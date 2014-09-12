@@ -1,0 +1,22 @@
+{
+    "id": "2F34DC1B-8031-4B18-8C75-0E5ECC634A67",
+    "name": "Xcode",
+    "friendlyName": "Xcode Build",
+    "description": "Build with Xcode",
+    "category": "Build",
+    "author": "Microsoft Corporation",
+    "version": {
+        "Major": 0,
+        "Minor": 1,
+        "Patch": 0,
+        "IsTest": false
+    },
+    "packageType":"NuGet",
+    "packageLocation": "http://nuget.org/packages/automationPullFromGitTask",
+    "sourceLocation": "http://codeplex.com/automationBuildTasks/",
+    "instanceNameFormat": "Xcode $(projName)",
+    "inputs": [
+        { "name": "projName", "propertyType": "string", "label": "Project Name", "defaultValue":"script.sh", "required":true },
+        { "name": "cwd", "propertyType": "string", "label": "Local path", "defaultValue":"$(DefinitionId)/repo/default", "required":true }
+    ]
+}

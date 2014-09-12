@@ -1,0 +1,24 @@
+{
+    "id": "900E03D8-4D8A-4976-867A-EB5113DB0636",
+    "name": "Jake",
+    "friendlyName": "Jake",
+    "description": "JavaScript build tool, similar to Make or Rake. Built to work with Node.js.",
+    "category": "Build",
+    "author": "Microsoft Corporation",
+    "version": {
+        "Major": 0,
+        "Minor": 1,
+        "Patch": 0,
+        "IsTest": false
+    },
+    "hostType": "Cross Platform",    
+    "packageType":"NuGet",
+    "packageLocation": "http://nuget.org/packages/automationGitCloneTask",
+    "sourceLocation": "http://codeplex.com/automationCrossPlatformTasks/",
+    "instanceNameFormat": "Jake $(target)",
+    "inputs": [
+        { "name": "scriptName", "propertyType": "string", "label": "Script Name", "defaultValue":"Jakefile.js", "required":true },
+        { "name": "target", "propertyType": "string", "label": "Jake Target", "defaultValue":"", "required":true },
+        { "name": "cwd", "propertyType": "string", "label": "Local path", "defaultValue":"$(DefinitionId)/repo", "required":true }
+    ]
+}

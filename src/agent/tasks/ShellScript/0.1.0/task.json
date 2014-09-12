@@ -1,0 +1,22 @@
+{
+    "id": "6C731C3C-3C68-459A-A5C9-BDE6E6595B5B",
+    "name": "ShellScript",
+    "friendlyName": "Shell Script",
+    "description": "JavaScript build tool, similar to Make or Rake. Built to work with Node.js.",
+    "category": "Utility",
+    "author": "Microsoft Corporation",
+    "version": {
+        "Major": 0,
+        "Minor": 1,
+        "Patch": 0,
+        "IsTest": false
+    },  
+    "packageType":"NuGet",
+    "packageLocation": "http://nuget.org/packages/automationGitCloneTask",
+    "sourceLocation": "http://codeplex.com/automationCrossPlatformTasks/",
+    "instanceNameFormat": "Shell Script $(scriptName)",
+    "inputs": [
+        { "name": "scriptName", "propertyType": "string", "label": "Script Name", "defaultValue":"script.sh", "required":true },
+        { "name": "cwd", "propertyType": "string", "label": "Local path", "defaultValue":"$(DefinitionId)/repo/default", "required":true }
+    ]
+}

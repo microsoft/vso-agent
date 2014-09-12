@@ -1,0 +1,22 @@
+--module CommonJS
+src/agent/api/messagelistener.ts
+src/agent/common.ts
+src/agent/configure.ts
+src/agent/context.ts
+src/agent/diagnostics.ts
+src/agent/environment.ts
+src/agent/extensions.ts
+src/agent/feedback.ts
+src/agent/handlers/js.ts
+src/agent/handlers/py.ts
+src/agent/host.ts
+src/agent/inputs.ts
+src/agent/job.ts
+src/agent/logging.ts
+src/agent/plugins.ts
+src/agent/service.ts
+src/agent/tracing.ts
+src/agent/utilities.ts
+src/agent/vsoagent.ts
+src/agent/vsoworker.ts
+src/bin/installer.ts
