@@ -11,11 +11,9 @@ A cross platform build agent for Microsoft Visual Studio Online (VSO) and Team F
 
 From a terminal ensure at least node 0.10 and npm 1.4:
 ```bash
-$ node -v
-v0.10.28
-
-$ npm -v
-1.4.5
+$ node -v && npm -v
+v0.10.29
+1.4.14
 ```
 
 ##Installer From Package
@@ -28,7 +26,7 @@ $ sudo npm install install-vsoagent -g
 
 ##Create Agent
 
-From a directory you created for the agent, run the installer.
+From a directory you created for the agent, run the installer.  Repeat for multiple agents.
 
 ```bash
 $ install-vsoagent
@@ -72,7 +70,7 @@ $ sudo node service status
 8367	-	com.microsoft.vsoagent
 ```
 
-output is (pid)  (rc)  (name)
+note: output is (pid)  (rc)  (name)
 
 ###Stop
 ```bash
