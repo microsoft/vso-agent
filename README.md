@@ -7,7 +7,7 @@ A cross platform build agent for Microsoft Visual Studio Online (VSO) and Team F
 ###Node and Npm:
 **Mac OSX**: Download and install node from [nodejs.org](http://nodejs.org/)
 
-**Linux**: Install [using package manager] (https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager)
+**Linux**: Install [using package manager](https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager)
 
 From a terminal ensure at least node 0.10 and npm 1.4:
 ```bash
