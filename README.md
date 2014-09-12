@@ -1,12 +1,13 @@
 #Microsoft Cross Platform Build Agent
 
-A cross platform build agent for Microsoft Visual Studio Online (VSO) and Team Foundation Server (TFS).
+A cross platform build agent for Microsoft Visual Studio Online (VSO) and Team Foundation Server (TFS).  Supported on Mac OSX and Linux.
 
 ##Pre-Reqs
 
 ###Node and Npm:
-**Mac OSX**: Download and install node from http://nodejs.org/
-**Linux**: https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager
+**Mac OSX**: Download and install node from [nodejs.org](http://nodejs.org/)
+
+**Linux**: Install [using package manager] (https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager)
 
 From a terminal ensure at least node 0.10 and npm 1.4:
 ```bash
@@ -42,7 +43,7 @@ note: if the agent isn't configured, on first run, it will configure
 $ node vsoagent
 
 Enter poolName(enter sets default) > 
-Enter serverUrl > https://bryanmac.visualstudio.com
+Enter serverUrl > https://contoso.visualstudio.com
 ...
 Config saved
 Waiting ...
@@ -54,7 +55,6 @@ $ node configure
 ```
 
 ##Run as a Service
-<a name="service" />
 
 note: only works on OSX right now
 
