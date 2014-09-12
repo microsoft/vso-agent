@@ -2,15 +2,7 @@
 
 A cross platform build agent for Microsoft Visual Studio Online (VSO) and Team Foundation Server (TFS).
 
-* [`Pre-Reqs`](#prereqs)
-* [`Installer From Package`](#installer)
-* [`Create Agent`](#create)
-* [`Configure Agent`](#configure)
-* [`Run As A Service`](#service)
-* [`Build From Source`](#build)
-
 ##Pre-Reqs
-<a name="prereqs" />
 
 ###Node and Npm:
 **Mac OSX**: Download and install node from http://nodejs.org/
@@ -26,14 +18,14 @@ $ npm -v
 ```
 
 ##Installer From Package
-<a name="installer" />
+
+Installs the agent installer once globally
 
 ```bash
 $ sudo npm install install-vsoagent -g
 ```
 
 ##Create Agent
-<a name="create" />
 
 From a directory you created for the agent, run the installer.
 
@@ -42,7 +34,6 @@ $ install-vsoagent
 ```
 
 ##Configure Agent
-<a name="configure" />
 
 Run the agent from the agent folder.
 note: if the agent isn't configured, on first run, it will configure
@@ -71,11 +62,7 @@ note: only works on OSX right now
 
 ```bash
 $ sudo node service install
-Enter alternate username > bryanmac
-Enter alternate password > ********
-Installing Service: com.microsoft.vsoagent
-Location: /Library/LaunchDaemons/com.microsoft.vsoagent.plist
-Installed Successfully
+...
 Started Successfully
 ```
 
@@ -105,7 +92,6 @@ $ cat /Library/LaunchDaemons/com.microsoft.vsoagent.plist
 ```
 
 ##Building From Source
-<a name="build" />
 
 ###Clone the repo
 ```bash
@@ -135,11 +121,6 @@ This creates a _package folder.  Install globally from that folder
 _package$ sudo npm install ./vsoxplat -g
 ...
 ```
-
-
-
-Note: You can alternatively cd into _packages/vsoxplat and just run from there
-      If you do that, run npm install in that directory.
 
 Note:  You can alternatively build and package independantly
 
