@@ -26,16 +26,25 @@ $ sudo npm install install-vsoagent -g
 
 ##Create Agent
 
-From a directory you created for the agent, run the installer.  Repeat for multiple agents.
+From a directory you created for the agent, run the installer.  Repeat from different folders for multiple agents.
 
 ```bash
 $ install-vsoagent
 ```
 
+##Provide Permissions to Account
+
+Determine which account the agent will run as.
+
+  1. Enable alternate credentials
+  2. Add to collection level *Build Service Accounts* group
+  3. Add to *Agent Pool Service Accounts* group
+
 ##Configure Agent
 
 Run the agent from the agent folder.
-note: if the agent isn't configured, on first run, it will configure
+Configuration will ask for the username and password of the account the agent will run as.
+note: if the agent isn't configured, on first run, it will configure.
 
 ```bash
 $ node vsoagent
@@ -105,8 +114,8 @@ sudo npm install -g jake
 ```
 
 ###Build and Create Package with Jake
-```bash
 run jake in the root of the repo
+```bash
 $ jake
 ...
 Package done.
@@ -119,6 +128,8 @@ This creates a _package folder.  Install globally from that folder
 _package$ sudo npm install ./vsoxplat -g
 ...
 ```
+
+Now you can create the agent (section above).
 
 Note:  You can alternatively build and package independantly
 

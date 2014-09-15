@@ -21,5 +21,13 @@ var agentDir = path.join(__dirname, '..', 'agent');
 var targetDir = process.cwd();
 
 console.log('Installing agent to ' + targetDir);
+
+console.log('Copying: ', agentDir, targetDir);
 shell.cp('-R', agentDir, targetDir);
+
+var modsDir = path.join(__dirname, '..', 'node_modules');
+var targetMods = path.join(targetDir, 'agent');
+console.log('Copying: ', modsDir, targetMods);
+shell.cp('-R', modsDir, targetMods);
+
 console.log('Done.');

@@ -19,6 +19,6 @@
     "inputs": [
         { "name": "scriptName", "propertyType": "string", "label": "Script Name", "defaultValue":"Jakefile.js", "required":true },
         { "name": "target", "propertyType": "string", "label": "Jake Target", "defaultValue":"", "required":true },
-        { "name": "cwd", "propertyType": "string", "label": "Local path", "defaultValue":"$(DefinitionId)/repo", "required":true }
+        { "name": "cwd", "propertyType": "string", "label": "Local path", "defaultValue":"$(sys.sourceFolder)", "required":true }
     ]
 }

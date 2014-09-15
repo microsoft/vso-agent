@@ -1,0 +1,85 @@
+{
+  "requestId": 3,
+  "lockToken": "978ef675-8aa2-4c27-a4ec-9a799aa40f2e",
+  "lockedUntil": "2014-07-30T22:11:31.563Z",
+  "plan": {
+    "planId": "cb2fb9c9-974a-4c1b-8bba-83b99670309d",
+    "artifactUri": "vstfs:///Build/Build/2",
+    "artifactLocation": null
+  },
+  "timeline": {
+    "id": "e31682a4-5e60-41d6-a3dd-cf2aa0a2457e",
+    "changeId": 1,
+    "location": null
+  },
+  "jobId": "e7bccabf-54b2-4f11-8394-7e92d6369733",
+  "jobName": "Build (debug, any cpu)",
+  "environment": {
+    "endpoints": [
+      {
+        "data": {
+          "localPath": "$(sys.sourceFolder)/test",
+          "rootFolder": null,
+          "clean": null,
+          "supportSubmodules": "False"
+        },
+        "name": "test",
+        "type": "TfsGit",
+        "authorization": "TfsBuild",
+        "url": "https://bryanmac.tfsbuildhost3.tfsallin.net/DefaultCollection/_git/test"
+      },
+      {
+        "name": "TfsBuild",
+        "type": "BuildService",
+        "authorization": "TfsBuild",
+        "url": "https://bryanmac.tfsbuildhost3.tfsallin.net/DefaultCollection"
+      }
+    ],
+    "secrets": {
+      "TfsBuild": "TeamFoundationService (TEAM FOUNDATION);http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fname=TeamFoundationService+(TEAM+FOUNDATION)&http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fnameidentifier=91160d53-25b5-4a9b-8ee0-dbe9ca9b0ffe&http%3a%2f%2fschemas.microsoft.com%2faccesscontrolservice%2f2010%2f07%2fclaims%2fidentityprovider=https%3a%2f%2ftfstest.accesscontrol.windows.net%2f&Audience=https%3a%2f%2fapp.tfsbuildhost3.tfsallin.net%2f&ExpiresOn=1406786965&Issuer=https%3a%2f%2ftfstest.accesscontrol.windows.net%2f&HMACSHA256=LL8CWggp0yABgd9t1UUdqh%2bEKUz0Vc09hYeOEXFPPvs%3d"
+    },
+    "variables": {
+      "sys": "build",
+      "sys.collectionId": "c45d99c3-3bd6-43d3-82d7-ad77a29e0d35",
+      "sys.teamProject": "test",
+      "sys.definitionId": "1",
+      "sys.definitionVersion": "1",
+      "sys.sourceBranch": "refs/heads/master",
+      "forceClean": "false",
+      "config": "debug",
+      "platform": "any cpu",
+      "dropLocation": "#/54/drop"
+    }
+  },
+  "authorization": {
+    "servicePrincipalId": "TeamFoundationService (TEAM FOUNDATION)",
+    "servicePrincipalToken": "http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fname=TeamFoundationService+(TEAM+FOUNDATION)&http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fnameidentifier=91160d53-25b5-4a9b-8ee0-dbe9ca9b0ffe&http%3a%2f%2fschemas.microsoft.com%2faccesscontrolservice%2f2010%2f07%2fclaims%2fidentityprovider=https%3a%2f%2ftfstest.accesscontrol.windows.net%2f&Audience=https%3a%2f%2fapp.tfsbuildhost3.tfsallin.net%2f&ExpiresOn=1406786973&Issuer=https%3a%2f%2ftfstest.accesscontrol.windows.net%2f&HMACSHA256=5KD8DIWUfPBg%2b3bElvRpo0OQ9gyMuwQNzItI6gYCgNg%3d",
+    "serverId": "00000000-0000-0000-0000-000000000000",
+    "serverUrl": "https://bryanmac.tfsbuildhost3.tfsallin.net/DefaultCollection"
+  },
+  "tasks": [
+    {
+      "instanceId": "eea97748-d972-4880-a9f5-6d3c3a7a6a68",
+      "displayName": null,
+      "id": "c6c4c611-aa2e-4a33-b606-5eaba2196824",
+      "name": "MSBuildSolution",
+      "version": "1.0.0",
+      "inputs": {
+        "solution": "**\\*.sln",
+        "platform": "$(platform)",
+        "configuration": "$(config)"
+      }
+    },
+    {
+      "instanceId": "eea5c107-3d1a-42a7-b300-49233d93df12",
+      "displayName": null,
+      "id": "36c4c611-aa2e-4a33-b606-5eaba2196824",
+      "name": "DropBinaries",
+      "version": "1.0.0",
+      "inputs": {
+        "searchPattern": "**\\bin",
+        "dropLocation": "$(dropLocation)"
+      }
+    }
+  ]
+}

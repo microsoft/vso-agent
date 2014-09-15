@@ -2,11 +2,13 @@
   "name": "install-vsoagent",
   "version": "0.1.0",
   "description": "Visual Studio Xplat Build Agent Installer",
+  "main": "bin/install.js",
+  "preferGlobal": true,  
   "bin": {
     "install-vsoagent": "./bin/install.js"
   },
   "scripts": {
-    "start": "./vsoagent.js",
+    "start": "./bin/install.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
