@@ -46,6 +46,8 @@ desc('Drop build')
 task('drop', [], function() {
 	console.log('Dropping _build');
 	jake.rmRf('_build');
+	console.log('Dropping _package');
+	jake.rmRf('_package');
 	console.log('Dropping done.');
 });
 

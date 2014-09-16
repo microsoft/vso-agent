@@ -1,4 +1,4 @@
-#!/usr/local/bin/node
+#!/usr/bin/env node
 
 // 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
