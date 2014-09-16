@@ -17,6 +17,6 @@
     "instanceNameFormat": "Shell Script $(scriptName)",
     "inputs": [
         { "name": "scriptName", "propertyType": "string", "label": "Script Name", "defaultValue":"script.sh", "required":true },
-        { "name": "cwd", "propertyType": "string", "label": "Local path", "defaultValue":"$(DefinitionId)/repo/default", "required":true }
+        { "name": "cwd", "propertyType": "string", "label": "Local path", "defaultValue":"$(sys.sourceFolder)", "required":true }
     ]
 }

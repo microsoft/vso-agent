@@ -26,9 +26,10 @@
     "endpoints": [
       {
         "data": {
-          "localPath": "./$(definitionId)/repo/default",
+          "localPath": "repo/default",
           "rootFolder": null,
-          "sourceVersion": ""
+          "sourceVersion": "",
+          "checkoutSubmodules": "False"
         },
         "id": 1,
         "name": "default repo",
@@ -45,17 +46,25 @@
     ],
     "secrets": {
       "TfsBuild": "TeamFoundationService (TEAM FOUNDATION);http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fname=TeamFoundationService+(TEAM+FOUNDATION)&http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fnameidentifier=37eae97c-1f3f-4a1f-8689-0633cc609ea3&http%3a%2f%2fschemas.microsoft.com%2faccesscontrolservice%2f2010%2f07%2fclaims%2fidentityprovider=https%3a%2f%2ftfsdev.accesscontrol.windows.net%2f&Audience=https%3a%2f%2fapp.tfsbuildhost8.tfsallin.net%2f&ExpiresOn=1399531565&Issuer=https%3a%2f%2ftfsdev.accesscontrol.windows.net%2f&HMACSHA256=aD%2fAyf4WEluDE2fgx5nVAhY4xZhGSCmdd3ZKhkIXpQs%3d"
-    }
-  },
+    },
+    "variables": {
+      "sys": "build",
+      "sys.collectionId": "e66d99c3-3bd6-43d3-82d7-ad77a29e0d45",
+      "sys.teamProject": "test",
+      "sys.definitionId": "76",
+      "sys.definitionVersion": "1",
+      "sys.sourceBranch": "refs/heads/master",
+      "forceClean": "false",
+      "config": "debug",
+      "platform": "any cpu",
+      "dropLocation": "#/53/drop"
+    }    
+  },  
   "authorization": {
     "servicePrincipalId": "TeamFoundationService (TEAM FOUNDATION)",
     "servicePrincipalToken": "http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fname=TeamFoundationService+(TEAM+FOUNDATION)&http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fnameidentifier=37eae97c-1f3f-4a1f-8689-0633cc609ea3&http%3a%2f%2fschemas.microsoft.com%2faccesscontrolservice%2f2010%2f07%2fclaims%2fidentityprovider=https%3a%2f%2ftfsdev.accesscontrol.windows.net%2f&Audience=https%3a%2f%2fapp.tfsbuildhost8.tfsallin.net%2f&ExpiresOn=1399531568&Issuer=https%3a%2f%2ftfsdev.accesscontrol.windows.net%2f&HMACSHA256=MbcDawHrTmF2WLFlMKjs4qiB9Ht1xD%2b2hnQr9NGzV3Y%3d",
     "serverId": "bbda04f7-135a-465c-8c4b-a4a114eb3fd2",
     "serverUrl": "http://localhost:3000/DefaultCollection"
-  },
-  "timeline": {
-    "id": "cceb04f7-135a-465c-8c4b-a4a114eb3ec4",
-    "changeId": 0
   },
   "tasks": [
      {
@@ -66,7 +75,7 @@
         "inputs":{
             "scriptName": "Jakefile.js", 
             "target": "sample:jaketask[output, 'Hello World']", 
-            "cwd": "./$(definitionId)/repo/default/jakeSample"  
+            "cwd": "$(sys.sourceFolder)/jakeSample"  
         }
     }, {
         "instanceId": "5ba368b7-9f14-44ce-9bdb-3ed56786458c",
@@ -75,7 +84,7 @@
         "version":"1.0.0",
         "inputs":{
             "scriptName": "SampleShellScript.sh", 
-            "cwd": "./$(definitionId)/repo/default"  
+            "cwd": "$(sys.sourceFolder)"  
         }
     }  
   ]
