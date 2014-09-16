@@ -42,7 +42,7 @@ var getFilteredEnv = function(): { [key: string]: string } {
 	
 	var filtered: { [key: string]: string } = {};
 	for (var envvar in process.env) {
-		if (filter.indexOf(envvar) < 0) {
+		if (filter.indexOf(envvar) < 0 && process.env[envvar].length < 1024) {
 			filtered[envvar] = process.env[envvar];
 		}
 	}
