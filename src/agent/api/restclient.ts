@@ -173,6 +173,13 @@ export class RestClient implements ifm.IRestClient {
     }
 
     uploadFile(relativeUrl: string, filePath: string, onResult: (err: any, statusCode: number, obj: any) => void): void {
+        if (process.env.XPLAT_TRACE_HTTP) {
+            console.log('======= uploadFile =========');
+            console.log(filePath);
+            console.log(relativeUrl);
+            console.log('=========================');
+        }
+
         var postUrl = this.resolveUrl(relativeUrl);
         var contentStream: ReadableStream = fs.createReadStream(filePath);
 

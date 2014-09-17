@@ -47,6 +47,13 @@ export class HttpClient implements ifm.IHttpClient {
     sendFile(verb: string, requestUrl: string, content: ReadableStream, headers: any, onResult: (err: any, res: http.ClientResponse, contents: string) => void): void {
         var options = this._getOptions(verb, requestUrl, headers);
 
+        if (process.env.XPLAT_TRACE_HTTP) {
+            console.log('======= REQUEST =========');
+            console.log('-- sendFile --');
+            console.log(JSON.stringify(options.options, null, 2));
+            console.log('=========================');
+        }
+
         var req = options.protocol.request(options.options, function (res) {
             var output = '';
 
@@ -105,9 +112,6 @@ export class HttpClient implements ifm.IHttpClient {
             options: options,
         };
     }
-
-    // _handleSend
-    // options.headers["Content-Type"] = contentType;
 
     request(protocol: any, options: any, objs: any, onResult: (err: any, res: http.ClientResponse, contents: string) => void): void {
         var reqData;

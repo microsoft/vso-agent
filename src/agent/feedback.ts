@@ -279,6 +279,8 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 	public doWork(callback: (err: any) => void): void {
 		this._trace.enter('servicechannel:doWork');
 		var records: ifm.TimelineRecord[] = this._recordsFromBatch();
+        this._batch = {};
+        this._recordCount = 0;		
 		this._sendTimelineRecords(records, callback);
 	}
 
