@@ -79,7 +79,7 @@ var processResponse = function (url, res, contents, onResult) {
         // not success
         var msg = httpCodes[res.statusCode] ? "Failed Request: " + httpCodes[res.statusCode] : "Failed Request";
         msg += '(' + res.statusCode + ') - ' + url;
-        
+
         if (contents) {
             console.log(contents);
         }
@@ -182,22 +182,33 @@ export class RestClient implements ifm.IRestClient {
             console.log('=========================');
         }
 
-        var postUrl = this.resolveUrl(relativeUrl);
-        var contentStream: ReadableStream = fs.createReadStream(filePath);
-
-        var headers = {};
-        headers["Accept"] = 'application/json';
-        this.httpClient.sendFile('POST', postUrl, contentStream, headers, (err: any, res: ifm.IHttpResponse, contents: string) => {
+        fs.stat(filePath, (err, stats) => {
             if (err) {
-                if (process.env.XPLAT_TRACE_HTTP) {
-                    console.log('ERR: ' + err.message + ':' + err.statusCode);
-                }
-                onResult(err, err.statusCode, null);
+                onResult(err, 400, null);
                 return;
             }
 
-            processResponse(postUrl, res, contents, onResult);
+            var postUrl = this.resolveUrl(relativeUrl);
+            var contentStream: ReadableStream = fs.createReadStream(filePath);
+
+            var headers = {};
+            headers["Accept"] = 'application/json';
+            headers["Content-Length"] = stats.size;
+
+            this.httpClient.sendFile('POST', postUrl, contentStream, headers, (err: any, res: ifm.IHttpResponse, contents: string) => {
+                if (err) {
+                    if (process.env.XPLAT_TRACE_HTTP) {
+                        console.log('ERR: ' + err.message + ':' + err.statusCode);
+                    }
+                    onResult(err, err.statusCode, null);
+                    return;
+                }
+
+                processResponse(postUrl, res, contents, onResult);
+            });
         });
+
+
     }
 
     replace(relativeUrl: string, resources: any, onResult: (err: any, statusCode: number, obj: any) => void): void {
