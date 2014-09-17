@@ -42,7 +42,7 @@ var getJsonResponse = function (contents) {
 var httpCodes = {
     300: "Multiple Choices",
     301: "Moved Permanantly",
-    302: "Found",
+    302: "Resource Moved",
     304: "Not Modified",
     305: "Use Proxy",
     306: "Switch Proxy",
@@ -77,7 +77,9 @@ var processResponse = function (url, res, contents, onResult) {
 
     if (res.statusCode > 299) {
         // not success
-        var msg = httpCodes[res.statusCode] ? httpCodes[res.statusCode] : "Failed Request";
+        var msg = httpCodes[res.statusCode] ? "Failed Request: " + httpCodes[res.statusCode] : "Failed Request";
+        msg += '(' + res.statusCode + ') - ' + url;
+        
         if (contents) {
             console.log(contents);
         }

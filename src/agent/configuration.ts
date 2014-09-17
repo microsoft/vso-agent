@@ -76,6 +76,11 @@ export class Configurator {
 		if (!settings.serverUrl) {
 			console.log("no settings found. configuring...");
 			this.create((err, agent, config) => {
+				if (err) {
+					complete(err, null, null);
+					return;
+				}
+
 				complete(err, config.settings, config.creds);
 			});
 			return;
@@ -188,7 +193,7 @@ export class Configurator {
 			}
 		], function(err) {
 			if (err) {
-				console.error('Error!!!');
+				console.error('Failed to register agent');
 				complete(err, null, null);
 				return;
 			}
@@ -230,7 +235,10 @@ export class Configurator {
 				});
 			},
 		], function(err) {
-			if (err) { complete(err, null, 0); return; }
+			if (err) { 
+				console.error('Failed to read agent');
+				complete(err, null, 0); return; 
+			}
 			complete(null, agent, agentPoolId);
 		});
 	}
