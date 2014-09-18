@@ -33,6 +33,7 @@ var inDebugger = (typeof global.v8debug === 'object');
 var ag: ctxm.AgentContext;
 var trace: tm.Tracing;
 var cfgr: cfgm.Configurator = new cfgm.Configurator();
+var messageListener: listener.MessageListener;
 
 var runWorker = function(ag: ctxm.AgentContext, workerMsg) {
 
@@ -116,7 +117,7 @@ cfgr.ensureConfigured((err: any, settings: cm.ISettings, creds:any) => {
 		var queueName = agent.name;
 		ag.info('Listening for agent: ' + queueName);
 
-		var messageListener: listener.MessageListener =  new listener.MessageListener(cfgr.agentApi, agent, config.poolId);
+		messageListener = new listener.MessageListener(cfgr.agentApi, agent, config.poolId);
         trace.write('created message listener');
 		ag.info('starting listener...');
 
@@ -171,5 +172,15 @@ process.on('uncaughtException', function (err) {
 
 process.on( 'SIGINT', function() {
   console.log( "\nShutting down host." );
-  process.exit();
+  if (messageListener) {
+    messageListener.stop( function (err) {
+        if (err) {
+            console.error(err.message);
+        }
+        process.exit();
+    })
+  }
+  else {
+    process.exit();
+  }
 })

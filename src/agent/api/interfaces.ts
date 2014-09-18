@@ -30,6 +30,7 @@ export interface IAgentApi {
     createAgent(poolId: number, agent: TaskAgent, onResult: (err: any, statusCode: number, agent: TaskAgent) => void): void;
     updateAgent(poolId: number, agent: TaskAgent, onResult: (err: any, statusCode: number, agent: TaskAgent) => void): void;
     createSession(poolId: number, session: TaskAgentSession, onResult: (err: any, statusCode: number, session: TaskAgentSession) => void): void;
+    deleteSession(poolId: number, sessionId: string, onResult: (err: any, statusCode: number) => void): void;
     updateJobRequest(poolId: number, lockToken: string, jobRequest: TaskAgentJobRequest, onResult: (err: any, statusCode: number, jobRequest: TaskAgentJobRequest) => void): void;
 }
 

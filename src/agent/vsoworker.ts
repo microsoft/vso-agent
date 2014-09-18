@@ -100,7 +100,7 @@ process.on('uncaughtException', function(err) {
 	process.exit();	
 });
 
-process.on( 'SIGINT', function() {
+process.on('SIGINT', function() {
 	if (ag) {
 		ag.info( "\nShutting down agent." );
 	}
