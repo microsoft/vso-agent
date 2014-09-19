@@ -64,6 +64,10 @@ export class AgentApi {
 		this.restClient.create('/_apis/distributedtask/pools/' + poolId + '/sessions', session, onResult);
 	}
 
+	deleteSession(poolId: number, sessionId: string, onResult: (err: any, statusCode: number, session: ifm.TaskAgentSession) => void): void {
+		this.restClient.delete('/_apis/distributedtask/pools/' + poolId + '/sessions/' + sessionId, onResult);
+	}
+
 	getMessage(poolId: number, sessionId: string, onResult: (err: any, statusCode: number, message: any) => void): void {
 		var path: string = '_apis/distributedtask/pools/' + poolId + '/messages?sessionId=' + sessionId;
 		this.restClient.getJson(path, onResult);
