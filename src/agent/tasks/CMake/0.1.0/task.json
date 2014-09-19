@@ -21,8 +21,13 @@
         { "name": "args", "propertyType": "string", "label": "Arguments", "defaultValue":"", "required":false }
     ],
     "execution": {
-        "handler": "JavaScript",
-        "target": "cmake.js",
-        "argumentFormat": ""
+        "JavaScript": {
+            "target": "cmake.js",
+            "argumentFormat": ""
+        },
+        "PowerShell": {
+            "target": "cmake.ps1",
+            "argumentFormat": ""
+        }
     }
 }

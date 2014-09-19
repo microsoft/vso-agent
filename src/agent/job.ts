@@ -272,10 +272,26 @@ export class JobRunner {
 			// TODO: task metadata should be typed
 			try {
 				var taskMetadata = JSON.parse(data);
-
 				var execution = taskMetadata.execution;
-				execution['target'] = path.join(taskPath, execution.target);
-				this.taskExecution[task.id] = execution;
+
+				var handlers = ['JavaScript', 'Python', 'ShellScript'];
+				var instructions;
+				handlers.some(function(handler) {
+					if (execution.hasOwnProperty(handler)) {
+						instructions = execution[handler];
+						instructions["handler"] = handler;
+
+						return true;
+					}
+				});
+				
+				if (!instructions) {
+					callback(new Error('Agent could not find a handler for this task'));
+					return;
+				}
+
+				instructions['target'] = path.join(taskPath, instructions.target);
+				this.taskExecution[task.id] = instructions;
 
 				callback();
 			}

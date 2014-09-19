@@ -20,8 +20,9 @@
         { "name": "cwd", "propertyType": "string", "label": "Local path", "defaultValue":"$(sys.sourceFolder)", "required":true }
     ],
     "execution": {
-        "handler": "JavaScript",
-        "target": "shellscript.js",
-        "argumentFormat": ""
+        "JavaScript": {
+            "target": "shellscript.js",
+            "argumentFormat": ""            
+        }
     }    
 }

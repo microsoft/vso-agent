@@ -21,8 +21,9 @@
         { "name": "cwd", "propertyType": "string", "label": "Local path", "defaultValue":"$(sys.sourceFolder)", "required":true }
     ],
     "execution": {
-        "handler": "JavaScript",
-        "target": "jaketask.js",
-        "argumentFormat": ""
+        "JavaScript": {
+            "target": "jaketask.js",
+            "argumentFormat": ""
+        }
     }
 }

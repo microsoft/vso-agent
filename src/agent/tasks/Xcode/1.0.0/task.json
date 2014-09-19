@@ -24,8 +24,9 @@
         { "name": "output", "propertyType": "string", "label": "Scheme", "defaultValue":"output/$(SDK)/$(Configuration)", "required":true }
     ],
     "execution": {
-        "handler": "ShellScript",
-        "target": "xcodebuild.sh",
-        "argumentFormat": ""
+        "ShellScript": {
+            "target": "xcodebuild.sh",
+            "argumentFormat": ""
+        }
     }    
 }
