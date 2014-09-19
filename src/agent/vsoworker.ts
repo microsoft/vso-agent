@@ -65,10 +65,15 @@ process.on('message',function(msg){
 		jobRunner.run(ctx, (err: any, result: ifm.TaskResult) => {
 			trace.callback('job.run');
 
+			ag.status('Job Completed: ' + job.jobName);
+            if (err) {
+                ag.error('Error: ' + err.message);
+            }
+
 			ctx.finishJob(result, (err: any)  => {
 				trace.callback('ctx.finishJob');
 
-				ag.status('Job Completed: ' + job.jobName);
+				ag.status('Job Finished: ' + job.jobName);
 	            if (err) {
 	                ag.error('Error: ' + err.message);
 	            }

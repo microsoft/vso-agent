@@ -10,14 +10,19 @@
         "Minor": 1,
         "Patch": 0,
         "IsTest": false
-    },  
-    "packageType":"NuGet",
-    "packageLocation": "http://nuget.org/packages/cmakebuildpackage",
-    "sourceLocation": "http://codeplex.com/automationCrossPlatformTasks/",
+    },
+    "demands" : [
+        "cmake"
+    ],
     "instanceNameFormat": "CMake $(scriptName)",
     "inputs": [
         { "name": "srcRoot", "propertyType": "string", "label": "Source Root", "defaultValue":"$(sys.sourceFolder)", "required":true },
         { "name": "buildDirName", "propertyType": "string", "label": "Build Directory Name", "defaultValue":"build", "required":true },
         { "name": "args", "propertyType": "string", "label": "Arguments", "defaultValue":"", "required":false }
-    ]
+    ],
+    "execution": {
+        "handler": "JavaScript",
+        "target": "cmake.js",
+        "argumentFormat": ""
+    }
 }

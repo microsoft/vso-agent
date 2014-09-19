@@ -41,7 +41,7 @@ export function runTask(scriptPath: string, ctx: ctxm.TaskContext, callback): vo
 //----------------------------------------------------------------
 // Python Task: Run a python script checked into source
 //----------------------------------------------------------------
-export function run(script, args, begin, done) {
+export function run(script, args, begin, done): void {
 
   // prefer python3 over python (2).  USEPATH envvar can be set
   var usePython = process.env['USEPYTHON'];

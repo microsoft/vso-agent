@@ -113,6 +113,18 @@ var checkWhich = function(cap: any, tool: string, capability?:string) {
 	}	
 }
 
+var checkTool = function(cap: any, command: string, args: string, capability: string) {
+	var tool = shell.which(command);
+	if (!tool) {
+		return;
+	}
+
+	var val = shell.exec(command + ' ' + args, {silent:true}).output;
+	if (val) {
+		cap[capability] = val;
+	}
+}
+
 var setIfNot = function(cap, name, val) {
 	if (!cap.hasOwnProperty(name)) {
 		cap[name] = val;
@@ -135,6 +147,7 @@ export function getCapabilities(): { [key: string]: string } {
 	setIfNot(cap, 'jake', '.');
 
 	checkWhich(cap, 'cmake');
+	checkTool(cap, 'xcode-select', '-p', 'xcode');
 
 	return cap;
 }

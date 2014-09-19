@@ -62,6 +62,9 @@ export class JobRunner {
 		job.environment.variables['sys.workFolder'] = workFolder;
 		job.environment.variables['sys.workingFolder'] = workingFolder;
 
+        var stagingFolder = path.join(workingFolder, 'staging');
+		job.environment.variables['sys.staging'] = stagingFolder;
+
 		trace.state('variables', job.environment.variables);
 	}
 
@@ -91,7 +94,7 @@ export class JobRunner {
 
 		// prepare (might download) up to 5 tasks in parallel and then run tasks seuentially
 		ag.status('Preparing Tasks');
-		async.forEachLimit(this.job.tasks, 5, 
+		async.forEach(this.job.tasks, 
 			function(pTask, callback){
 				_this.prepareTask(jobCtx, pTask, callback);
 			}, 
@@ -247,7 +250,7 @@ export class JobRunner {
 			});		
 	}
 
-	private taskScripts = {};
+	private taskExecution = {};
 
 	private prepareTask(ctx: ctxm.JobContext, task: ifm.TaskInstance, callback) {
 		var ag = this.context;
@@ -257,11 +260,10 @@ export class JobRunner {
 		ag.info('preparing task ' + task.name);
 
 		var taskJsonPath = path.join(taskPath, 'task.json');
-		var taskNodeJsonPath = path.join(taskPath, 'task-node.json');
 
 		// TODO (bryanmac): support downloading - check if exists
-		var _this = this;
-		fs.readFile(taskJsonPath, 'utf8', function (err, data) {
+
+		fs.readFile(taskJsonPath, 'utf8', (err, data) => {
 			if (err) {
 				callback(err);
 				return;
@@ -269,32 +271,18 @@ export class JobRunner {
 
 			// TODO: task metadata should be typed
 			try {
-				// ensure valid metadata - not needed for agent to run
-				JSON.parse(data);
+				var taskMetadata = JSON.parse(data);
+
+				var execution = taskMetadata.execution;
+				execution['target'] = path.join(taskPath, execution.target);
+				this.taskExecution[task.id] = execution;
+
+				callback();
 			}
 			catch (e) {
 				callback(new Error('Invalid metadata @ ' + taskJsonPath));
 				return;
 			}
-
-			fs.readFile(taskNodeJsonPath, 'utf8', function (err, data) {
-				if (err) {
-					callback(err);
-					return;
-				}
-
-				try {
-					var taskExecution = JSON.parse(data);
-					var taskScript = taskExecution.task;
-					_this.taskScripts[task.id] = path.join(taskPath, taskScript);					
-				}
-				catch (e) {
-					callback(new Error('Invalid metadata @ ' + taskNodeJsonPath));
-					return;
-				}
-
-				callback();			
-			});
 		});
 	}
 
@@ -310,10 +298,10 @@ export class JobRunner {
 
 		ctx.inputs = task.inputs;
 
-		var taskScript = this.taskScripts[task.id];
-		var ext = path.extname(taskScript).slice(1);
-		var handler = require('./handlers/' + ext);
-		ag.info('running ' + taskScript);
-		handler.runTask(taskScript, ctx, callback);
+		var execution = this.taskExecution[task.id];
+		var handler = require('./handlers/' + execution.handler);
+		ag.info('running ' + execution.target + ' with ' + execution.handler);
+
+		handler.runTask(execution.target, ctx, callback);
 	}	
 }

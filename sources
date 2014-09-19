@@ -7,8 +7,9 @@ src/agent/diagnostics.ts
 src/agent/environment.ts
 src/agent/extensions.ts
 src/agent/feedback.ts
-src/agent/handlers/js.ts
-src/agent/handlers/py.ts
+src/agent/handlers/JavaScript.ts
+src/agent/handlers/Python.ts
+src/agent/handlers/ShellScript.ts
 src/agent/host.ts
 src/agent/inputs.ts
 src/agent/job.ts

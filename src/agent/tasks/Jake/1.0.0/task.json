@@ -11,14 +11,18 @@
         "Patch": 0,
         "IsTest": false
     },
-    "hostType": "Cross Platform",    
-    "packageType":"NuGet",
-    "packageLocation": "http://nuget.org/packages/automationGitCloneTask",
-    "sourceLocation": "http://codeplex.com/automationCrossPlatformTasks/",
+    "demands" : [
+        "jake"
+    ],
     "instanceNameFormat": "Jake $(target)",
     "inputs": [
         { "name": "scriptName", "propertyType": "string", "label": "Script Name", "defaultValue":"Jakefile.js", "required":true },
         { "name": "target", "propertyType": "string", "label": "Jake Target", "defaultValue":"", "required":true },
         { "name": "cwd", "propertyType": "string", "label": "Local path", "defaultValue":"$(sys.sourceFolder)", "required":true }
-    ]
+    ],
+    "execution": {
+        "handler": "JavaScript",
+        "target": "jaketask.js",
+        "argumentFormat": ""
+    }
 }
