@@ -65,7 +65,6 @@ export interface ITraceWriter {
 export interface ISettings {
 	poolName: string;
 	serverUrl: string;
-	maxParallelism: number;
 	agentName: string;
 	workFolder: string;
 }

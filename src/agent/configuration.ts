@@ -43,7 +43,6 @@ export function read(): cm.ISettings {
 	var settings: cm.ISettings  = {
 		poolName : nconf.get("poolName"),
 		serverUrl : nconf.get("serverUrl"),
-		maxParallelism: nconf.get("maxParallelism"),
 		agentName : nconf.get("agentName"),
 		workFolder: nconf.get("workFolder")
 	}
@@ -114,9 +113,6 @@ export class Configurator {
 				name: 'poolName', description: 'agent pool name', arg: 'l', def: 'default', type: 'string', req: true
 			},
 			{
-				name: 'maxParallelism', description: 'agent max parallelism', arg: 'x', def: 3, type: 'number', req: true
-			},
-			{
 				name: 'workFolder', description: 'agent work folder', arg: 'f', def: './work', type: 'string', req: true
 			}		
 		];
@@ -129,7 +125,6 @@ export class Configurator {
 					settings = <cm.ISettings>{};
 					settings['poolName'] = result['poolName'];
 					settings['serverUrl'] = result['serverUrl'];
-					settings['maxParallelism'] = result['maxParallelism'];
 					settings['agentName'] = result['agentName'];
 					settings['workFolder'] = result['workFolder'];
 					config.settings = settings;
@@ -294,7 +289,7 @@ export class Configurator {
 				console.log('creating agent...');
 				var caps: { [key: string]: string } = env.getCapabilities();
 				var agent = {
-					maxParallelism: settings.maxParallelism,
+					maxParallelism: 1,
 					name: settings.agentName,
 					systemCapabilities: caps
 				};
@@ -317,7 +312,7 @@ export class Configurator {
 
 				var caps: { [key: string]: string } = env.getCapabilities();
 				console.log('updating agent...');
-	            newAgent['maxParallelism'] = settings.maxParallelism;
+	            newAgent['maxParallelism'] = 1;
 	            newAgent['name'] = settings.agentName;
 	            newAgent['systemCapabilities'] = caps;
 
