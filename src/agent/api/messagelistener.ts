@@ -77,4 +77,13 @@ export class MessageListener {
 			this.getMessages(callback)	
 		});	
 	}
+
+	stop(callback: (err: any) => void): void {
+		if (this.sessionId)
+		{
+			this.agentapi.deleteSession(this.poolId, this.sessionId, (err, statusCode) => {
+				callback(err);
+			});
+		}
+	}
 }
