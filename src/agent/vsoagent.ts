@@ -175,7 +175,8 @@ process.on( 'SIGINT', function() {
   if (messageListener) {
     messageListener.stop( function (err) {
         if (err) {
-            console.error(err.message);
+            ag.error('Error deleting agent session:');
+            ag.error(err.message);
         }
         process.exit();
     })
