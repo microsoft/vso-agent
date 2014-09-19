@@ -27,12 +27,12 @@ import ctxm = require('../context');
 export function runTask(scriptPath: string, ctx: ctxm.TaskContext, callback): void {
 	// set env var for each input value
 	for (var key in ctx.inputs){
-		var envVarName = 'INPUT_' + ctx.inputs[key].toUpperCase();
+		var envVarName = 'INPUT_' + key.toUpperCase();
 		process.env[envVarName] = ctx.inputs[key];
 
 		console.log('setting ' + envVarName + ' to  ' + process.env[envVarName]);
 	}
 
 	console.log('running: ' + scriptPath);
-	ctx.util.spawn('sh', scriptPath, {}, callback);
+	ctx.util.spawn('sh', [scriptPath], {}, callback);
 }

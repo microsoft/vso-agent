@@ -16,12 +16,12 @@
     ],
     "instanceNameFormat": "Xcode $(xcWorkspacePath)",
     "inputs": [
-        { "name": "xcWorkspacePath", "propertyType": "filePath", "label": "Workspace Path", "defaultValue":"src/myproject.xcodeproject/project.xcworkspace", "required":true },
-        { "name": "scheme", "propertyType": "string", "label": "Scheme", "defaultValue":"", "required":true }
-        { "name": "xcodeApp", "propertyType": "string", "label": "Xcode App", "defaultValue":"$(XcodeApp)", "required":true }
-        { "name": "configuration", "propertyType": "string", "label": "Configuration", "defaultValue":"$(Configuration)", "required":true }
-        { "name": "sdk", "propertyType": "string", "label": "SDK", "defaultValue":"$(SDK)", "required":true }
-        { "name": "output", "propertyType": "string", "label": "Scheme", "defaultValue":"output/$(SDK)/$(Configuration)", "required":true }
+        { "name": "xcWorkspacePath", "type": "filePath", "label": "Workspace Path", "defaultValue":"$(sys.sourceFolder)/src/myproject.xcodeproject/project.xcworkspace", "required":true },
+        { "name": "scheme", "type": "string", "label": "Scheme", "defaultValue":"", "required":true },
+        { "name": "xcodeApp", "type": "string", "label": "Xcode App", "defaultValue":"$(XcodeApp)", "required":true },
+        { "name": "configuration", "type": "string", "label": "Configuration", "defaultValue":"$(Configuration)", "required":true },
+        { "name": "sdk", "type": "string", "label": "SDK", "defaultValue":"$(SDK)", "required":true },
+        { "name": "clean", "type": "boolean", "label": "Clean", "defaultValue": "False", "required": false }
     ],
     "execution": {
         "ShellScript": {

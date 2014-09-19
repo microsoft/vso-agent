@@ -16,9 +16,9 @@
     ],
     "instanceNameFormat": "Jake $(target)",
     "inputs": [
-        { "name": "scriptName", "propertyType": "string", "label": "Script Name", "defaultValue":"Jakefile.js", "required":true },
-        { "name": "target", "propertyType": "string", "label": "Jake Target", "defaultValue":"", "required":true },
-        { "name": "cwd", "propertyType": "string", "label": "Local path", "defaultValue":"$(sys.sourceFolder)", "required":true }
+        { "name": "scriptName", "type": "string", "label": "Script Name", "defaultValue":"Jakefile.js", "required":true },
+        { "name": "target", "type": "string", "label": "Jake Target", "defaultValue":"", "required":true },
+        { "name": "cwd", "type": "string", "label": "Local path", "defaultValue":"$(sys.sourceFolder)", "required":true }
     ],
     "execution": {
         "JavaScript": {

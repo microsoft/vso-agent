@@ -36,28 +36,31 @@ function failed()
 #----------------------------------------------------------------
 # Input validation and defaults
 #----------------------------------------------------------------
-if [ ! -d ${INPUT_OUTPUTPATH} ]; then
-    failed "OUTPUTPATH does not exist"
-fi
 
 if [ ! ${INPUT_XCWORKSPACEPATH} ]; then
-    failed "XCWORKSPACEPATH must be set"
+    failed "xcworkspacePath must be set"
 fi
 
 if [ ! ${INPUT_SCHEME} ]; then
-    failed "SCHEME must be set"
+    failed "scheme must be set"
 fi
 
 if [ ! ${INPUT_SDK} ]; then
     failed "SDK must be set"
 fi
 
+if [ ! ${INPUT_CONFIGURATION} ]; then
+    failed "Configuration must be set"
+fi
+
 if [ ! ${INPUT_XCODEAPP} ]; then
     export XCODE_APP=/Applications/Xcode.app
 fi
 
-if [ ! -d ${INPUT_OUTPUTPATH} ]; then
-    mkdir ${INPUT_OUTPUTPATH} || failed "Could not create ${OUTPUTPATH}"
+export CWD=$(pwd)
+export OUTPUT_PATH=${CWD}/output/${INPUT_SDK}/${INPUT_CONFIGURATION}
+if [ ! -d ${OUTPUT_PATH} ]; then
+    mkdir -p ${OUTPUT_PATH} || failed "Could not create ${OUTPUT_PATH}"
 fi
 
 # xcodebuild calls the tools set by DEVELOPER_DIR
@@ -73,9 +76,9 @@ echo -------------------------------------------------------------
 echo "Using Xcode   : ${DEVELOPER_DIR}"
 echo "Building      : ${INPUT_XCWORKSPACEPATH}"
 echo "Scheme        : ${INPUT_SCHEME}"
-echo "Configuration : ${INPUT_CONFIGURATIONNAME}"
+echo "Configuration : ${INPUT_CONFIGURATION}"
 echo "For SDK       : ${INPUT_SDK}"
-echo "Output        : ${INPUT_OUTPUTPATH}"
+echo "Output        : ${OUTPUT_PATH}"
 echo -------------------------------------------------------------
 echo
 
@@ -90,8 +93,8 @@ echo
 xcodebuild -workspace ${INPUT_XCWORKSPACEPATH} \
            -sdk ${INPUT_SDK} \
            -scheme ${INPUT_SCHEME} \
-           -configuration ${INPUT_CONFIGURATIONNAME} \
-           DSTROOT=${INPUT_OUTPUTPATH}/build.dst \
-           OBJROOT=${INPUT_OUTPUTPATH}/build.obj \
-           SYMROOT=${INPUT_OUTPUTPATH}/build.sym \
-           SHARED_PRECOMPS_DIR=${INPUT_OUTPUTPATH}/build.pch
+           -configuration ${INPUT_CONFIGURATION} \
+           DSTROOT=${OUTPUT_PATH}/build.dst \
+           OBJROOT=${OUTPUT_PATH}/build.obj \
+           SYMROOT=${OUTPUT_PATH}/build.sym \
+           SHARED_PRECOMPS_DIR=${OUTPUT_PATH}/build.pch

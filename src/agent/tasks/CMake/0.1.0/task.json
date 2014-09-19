@@ -5,20 +5,20 @@
     "description": "Cross platform build system",
     "category": "Build",
     "author": "Microsoft Corporation",
+    "demands" : [
+        "cmake"
+    ],
     "version": {
         "Major": 0,
         "Minor": 1,
         "Patch": 0,
         "IsTest": false
     },
-    "demands" : [
-        "cmake"
-    ],
-    "instanceNameFormat": "CMake $(scriptName)",
+    "instanceNameFormat": "CMake",
     "inputs": [
-        { "name": "srcRoot", "propertyType": "string", "label": "Source Root", "defaultValue":"$(sys.sourceFolder)", "required":true },
-        { "name": "buildDirName", "propertyType": "string", "label": "Build Directory Name", "defaultValue":"build", "required":true },
-        { "name": "args", "propertyType": "string", "label": "Arguments", "defaultValue":"", "required":false }
+        { "name": "srcRoot", "type": "string", "label": "Source Root", "defaultValue":"$(sys.sourceFolder)", "required":true },
+        { "name": "buildDirName", "type": "string", "label": "Build Directory Name", "defaultValue":"build", "required":true },
+        { "name": "args", "type": "string", "label": "Arguments", "defaultValue":"", "required":false }
     ],
     "execution": {
         "JavaScript": {
@@ -26,8 +26,9 @@
             "argumentFormat": ""
         },
         "PowerShell": {
-            "target": "cmake.ps1",
-            "argumentFormat": ""
+            "target": "$(currentDirectory)\\CMake.ps1",
+            "argumentFormat": "",
+            "workingDirectory": "$(currentDirectory)"
         }
     }
 }

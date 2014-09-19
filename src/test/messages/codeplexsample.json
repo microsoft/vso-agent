@@ -86,6 +86,18 @@
             "scriptName": "SampleShellScript.sh", 
             "cwd": "$(sys.sourceFolder)"  
         }
-    }  
+    }, {
+        "instanceId": "6cd468b7-9f14-44ce-9bdb-3ed56786457f",
+        "id": "1E78DC1B-9132-4B18-9C75-0E7ECC634B74",
+        "name": "Xcode",
+        "version":"1.0.0",
+        "inputs":{
+            "xcWorkspacePath": "$(sys.sourceFolder)/iosApp/TfsiOSSample.xcodeproj/project.xcworkspace", 
+            "scheme": "CIBuild",
+            "sdk": "iphonesimulator",
+            "configuration": "Debug",
+            "xcodeApp": "/Applications/Xcode.app"  
+        }
+    } 
   ]
 }
