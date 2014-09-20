@@ -30,6 +30,7 @@ export class Utilities {
     // spawn a process with stdout/err piped to context's logger
 	// callback(err)
 	public spawn(name: string, args: string[], options, callback) {
+		var failed = false;
 		options = options || {};
 
 		var ops = {
@@ -55,23 +56,24 @@ export class Utilities {
 		});
 
 		runCP.stderr.on('data', (data) => {
-			if (ops.failOnStdErr) {
-				callback(new Error(data.toString('utf8')));
-			}
-			else {
-				this.ctx.info(data.toString('utf8'));
-			}
+			failed = ops.failOnStdErr;
+            this.ctx.error(data.toString('utf8'));
 		});
 
 		runCP.on('exit', (code) => {
-			if (code == 0) {
-				callback();
-			}
-			else {
-				var msg = 'Return code: ' + code;
-				this.ctx.error(msg);
-				callback(new Error(msg));
-			}
+            if (failed) {
+                callback(new Error('Failed with Error Output'));
+                return;
+            }
+
+            if (code == 0) {
+                callback();
+            } else {                
+                var msg = 'Return code: ' + code;
+                this.ctx.error(msg);
+
+                callback(new Error(msg));
+            }
 		});			
 	}	
 }
