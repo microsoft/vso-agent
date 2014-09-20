@@ -94,8 +94,10 @@ export class TimedQueue extends TimedWorker{
 	// Sending
 	//------------------------------------------------------------------
 	public drain(callback: (err: any) => void): void {
-		if (this._queue && this._queue.length > 0) {
-			this.processQueue(this._queue, (err) => {
+		this.enabled = false;
+		
+		if (this._queue && this._queue.length > 0) {			
+			this.doWork((err) => {
 				callback(err);
 			});
 		}

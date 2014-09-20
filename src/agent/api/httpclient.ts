@@ -118,7 +118,7 @@ export class HttpClient implements ifm.IHttpClient {
 
         if (objs) {
             reqData = JSON.stringify(objs, null, 2);
-            options.headers["Content-Length"] = reqData.length;  // new Buffer(reqData, 'utf8').length;
+            options.headers["Content-Length"] = Buffer.byteLength(reqData, 'utf8');
         }
 
         if (process.env.XPLAT_TRACE_HTTP) {
