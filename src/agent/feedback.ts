@@ -24,7 +24,7 @@ var async = require('async');
 var CONSOLE_DELAY = 373;
 var TIMELINE_DELAY = 487;
 var LOG_DELAY = 1137;
-var LOCK_DELAY = 59323;
+var LOCK_DELAY = 29323;
 
 export class TimedWorker {
 	constructor(msDelay: number) {
@@ -97,7 +97,9 @@ export class TimedQueue extends TimedWorker{
 		this.enabled = false;
 		
 		if (this._queue && this._queue.length > 0) {			
-			this.doWork((err) => {
+			var toSend = this._queue;
+			this._queue = [];
+			this.processQueue(toSend, (err) => {
 				callback(err);
 			});
 		}
@@ -134,13 +136,16 @@ export class TimedQueue extends TimedWorker{
 // - The service channel is a timed worker and creates timed queues for logs and console
 //----------------------------------------------------------------------------------------
 
+var trace: tm.Tracing;
+
 export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 	constructor(agentUrl: string, 
 		        taskUrl: string, 
 		        jobInfo: cm.IJobInfo, 
 		        agentCtx: ctxm.AgentContext) {
 
-		this._trace = new tm.Tracing(__filename, agentCtx);
+		trace = new tm.Tracing(__filename, agentCtx);
+		trace.enter('ServiceChannel');
 
 		this.agentUrl = agentUrl;
 		this.taskUrl = taskUrl;
@@ -176,7 +181,6 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 	public jobInfo: cm.IJobInfo;
 	public enabled: boolean;
 
-	private _trace: tm.Tracing;
 	private _logQueue: LogPageQueue;
 	private _consoleQueue: WebConsoleQueue;
 	private _lockRenewer: LockRenewer;
@@ -189,20 +193,27 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 
 	// finish sending feedback before finishing job
 	public drain(callback: (err: any) => void): void {
-		this._trace.enter('servicechannel:drain');
+		trace.enter('servicechannel:drain');
 		this.enabled = false;
 		this._consoleQueue.end();
 
 		// drain the timeline batch
 		this.doWork((err: any) => {
-			// TODO: failure case
+			trace.write('done work');
+			if (err) {
+				// TODO: failure case ... more?
+				trace.write('error draining queue: ' + err.message);
+			}
+
+			trace.write('draining console queue ...');
 			this._consoleQueue.drain(callback);
 		});
 	}
 
 	// work after job completed (uploading logs)
 	public finish(callback: (err: any) => void): void {	
-		this._trace.enter('servicechannel:finish');
+		trace.enter('servicechannel:finish');
+		this._lockRenewer.stop();
 		this._logQueue.drain(callback);
 	}
 
@@ -210,23 +221,28 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 	// Queue Items
 	//------------------------------------------------------------------  
 	public queueLogPage(page: cm.ILogPageInfo): void {
-		this._trace.enter('servicechannel:queueLogPage');
+		trace.enter('servicechannel:queueLogPage');
+		trace.state('page', page);
 		this._logQueue.add(page);
 	}
 
 	public queueConsoleLine(line: string): void {
-		this._trace.enter('servicechannel:queueConsoleLine');
+		trace.write('qline: ' + line);
 		this._consoleQueue.add(line);
 	}
 
 	public queueConsoleSection(line: string): void {
-		this._trace.enter('servicechannel:queueConsoleSection');
+		trace.enter('servicechannel:queueConsoleSection: ' + line);
 		this._consoleQueue.section(line);
 	}
 	
 	public updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void {
-		this._trace.enter('servicechannel:updateJobRequest');
+		trace.enter('servicechannel:updateJobRequest');
+		trace.write('poolId: ' + poolId);
+		trace.write('lockToken: ' + lockToken);
         this._agentApi.updateJobRequest(poolId, lockToken, jobRequest, (err, status, jobRequest) => {
+        	trace.write('err: ' + err);
+        	trace.write('status: ' + status);
             callback(err);
         });	
     }
@@ -279,8 +295,10 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 	//------------------------------------------------------------------
 	
 	public doWork(callback: (err: any) => void): void {
-		this._trace.enter('servicechannel:doWork');
+		trace.enter('servicechannel:doWork');
 		var records: ifm.TimelineRecord[] = this._recordsFromBatch();
+		trace.write('record count: ' + records.length);
+
         this._batch = {};
         this._recordCount = 0;		
 		this._sendTimelineRecords(records, callback);
@@ -288,12 +306,12 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 
 	
 	public shouldDoWork(): boolean {
-		this._trace.enter('servicechannel:shouldDoWork');
+		trace.enter('servicechannel:shouldDoWork');
 		return this._recordCount > 0;
 	}
 
 	private _getFromBatch(recordId: string) {
-		this._trace.enter('servicechannel:_getFromBatch');
+		trace.enter('servicechannel:_getFromBatch');
 		if (!this._batch.hasOwnProperty(recordId)) {
 			this._batch[recordId] = {};
 			++this._recordCount;
@@ -303,7 +321,9 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 	}  	
 
 	private _sendTimelineRecords(records: ifm.TimelineRecord[], callback: (err: any) => void): void {
-		this._trace.enter('servicechannel:_sendTimelineRecords');
+		trace.enter('servicechannel:_sendTimelineRecords');
+		trace.state('records', records);
+
     	this.taskApi.updateTimelineRecords(this.jobInfo.planId, 
     									   this.jobInfo.timelineId, records, 
     									   (err, status, records) => {
@@ -313,7 +333,7 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 	}
 
 	private _recordsFromBatch(): ifm.TimelineRecord[] {
-		this._trace.enter('servicechannel:_recordsFromBatch');
+		trace.enter('servicechannel:_recordsFromBatch');
 		var records: ifm.TimelineRecord[] = [];
 		
 		for (var id in this._batch) {
@@ -344,11 +364,18 @@ export class WebConsoleQueue extends TimedQueue {
 	private _taskApi: ifm.ITaskApi;
 
 	public processQueue(queue: any[], callback: (err: any) => void): void {
+		trace.state('queue', queue);
+		trace.state('jobInfo', this._jobInfo);
     	this._taskApi.appendTimelineRecordFeed(this._jobInfo.planId, 
     										  this._jobInfo.timelineId, 
     										  this._jobInfo.jobId, 
     										  queue, 
     										  (err, status, lines) => {
+    										  	trace.write('done writing lines');
+    										  	if (err) {
+    										  		trace.write('err: ' + err.message);
+    										  	}
+
 									    		callback(err);
 	                                          });	
 	}
@@ -362,7 +389,6 @@ export class LogPageQueue extends TimedQueue {
 		this._taskApi = feedback.taskApi;
 		this._agentCtx = agentCtx;
 		this._recordToLogIdMap = {};
-		this._trace = new tm.Tracing(__filename, agentCtx);
 
 		super(LOG_DELAY);
 	}
@@ -382,7 +408,7 @@ export class LogPageQueue extends TimedQueue {
 	private _recordToLogIdMap: { [recordId: string]: number };
 
 	public processQueue(queue: any[], callback: (err: any) => void): void {
-		this._trace.enter('LogQueue:processQueue');
+		trace.enter('LogQueue:processQueue');
 		
 		var planId: string = this._jobInfo.planId;
 
@@ -468,9 +494,14 @@ export class LogPageQueue extends TimedQueue {
 // Job Renewal
 export class LockRenewer extends TimedWorker {
 	constructor(jobInfo: cm.IJobInfo, poolId: number, agentApi: ifm.IAgentApi) {
+		trace.enter('LockRenewer');
+
 		this._jobInfo = jobInfo;
+		trace.state('_jobInfo', this._jobInfo);
 		this._agentApi = agentApi;
-		this._poolId;
+		this._poolId = poolId;
+		trace.write('_poolId: ' + this._poolId);
+
 		super(LOCK_DELAY);
 	}
 
@@ -482,10 +513,15 @@ export class LockRenewer extends TimedWorker {
 		this._renewLock(callback);
 	}
 
+	public stop() {
+		this.enabled = false;
+	}
+
     private _renewLock(callback: (err: any) => void): void {
         var jobRequest: ifm.TaskAgentJobRequest = <ifm.TaskAgentJobRequest>{};
         jobRequest.requestId = this._jobInfo.requestId;
 
+        trace.state('jobRequest', jobRequest);
         this._agentApi.updateJobRequest(this._poolId, this._jobInfo.lockToken, jobRequest, (err, status, jobRequest) => {
             callback(err);
         });

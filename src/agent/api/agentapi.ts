@@ -82,6 +82,12 @@ export class AgentApi {
 		if (lockToken)
 			resPath += '?lockToken=' + lockToken;
 
-		this.restClient.update(resPath, jobRequest, onResult);
+        var genericRecord = <any>jobRequest;
+
+        if (jobRequest.hasOwnProperty('result')) {
+            genericRecord.result = restm.enumToString(ifm.TaskResult, jobRequest.result, true);
+        }
+
+        this.restClient.update(resPath, genericRecord, onResult);		
 	}
 }

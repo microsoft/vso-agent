@@ -170,7 +170,7 @@ process.on('uncaughtException', function (err) {
     }
 });
 
-process.on( 'SIGINT', function() {
+process.on('SIGINT', function() {
   console.log( "\nShutting down host." );
   if (messageListener) {
     messageListener.stop( function (err) {

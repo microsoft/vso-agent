@@ -30,25 +30,12 @@ export class Tracing {
 	private scope: string;
 	private writer: cm.ITraceWriter;
 
-	private traceLocation(location: string, highlight: string, data?: any) {
-		
-	    if (!process.env[cm.envTrace]) {
-	        return;
-	    }
-
-	    this.location = location;
-		this.write(highlight);
-		if (data) {
-			this.write(JSON.stringify(data));
-		}
+	public enter(location: string) {
+		this.write(location + '>>>>>>>>>> ');
 	}
 
-	public enter(location: string, data?: any) {
-		this.traceLocation(location, '>>>>>>>>>> ', data);
-	}
-
-	public callback(location: string, data?: any) {
-		this.traceLocation('CB:' + location, '<<<<<<<<<< ', data);
+	public callback(location: string) {
+		this.write(location + '<<<<<<<<<< ');
 	}
 
 	public state(name: string, data: any) {
@@ -60,6 +47,6 @@ export class Tracing {
 	        return;
 	    }
 
-		this.writer.trace('[' + new Date().toISOString()  + '] ' + this.scope + ':' + this.location + '> ' + message + os.EOL);
+		this.writer.trace('[' + new Date().toISOString()  + '] ' + this.scope + ':' + '> ' + message + os.EOL);
 	}
 }

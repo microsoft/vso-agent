@@ -64,9 +64,7 @@ export class MessageListener {
 		var session: ifm.TaskAgentSession = <ifm.TaskAgentSession>{};
 		session.agent = this.agent;
 		session.ownerName = uuid.v1();
-		// session.sessionId = '00000000-0000-0000-0000-000000000000';
 
-		// createSession(poolId: number, agent: ifm.TaskAgent, onResult: (err: any, statusCode: number, session: ifm.TaskAgentSession) 
 		this.agentapi.createSession(this.poolId, session, (err, statusCode, session) => {
 			if (err) {
 				callback(err, null);
@@ -74,13 +72,12 @@ export class MessageListener {
 			}
 
 			this.sessionId = session.sessionId;
-			this.getMessages(callback)	
+			this.getMessages(callback);	
 		});	
 	}
 
 	stop(callback: (err: any) => void): void {
-		if (this.sessionId)
-		{
+		if (this.sessionId) {
 			this.agentapi.deleteSession(this.poolId, this.sessionId, (err, statusCode) => {
 				callback(err);
 			});

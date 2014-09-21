@@ -24,8 +24,16 @@ import ifm = require('./api/interfaces');
 import lm = require('./logging');
 import os = require("os");
 import path = require('path');
-import tm = require('tracing');
+import tm = require('./tracing');
 import um = require('./utilities');
+
+var trace: tm.Tracing;
+
+function ensureTrace(writer: cm.ITraceWriter) {
+	if (!trace) {
+		trace = new tm.Tracing(__filename, writer);	
+	}
+}
 
 export class Context extends events.EventEmitter {
 	constructor(writers: cm.IDiagnosticWriter[]) {
@@ -155,6 +163,9 @@ export class ExecutionContext extends Context {
 				recordId: string, 
 				feedback: cm.IFeedbackChannel,
 				agentCtx: AgentContext) {
+		
+		ensureTrace(agentCtx);
+		trace.enter('ExecutionContext');
 
 		this.jobInfo = jobInfo;
 		this.variables = jobInfo.variables;
@@ -175,7 +186,8 @@ export class ExecutionContext extends Context {
 		var logger: lm.PagingLogger = new lm.PagingLogger(logFolder, logData);
 		logger.level = process.env[cm.envVerbose] ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info;
 
-        logger.on('pageComplete', function (info: cm.ILogPageInfo) {
+        logger.on('pageComplete', (info: cm.ILogPageInfo) => {
+        	trace.state('pageComplete', info);
         	feedback.queueLogPage(info);
          });
 
@@ -218,12 +230,18 @@ export class JobContext extends ExecutionContext {
 				feedback: cm.IFeedbackChannel,
 		        agentCtx: AgentContext) {
 
+		ensureTrace(agentCtx);
+		trace.enter('JobContext');
+
 		this.job = job;
 
         var info: cm.IJobInfo = cm.jobInfoFromJob(job);
 
         this.jobInfo = info;
+        trace.state('this.jobInfo', this.jobInfo);
         this.feedback = feedback;
+        this.config = agentCtx.config;
+        trace.state('this.config', this.config);
 
 		super(info, job.timeline.id, feedback, agentCtx);
 	}
@@ -236,19 +254,27 @@ export class JobContext extends ExecutionContext {
     // Job/Task Status
     //------------------------------------------------------------------------------------
     public finishJob(result: ifm.TaskResult, callback: (err: any) => void): void {
+    	trace.enter('finishJob');
+    	trace.state('result', ifm.TaskResult[result]);
+
     	this.setTaskResult(this.job.jobId, this.job.jobName, result);
 
         // drain the queues before exiting the worker
+        trace.write('draining feedback');
         this.feedback.drain((err: any) => {
         	if (err) {
-        		console.log('Failed to drain queue');
+        		trace.write('Failed to drain queue');
         		result = ifm.TaskResult.Failed;
         	}
 
+        	trace.write('done draining queue. finishing job');
 	        var jobRequest: ifm.TaskAgentJobRequest = <ifm.TaskAgentJobRequest>{};
 	        jobRequest.requestId = this.job.requestId;
 	        jobRequest.finishTime = new Date();
 	        jobRequest.result = result;
+
+	        trace.state('jobRequest', jobRequest);
+	        trace.state('this.config', this.config);
 
 	        this.feedback.updateJobRequest(this.config.poolId, 
 	        	                           this.job.lockToken, 
@@ -266,6 +292,7 @@ export class JobContext extends ExecutionContext {
     }
 
     public setJobInProgress(): void {
+    	trace.enter('setJobInProgress');
     	var jobId = this.job.jobId;
 
     	// job
@@ -278,6 +305,7 @@ export class JobContext extends ExecutionContext {
     }
 
     public registerPendingTask(id: string, name: string): void {
+    	trace.enter('registerPendingTask');
     	this.feedback.setCurrentOperation(id, "Initializing");
     	this.feedback.setParentId(id, this.job.jobId);
     	this.feedback.setName(id, name);
@@ -287,7 +315,7 @@ export class JobContext extends ExecutionContext {
     }
 
     public setTaskStarted(id: string, name: string): void {
-
+    	trace.enter('setTaskStarted');
     	// set the job operation
 		this.feedback.setCurrentOperation(this.job.jobId, 'Starting ' + name);
 
@@ -298,7 +326,7 @@ export class JobContext extends ExecutionContext {
     }
 
     public setTaskResult(id: string, name: string, result: ifm.TaskResult): void {
-
+		trace.enter('setTaskResult');
     	this.feedback.setCurrentOperation(id, "Completed " + name);
     	this.feedback.setState(id, ifm.TimelineRecordState.Completed);
     	this.feedback.setFinishTime(id, new Date());

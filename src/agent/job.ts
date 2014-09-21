@@ -100,6 +100,7 @@ export class JobRunner {
 			}, 
 			function(err){
 		        if (err) {
+		        	trace.write('error preparing tasks');
 		            complete(err, ifm.TaskResult.Failed);
 		            return;
 		        }
@@ -107,8 +108,11 @@ export class JobRunner {
 				ag.info('Task preparations complete.');
 
 				// TODO: replace build with sender id once confirm how sent
+
+				ag.info('loading plugins...');
 				plgm.load('build', ag, (err:any, plugins:any) => {
 					if (err) {
+						trace.write('error loading plugins');
 						complete(err, ifm.TaskResult.Failed);
 						return;
 					}
@@ -159,7 +163,9 @@ export class JobRunner {
 									if (err) {
 										ag.error(err);
 									}
-									done(err);
+
+									// we always run afterJob plugins
+									done(null);
 								})
 							},
 							function(done) {
@@ -205,14 +211,17 @@ export class JobRunner {
 	}
 
 	private runTasks(jobCtx: ctxm.JobContext, callback: (err:any, success:boolean) => void): void {
+		trace.enter('runTasks');
+
 		var job: ifm.JobRequestMessage = jobCtx.job;
 		var ag = this.context;
 		var success = true;
 		var _this: JobRunner = this;
 
+		trace.state('tasks', job.tasks);
 		async.forEachSeries(job.tasks,
 			function(item: ifm.TaskInstance, done: (err:any) => void){
-
+				
 				jobCtx.writeConsoleSection('Running ' + item.name);
 				var taskCtx: ctxm.TaskContext = new ctxm.TaskContext(jobCtx.jobInfo, 
 					                                                 item.instanceId,
@@ -253,18 +262,23 @@ export class JobRunner {
 	private taskExecution = {};
 
 	private prepareTask(ctx: ctxm.JobContext, task: ifm.TaskInstance, callback) {
+		trace.enter('prepareTask');
+
 		var ag = this.context;
 
 		var taskPath = path.join(ctx.workFolder, 'tasks', task.name, task.version);
+		trace.write('taskPath: ' + taskPath);
 
 		ag.info('preparing task ' + task.name);
 
 		var taskJsonPath = path.join(taskPath, 'task.json');
+		trace.write('taskJsonPath: ' + taskJsonPath);
 
 		// TODO (bryanmac): support downloading - check if exists
 
 		fs.readFile(taskJsonPath, 'utf8', (err, data) => {
 			if (err) {
+				trace.write('error reading: ' + taskJsonPath);
 				callback(err);
 				return;
 			}
@@ -272,6 +286,8 @@ export class JobRunner {
 			// TODO: task metadata should be typed
 			try {
 				var taskMetadata = JSON.parse(data);
+				trace.state('taskMetadata', taskMetadata);
+
 				var execution = taskMetadata.execution;
 
 				var handlers = ['JavaScript', 'Python', 'ShellScript'];
@@ -281,21 +297,26 @@ export class JobRunner {
 						instructions = execution[handler];
 						instructions["handler"] = handler;
 
+						trace.write('handler: ' + handler);
+
 						return true;
 					}
 				});
 				
 				if (!instructions) {
+					trace.write('no handler for this task');
 					callback(new Error('Agent could not find a handler for this task'));
 					return;
 				}
 
 				instructions['target'] = path.join(taskPath, instructions.target);
+				trace.state('instructions', instructions);
 				this.taskExecution[task.id] = instructions;
 
 				callback();
 			}
 			catch (e) {
+				trace.write('exception getting metadata: ' + e.message);
 				callback(new Error('Invalid metadata @ ' + taskJsonPath));
 				return;
 			}
@@ -303,6 +324,7 @@ export class JobRunner {
 	}
 
 	private runTask(task: ifm.TaskInstance, ctx: ctxm.TaskContext, callback) {
+		trace.enter('runTask');
 		var ag = this.context;
 
 		ag.status('Task: ' + task.name);
@@ -311,13 +333,15 @@ export class JobRunner {
 			ctx.info(key + ': ' + task.inputs[key]);
 		}
 		ctx.info('');
-
 		ctx.inputs = task.inputs;
 
 		var execution = this.taskExecution[task.id];
+		trace.state('execution', execution);
+
 		var handler = require('./handlers/' + execution.handler);
 		ag.info('running ' + execution.target + ' with ' + execution.handler);
 
+		trace.write('calling handler.runTask');
 		handler.runTask(execution.target, ctx, callback);
 	}	
 }
