@@ -242,7 +242,7 @@ export class Configurator {
 	// Private
 	//-------------------------------------------------------------
 	private validate(settings: cm.ISettings) {
-		throwIf(!check.isURL(settings.serverUrl), settings.serverUrl + 'is not a valid URL');
+		throwIf(!check.isURL(settings.serverUrl), settings.serverUrl + ' is not a valid URL');
 	}
 
 	private writeAgentToPool(settings: cm.ISettings, agentapi: ifm.IAgentApi, complete: (err: any, agent: ifm.TaskAgent, poolId: number) => void): void {
