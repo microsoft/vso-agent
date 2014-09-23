@@ -52,6 +52,7 @@ exports.beforeJob = function(ctx, callback) {
     ctx.info('endpoints: ' + endpoints);
 
 	var tfcreds = { username: process.env.altusername, password: process.env.altpassword };
+    var selectedRef = ctx.job.environment.variables['sys.sourceVersion'] ? ctx.job.environment.variables['sys.sourceVersion'] : ctx.job.environment.variables['sys.sourceBranch'];
 
     // TODO: we only really support one.  Consider changing to index 0 of filter result and warn | fail if length > 0
     //       what's odd is we will set sys.sourceFolder so > 1 means last one wins
@@ -59,7 +60,7 @@ exports.beforeJob = function(ctx, callback) {
     	var creds = endpoint.type === 'TfsGit' ? tfcreds: endpoint.creds;
     	var options = {
     		repoLocation: endpoint.url,
-    		ref: endpoint.data.sourceVersion,
+    		ref: selectedRef,
     		creds: creds,
     		localPath: 'repo', // not allowing custom local paths - we always put in repo
             submodules: endpoint.data.checkoutSubmodules === "True" 

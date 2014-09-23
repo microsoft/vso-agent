@@ -36,7 +36,7 @@ exports.getcode = function(ctx, options, callback) {
 	ctx.info('Using: ' + git);
 	
 	ctx.info('Repo: ' + options.repoLocation);
-	var inputref = "master";
+	var inputref = "refs/heads/master";
 	if (options.ref && options.ref.trim().length) {
 		inputref = options.ref;
 	}
