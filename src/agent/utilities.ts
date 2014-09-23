@@ -57,7 +57,11 @@ export class Utilities {
 
 		runCP.stderr.on('data', (data) => {
 			failed = ops.failOnStdErr;
-            this.ctx.error(data.toString('utf8'));
+			if (ops.failOnStdErr) {
+		        this.ctx.error(data.toString('utf8'));
+			} else {
+				this.ctx.info(data.toString('utf8'));
+			}
 		});
 
 		runCP.on('exit', (code) => {
