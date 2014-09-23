@@ -138,13 +138,19 @@ export class TimedQueue extends TimedWorker{
 
 var trace: tm.Tracing;
 
+function ensureTrace(writer: cm.ITraceWriter) {
+	if (!trace) {
+		trace = new tm.Tracing(__filename, writer);	
+	}
+}
+
 export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 	constructor(agentUrl: string, 
 		        taskUrl: string, 
 		        jobInfo: cm.IJobInfo, 
 		        agentCtx: ctxm.AgentContext) {
 
-		trace = new tm.Tracing(__filename, agentCtx);
+		ensureTrace(agentCtx);
 		trace.enter('ServiceChannel');
 
 		this.agentUrl = agentUrl;
@@ -383,6 +389,8 @@ export class WebConsoleQueue extends TimedQueue {
 
 export class LogPageQueue extends TimedQueue {
 	constructor(feedback: cm.IFeedbackChannel, agentCtx: ctxm.AgentContext) {
+		ensureTrace(agentCtx);
+		trace.enter('LogPageQueue');
 
 		this._feedback = feedback;
 		this._jobInfo = feedback.jobInfo;
@@ -399,11 +407,8 @@ export class LogPageQueue extends TimedQueue {
 	private _jobInfo: cm.IJobInfo;
 	private _taskApi: ifm.ITaskApi;
 
-	//
-	// TODO: add dictionary of recordId --> logId
-	//       on upload, if not in map, create.
-	//       Be Lazy on creating the log
-	// TODO: delete the file after uploading
+    //
+	// TODO: delete the file after uploading.  should probably leave on disk and wait for clean up procedure
 	//
 	private _recordToLogIdMap: { [recordId: string]: number };
 
@@ -414,15 +419,22 @@ export class LogPageQueue extends TimedQueue {
 
 		async.forEachSeries(queue,
 			(logPageInfo: cm.ILogPageInfo, done: (err: any) => void) => {
-				
+				trace.state('logPageInfo', logPageInfo);
+
 				var pagePath: string = logPageInfo.pagePath;
+				trace.write('logPagePath: ' + pagePath);
+
 				var recordId: string = logPageInfo.logInfo.recordId;
+				trace.write('logRecordId: ' + recordId);
+
 				var serverLogPath: string;
 				var logId: number;
 
 				async.series(
 				[
 					(doneStep) => {
+						trace.write('creating log record');
+
 						// check in map instead of pageNumber check so on failure, we'll still try
 						// and create/upload subsequent pages
 						if (!this._recordToLogIdMap.hasOwnProperty(logPageInfo.logInfo.recordId)) {
@@ -431,12 +443,14 @@ export class LogPageQueue extends TimedQueue {
     							                    serverLogPath, 
     							                    (err: any, statusCode: number, log: ifm.TaskLog) => {
     							if (err) {
+    								trace.write('error creating log record: ' + err.message);
     								doneStep(err);
     								return;
     							}
 
     							// associate log with timeline recordId
     							this._recordToLogIdMap[recordId] = log.id;
+    							trace.write('added log id to map: ' + log.id);
     							doneStep(null);
     						});
 						} 
@@ -448,10 +462,14 @@ export class LogPageQueue extends TimedQueue {
 						// check logId in map first
 						logId = this._recordToLogIdMap[recordId]; 
 						if (logId) {
+							trace.write('uploading log');
 							this._taskApi.uploadLogFile(planId, 
 								                        logId, 
 								                        pagePath, 
 								                        (err: any, statusCode: number, obj: any) => {
+								if (err) {
+									trace.write('error uploading log file: ' + err.message);
+								}
 								doneStep(err);
 							});
 						}
@@ -471,9 +489,13 @@ export class LogPageQueue extends TimedQueue {
 						// So, if disabled, do a final drain of the timeline records (contains ptrs to log)
 						//
 						if (!this._feedback.enabled) {
+							trace.write('draining queue');
 							this._feedback.drain((err: any) => {
 								doneStep(err);
 							});
+						}
+						else {
+							doneStep(null);
 						}
 					}					
 				], (err: any) => {
