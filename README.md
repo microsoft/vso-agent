@@ -16,7 +16,7 @@ v0.10.29
 1.4.14
 ```
 
-##Installer From Package
+##Agent From Package
 
 Installs the agent installer once globally
 
@@ -24,12 +24,20 @@ Installs the agent installer once globally
 $ sudo npm install install-vsoagent -g
 ```
 
-##Create Agent
+###Create Agents
 
 From a directory you created for the agent, run the installer.  Repeat from different folders for multiple agents.
 
 ```bash
 $ install-vsoagent
+```
+
+##Agent From Tar Zip
+Create a directory for the agent.  Copy the tar zip into it.
+```bash
+tar xvzf ./vsoxplat.tar.gz
+cd agent
+sudo npm install
 ```
 
 ##Provide Permissions to Account
