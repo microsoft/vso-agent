@@ -142,6 +142,7 @@ export class JobRunner {
 					ag.info('working: ' + jobCtx.workingFolder);
 					shell.mkdir('-p', jobCtx.workingFolder);
 					shell.cd(jobCtx.workingFolder);
+					trace.write(process.cwd());
 
 					var jobSuccess = true;
 					async.series([
@@ -160,6 +161,8 @@ export class JobRunner {
 									_this._replaceTaskInputVars(_this.job);
 
 									jobSuccess = !err && success;
+									trace.write('jobSuccess: ' + jobSuccess);
+
 									if (err) {
 										ag.error(err);
 									}
@@ -177,7 +180,9 @@ export class JobRunner {
 								ag.info('Running Tasks ...');
 								_this.runTasks(jobCtx, (err: any, success: boolean) => {
 									ag.info('Finished running tasks');
-									jobSuccess = !err && success;
+									jobSuccess = jobSuccess && !err && success;
+									trace.write('jobSuccess: ' + jobSuccess);
+
 									if (err) {
 										ag.error(err);
 									}
@@ -189,7 +194,9 @@ export class JobRunner {
 								ag.info('Running afterJob Plugins ...');
 								plgm.afterJob(plugins, jobCtx, ag, jobSuccess, function(err, success) {
 									ag.info('Finished running afterJob plugins');
-									jobSuccess = !err && success;
+									jobSuccess = jobSuccess && !err && success;
+									trace.write('jobSuccess: ' + jobSuccess);
+
 									if (err) {
 										ag.error(err);
 									}									
@@ -199,6 +206,8 @@ export class JobRunner {
 						], 
 						function(err) {
 							var jobResult = jobSuccess ? ifm.TaskResult.Succeeded : ifm.TaskResult.Failed;
+							trace.write('jobResult: ' + jobResult);
+
 							if (err) {
 								jobResult = ifm.TaskResult.Failed; 
 							}
@@ -241,6 +250,8 @@ export class JobRunner {
 						success = false;
 						taskResult = ifm.TaskResult.Failed;
 					}
+
+					trace.write('taskResult: ' + taskResult);
 					jobCtx.setTaskResult(item.instanceId, item.name, taskResult);
 
 					taskCtx.end();
@@ -248,6 +259,7 @@ export class JobRunner {
 				});
 			}, function(err) {
 				ag.info('Done running tasks.');
+				trace.write('jobSucess: ' + success);
 
 				if (err) {
 	                ag.error(err.message);
