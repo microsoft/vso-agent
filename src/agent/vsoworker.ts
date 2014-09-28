@@ -25,9 +25,33 @@ import jrm = require("./job");
 import fm = require('./feedback');
 import os = require('os');
 import tm = require('./tracing');
+import path = require('path');
 
 var ag: ctxm.AgentContext;
 var trace: tm.Tracing;
+
+function setVariables(job: ifm.JobRequestMessage, agentContext: ctxm.AgentContext) {
+	trace.enter('setVariables');
+	trace.state('variables', job.environment.variables);
+
+    var workFolder = agentContext.config.settings.workFolder;
+    if (!workFolder.startsWith('/')) {
+        workFolder = path.join(__dirname, agentContext.config.settings.workFolder);
+    }
+
+	var sys = job.environment.variables['sys'];
+	var collId = job.environment.variables['sys.collectionId'];
+	var defId = job.environment.variables['sys.definitionId'];
+
+	var workingFolder = path.join(workFolder, sys, collId, defId);
+	job.environment.variables['sys.workFolder'] = workFolder;
+	job.environment.variables['sys.workingFolder'] = workingFolder;
+
+    var stagingFolder = path.join(workingFolder, 'staging');
+	job.environment.variables['sys.staging'] = stagingFolder;
+
+	trace.state('variables', job.environment.variables);
+}
 
 //
 // Worker process waits for a job message, processes and then exits
@@ -41,6 +65,8 @@ process.on('message',function(msg){
 	ag.info('worker::onMessage');
 	if (msg.messageType === "job") {
 		var job: ifm.JobRequestMessage = msg.data;
+		setVariables(job, ag);
+
 		var jobInfo: cm.IJobInfo = cm.jobInfoFromJob(job);
 
 		// TODO: on output from context --> diag
@@ -54,15 +80,18 @@ process.on('message',function(msg){
 		ag.info('message:');
 		trace.state('msg:', msg);
 
-		var jobRunner: jrm.JobRunner = new jrm.JobRunner(ag);
-		jobRunner.setVariables(job);
-
 		var agentUrl = ag.config.settings.serverUrl;
 		var taskUrl = job.authorization.serverUrl;
 		var feedback: cm.IFeedbackChannel = new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, ag);
+		trace.write('created feedback');
+
 		var ctx: ctxm.JobContext = new ctxm.JobContext(job, feedback, ag);
-		
-		jobRunner.run(ctx, (err: any, result: ifm.TaskResult) => {
+		trace.write('created JobContext');
+
+		var jobRunner: jrm.JobRunner = new jrm.JobRunner(ag, ctx);
+		trace.write('created jobRunner');
+
+		jobRunner.run((err: any, result: ifm.TaskResult) => {
 			trace.callback('job.run');
 
 			ag.status('Job Completed: ' + job.jobName);

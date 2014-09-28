@@ -92,7 +92,7 @@
         "name": "Xcode",
         "version":"1.0.0",
         "inputs":{
-            "xcWorkspacePath": "$(sys.sourceFolder)/iosApp/TfsiOSSample.xcodeproj/project.xcworkspace", 
+            "xcWorkspacePath": "iosApp/TfsiOSSample.xcodeproj/project.xcworkspace", 
             "scheme": "CIBuild",
             "sdk": "iphonesimulator",
             "configuration": "Debug",

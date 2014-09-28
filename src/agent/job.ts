@@ -37,66 +37,48 @@ var trace: tm.Tracing;
 //       discuss ordering on log creation, associating timeline with logid
 //
 export class JobRunner {
-	constructor(context: ctxm.AgentContext) {
-		this.context = context;
-		trace = new tm.Tracing(__filename, context);
+	constructor(agCtx: ctxm.AgentContext, jobCtx: ctxm.JobContext) {
+		this.agentContext = agCtx;
+		trace = new tm.Tracing(__filename, agCtx);
+		trace.enter('JobRunner');
+		this.jobContext = jobCtx;
+		this.job = jobCtx.job;		
 	}
 
-	private context: ctxm.AgentContext;
+	private agentContext: ctxm.AgentContext;
+	private jobContext: ctxm.JobContext;
+
 	private job: ifm.JobRequestMessage;
 
-	public setVariables(job: ifm.JobRequestMessage) {
-		trace.enter('setVariables');
-		trace.state('variables', job.environment.variables);
-
-        var workFolder = this.context.config.settings.workFolder;
-        if (!workFolder.startsWith('/')) {
-            workFolder = path.join(__dirname, this.context.config.settings.workFolder);
-        }
-
-		var sys = job.environment.variables['sys'];
-		var collId = job.environment.variables['sys.collectionId'];
-		var defId = job.environment.variables['sys.definitionId'];
-
-		var workingFolder = path.join(workFolder, sys, collId, defId);
-		job.environment.variables['sys.workFolder'] = workFolder;
-		job.environment.variables['sys.workingFolder'] = workingFolder;
-
-        var stagingFolder = path.join(workingFolder, 'staging');
-		job.environment.variables['sys.staging'] = stagingFolder;
-
-		trace.state('variables', job.environment.variables);
-	}
-
-	private _replaceTaskInputVars(job: ifm.JobRequestMessage) {
+	private _replaceTaskInputVars() {
 		trace.enter('replaceTaskInputVars');
 
 		// replace variables in inputs
-		if (job.environment.variables) {
-			job.tasks.forEach(function(task) {
+		if (this.job.environment.variables) {
+			this.job.tasks.forEach((task) => {
 				trace.write(task.name);
 				for (var key in task.inputs){
-					task.inputs[key] = task.inputs[key].replaceVars(job.environment.variables);
+					task.inputs[key] = task.inputs[key].replaceVars(this.job.environment.variables);
 				}
 			});
 		}
-		trace.state('tasks', job.tasks);
+		trace.state('tasks', this.job.tasks);
 	}
 
-	public run(jobCtx: ctxm.JobContext, complete: (err:any, result: ifm.TaskResult) => void) {
-		this.job = jobCtx.job;
-		var ag = this.context;
+	public run(complete: (err:any, result: ifm.TaskResult) => void) {
 		trace.enter('run');
 
-		this._replaceTaskInputVars(this.job);
+		var ag = this.agentContext;
+		this._replaceTaskInputVars();
 
 		var _this: JobRunner = this;
+		var jobCtx: ctxm.JobContext = this.jobContext;
 
 		// prepare (might download) up to 5 tasks in parallel and then run tasks seuentially
 		ag.status('Preparing Tasks');
 		async.forEach(this.job.tasks, 
 			function(pTask, callback){
-				_this.prepareTask(jobCtx, pTask, callback);
+				_this.prepareTask(pTask, callback);
 			}, 
 			function(err){
 		        if (err) {
@@ -158,7 +140,7 @@ export class JobRunner {
 									trace.state('variables after plugins:', _this.job.environment.variables);
 
 									// plugins can contribute to vars so replace again
-									_this._replaceTaskInputVars(_this.job);
+									_this._replaceTaskInputVars();
 
 									jobSuccess = !err && success;
 									trace.write('jobSuccess: ' + jobSuccess);
@@ -178,7 +160,7 @@ export class JobRunner {
 								}
 
 								ag.info('Running Tasks ...');
-								_this.runTasks(jobCtx, (err: any, success: boolean) => {
+								_this.runTasks((err: any, success: boolean) => {
 									ag.info('Finished running tasks');
 									jobSuccess = jobSuccess && !err && success;
 									trace.write('jobSuccess: ' + jobSuccess);
@@ -219,11 +201,13 @@ export class JobRunner {
 			})
 	}
 
-	private runTasks(jobCtx: ctxm.JobContext, callback: (err:any, success:boolean) => void): void {
+	private runTasks(callback: (err:any, success:boolean) => void): void {
 		trace.enter('runTasks');
 
-		var job: ifm.JobRequestMessage = jobCtx.job;
-		var ag = this.context;
+		var job: ifm.JobRequestMessage = this.job;
+		var ag = this.agentContext;
+		var jobCtx: ctxm.JobContext = this.jobContext;
+
 		var success = true;
 		var _this: JobRunner = this;
 
@@ -272,13 +256,14 @@ export class JobRunner {
 	}
 
 	private taskExecution = {};
+	private taskMetadata = {};
 
-	private prepareTask(ctx: ctxm.JobContext, task: ifm.TaskInstance, callback) {
+	private prepareTask(task: ifm.TaskInstance, callback) {
 		trace.enter('prepareTask');
 
-		var ag = this.context;
+		var ag = this.agentContext;
 
-		var taskPath = path.join(ctx.workFolder, 'tasks', task.name, task.version);
+		var taskPath = path.join(this.jobContext.workFolder, 'tasks', task.name, task.version);
 		trace.write('taskPath: ' + taskPath);
 
 		ag.info('preparing task ' + task.name);
@@ -299,6 +284,7 @@ export class JobRunner {
 			try {
 				var taskMetadata = JSON.parse(data);
 				trace.state('taskMetadata', taskMetadata);
+				this.taskMetadata[task.id] = taskMetadata;
 
 				var execution = taskMetadata.execution;
 
@@ -335,16 +321,57 @@ export class JobRunner {
 		});
 	}
 
+	//
+	// TODO: add beforeTask plugin step and move to their.  This is build specific code
+	// and should not be in the generic agent code
+	//
+	private _processInputs(task: ifm.TaskInstance) {
+		trace.enter('processInputs');
+
+		//
+		// Resolve paths for filePath inputs
+		//
+		var metadata = this.taskMetadata[task.id];
+		trace.write('retrieved metadata for ' + task.name);
+
+		var filePathInputs = {};
+		metadata.inputs.forEach((input) => {
+			trace.write('input ' + input.name + ' is type ' + input.type);
+			if (input.type === 'filePath') {
+				trace.write('adding ' + input.name);
+				filePathInputs[input.name] = true;
+			}
+		});
+
+		trace.state('filePathInputs', filePathInputs);
+		var srcFolder = this.job.environment.variables['sys.sourceFolder'];
+		trace.write('srcFolder: ' + srcFolder);
+
+		for (var key in task.inputs){
+			trace.write('checking ' + key);
+			if (filePathInputs.hasOwnProperty(key)) {
+				trace.write('rewriting value for ' + key);
+				var resolvedPath = path.resolve(srcFolder, task.inputs[key]);
+				trace.write('resolvedPath: ' + resolvedPath);
+				task.inputs[key] = resolvedPath;
+			}
+			this.jobContext.verbose(key + ': ' + task.inputs[key]);
+		}
+
+		trace.state('task.inputs', task.inputs);
+	}
+
 	private runTask(task: ifm.TaskInstance, ctx: ctxm.TaskContext, callback) {
 		trace.enter('runTask');
-		var ag = this.context;
+		var ag = this.agentContext;
 
 		ag.status('Task: ' + task.name);
 
+		this._processInputs(task);
 		for (var key in task.inputs){
-			ctx.info(key + ': ' + task.inputs[key]);
+			ctx.verbose(key + ': ' + task.inputs[key]);
 		}
-		ctx.info('');
+		ctx.verbose('');
 		ctx.inputs = task.inputs;
 
 		var execution = this.taskExecution[task.id];

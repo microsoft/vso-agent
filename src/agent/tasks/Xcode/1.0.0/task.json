@@ -16,7 +16,9 @@
     ],
     "instanceNameFormat": "Xcode $(xcWorkspacePath)",
     "inputs": [
-        { "name": "xcWorkspacePath", "type": "filePath", "label": "Workspace Path", "defaultValue":"$(sys.sourceFolder)/src/myproject.xcodeproject/project.xcworkspace", "required":true },
+        { "name": "xcWorkspacePath", "type": "filePath", "label": "Workspace Path", "defaultValue":"src/myproject.xcodeproject/project.xcworkspace", "required":false },
+        { "name": "projectPath", "type": "filePath", "label": "Project Path", "defaultValue":"", "required":false },
+        { "name": "targetName", "type": "string", "label": "Target Name", "defaultValue":"", "required":false },
         { "name": "scheme", "type": "string", "label": "Scheme", "defaultValue":"", "required":true },
         { "name": "xcodeApp", "type": "string", "label": "Xcode App", "defaultValue":"$(XcodeApp)", "required":true },
         { "name": "configuration", "type": "string", "label": "Configuration", "defaultValue":"$(Configuration)", "required":true },

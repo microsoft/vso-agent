@@ -29,8 +29,6 @@ export function runTask(scriptPath: string, ctx: ctxm.TaskContext, callback): vo
 	for (var key in ctx.inputs){
 		var envVarName = 'INPUT_' + key.toUpperCase();
 		process.env[envVarName] = ctx.inputs[key];
-
-		console.log('setting ' + envVarName + ' to  ' + process.env[envVarName]);
 	}
 
 	console.log('running: ' + scriptPath);

@@ -435,8 +435,10 @@ export class LogPageQueue extends TimedQueue {
 					(doneStep) => {
 						trace.write('creating log record');
 
-						// check in map instead of pageNumber check so on failure, we'll still try
-						// and create/upload subsequent pages
+						//
+						// we only want to create the log metadata record once per 
+						// timeline record Id.  So, create and put it in a map
+						//
 						if (!this._recordToLogIdMap.hasOwnProperty(logPageInfo.logInfo.recordId)) {
 							serverLogPath = 'logs\\' + recordId; // FCS expects \
     						this._taskApi.createLog(planId, 
