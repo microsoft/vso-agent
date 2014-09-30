@@ -39,12 +39,12 @@
       "TfsBuild": "TeamFoundationService (TEAM FOUNDATION);http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fname=TeamFoundationService+(TEAM+FOUNDATION)&http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fnameidentifier=91160d53-25b5-4a9b-8ee0-dbe9ca9b0ffe&http%3a%2f%2fschemas.microsoft.com%2faccesscontrolservice%2f2010%2f07%2fclaims%2fidentityprovider=https%3a%2f%2ftfstest.accesscontrol.windows.net%2f&Audience=https%3a%2f%2fapp.tfsbuildhost3.tfsallin.net%2f&ExpiresOn=1406786965&Issuer=https%3a%2f%2ftfstest.accesscontrol.windows.net%2f&HMACSHA256=LL8CWggp0yABgd9t1UUdqh%2bEKUz0Vc09hYeOEXFPPvs%3d"
     },
     "variables": {
-      "sys": "build",
-      "sys.collectionId": "c45d99c3-3bd6-43d3-82d7-ad77a29e0d35",
-      "sys.teamProject": "test",
-      "sys.definitionId": "1",
-      "sys.definitionVersion": "1",
-      "sys.sourceBranch": "refs/heads/master",
+      "system": "build",
+      "system.collectionId": "c45d99c3-3bd6-43d3-82d7-ad77a29e0d35",
+      "system.teamProject": "test",
+      "system.definitionId": "1",
+      "build.definitionVersion": "1",
+      "build.sourceBranch": "refs/heads/master",
       "forceClean": "false",
       "config": "debug",
       "platform": "any cpu",

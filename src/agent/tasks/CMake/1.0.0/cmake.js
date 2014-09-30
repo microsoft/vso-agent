@@ -26,13 +26,12 @@ exports.execute = function(ctx, callback) {
 	}
 	ctx.info('using cmake: ' + cmakePath);
 
-	var repoRoot = ctx.variables['build.sourcesDirectory'];
-
-	var srcRoot = path.resolve(repoRoot, ctx.inputs.srcRoot);
-	ctx.info('resolved srcRoot: ' + srcRoot);
+	var srcRoot = ctx.inputs.srcRoot);
+	ctx.info('srcRoot: ' + srcRoot);
 
 	if (!fs.existsSync(srcRoot)) {
 		callback(new Error('srcRoot does not exist: ' + srcRoot));	
+		return;
 	}
 	cd(srcRoot);
 

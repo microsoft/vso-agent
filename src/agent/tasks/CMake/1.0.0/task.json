@@ -16,7 +16,7 @@
     },
     "instanceNameFormat": "CMake",
     "inputs": [
-        { "name": "srcRoot", "type": "string", "label": "Source Root", "defaultValue":"", "required":true },
+        { "name": "srcRoot", "type": "filePath", "label": "Source Root", "defaultValue":"", "required":true },
         { "name": "buildDirName", "type": "string", "label": "Build Directory Name", "defaultValue":"build", "required":true },
         { "name": "args", "type": "string", "label": "Arguments", "defaultValue":"", "required":false }
     ],

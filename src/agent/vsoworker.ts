@@ -34,21 +34,25 @@ function setVariables(job: ifm.JobRequestMessage, agentContext: ctxm.AgentContex
 	trace.enter('setVariables');
 	trace.state('variables', job.environment.variables);
 
-    var workFolder = agentContext.config.settings.workFolder;
-    if (!workFolder.startsWith('/')) {
-        workFolder = path.join(__dirname, agentContext.config.settings.workFolder);
+    var workingFolder = agentContext.config.settings.workFolder;
+    if (!workingFolder.startsWith('/')) {
+        workingFolder = path.join(__dirname, agentContext.config.settings.workFolder);
     }
 
-	var sys = job.environment.variables['sys'];
-	var collId = job.environment.variables['sys.collectionId'];
-	var defId = job.environment.variables['sys.definitionId'];
+    var variables = job.environment.variables;
 
-	var workingFolder = path.join(workFolder, sys, collId, defId);
-	job.environment.variables['sys.workFolder'] = workFolder;
-	job.environment.variables['sys.workingFolder'] = workingFolder;
+    // TODO: remove the back compat vars in a sprint 
+	var sys = variables[cm.sysVars.system] || variables['sys'];
+	var collId = variables[cm.sysVars.collectionId] || variables['sys.collectionId'];
+	var defId = variables[cm.sysVars.definitionId] || variables['sys.definitionId'];
 
-    var stagingFolder = path.join(workingFolder, 'staging');
-	job.environment.variables['sys.staging'] = stagingFolder;
+	// TODO: build dir should be defined in the build plugin - not in core agent
+	var buildDirectory = path.join(workingFolder, sys, collId, defId);
+	variables[cm.agentVars.workingDirectory] = workingFolder;
+	variables[cm.agentVars.buildDirectory] = buildDirectory;
+
+    var stagingFolder = path.join(buildDirectory, 'staging');
+	job.environment.variables[cm.buildVars.stagingDirectory] = stagingFolder;
 
 	trace.state('variables', job.environment.variables);
 }

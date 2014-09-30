@@ -51,8 +51,17 @@ exports.beforeJob = function(ctx, callback) {
 
     ctx.info('endpoints: ' + endpoints);
 
+    var variables = ctx.job.environment.variables;
+
+    // TODO: remove compat vars after next sprint
+    var srcVersion = variables['build.sourceVersion'] || variables['sys.sourceVersion'];
+    var srcBranch = variables['build.sourceBranch'] || variables['sys.sourceBranch'];
+    ctx.info('srcVersion: ' + srcVersion);
+    ctx.info('srcBranch: ' + srcBranch);
+
 	var tfcreds = { username: process.env.altusername, password: process.env.altpassword };
-    var selectedRef = ctx.job.environment.variables['sys.sourceVersion'] ? ctx.job.environment.variables['sys.sourceVersion'] : ctx.job.environment.variables['sys.sourceBranch'];
+    var selectedRef = srcVersion ? srcVersion : srcBranch;
+    ctx.info('selectedRef: ' + selectedRef);
 
     // TODO: we only really support one.  Consider changing to index 0 of filter result and warn | fail if length > 0
     //       what's odd is we will set sys.sourceFolder so > 1 means last one wins
@@ -68,7 +77,9 @@ exports.beforeJob = function(ctx, callback) {
         ctx.info('options: ' + JSON.stringify(options));
         var repoPath = path.resolve(options.localPath);
         
-        ctx.job.environment.variables['sys.sourceFolder'] = repoPath;
+        ctx.job.environment.variables['build.sourceDirectory'] = repoPath;
+        // TODO: remove compat variable
+        ctx.job.environment.variables['sys.sourcesFolder'] = repoPath;
     	gitrepo.getcode(ctx, options, done);
     }, function (err) {
         callback(err);

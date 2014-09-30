@@ -43,7 +43,6 @@ export class Context extends events.EventEmitter {
 	}
 
 	public config: cm.IConfiguration;
-	public workFolder: string;
 	public hasErrors: boolean;
 	private writers: cm.IDiagnosticWriter[];
 
@@ -134,10 +133,7 @@ export class Context extends events.EventEmitter {
 export class AgentContext extends Context implements cm.ITraceWriter {
 	constructor(hostProcess: string, config: cm.IConfiguration) {
 		this.config = config;
-        this.workFolder = this.config.settings.workFolder;
-        if (!this.workFolder.startsWith('/')) {
-            this.workFolder = path.join(__dirname, this.config.settings.workFolder);
-        }
+
         this.fileWriter = new dm.DiagnosticFileWriter(process.env[cm.envVerbose] ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info, 
 					path.join(path.resolve(this.config.settings.workFolder), '_diag', hostProcess), 
 					new Date().toISOString().replace(/:/gi, '_') + '_' + process.pid + '.log');
@@ -174,10 +170,8 @@ export class ExecutionContext extends Context {
 		this.feedback = feedback;
 		this.config = agentCtx.config;
 
-        this.workFolder = this.variables['sys.workFolder'];
-        this.workingFolder = this.variables['sys.workingFolder'];
-
-		var logFolder = path.join(this.workFolder, '_logs');
+        this.workingFolder = this.variables[cm.agentVars.workingDirectory];
+		var logFolder = path.join(this.workingFolder, '_logs');
 
 		var logData = <cm.ILogMetadata>{};
 		logData.jobInfo = jobInfo;
@@ -200,7 +194,6 @@ export class ExecutionContext extends Context {
 	public jobInfo: cm.IJobInfo;
 	public variables: { [key: string]: string };
 	public recordId: string;
-	public workFolder: string;
 	public workingFolder: string;
 	public feedback: cm.IFeedbackChannel;
 	public util: any;

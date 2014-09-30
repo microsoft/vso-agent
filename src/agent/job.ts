@@ -25,6 +25,7 @@ import lm = require('./logging');
 import path = require('path');
 import plgm = require('./plugins');
 import tm = require('./tracing');
+import cm = require('./common');
 
 var shell = require('shelljs');
 
@@ -263,7 +264,7 @@ export class JobRunner {
 
 		var ag = this.agentContext;
 
-		var taskPath = path.join(this.jobContext.workFolder, 'tasks', task.name, task.version);
+		var taskPath = path.join(this.jobContext.workingFolder, 'tasks', task.name, task.version);
 		trace.write('taskPath: ' + taskPath);
 
 		ag.info('preparing task ' + task.name);
@@ -344,7 +345,7 @@ export class JobRunner {
 		});
 
 		trace.state('filePathInputs', filePathInputs);
-		var srcFolder = this.job.environment.variables['sys.sourceFolder'];
+		var srcFolder = this.job.environment.variables[cm.buildVars.sourceDirectory];
 		trace.write('srcFolder: ' + srcFolder);
 
 		for (var key in task.inputs){

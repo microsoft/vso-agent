@@ -63,7 +63,7 @@
         "inputs":{
             "scriptName": "jakefile", 
             "target": "clean", 
-            "cwd": "$(sys.sourceFolder)"  
+            "cwd": ""  
         }
     }, {
         "instanceId": "1686e5b0-2fb1-4a44-ad34-c1c2525bd89f",
@@ -74,7 +74,7 @@
         "inputs":{
             "scriptName": "jakefile", 
             "target": "local", 
-            "cwd": "$(sys.sourceFolder)"  
+            "cwd": ""  
         }
     }  
   ]

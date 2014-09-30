@@ -48,12 +48,12 @@
       "TfsBuild": "TeamFoundationService (TEAM FOUNDATION);http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fname=TeamFoundationService+(TEAM+FOUNDATION)&http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fnameidentifier=37eae97c-1f3f-4a1f-8689-0633cc609ea3&http%3a%2f%2fschemas.microsoft.com%2faccesscontrolservice%2f2010%2f07%2fclaims%2fidentityprovider=https%3a%2f%2ftfsdev.accesscontrol.windows.net%2f&Audience=https%3a%2f%2fapp.tfsbuildhost8.tfsallin.net%2f&ExpiresOn=1399531565&Issuer=https%3a%2f%2ftfsdev.accesscontrol.windows.net%2f&HMACSHA256=aD%2fAyf4WEluDE2fgx5nVAhY4xZhGSCmdd3ZKhkIXpQs%3d"
     },
     "variables": {
-      "sys": "build",
-      "sys.collectionId": "e66d99c3-3bd6-43d3-82d7-ad77a29e0d45",
-      "sys.teamProject": "test",
-      "sys.definitionId": "76",
-      "sys.definitionVersion": "1",
-      "sys.sourceBranch": "refs/heads/master",
+      "system": "build",
+      "system.collectionId": "e66d99c3-3bd6-43d3-82d7-ad77a29e0d45",
+      "system.teamProject": "test",
+      "system.definitionId": "76",
+      "build.definitionVersion": "1",
+      "build.sourceBranch": "refs/heads/master",
       "forceClean": "false",
       "Configuration": "Debug",
       "SDK": "iphonesimulator",

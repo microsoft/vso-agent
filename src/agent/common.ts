@@ -26,6 +26,21 @@ var crypto = require('crypto');
 
 require('./extensions');
 
+export var sysVars = <any>{};
+sysVars.system = 'system';
+sysVars.collectionId = 'system.collectionId';
+sysVars.definitionId = 'system.definitionId'
+
+export var agentVars = <any>{};
+agentVars.rootDirectory = 'agent.rootDirectory';
+agentVars.buildDirectory = 'agent.buildDirectory';
+agentVars.workingDirectory = 'agent.workingDirectory';
+
+// TODO: should be in build plugin
+export var buildVars = <any>{};
+buildVars.sourceDirectory = 'build.sourceDirectory';
+buildVars.stagingDirectory = 'build.stagingDirectory';
+
 //-----------------------------------------------------------
 // ENV VARS
 //-----------------------------------------------------------
