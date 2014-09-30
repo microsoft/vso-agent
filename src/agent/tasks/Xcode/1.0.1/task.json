@@ -14,7 +14,7 @@
     "demands" : [
         "xcode"
     ],
-    "instanceNameFormat": "Xcode $(xcWorkspacePath)",
+    "instanceNameFormat": "Xcode $(actions)",
     "inputs": [
         { "name": "xcWorkspacePath", "type": "filePath", "label": "Workspace Path", "defaultValue":"", "required":false },
         { "name": "projectPath", "type": "filePath", "label": "Project Path", "defaultValue":"", "required":false },
@@ -23,8 +23,7 @@
         { "name": "actions", "type": "string", "label": "Actions", "defaultValue":"build", "required":false },
         { "name": "configuration", "type": "string", "label": "Configuration", "defaultValue":"$(Configuration)", "required":true },
         { "name": "sdk", "type": "string", "label": "SDK", "defaultValue":"$(SDK)", "required":true },
-        { "name": "outputPattern", "type": "string", "label": "Output", "defaultValue":"$(SDK)/$(Configuration)", "required":true },
-        { "name": "clean", "type": "boolean", "label": "Clean", "defaultValue": "False", "required": false }
+        { "name": "outputPattern", "type": "string", "label": "Output", "defaultValue":"$(SDK)/$(Configuration)", "required":true }
     ],
     "execution": {
         "JavaScript": {
