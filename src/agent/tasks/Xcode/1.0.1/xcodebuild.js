@@ -23,6 +23,8 @@ exports.execute = function(ctx, callback) {
 	var xcbpath = which('xcodebuild');
 	ctx.info('using xcodebuild: ' + xcbpath);
 
+	var repoPath = ctx.variables['build.sourceDirectory'];
+
 	//----------------------------------------------------------------------
 	// Input Validation/Feedback
 	//----------------------------------------------------------------------
@@ -99,12 +101,12 @@ exports.execute = function(ctx, callback) {
 
 	var args = []; 
 
-	if (xcWorkspacePath) {
+	if (xcWorkspacePath && xcWorkspacePath != repoPath) {
 		args.push('-workspace');
 		args.push(xcWorkspacePath);
 	}
 
-	if (projectPath) {
+	if (projectPath && projectPath != repoPath) {
 		args.push('-project');
 		args.push(projectPath);
 	}

@@ -15,14 +15,15 @@
 // 
 
 var path = require('path');
-
+var shell = require('shelljs');
 var buildRoot = path.join(__dirname, '_build');
 var buildPath = path.join(buildRoot, 'vsoxplat');
 var packageRoot = path.join(__dirname, '_package');
+var tarRoot = path.join(__dirname, '_tar');
 var packagePath = path.join(packageRoot, 'vsoxplat');
 
 desc('This is the default task.');
-task('default', ['clean', 'package'], function () {
+task('default', ['clean', 'package', 'tar'], function () {
 
 });
 
@@ -48,6 +49,8 @@ task('drop', [], function() {
 	jake.rmRf('_build');
 	console.log('Dropping _package');
 	jake.rmRf('_package');
+	console.log('Dropping _tar');
+	jake.rmRf('_tar');	
 	console.log('Dropping done.');
 });
 
@@ -81,6 +84,25 @@ task('package', [], function() {
 	jake.cpR('src/agent/tasks', path.join(packagePath, 'agent', 'work', 'tasks'));
 	
 	console.log('Package created.');
+});
+
+desc('Create Tar')
+task('tar', [], function() {
+	console.log('Creating _tar/vsoxplat.tar');
+
+	shell.rm('-rf', '_tar');
+	shell.mkdir('_tar');
+	console.log('copying agent...');
+	shell.cp('-R', '_package/vsoxplat/agent', '_tar');
+	shell.cp('_package/vsoxplat/package.json', '_tar/agent');
+	shell.cd('_tar');
+	console.log('creating tar...');
+	shell.exec('tar czf vsoxplat.tar.gz agent');
+	shell.cd('..');
+	console.log('cleaning up...');
+	shell.rm('-rf', '_tar/agent');
+
+	console.log('done.');
 });
 
 desc('Run host')

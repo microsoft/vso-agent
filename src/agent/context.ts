@@ -170,8 +170,9 @@ export class ExecutionContext extends Context {
 		this.feedback = feedback;
 		this.config = agentCtx.config;
 
-        this.workingFolder = this.variables[cm.agentVars.workingDirectory];
-		var logFolder = path.join(this.workingFolder, '_logs');
+        this.buildDirectory = this.variables[cm.agentVars.buildDirectory];
+        this.workingDirectory = this.variables[cm.agentVars.workingDirectory];
+		var logFolder = path.join(this.workingDirectory, '_logs');
 
 		var logData = <cm.ILogMetadata>{};
 		logData.jobInfo = jobInfo;
@@ -194,7 +195,8 @@ export class ExecutionContext extends Context {
 	public jobInfo: cm.IJobInfo;
 	public variables: { [key: string]: string };
 	public recordId: string;
-	public workingFolder: string;
+	public buildDirectory: string;
+	public workingDirectory: string;
 	public feedback: cm.IFeedbackChannel;
 	public util: any;
 }

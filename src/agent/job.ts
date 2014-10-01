@@ -122,9 +122,9 @@ export class JobRunner {
 						jobCtx.registerPendingTask(plugin.afterId, plugin.pluginName());
 					});
 
-					ag.info('working: ' + jobCtx.workingFolder);
-					shell.mkdir('-p', jobCtx.workingFolder);
-					shell.cd(jobCtx.workingFolder);
+					ag.info('buildDirectory: ' + jobCtx.buildDirectory);
+					shell.mkdir('-p', jobCtx.buildDirectory);
+					shell.cd(jobCtx.buildDirectory);
 					trace.write(process.cwd());
 
 					var jobSuccess = true;
@@ -226,7 +226,7 @@ export class JobRunner {
 					jobCtx.feedback.queueConsoleLine(message);
 				});
 
-				shell.cd(taskCtx.workingFolder);
+				shell.cd(taskCtx.buildDirectory);
 				jobCtx.setTaskStarted(item.instanceId, item.name);
 				_this.runTask(item, taskCtx, function(err) {
 
@@ -264,7 +264,7 @@ export class JobRunner {
 
 		var ag = this.agentContext;
 
-		var taskPath = path.join(this.jobContext.workingFolder, 'tasks', task.name, task.version);
+		var taskPath = path.join(this.jobContext.workingDirectory, 'tasks', task.name, task.version);
 		trace.write('taskPath: ' + taskPath);
 
 		ag.info('preparing task ' + task.name);

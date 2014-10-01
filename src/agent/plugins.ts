@@ -99,7 +99,7 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, agentCtx: ctxm.AgentCon
 				ctx.feedback.queueConsoleLine(message);
 			});
 			
-			shell.cd(pluginCtx.workingFolder);
+			shell.cd(pluginCtx.buildDirectory);
 			ctx.setTaskStarted(plugin.beforeId, plugin.pluginName());
 
 			plugin.beforeJob(pluginCtx, function(err) {
@@ -143,7 +143,7 @@ export function afterJob(plugins, ctx: ctxm.JobContext, agentCtx: ctxm.AgentCont
 				ctx.feedback.queueConsoleLine(message);
 			});
 
-			shell.cd(pluginCtx.workingFolder);
+			shell.cd(pluginCtx.buildDirectory);
 			ctx.setTaskStarted(plugin.afterId, plugin.pluginName());
 			plugin.afterJob(pluginCtx, function(err) {
 				if (err) {
