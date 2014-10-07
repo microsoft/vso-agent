@@ -26,7 +26,7 @@ export class BuildApi implements ifm.IBuildApi {
 	constructor(collectionUrl:string, handler: ifm.IRequestHandler) {
 		this.collectionUrl = collectionUrl;
 		this.httpClient = new httpm.HttpClient('vso-build-api', handler);
-		this.restClient = new restm.RestClient(collectionUrl, this.httpClient);		
+		this.restClient = new restm.RestClient(collectionUrl, '2.0', this.httpClient);		
 	}
 
 	//

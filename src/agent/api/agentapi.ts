@@ -26,7 +26,7 @@ export class AgentApi {
 	constructor(accountUrl:string, handler: ifm.IRequestHandler) {
 		this.accountUrl = accountUrl;
 		this.httpClient = new httpm.HttpClient('vso-build-api', handler);
-		this.restClient = new restm.RestClient(accountUrl, this.httpClient);		
+		this.restClient = new restm.RestClient(accountUrl, '1.0', this.httpClient);		
 	}
 
 	//

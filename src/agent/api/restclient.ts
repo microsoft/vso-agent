@@ -124,12 +124,14 @@ export function enumToString(enumType: any, enumValue: number, camelCase: boolea
 export class RestClient implements ifm.IRestClient {
     baseUrl: string;
     basePath: string;
+    apiVersion: string;
     httpClient: ifm.IHttpClient;
 
-    constructor(baseUrl: string, httpClient: ifm.IHttpClient) {
+    constructor(baseUrl: string, apiVersion: string, httpClient: ifm.IHttpClient) {
         this.baseUrl = baseUrl;
         this.basePath = url.parse(baseUrl).pathname;
         this.httpClient = httpClient;
+        this.apiVersion = apiVersion;
     }
 
     resolveUrl(relativeUrl: string): string {
@@ -192,7 +194,7 @@ export class RestClient implements ifm.IRestClient {
             var contentStream: ReadableStream = fs.createReadStream(filePath);
 
             var headers = {};
-            headers["Accept"] = 'application/json';
+            headers["Accept"] = 'application/json; api-version=' + this.apiVersion;
             headers["Content-Length"] = stats.size;
 
             this.httpClient.sendFile('POST', postUrl, contentStream, headers, (err: any, res: ifm.IHttpResponse, contents: string) => {
@@ -235,7 +237,7 @@ export class RestClient implements ifm.IRestClient {
         var getUrl = this.resolveUrl(relativeUrl);
 
         var headers = {};
-        headers["Accept"] = 'application/json';
+        headers["Accept"] = 'application/json; api-version=' + this.apiVersion;
         this.httpClient.get(verb, getUrl, headers, (err: any, res: ifm.IHttpResponse, contents: string) => {
             if (err) {
                 if (process.env.XPLAT_TRACE_HTTP) {
@@ -253,7 +255,7 @@ export class RestClient implements ifm.IRestClient {
         var postUrl = this.resolveUrl(relativeUrl);
 
         var headers = {};
-        headers["Accept"] = 'application/json';
+        headers["Accept"] = 'application/json; api-version=' + this.apiVersion;
         headers["Content-Type"] = 'application/json; charset=utf-8';
 
         this.httpClient.send(verb, postUrl, data, headers, (err: any, res: ifm.IHttpResponse, contents: string) => {

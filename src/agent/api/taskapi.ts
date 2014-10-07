@@ -26,7 +26,7 @@ export class TaskApi {
     constructor(collectionUrl: string, handler: ifm.IRequestHandler) {
         this.collectionUrl = collectionUrl;
         this.httpClient = new httpm.HttpClient('vso-task-api', handler);
-        this.restClient = new restm.RestClient(collectionUrl, this.httpClient);
+        this.restClient = new restm.RestClient(collectionUrl, '1.0', this.httpClient);
     }
 
     createLog(planId: string, logPath: string, onResult: (err: any, statusCode: number, log: ifm.TaskLog) => void): void {
