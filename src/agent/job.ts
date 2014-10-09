@@ -158,6 +158,8 @@ export class JobRunner {
 								// if prepare plugins fail, we should not run tasks (getting code failed etc...)
 								if (!jobSuccess) {
 									done(null);
+									trace.write('skipping running tasks since prepare plugins failed.');
+									return;
 								}
 
 								ag.info('Running Tasks ...');

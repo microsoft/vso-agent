@@ -245,11 +245,17 @@ export class Configurator {
 		throwIf(!check.isURL(settings.serverUrl), settings.serverUrl + ' is not a valid URL');
 	}
 
+	private appendAgentCaps(settings: cm.ISettings, caps: { [key: string]: string }) {
+		caps['Agent.Name'] = settings.agentName;
+		caps['Agent.OS'] = process.platform;
+	}
+
 	private writeAgentToPool(settings: cm.ISettings, agentapi: ifm.IAgentApi, complete: (err: any, agent: ifm.TaskAgent, poolId: number) => void): void {
 		var agentPoolId = 0;
 		var updateAgents = false;
 		var newAgent:ifm.TaskAgent;
 		var agentQueue = '';
+		var _this = this;
 
 		async.series([
 			// connect
@@ -288,6 +294,8 @@ export class Configurator {
 
 				console.log('creating agent...');
 				var caps: { [key: string]: string } = env.getCapabilities();
+				_this.appendAgentCaps(settings, caps);
+
 				var agent = {
 					maxParallelism: 1,
 					name: settings.agentName,
@@ -311,6 +319,8 @@ export class Configurator {
 				}
 
 				var caps: { [key: string]: string } = env.getCapabilities();
+				_this.appendAgentCaps(settings, caps);
+
 				console.log('updating agent...');
 	            newAgent['maxParallelism'] = 1;
 	            newAgent['name'] = settings.agentName;

@@ -20,10 +20,15 @@ var fs = require('fs');
 var async = require('async');
 var gitutil = require('./gitutil');
 
-var checkShellError = function(callback) {
-	if (error()) {
-		callback(new Error(error()));
-	}		
+var shellError = function(ctx, callback) {
+	var errMsg = error();
+	if (errMsg) {
+		ctx.error(errMsg);
+		callback(new Error(errMsg));
+		return true;
+	}
+
+	return false;
 }
 
 exports.getcode = function(ctx, options, callback) {
@@ -31,8 +36,12 @@ exports.getcode = function(ctx, options, callback) {
 
 	var git = which('git');
 	if (!git) {
-		callback(new Error('git is not installed'));
+		var msg = 'git is not installed';
+		ctx.error(msg);
+		callback(new Error(msg));
+		return;
 	}
+
 	ctx.info('Using: ' + git);
 	
 	ctx.info('Repo: ' + options.repoLocation);
@@ -40,9 +49,6 @@ exports.getcode = function(ctx, options, callback) {
 	if (options.ref && options.ref.trim().length) {
 		inputref = options.ref;
 	}
-
-	// TODO: (bryanmac) Pull auth from context and/or task - anonymous repo right now.
-	// TODO: replace $(definitionId) from vars.  Done on all inputs before it gets to task
 
 	var repoPath = path.resolve(options.localPath);
 	ctx.info('Repo path: ' + repoPath);
@@ -54,22 +60,20 @@ exports.getcode = function(ctx, options, callback) {
 	var askpass = null;
 	if (options.creds) {
 		var askPath = path.join(__dirname, 'askpass.js');
+		process.env['GIT_ASKPASS']=askPath;
+
 		// TODO: should be some sort of config as part of pulling down task.
 		chmod('u+x', askPath);
 
-		askpass = 'core.askpass=' + path.join(__dirname, 'askpass.js');
-		options.repoLocation = gitutil.urlWithUserName(options.creds.username, options.repoLocation);
-		ctx.info('new repo location:' + options.repoLocation);
+		//options.repoLocation = gitutil.urlWithUserName(options.creds.username, options.repoLocation);
+		ctx.info('repo location:' + options.repoLocation);
 	}
-
-	console.log('askpass: ' + askpass);
-	console.log('pass:' + process.env.altpassword);
 	
 	var repoDirName = path.dirname(repoPath);
 	if (!fs.existsSync (repoDirName)) {
 		ctx.info('Creating repo dir: ' + repoDirName)
 		mkdir('-p', repoDirName);
-		checkShellError(callback);
+		if (shellError(ctx, callback)) return;
 	}
 	cd(repoDirName);
 	ctx.info('cwd: ' + process.cwd());
@@ -98,7 +102,7 @@ exports.getcode = function(ctx, options, callback) {
 				ctx.section('Git fetch');
 				cd(repoPath);
 				ctx.info('cwd: ' + process.cwd());
-				checkShellError(complete);
+				if (shellError(ctx, callback)) return;
 				ctx.util.spawn('git', ['fetch'], { failOnStdErr: false }, function(err){ handle(err, complete); });
 			}
 			else {
@@ -110,7 +114,7 @@ exports.getcode = function(ctx, options, callback) {
 					}
 					else {
 						cd(repoPath);
-						checkShellError(complete);
+						if (shellError(ctx, callback)) return;
 						handle(err, complete);
 					}
 				});

@@ -44,12 +44,13 @@ exports.beforeJob = function(ctx, callback) {
 	//------------------------------------------------------------
 
     var endpoints = ctx.job.environment.endpoints;
+
     // TODO: support TfsVersionControl
     var srcendpoints = endpoints.filter(function(endpoint) {
         return endpoint.type === 'TfsGit' || endpoint.type === 'Git';
     });
 
-    ctx.info('endpoints: ' + endpoints);
+    ctx.info('endpoints: ' + JSON.stringify(endpoints, null, 2));
 
     var variables = ctx.job.environment.variables;
 
@@ -74,10 +75,10 @@ exports.beforeJob = function(ctx, callback) {
     		localPath: 'repo', // not allowing custom local paths - we always put in repo
             submodules: endpoint.data.checkoutSubmodules === "True" 
     	};
-        ctx.info('options: ' + JSON.stringify(options));
-        var repoPath = path.resolve(options.localPath);
-        
+
+        var repoPath = path.resolve(options.localPath);        
         ctx.job.environment.variables['build.sourceDirectory'] = repoPath;
+        
         // TODO: remove compat variable
         ctx.job.environment.variables['sys.sourcesFolder'] = repoPath;
     	gitrepo.getcode(ctx, options, done);

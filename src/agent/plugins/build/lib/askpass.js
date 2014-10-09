@@ -19,6 +19,10 @@
 var fs = require('fs');
 var path = require('path');
 
+String.prototype.startsWith = function (str) {
+    return this.slice(0, str.length) == str;
+}
+
 // git clone <url> -c core.askpass="...path.../askpass.js"
 // 
 // arg[2]: Password for 'https://username@account.visualstudio.com':
@@ -26,5 +30,22 @@ var path = require('path');
 // arg[2]: Username for 'https://account.visualstudio.com':
 //
 
-process.stdout.write(process.env.altpassword);
+var prompt = process.argv[2];
+
+if (prompt) {
+	if (prompt.startsWith('Username')) {
+		var uname = process.env['altusername'];
+		if (uname) {
+			process.stdout.write(uname);
+		}
+	}
+
+	if (prompt.startsWith('Password')) {
+		var pwd = process.env['altpassword'];
+		if (pwd) {
+			process.stdout.write(pwd);
+		}
+	}	
+}
+
 
