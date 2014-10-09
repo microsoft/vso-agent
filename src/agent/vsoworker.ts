@@ -80,14 +80,6 @@ process.on('message',function(msg){
             process.env['altpassword'] = msg.config.creds.password;    
         }
 
-        if (msg.config.creds.username) {
-        	msg.config.creds.username = '***';	
-        }
-        
-        if (msg.config.creds.password) {
-        	msg.config.creds.password = '***';	
-        }
-
 		ag.status('Running job: ' + job.jobName);
 		ag.info('message:');
 		trace.state('msg:', msg);
