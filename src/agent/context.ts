@@ -179,7 +179,7 @@ export class ExecutionContext extends Context {
 		logData.recordId = recordId;
 
 		var logger: lm.PagingLogger = new lm.PagingLogger(logFolder, logData);
-		logger.level = process.env[cm.envVerbose] ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info;
+		logger.level = this.variables[cm.sysVars.debug] == 'true' ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info;
 
         logger.on('pageComplete', (info: cm.ILogPageInfo) => {
         	trace.state('pageComplete', info);
