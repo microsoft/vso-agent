@@ -33,8 +33,7 @@ exports.execute = function(ctx, callback) {
 		cwd = path.dirname(scriptPath);
 	}
 	cd(cwd);
-	ctx.info('cwd: ' + process.cwd());
-
+	ctx.verbose('cwd: ' + process.cwd());
 	ctx.info('Running Jake:' + scriptPath);
 	
 	var args = []; 
@@ -51,6 +50,11 @@ exports.execute = function(ctx, callback) {
 		cwd: path.resolve(cwd),
 		env: process.env
 	};
+
+	ctx.verbose('node arguments:');
+	args.forEach(function(arg) {
+		ctx.verbose('   ' + arg);
+	});
 
 	// calling spawn instead of fork so we can easily capture output --> logs	
 	ctx.util.spawn('node', args, ops, callback);

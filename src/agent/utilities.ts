@@ -44,8 +44,8 @@ export class Utilities {
 			ops[op] = options[op];
 		}
 
-        this.ctx.info('cwd: ' + ops.cwd);
-        this.ctx.info(name + ' ' + args);
+        this.ctx.verbose('cwd: ' + ops.cwd);
+        this.ctx.verbose(name + ' ' + args);
 
 		var cp = require('child_process').spawn;
 

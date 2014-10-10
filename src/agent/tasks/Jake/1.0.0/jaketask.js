@@ -25,8 +25,7 @@ exports.execute = function(ctx, callback) {
 	var _buffer;
 
 	var jakeWorking = path.resolve(ctx.inputs.cwd);
-	ctx.info('Running Jake');
-	ctx.info(process.cwd());
+	ctx.verbose(process.cwd());
     if (!fs.existsSync(jakeWorking)) {
     	ctx.error('cwd: ' + ctx.inputs.cwd + ' does not exist. (' + jakeWorking + ')');
     	callback(new Error('cwd: ' + ctx.inputs.cwd + ' does not exist. (' + jakeWorking + ')'));
@@ -55,6 +54,11 @@ exports.execute = function(ctx, callback) {
 		cwd: path.resolve(ctx.inputs.cwd),
 		env: process.env
 	};
+
+	ctx.verbose('node arguments:');
+	args.forEach(function(arg) {
+		ctx.verbose('   ' + arg);
+	});
 
 	// calling spawn instead of fork so we can easily capture output --> logs	
 	ctx.util.spawn('node', args, ops, callback);

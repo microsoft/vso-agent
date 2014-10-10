@@ -21,7 +21,7 @@ var fs = require('fs')
 
 exports.execute = function(ctx, callback) {
 	var xcbpath = which('xcodebuild');
-	ctx.info('using xcodebuild: ' + xcbpath);
+	ctx.verbose('using xcodebuild: ' + xcbpath);
 
 	var repoPath = ctx.variables['build.sourceDirectory'];
 
@@ -137,11 +137,11 @@ exports.execute = function(ctx, callback) {
 	args.push('OBJROOT=' + path.join(outputFolder, 'build.obj'));
 	args.push('SYMROOT=' + path.join(outputFolder, 'build.sym'));
 	args.push('SHARED_PRECOMPS_DIR=' + path.join(outputFolder, 'build.pch'));
-				
-	ctx.info('xcodebuildargs:');
-	ctx.info(xcbpath);
+
+	ctx.verbose('xcodepath: ' + xcbpath);
+	ctx.verbose('xcodebuildargs:');
 	args.forEach(function(arg) {
-		ctx.info('   ' + arg);
+		ctx.verbose('   ' + arg);
 	});
 
 	var ops = {

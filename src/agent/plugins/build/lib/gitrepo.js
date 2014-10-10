@@ -32,7 +32,7 @@ var shellError = function(ctx, callback) {
 }
 
 exports.getcode = function(ctx, options, callback) {
-	ctx.info('cwd: ' + process.cwd());
+	ctx.verbose('cwd: ' + process.cwd());
 
 	var git = which('git');
 	if (!git) {
@@ -42,7 +42,7 @@ exports.getcode = function(ctx, options, callback) {
 		return;
 	}
 
-	ctx.info('Using: ' + git);
+	ctx.verbose('Using: ' + git);
 	
 	ctx.info('Repo: ' + options.repoLocation);
 	var inputref = "refs/heads/master";
@@ -101,7 +101,7 @@ exports.getcode = function(ctx, options, callback) {
 			if (repoExists) {
 				ctx.section('Git fetch');
 				cd(repoPath);
-				ctx.info('cwd: ' + process.cwd());
+				ctx.verbose('cwd: ' + process.cwd());
 				if (shellError(ctx, callback)) return;
 				ctx.util.spawn('git', ['fetch'], { failOnStdErr: false }, function(err){ handle(err, complete); });
 			}

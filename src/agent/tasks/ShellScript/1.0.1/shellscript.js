@@ -27,12 +27,12 @@ exports.execute = function(ctx, callback) {
 	if (!cwd || cwd.length == 0) {
 		cwd = path.dirname(scriptPath);
 	}
-	ctx.verbose('cwd: ' + cwd);
 
 	cd(cwd);
+	ctx.verbose('cwd: ' + cwd);
 
 	// shell script runner
-	
+	ctx.verbose('running: ' + scriptPath);
 	ctx.util.spawn('sh', scriptPath, { cwd: cwd }, callback);
 }
 

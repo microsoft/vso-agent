@@ -21,9 +21,9 @@ exports.execute = function(ctx, callback) {
 	var _buffer;
 
 	var workingDir = path.resolve(ctx.inputs.cwd);
-	ctx.info('workingDir: ' +  workingDir);
 	cd(workingDir);
-
+	ctx.verbose('cwd: ' + workingDir);
+	ctx.verbose('script name: ' + ctx.inputs.scriptName);
 	// shell script runner
 	
 	ctx.util.spawn('sh', [ctx.inputs.scriptName], { cwd: workingDir }, callback);

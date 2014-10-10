@@ -24,10 +24,10 @@ exports.execute = function(ctx, callback) {
 	if (!cmakePath) {
 		callback(new Error('cmake not found'));
 	}
-	ctx.info('using cmake: ' + cmakePath);
+	ctx.verbose('using cmake: ' + cmakePath);
 
 	var srcRoot = ctx.inputs.srcRoot);
-	ctx.info('srcRoot: ' + srcRoot);
+	ctx.verbose('srcRoot: ' + srcRoot);
 
 	if (!fs.existsSync(srcRoot)) {
 		callback(new Error('srcRoot does not exist: ' + srcRoot));	
@@ -39,12 +39,12 @@ exports.execute = function(ctx, callback) {
 	var buildDirName = ctx.inputs.buildDirName;
 	var buildPath = path.join(srcRoot, buildDirName);
 	if (!fs.existsSync(buildPath)) {
+		ctx.verbose('creating build folder: ' + buildDirName)
 		mkdir(buildDirName);	
 	}
 	cd(buildDirName);
 
 	var cwd = process.cwd();
-	ctx.info('cwd: ' +  cwd);
 	ctx.info('Generating Files');
 	ctx.util.spawn(cmakePath, [srcRoot], { cwd: cwd, failOnStdErr: false }, function(err) {
 		if (err) {
@@ -53,6 +53,7 @@ exports.execute = function(ctx, callback) {
 		}
 
 		// TODO: join args from input
+		ctx.info('Building');
 		ctx.util.spawn(cmakePath, ['--build', buildPath], { cwd: cwd, failOnStdErr: false }, callback);	
 	});
 }
