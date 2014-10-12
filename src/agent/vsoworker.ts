@@ -111,18 +111,7 @@ process.on('message',function(msg){
 	                ag.error('Error: ' + err.message);
 	            }
 
-	            // At this point, the job is done so the server can send another.
-	            // process will not exit until the job is done.
-				ag.status('Finish Uploading Logs ...');
-
-				// ag.finishLogs()
-				ctx.finishLogs((err:any) => {
-					if (err) {
-		                ag.error('Error: ' + err.message);
-		            }
-
-					process.exit();
-				});
+	            process.exit();
 			});
 
 		});

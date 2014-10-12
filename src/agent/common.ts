@@ -100,9 +100,7 @@ export interface IFeedbackChannel {
 	enabled: boolean;
 
 	// lifetime
-	end(): void;
 	drain(callback: (err: any) => void): void;
-	finish(callback: (err: any) => void): void;
 
 	// queues
 	queueLogPage(page: ILogPageInfo): void;

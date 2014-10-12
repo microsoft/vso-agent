@@ -278,10 +278,6 @@ export class JobContext extends ExecutionContext {
         }); 	
     }
 
-    public finishLogs(callback: (err: any) => void): void {
-    	this.feedback.finish(callback);
-    }
-
     public writeConsoleSection(message: string) {
     	this.feedback.queueConsoleSection(message);
     }

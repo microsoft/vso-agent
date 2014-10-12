@@ -26,7 +26,7 @@ var TIMELINE_DELAY = 487;
 var LOG_DELAY = 1137;
 var LOCK_DELAY = 29323;
 var CHECK_INTERVAL = 1000;
-var MAX_DRAIN_WAIT = 10 * 60 * 1000; // 10 min
+var MAX_DRAIN_WAIT = 60 * 1000; // 1 min
 
 export class TimedWorker {
 	constructor(msDelay: number) {
@@ -80,14 +80,12 @@ export class TimedWorker {
 export class TimedQueue extends TimedWorker{
 	constructor(msDelay: number) {
 		this._queue = [];
-		this._isProcessing = false;
-		this._totalWaitTime = 0;
+		this.isProcessing = false;
 		super(msDelay);
 	}
 
 	public _queue: any[];
-    private _isProcessing: boolean;
-    private _totalWaitTime: number;
+    public isProcessing: boolean;
 
     //------------------------------------------------------------------
 	// Queueing
@@ -95,55 +93,14 @@ export class TimedQueue extends TimedWorker{
 	public add(item: any): void {
 		this._queue.push(item);
 	}
+
+	public getLength(): number {
+		return this._queue.length;
+	}
  
     //------------------------------------------------------------------
 	// Sending
 	//------------------------------------------------------------------
-	public drain(callback: (err: any) => void): void {
-		trace.enter('queue:drain');
-		this.enabled = false;
-		
-		if (this._queue && this._queue.length > 0) {
-			trace.write('queue items to process: ' + this._queue.length);
-			var toSend = this._queue;
-			this._queue = [];
-			this._isProcessing = true;
-			this.processQueue(toSend, (err) => {
-				trace.write('queue done processing');
-				this._isProcessing = false;
-				callback(err);
-			});
-		}
-		else {
-			//
-			// If the queue is empty, it's possible it's still processing. 
-			// Before we callback that we've completely drained, let's
-			// wait for processing up to some max drain time.
-			//
-            if (this._isProcessing) {
-            	trace.write('waiting on processing');
-                this._totalWaitTime = 0;
-                this._waitOnProcessing(callback);                
-            }
-            else {
-                callback(null);
-            }
-		}
-	}
-
-    private _waitOnProcessing(callback: (err: any) => void): void {
-    	trace.write('Waiting on processing: ' + this._totalWaitTime / 1000 + 'sec');
-    	setTimeout(() => {
-    		this._totalWaitTime += CHECK_INTERVAL;
-    		if (!this._isProcessing || this._totalWaitTime >= MAX_DRAIN_WAIT) {
-    			trace.write('processing: ' + this._isProcessing);
-    			callback(null);
-    		}
-    		else {
-    			this._waitOnProcessing(callback);
-    		}
-    	}, CHECK_INTERVAL);
-    }
 
 	// need to override
 	public processQueue(queue: any[], callback: (err: any) => void): void {
@@ -156,9 +113,9 @@ export class TimedQueue extends TimedWorker{
 	public doWork(callback: (err: any) => void): void {
 		var toSend = this._queue;
 		this._queue = [];
-		this._isProcessing = true;
+		this.isProcessing = true;
 		this.processQueue(toSend, (err) => {
-			this._isProcessing = false;
+			this.isProcessing = false;
 			this.continueSending();
 		});
 	}
@@ -212,6 +169,7 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
                                         agentCtx.config.creds.username, 
                                         agentCtx.config.creds.password);
 
+		this._totalWaitTime = 0;
 		this._logQueue = new LogPageQueue(this, agentCtx);
 		this._consoleQueue = new WebConsoleQueue(this);
 		this._lockRenewer = new LockRenewer(jobInfo, agentCtx.config.poolId, this._agentApi);		
@@ -224,8 +182,8 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 	public taskApi: ifm.ITaskApi;
 	public agentCtx: ctxm.AgentContext;
 	public jobInfo: cm.IJobInfo;
-	public enabled: boolean;
 
+	private _totalWaitTime: number;
 	private _logQueue: LogPageQueue;
 	private _consoleQueue: WebConsoleQueue;
 	private _lockRenewer: LockRenewer;
@@ -236,31 +194,37 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 	private _batch: any;
 	private _recordCount: number;
 
-	// finish sending feedback before finishing job
+	// wait till all the queues are empty and not processing.
 	public drain(callback: (err: any) => void): void {
 		trace.enter('servicechannel:drain');
-		this.enabled = false;
-		this._consoleQueue.end();
-
-		// drain the timeline batch
-		this.doWork((err: any) => {
-			trace.write('done work');
-			if (err) {
-				// TODO: failure case ... more?
-				trace.write('error draining queue: ' + err.message);
-			}
-
-			trace.write('draining console queue ...');
-			this._consoleQueue.drain(callback);
-		});
+		//this._lockRenewer.stop();
+		this._waitOnProcessing(callback);
 	}
 
-	// work after job completed (uploading logs)
-	public finish(callback: (err: any) => void): void {	
-		trace.enter('servicechannel:finish');
-		this._lockRenewer.stop();
-		this._logQueue.drain(callback);
+	private _queuesBusy(): boolean {
+		trace.write('console queue : ' + this._consoleQueue.isProcessing + ' ' + this._consoleQueue.getLength());
+		trace.write('log queue     : ' + this._logQueue.isProcessing + ' ' + this._logQueue.getLength());
+
+		var busy = (this._consoleQueue.isProcessing || this._consoleQueue.getLength() > 0) ||
+			       (this._logQueue.isProcessing || this._logQueue.getLength() > 0);
+
+		trace.write('busy: ' + busy);
+		return busy;
 	}
+
+    private _waitOnProcessing(callback: (err: any) => void): void {
+    	trace.write('Waiting on processing: ' + this._totalWaitTime / 1000 + ' sec');
+    	setTimeout(() => {
+    		this._totalWaitTime += CHECK_INTERVAL;
+    		if (this._queuesBusy() && this._totalWaitTime <= MAX_DRAIN_WAIT) {
+    			trace.write('continue waiting');
+				this._waitOnProcessing(callback);
+    		}
+    		else {
+    			callback(null);
+    		}
+    	}, CHECK_INTERVAL);
+    }	
 
     //------------------------------------------------------------------
 	// Queue Items
