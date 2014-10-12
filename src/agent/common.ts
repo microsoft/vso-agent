@@ -29,7 +29,8 @@ require('./extensions');
 export var sysVars = <any>{};
 sysVars.system = 'system';
 sysVars.collectionId = 'system.collectionId';
-sysVars.definitionId = 'system.definitionId'
+sysVars.definitionId = 'system.definitionId';
+sysVars.debug = 'system.debug';
 
 export var agentVars = <any>{};
 agentVars.rootDirectory = 'agent.rootDirectory';
