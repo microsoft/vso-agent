@@ -254,28 +254,23 @@ export class JobContext extends ExecutionContext {
 
     	this.setTaskResult(this.job.jobId, this.job.jobName, result);
 
-        // drain the queues before exiting the worker
-        trace.write('draining feedback');
-        this.feedback.drain((err: any) => {
-        	if (err) {
-        		trace.write('Failed to drain queue');
-        		result = ifm.TaskResult.Failed;
-        	}
+        var jobRequest: ifm.TaskAgentJobRequest = <ifm.TaskAgentJobRequest>{};
+        jobRequest.requestId = this.job.requestId;
+        jobRequest.finishTime = new Date();
+        jobRequest.result = result;
 
-        	trace.write('done draining queue. finishing job');
-	        var jobRequest: ifm.TaskAgentJobRequest = <ifm.TaskAgentJobRequest>{};
-	        jobRequest.requestId = this.job.requestId;
-	        jobRequest.finishTime = new Date();
-	        jobRequest.result = result;
+        trace.state('jobRequest', jobRequest);
+        trace.state('this.config', this.config);
 
-	        trace.state('jobRequest', jobRequest);
-	        trace.state('this.config', this.config);
+        // marking the job complete and then drain so the next worker can start
+        this.feedback.updateJobRequest(this.config.poolId, 
+        	                           this.job.lockToken, 
+        	                           jobRequest, 
+        	                           (err: any) => {
+        	                           		trace.write('draining feedback');
+        	                           		this.feedback.drain(callback);
 
-	        this.feedback.updateJobRequest(this.config.poolId, 
-	        	                           this.job.lockToken, 
-	        	                           jobRequest, 
-	        	                           callback);
-        }); 	
+        	                           	}); 	
     }
 
     public writeConsoleSection(message: string) {
