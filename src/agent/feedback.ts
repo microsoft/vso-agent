@@ -25,6 +25,8 @@ var CONSOLE_DELAY = 373;
 var TIMELINE_DELAY = 487;
 var LOG_DELAY = 1137;
 var LOCK_DELAY = 29323;
+var CHECK_INTERVAL = 1000;
+var MAX_DRAIN_WAIT = 10 * 60 * 1000; // 10 min
 
 export class TimedWorker {
 	constructor(msDelay: number) {
@@ -78,10 +80,14 @@ export class TimedWorker {
 export class TimedQueue extends TimedWorker{
 	constructor(msDelay: number) {
 		this._queue = [];
+		this._isProcessing = false;
+		this._totalWaitTime = 0;
 		super(msDelay);
 	}
 
 	public _queue: any[];
+    private _isProcessing: boolean;
+    private _totalWaitTime: number;
 
     //------------------------------------------------------------------
 	// Queueing
@@ -94,19 +100,50 @@ export class TimedQueue extends TimedWorker{
 	// Sending
 	//------------------------------------------------------------------
 	public drain(callback: (err: any) => void): void {
+		trace.enter('queue:drain');
 		this.enabled = false;
 		
-		if (this._queue && this._queue.length > 0) {			
+		if (this._queue && this._queue.length > 0) {
+			trace.write('queue items to process: ' + this._queue.length);
 			var toSend = this._queue;
 			this._queue = [];
+			this._isProcessing = true;
 			this.processQueue(toSend, (err) => {
+				trace.write('queue done processing');
+				this._isProcessing = false;
 				callback(err);
 			});
 		}
 		else {
-			callback(null);
+			//
+			// If the queue is empty, it's possible it's still processing. 
+			// Before we callback that we've completely drained, let's
+			// wait for processing up to some max drain time.
+			//
+            if (this._isProcessing) {
+            	trace.write('waiting on processing');
+                this._totalWaitTime = 0;
+                this._waitOnProcessing(callback);                
+            }
+            else {
+                callback(null);
+            }
 		}
 	}
+
+    private _waitOnProcessing(callback: (err: any) => void): void {
+    	trace.write('Waiting on processing: ' + this._totalWaitTime / 1000 + 'sec');
+    	setTimeout(() => {
+    		this._totalWaitTime += CHECK_INTERVAL;
+    		if (!this._isProcessing || this._totalWaitTime >= MAX_DRAIN_WAIT) {
+    			trace.write('processing: ' + this._isProcessing);
+    			callback(null);
+    		}
+    		else {
+    			this._waitOnProcessing(callback);
+    		}
+    	}, CHECK_INTERVAL);
+    }
 
 	// need to override
 	public processQueue(queue: any[], callback: (err: any) => void): void {
@@ -119,7 +156,9 @@ export class TimedQueue extends TimedWorker{
 	public doWork(callback: (err: any) => void): void {
 		var toSend = this._queue;
 		this._queue = [];
+		this._isProcessing = true;
 		this.processQueue(toSend, (err) => {
+			this._isProcessing = false;
 			this.continueSending();
 		});
 	}
@@ -413,22 +452,27 @@ export class LogPageQueue extends TimedQueue {
 	private _recordToLogIdMap: { [recordId: string]: number };
 
 	public processQueue(queue: any[], callback: (err: any) => void): void {
-		trace.enter('LogQueue:processQueue');
+		trace.enter('LogQueue:processQueue: ' + queue.length + ' pages to process');
+		for (var i=0; i < queue.length; i++) {
+			trace.write('page: ' + queue[i].pagePath);
+		}
 		
 		var planId: string = this._jobInfo.planId;
 
 		async.forEachSeries(queue,
 			(logPageInfo: cm.ILogPageInfo, done: (err: any) => void) => {
-				trace.state('logPageInfo', logPageInfo);
+				trace.state('process:logPageInfo', logPageInfo);
 
 				var pagePath: string = logPageInfo.pagePath;
-				trace.write('logPagePath: ' + pagePath);
+				trace.write('process:logPagePath: ' + pagePath);
 
 				var recordId: string = logPageInfo.logInfo.recordId;
 				trace.write('logRecordId: ' + recordId);
 
 				var serverLogPath: string;
 				var logId: number;
+
+				var pageUploaded = false;
 
 				async.series(
 				[
@@ -464,7 +508,7 @@ export class LogPageQueue extends TimedQueue {
 						// check logId in map first
 						logId = this._recordToLogIdMap[recordId]; 
 						if (logId) {
-							trace.write('uploading log');
+							trace.write('uploading log page: ' + pagePath);
 							this._taskApi.uploadLogFile(planId, 
 								                        logId, 
 								                        pagePath, 
@@ -472,7 +516,10 @@ export class LogPageQueue extends TimedQueue {
 								if (err) {
 									trace.write('error uploading log file: ' + err.message);
 								}
-								doneStep(err);
+
+								// we're going to continue here so we can get the next logs
+								// TODO: we should consider requeueing?								
+								doneStep(null);
 							});
 						}
 						else {
@@ -491,9 +538,15 @@ export class LogPageQueue extends TimedQueue {
 						// So, if disabled, do a final drain of the timeline records (contains ptrs to log)
 						//
 						if (!this._feedback.enabled) {
-							trace.write('draining queue');
+							trace.write('feedback disabled: draining queue');
 							this._feedback.drain((err: any) => {
-								doneStep(err);
+								if (err) {
+									trace.write('error draining queue: ' + err.message);
+								}
+
+								// we're going to continue here so we can get the next logs
+								// TODO: we should consider requeueing?
+								doneStep(null);
 							});
 						}
 						else {
