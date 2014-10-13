@@ -34,5 +34,8 @@
     "svchost": "0.1.x",
     "svcinstall": "0.1.x",
     "validator": "~3.11.0"
+  },
+  "devDependencies": {
+    "mocha": "1.x"
   }
 }

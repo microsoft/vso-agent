@@ -21,3 +21,5 @@ src/agent/utilities.ts
 src/agent/vsoagent.ts
 src/agent/vsoworker.ts
 src/bin/installer.ts
+src/test/lib/diagnostic.ts
+src/test/sample.ts

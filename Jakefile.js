@@ -14,10 +14,13 @@
 // limitations under the License.
 // 
 
+var fs = require('fs');
 var path = require('path');
 var shell = require('shelljs');
+var mocha = require ('mocha');
 var buildRoot = path.join(__dirname, '_build');
 var buildPath = path.join(buildRoot, 'vsoxplat');
+var testPath = path.join(buildPath, 'test');
 var packageRoot = path.join(__dirname, '_package');
 var tarRoot = path.join(__dirname, '_tar');
 var packagePath = path.join(packageRoot, 'vsoxplat');
@@ -40,6 +43,25 @@ task('build', {async: true}, function () {
 		jake.cpR('src/agent/handlers/vso.py', path.join(buildPath, 'agent', 'handlers'));
 		jake.cpR('src/bin/install.js', path.join(buildPath, 'bin'));
 		complete();
+	});
+});
+
+desc('Run tests')
+task('test', ['clean'], function() {
+	var runner = new mocha({reporter: 'spec', ui: 'bdd'});
+
+	fs.readdirSync(testPath).filter(function(file){
+		return file.substr(-3) === '.js';
+	}).forEach(function(file){
+		runner.addFile(path.join(testPath, file));
+	});
+
+	runner.run(function(failures) {
+		if (failures) {
+			fail(failures);
+		} else {
+			complete();
+		}
 	});
 });
 

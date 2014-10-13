@@ -146,4 +146,8 @@ $ jake build
 $ jake package
 ```
 
-
+###Run Tests
+run jake test in the root of the repo
+```bash
+jake test
+```
