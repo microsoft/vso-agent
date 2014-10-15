@@ -20,9 +20,10 @@ var shell = require('shelljs');
 var mocha = require ('mocha');
 var buildRoot = path.join(__dirname, '_build');
 var buildPath = path.join(buildRoot, 'vsoxplat');
-var testPath = path.join(buildPath, 'test');
 var packageRoot = path.join(__dirname, '_package');
 var tarRoot = path.join(__dirname, '_tar');
+var testRoot = path.join(__dirname, '_test');
+var testPath = path.join(testRoot, 'test');
 var packagePath = path.join(packageRoot, 'vsoxplat');
 
 desc('This is the default task.');
@@ -48,6 +49,15 @@ task('build', {async: true}, function () {
 
 desc('Run tests')
 task('test', ['clean'], function() {
+	console.log('Creating _test folder');
+	jake.rmRf(testRoot);
+	console.log('Copying files');
+	jake.cpR(buildPath, testRoot);
+	jake.cpR('src/test/messages', path.join(testRoot, 'test'));
+	jake.mkdirP(path.join(testRoot, 'agent', 'work'));
+	jake.cpR('src/agent/tasks', path.join(testRoot, 'agent', 'work', 'tasks'));
+	jake.cpR('src/agent/plugins', path.join(testRoot, 'agent', 'plugins'));
+
 	var runner = new mocha({reporter: 'spec', ui: 'bdd'});
 
 	fs.readdirSync(testPath).filter(function(file){
@@ -72,7 +82,9 @@ task('drop', [], function() {
 	console.log('Dropping _package');
 	jake.rmRf('_package');
 	console.log('Dropping _tar');
-	jake.rmRf('_tar');	
+	jake.rmRf('_tar');
+	console.log('Dropping _test');
+	jake.rmRf(testRoot);
 	console.log('Dropping done.');
 });
 

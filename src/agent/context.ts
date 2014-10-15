@@ -133,6 +133,11 @@ export class Context extends events.EventEmitter {
 export class AgentContext extends Context implements cm.ITraceWriter {
 	constructor(hostProcess: string, config: cm.IConfiguration) {
 		this.config = config;
+		
+		// Set full path for work folder, as it is used by others
+		if (!this.config.settings.workFolder.startsWith('/')) {
+        	this.config.settings.workFolder = path.join(__dirname, this.config.settings.workFolder);
+    	}
 
         this.fileWriter = new dm.DiagnosticFileWriter(process.env[cm.envVerbose] ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info, 
 					path.join(path.resolve(this.config.settings.workFolder), '_diag', hostProcess), 

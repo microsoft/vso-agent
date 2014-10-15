@@ -35,10 +35,6 @@ function setVariables(job: ifm.JobRequestMessage, agentContext: ctxm.AgentContex
 	trace.state('variables', job.environment.variables);
 
     var workingFolder = agentContext.config.settings.workFolder;
-    if (!workingFolder.startsWith('/')) {
-        workingFolder = path.join(__dirname, agentContext.config.settings.workFolder);
-    }
-
     var variables = job.environment.variables;
 
     // TODO: remove the back compat vars in a sprint 
@@ -60,7 +56,8 @@ function setVariables(job: ifm.JobRequestMessage, agentContext: ctxm.AgentContex
 //
 // Worker process waits for a job message, processes and then exits
 //
-process.on('message',function(msg){
+
+export function run(msg, createFeedbackChannel: (agentUrl, taskUrl, jobInfo, ag) => cm.IFeedbackChannel, finished: () => void) {
 	ag = new ctxm.AgentContext('worker', msg.config);
 	trace = new tm.Tracing(__filename, ag);
 	trace.enter('.onMessage');
@@ -86,7 +83,7 @@ process.on('message',function(msg){
 
 		var agentUrl = ag.config.settings.serverUrl;
 		var taskUrl = job.authorization.serverUrl;
-		var feedback: cm.IFeedbackChannel = new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, ag);
+		var feedback: cm.IFeedbackChannel = createFeedbackChannel(agentUrl, taskUrl, jobInfo, ag);
 		trace.write('created feedback');
 
 		var ctx: ctxm.JobContext = new ctxm.JobContext(job, feedback, ag);
@@ -111,13 +108,22 @@ process.on('message',function(msg){
 	                ag.error('Error: ' + err.message);
 	            }
 
-	            process.exit();
+	            finished();
 			});
 
 		});
 	}
-});
+}
 
+process.on('message',function(msg){
+	run(msg, 
+		function(agentUrl, taskUrl, jobInfo, ag) {
+			return new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, ag);
+		},
+		function() {
+			process.exit();
+	});
+});
 
 process.on('uncaughtException', function(err) {
 	if (ag) {

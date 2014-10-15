@@ -23,3 +23,4 @@ src/agent/vsoworker.ts
 src/bin/installer.ts
 src/test/lib/diagnostic.ts
 src/test/sample.ts
+src/test/shellscript.ts
