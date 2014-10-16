@@ -134,7 +134,8 @@ exports.execute = function(ctx, callback) {
 	// actions is optional - build is default
 	var actions = ctx.inputs.actions;
 	if (actions) {
-		args.push(ctx.inputs.actions);
+		var actionArgs = ctx.inputs.actions.split(' ');
+		args = args.concat(actionArgs);
 	}
 
 	// push variables for output
@@ -182,7 +183,7 @@ exports.execute = function(ctx, callback) {
 					var errMsg = "xcodebuild failed: " + rc;
 					switch (rc) {
 						case EX_DATAERR:
-							errMsg = "xcodebuild " + actions + "failed.  See the log.";
+							errMsg = "xcodebuild " + actions + " failed.  See the log.";
 							break;
 
 						case EX_USAGE:
