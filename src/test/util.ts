@@ -15,6 +15,7 @@
 //
 
 import gm = require('./lib/gitrepo');
+import cm = require('../agent/common');
 var fs = require('fs');
 var shell = require('shelljs');
 var uuid = require('node-uuid');
@@ -63,6 +64,22 @@ function copyTestProject(projectName: string, destination: string) {
 
 export function createTestMessage() {
 
+}
+
+export function createTestConfig(): cm.IConfiguration {
+	// TODO Do we want to create these randomly, or do we not care?
+	var config:cm.IConfiguration = <cm.IConfiguration>{};
+	config.settings = <cm.ISettings>{};
+	config.settings.poolName = 'testPool';
+	config.settings.serverUrl = 'https://yosoylocoporcornballs.com';
+	config.settings.agentName = 'testAgent';
+	config.settings.workFolder = './work'
+	config.creds = {};
+	config.creds.username = 'username';
+	config.creds.password = 'password';
+	config.poolId = 1;
+
+	return config;
 }
 
 

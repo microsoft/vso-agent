@@ -18,69 +18,104 @@ import cm = require('../../agent/common');
 import ifm = require('../../agent/api/interfaces');
 
 export class TestFeedbackChannel implements cm.IFeedbackChannel {
-	agentUrl: string;
-	taskUrl: string;
-	taskApi: ifm.ITaskApi;
-	jobInfo: cm.IJobInfo;	
-	enabled: boolean;
+	public agentUrl: string;
+	public taskUrl: string;
+	public taskApi: ifm.ITaskApi;
+	public jobInfo: cm.IJobInfo;	
+	public enabled: boolean;
 
-	drain(callback: (err: any) => void): void {
+	private _webConsole: string[];
+	private _records: any;
+	private _logPages: any;
+
+	constructor() {
+		this._webConsole = [];
+		this._records = {};
+		this._logPages = {};
+	}
+
+
+	public drain(callback: (err: any) => void): void {
 		callback(null);
 	}
 
-	queueLogPage(page: cm.ILogPageInfo): void {
+	public queueLogPage(page: cm.ILogPageInfo): void {
+		if (!this._logPages.hasOwnProperty(page.logInfo.recordId)) {
+			this._logPages[page.logInfo.recordId] = [];
+		}
 
+		this._logPages[page.logInfo.recordId].push(page);
 	}
 
-	queueConsoleLine(line: string): void {
-
+	public queueConsoleLine(line: string): void {
+		this._webConsole.push(line);
 	}
 
-	queueConsoleSection(line: string): void {
-
+	public queueConsoleSection(line: string): void {
+		this._webConsole.push('[section] ' + line);
 	}
 
-	setCurrentOperation(recordId: string, operation: string): void {
-
+	public setCurrentOperation(recordId: string, operation: string): void {
+		this._getFromBatch(recordId).currentOperation = operation;
 	}
 
-	setName(recordId: string, name: string): void {
-
+	public setName(recordId: string, name: string): void {
+		this._getFromBatch(recordId).name = name;
 	}
 
-	setStartTime(recordId: string, startTime: Date): void {
-
+	public setStartTime(recordId: string, startTime: Date): void {
+		this._getFromBatch(recordId).startTime = startTime;
 	}
 
-	setFinishTime(recordId: string, finishTime: Date): void {
-
+	public setFinishTime(recordId: string, finishTime: Date): void {
+		this._getFromBatch(recordId).finishTime = finishTime;
 	}
 
-	setState(recordId: string, state: ifm.TimelineRecordState): void {
-
+	public setState(recordId: string, state: ifm.TimelineRecordState): void {
+		this._getFromBatch(recordId).state = state;
 	}
 
-	setResult(recordId: string, result: ifm.TaskResult): void {
-
+	public setResult(recordId: string, result: ifm.TaskResult): void {
+		this._getFromBatch(recordId).result = result;
 	}
 
-	setType(recordId: string, type: string): void {
-
+	public setType(recordId: string, type: string): void {
+		this._getFromBatch(recordId).type = type;
 	}
 
-	setParentId(recordId: string, parentId: string): void {
-
+	public setParentId(recordId: string, parentId: string): void {
+		this._getFromBatch(recordId).parentId = parentId;
 	}
 
-	setWorkerName(recordId: string, workerName: string): void {
-
+	public setWorkerName(recordId: string, workerName: string): void {
+		this._getFromBatch(recordId).workerName = workerName;
 	}
 
-	setLogId(recordId: string, logRef: ifm.TaskLogReference): void {
-
+	public setLogId(recordId: string, logRef: ifm.TaskLogReference): void {
+		this._getFromBatch(recordId).log = logRef;
 	}
 
-	updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void {
+	public updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void {
 		callback(null);
+	}
+
+	public printConsole(): void {
+		console.log(this._webConsole);
+	}
+
+	public printRecords(): void {
+		console.log(JSON.stringify(this._records));
+	}
+
+	public printLogPages(): void {
+		console.log(JSON.stringify(this._logPages));
+	}
+
+	private _getFromBatch(recordId: string) {
+		if (!this._records.hasOwnProperty(recordId)) {
+			this._records[recordId] = {};
+		}
+
+		return this._records[recordId];
 	}
 }

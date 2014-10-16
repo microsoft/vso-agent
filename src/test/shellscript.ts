@@ -46,19 +46,11 @@ describe('ShellScript Job', function() {
 	});
 
 	it('should run', function(done) {
-		var config:cm.IConfiguration = <cm.IConfiguration>{};
-		config.settings = <cm.ISettings>{};
-		config.settings.poolName = 'default';
-		config.settings.serverUrl = 'https://cjtest.tfsbuildhost3.tfsallin.net';
-		config.settings.agentName = 'test';
-		config.settings.workFolder = './work'
-		config.creds = {};
-		config.creds.username = 'user';
-		config.creds.password = 'password';
-		config.poolId = 1;
+		var config: cm.IConfiguration = util.createTestConfig();
 		// TODO fix up issues with shellscript.json
 		var messageBody = require('./messages/shellscript.json');
 		messageBody.environment.endpoints[0].url = repo.repo;
+		var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
 		var workerMsg = { 
 			messageType:"job",
 			config: config,
@@ -66,7 +58,7 @@ describe('ShellScript Job', function() {
 		}
 		wk.run(workerMsg,
 			function(agentUrl, taskUrl, jobInfo, ag) {
-				return new fm.TestFeedbackChannel();
+				return feedbackChannel;
 			},
 			function() {
 				done();
