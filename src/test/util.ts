@@ -14,24 +14,56 @@
 // limitations under the License.
 //
 
+import gm = require('./lib/gitrepo');
 var fs = require('fs');
 var shell = require('shelljs');
+var uuid = require('node-uuid');
+var path = require('path');
 
-export function createWork(folder: string) {
-	fs.exists(folder, function(exists) {
-		if (!exists) {
-			try {
-				console.log('Creating folder ' + folder);
-				shell.mkdir('-p', folder);	
-			}
-			catch (e) {
-				console.log('Could not create the work folder');
-			}
+export function createTestProjectRepo(projectName: string, callback: (err, repo) => void){
+	var folder = createTmpFolder();
+	copyTestProject(projectName, folder);
+	var repo = new gm.GitRepo(folder);
+	repo.init(function (err) {
+		if (!err) {
+			repo.add('.', function(err) {
+				if (!err) {
+					repo.commit('Initial setup', false, function(err) {
+						if (!err) {
+							callback(null, repo);
+						} else {
+							callback(err, null);
+						}
+					});
+				} else {
+					callback(err, null);
+				}
+			});
+		} else {
+			callback(err, null);
 		}
 	});
-	copyTasks(folder);
-};
+}
 
-function copyTasks(destination: string) {
-	shell.cp('-R', 'src/agent/tasks', destination)
-};
+export function cleanup(repo: gm.GitRepo) {
+	if (!process.env.XPLAT_NO_CLEANUP) {
+		shell.rm('-rf', repo.repo);
+	}
+}
+
+export function createTmpFolder(): string {
+	var folder = path.join(process.env['TMPDIR'], uuid.v1());
+	shell.mkdir('-p', folder);
+	return folder;
+}
+
+function copyTestProject(projectName: string, destination: string) {
+	shell.cp('-rf', path.join(__dirname, 'projects', projectName, '*'), destination);
+}
+
+export function createTestMessage() {
+
+}
+
+
+

@@ -54,6 +54,7 @@ task('test', ['clean'], function() {
 	console.log('Copying files');
 	jake.cpR(buildPath, testRoot);
 	jake.cpR('src/test/messages', path.join(testRoot, 'test'));
+	jake.cpR('src/test/projects', path.join(testRoot, 'test'));
 	jake.mkdirP(path.join(testRoot, 'agent', 'work'));
 	jake.cpR('src/agent/tasks', path.join(testRoot, 'agent', 'work', 'tasks'));
 	jake.cpR('src/agent/plugins', path.join(testRoot, 'agent', 'plugins'));

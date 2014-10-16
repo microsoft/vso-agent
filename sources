@@ -22,5 +22,7 @@ src/agent/vsoagent.ts
 src/agent/vsoworker.ts
 src/bin/installer.ts
 src/test/lib/diagnostic.ts
+src/test/lib/feedback.ts
+src/test/lib/gitrepo.ts
 src/test/sample.ts
 src/test/shellscript.ts

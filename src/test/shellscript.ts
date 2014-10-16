@@ -19,12 +19,33 @@
 import assert = require('assert');
 import util = require('./util');
 import fm = require('./lib/feedback');
+import gm = require('./lib/gitrepo');
 import wk = require('../agent/vsoworker');
 import cm = require('../agent/common');
 
+var shell = require('shelljs');
+
 describe('ShellScript Job', function() {
+	var repo: gm.GitRepo;
+
+	beforeEach(function(done) {
+		util.createTestProjectRepo('shellscript', function(err, createdRepo) {
+			if (!err) {
+				repo = createdRepo;
+			} else {
+				assert.fail('Failed to create repo: ' + err);
+			}
+			done();
+		});
+	});
+
+	afterEach(function() {
+		if (repo) {
+			util.cleanup(repo);
+		}
+	});
+
 	it('should run', function(done) {
-		this.timeout(60000);
 		var config:cm.IConfiguration = <cm.IConfiguration>{};
 		config.settings = <cm.ISettings>{};
 		config.settings.poolName = 'default';
@@ -32,17 +53,17 @@ describe('ShellScript Job', function() {
 		config.settings.agentName = 'test';
 		config.settings.workFolder = './work'
 		config.creds = {};
-		config.creds.username = 'chjohn';
-		config.creds.password = 'GameNight!';
+		config.creds.username = 'user';
+		config.creds.password = 'password';
 		config.poolId = 1;
 		// TODO fix up issues with shellscript.json
 		var messageBody = require('./messages/shellscript.json');
+		messageBody.environment.endpoints[0].url = repo.repo;
 		var workerMsg = { 
 			messageType:"job",
 			config: config,
 			data: messageBody
 		}
-		util.createWork('_build/vsoxplat/agent/work');
 		wk.run(workerMsg,
 			function(agentUrl, taskUrl, jobInfo, ag) {
 				return new fm.TestFeedbackChannel();

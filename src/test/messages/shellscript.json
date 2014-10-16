@@ -24,7 +24,7 @@
 					"checkoutSubmodules":"False"
 				},
 				"name": "test",
-				"type": "TfsGit",
+				"type": "Git",
 				"authorization": "Job",
 				"url": "https://cjtest.tfsbuildhost3.tfsallin.net/DefaultCollection/_git/test"
 			}
@@ -63,7 +63,7 @@
 			"name": "ShellScript",
 			"version": "1.0.1",
 			"inputs": {
-				"scriptPath": "build.sh",
+				"scriptPath": "shell.sh",
 				"cwd":""
 			}
 		}
