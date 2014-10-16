@@ -87,6 +87,16 @@
             "cwd": ""  
         }
     }, {
+        "instanceId": "5ba368b7-9f14-44ce-9bdb-3ed56786458c",
+        "id": "6C731C3C-3C68-459A-A5C9-BDE6E6595B5B",
+        "name": "ShellScript",
+        "version":"1.0.1",
+        "inputs":{
+            "scriptPath": "Helloworld.sh", 
+            "args" : "-a aval -b -c cval",
+            "cwd": ""
+        }
+    }, {      
         "instanceId": "6cd468b7-9f14-44ce-9bdb-3ed56786457f",
         "id": "1E78DC1B-9132-4B18-9C75-0E7ECC634B74",
         "name": "Xcode",

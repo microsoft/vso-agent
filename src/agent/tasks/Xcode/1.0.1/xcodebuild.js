@@ -14,6 +14,10 @@
 // limitations under the License.
 // 
 
+var EX__BASE = 63;
+var EX_USAGE = 64;
+var EX_DATAERR = 65;
+
 var fs = require('fs')
   , path = require('path')
   , async = require('async')
@@ -128,7 +132,8 @@ exports.execute = function(ctx, callback) {
 	}
 
 	// actions is optional - build is default
-	if (ctx.inputs.actions) {
+	var actions = ctx.inputs.actions;
+	if (actions) {
 		args.push(ctx.inputs.actions);
 	}
 
@@ -144,6 +149,7 @@ exports.execute = function(ctx, callback) {
 		ctx.verbose('   ' + arg);
 	});
 
+
 	var ops = {
 		cwd: cwd,
 		env: process.env
@@ -151,10 +157,42 @@ exports.execute = function(ctx, callback) {
 
 	async.series([
 		function(complete) {
-			ctx.util.spawn(xcbpath, ['-version'], ops, function(err){ complete(err); });
+			ctx.util.spawn(xcbpath, ['-version'], ops, function(err, rc){ 
+				ctx.verbose('rc: ' + rc);
+				complete(err); 
+			});
 		},
 		function(complete) {
-			ctx.util.spawn(xcbpath, args, ops, function(err){ complete(err); });
+			// we are relying on sysex3 return codes via xcodebuild man page 
+			// https://developer.apple.com/library/mac/documentation/Darwin/Reference/ManPages/man3/sysexits.3.html#//apple_ref/doc/man/3/sysexits			
+			var ops = {
+				cwd: cwd,
+				env: process.env,
+				failOnStdErr: false,
+				failOnNonZeroRC: false
+			};
+
+			ctx.util.spawn(xcbpath, args, ops, function(err, rc){ 
+				ctx.verbose('rc: ' + rc);
+
+				if (rc < EX__BASE) {
+					complete(null);
+				}
+				else {
+					var errMsg = "xcodebuild failed: " + rc;
+					switch (rc) {
+						case EX_DATAERR:
+							errMsg = "xcodebuild " + actions + "failed.  See the log.";
+							break;
+
+						case EX_USAGE:
+							errMsg = "xcodebuild usage incorrect.  See the log.";
+							break;
+					}
+					
+					complete(new Error(errMsg)); 					
+				}
+			});
 		}],
 		function(err) {
 			callback(err);

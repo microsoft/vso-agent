@@ -27,16 +27,25 @@ export class Utilities {
 
 	private ctx: ctxm.Context;
 
+	//
+	// '-a -b "quoted b value" -c -d "quoted d value"' becomes
+	// [ '-a', '-b', '"quoted b value"', '-c', '-d', '"quoted d value"' ]
+	//
+	public argStringToArray(argString: string): string[] {
+		return argString.match(/([^" ]*("[^"]*")[^" ]*)|[^" ]+/g);	
+	}
+
     // spawn a process with stdout/err piped to context's logger
 	// callback(err)
-	public spawn(name: string, args: string[], options, callback) {
+	public spawn(name: string, args: string[], options, callback: (err: any, returnCode: number) => void) {
 		var failed = false;
 		options = options || {};
 
 		var ops = {
 			cwd: process.cwd(),
 			env: process.env,
-			failOnStdErr: true 
+			failOnStdErr: true,
+			failOnNonZeroRC: true 
 		};
 
 		// write over specified options over default options (ops)
@@ -66,17 +75,17 @@ export class Utilities {
 
 		runCP.on('exit', (code) => {
             if (failed) {
-                callback(new Error('Failed with Error Output'));
+                callback(new Error('Failed with Error Output'), code);
                 return;
             }
 
-            if (code == 0) {
-                callback();
+            if (code == 0 || !ops.failOnNonZeroRC) {
+                callback(null, code);
             } else {                
                 var msg = 'Return code: ' + code;
                 this.ctx.error(msg);
 
-                callback(new Error(msg));
+                callback(new Error(msg), code);
             }
 		});			
 	}	

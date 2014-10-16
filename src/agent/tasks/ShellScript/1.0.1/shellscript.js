@@ -20,7 +20,13 @@ var shell = require('shelljs/global');
 exports.execute = function(ctx, callback) {
 	var _buffer;
 
-	var scriptPath = [ctx.inputs.scriptPath];
+	var args = [ctx.inputs.scriptPath];
+
+	var argsInput = ctx.inputs.args;
+	ctx.verbose('argsInput: ' + argsInput);
+	if (argsInput && argsInput.length > 0) {
+		args = args.concat(ctx.util.argStringToArray(argsInput));
+	} 
 
 	// cwd is optional - we use folder of script as working directory if not set.
 	var cwd = ctx.inputs.cwd;
@@ -32,8 +38,9 @@ exports.execute = function(ctx, callback) {
 	ctx.verbose('cwd: ' + cwd);
 
 	// shell script runner
-	ctx.verbose('running: ' + scriptPath);
-	ctx.util.spawn('sh', scriptPath, { cwd: cwd }, callback);
+	ctx.verbose('running: ' + JSON.stringify(args, null, 2));
+
+	ctx.util.spawn('sh', args, { cwd: cwd }, callback);
 }
 
 // TODO: (bryanmac) system needs to chmod on the script? is that configurable?
