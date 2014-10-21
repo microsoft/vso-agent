@@ -16,20 +16,18 @@
 
 /// <reference path="./definitions/mocha.d.ts"/>
 
+import gm = require('./lib/gitrepo');
 import assert = require('assert');
 import util = require('./util');
 import fm = require('./lib/feedback');
-import gm = require('./lib/gitrepo');
 import wk = require('../agent/vsoworker');
 import cm = require('../agent/common');
 
-var shell = require('shelljs');
-
-describe('ShellScript Job', function() {
+describe('Xcode Job', function() {
 	var repo: gm.GitRepo;
 
 	beforeEach(function(done) {
-		util.createTestProjectRepo('shellscript', function(err, createdRepo) {
+		util.createTestProjectRepo('xcode', function(err, createdRepo) {
 			if (!err) {
 				repo = createdRepo;
 			} else {
@@ -48,8 +46,7 @@ describe('ShellScript Job', function() {
 	it('should run', function(done) {
 		this.timeout(10000);
 		var config: cm.IConfiguration = util.createTestConfig();
-		// fix up issues with shellscript.json
-		var messageBody = require('./messages/shellscript.json');
+		var messageBody = require('./messages/xcode.json');
 		messageBody.environment.endpoints[0].url = repo.repo;
 		var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
 		var workerMsg = { 

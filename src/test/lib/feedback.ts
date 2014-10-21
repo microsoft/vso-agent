@@ -111,6 +111,24 @@ export class TestFeedbackChannel implements cm.IFeedbackChannel {
 		console.log(JSON.stringify(this._logPages));
 	}
 
+	public getRecordsString(): string {
+		return JSON.stringify(this._records);
+	}
+
+	public jobsCompletedSuccessfully(): boolean {
+		for(var id in this._records) {
+			if (this._records.hasOwnProperty(id)) {
+				var record = this._records[id];
+				if (record.state != ifm.TimelineRecordState.Completed) {
+					return false;
+				} else if(record.result != ifm.TaskResult.Succeeded) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
 	private _getFromBatch(recordId: string) {
 		if (!this._records.hasOwnProperty(recordId)) {
 			this._records[recordId] = {};

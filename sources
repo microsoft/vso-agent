@@ -26,3 +26,4 @@ src/test/lib/feedback.ts
 src/test/lib/gitrepo.ts
 src/test/jake.ts
 src/test/shellscript.ts
+src/test/xcode.ts

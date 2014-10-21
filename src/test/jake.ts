@@ -44,9 +44,8 @@ describe('Jake Job', function() {
 	});
 
 	it('should run', function(done) {
-		this.timeout(60000);
+		this.timeout(10000);
 		var config: cm.IConfiguration = util.createTestConfig();
-		// TODO fix up issues with shellscript.json
 		var messageBody = require('./messages/jake.json');
 		messageBody.environment.endpoints[0].url = repo.repo;
 		var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
@@ -60,6 +59,7 @@ describe('Jake Job', function() {
 				return feedbackChannel;
 			},
 			function() {
+				assert(feedbackChannel.jobsCompletedSuccessfully(), feedbackChannel.getRecordsString());
 				done();
 		});
 	});
