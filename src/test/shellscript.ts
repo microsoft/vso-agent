@@ -25,43 +25,46 @@ import cm = require('../agent/common');
 
 var shell = require('shelljs');
 
-describe('ShellScript Job', function() {
-	var repo: gm.GitRepo;
+describe('Test Jobs', function() {
+	describe('ShellScript Job', function() {
+		var repo: gm.GitRepo;
 
-	beforeEach(function(done) {
-		util.createTestProjectRepo('shellscript', function(err, createdRepo) {
-			if (!err) {
-				repo = createdRepo;
-			} else {
-				assert.fail('Failed to create repo: ' + err);
-			}
-			done();
-		});
-	});
-
-	afterEach(function() {
-		if (repo) {
-			util.cleanup(repo);
-		}
-	});
-
-	it('should run', function(done) {
-		var config: cm.IConfiguration = util.createTestConfig();
-		// TODO fix up issues with shellscript.json
-		var messageBody = require('./messages/shellscript.json');
-		messageBody.environment.endpoints[0].url = repo.repo;
-		var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
-		var workerMsg = { 
-			messageType:"job",
-			config: config,
-			data: messageBody
-		}
-		wk.run(workerMsg,
-			function(agentUrl, taskUrl, jobInfo, ag) {
-				return feedbackChannel;
-			},
-			function() {
+		beforeEach(function(done) {
+			util.createTestProjectRepo('shellscript', function(err, createdRepo) {
+				if (!err) {
+					repo = createdRepo;
+				} else {
+					assert.fail('Failed to create repo: ' + err);
+				}
 				done();
+			});
+		});
+
+		afterEach(function() {
+			if (repo) {
+				util.cleanup(repo);
+			}
+		});
+
+		it('should run', function(done) {
+			this.timeout(60000);
+			var config: cm.IConfiguration = util.createTestConfig();
+			// TODO fix up issues with shellscript.json
+			var messageBody = require('./messages/shellscript.json');
+			messageBody.environment.endpoints[0].url = repo.repo;
+			var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
+			var workerMsg = { 
+				messageType:"job",
+				config: config,
+				data: messageBody
+			}
+			wk.run(workerMsg,
+				function(agentUrl, taskUrl, jobInfo, ag) {
+					return feedbackChannel;
+				},
+				function() {
+					done();
+			});
 		});
 	});
 });
