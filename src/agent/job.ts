@@ -184,12 +184,13 @@ export class JobRunner {
 
 									if (err) {
 										ag.error(err);
-									}									
-									done(err);
+                                    }
+
+                                    done(err);
 								});
 							}			
 						], 
-						function(err) {
+                        function (err) {
 							var jobResult = jobSuccess ? ifm.TaskResult.Succeeded : ifm.TaskResult.Failed;
 							trace.write('jobResult: ' + jobResult);
 

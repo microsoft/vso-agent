@@ -121,7 +121,8 @@ process.on('message',function(msg){
 
 process.on('uncaughtException', function(err) {
 	if (ag) {
-		ag.error('worker unhandled: ' + err.message);
+        ag.error('worker unhandled: ' + err.message);
+        ag.error(err);
 	}
 
 	process.exit();	

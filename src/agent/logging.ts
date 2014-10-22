@@ -38,7 +38,7 @@ export class PagingLogger extends events.EventEmitter implements cm.IDiagnosticW
 
 		this.metadata = metadata;
 		this.pagesId = uuid.v1();
-		var logName = new Date().toISOString() + '_' + process.pid + '.log';
+		var logName = new Date().toISOString().replace(':', '-') + '_' + process.pid + '.log';
 		this.logPath = path.join(logFolder, logName);
 		this.pageFolder = path.join(logFolder, 'pages');
 		shell.mkdir('-p', this.pageFolder);

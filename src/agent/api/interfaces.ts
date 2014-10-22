@@ -164,12 +164,18 @@ export interface JobEndpoint {
 export interface JobEnvironment {
     data: any;
     endpoints: JobEndpoint[];
+    options: { [key: string]: JobOption; };
     secrets: any;
     variables: { [key: string]: string; };
 }
 
 export interface JobEvent {
     jobId: string;
+}
+
+export interface JobOption {
+    data: { [key: string]: string; };
+    id: string;
 }
 
 export interface JobRequestMessage {

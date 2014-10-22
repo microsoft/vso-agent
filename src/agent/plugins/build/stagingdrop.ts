@@ -1,0 +1,416 @@
+// 
+// Copyright (c) Microsoft and contributors.  All rights reserved.
+// 
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//   http://www.apache.org/licenses/LICENSE-2.0
+// 
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// 
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// 
+
+/// <reference path="../../definitions/Q.d.ts" />
+/// <reference path="../../definitions/shelljs.d.ts" />
+
+import path = require('path');
+import fs = require('fs');
+import Q = require("q");
+import shelljs = require("shelljs");
+import ctxm = require('../../context');
+import ifm = require('../../api/interfaces');
+import buildApi = require("./buildapi");
+import basicm = require('../../api/basiccreds');
+
+var stagingOptionId: string = "82f9a3e8-3930-482e-ac62-ae3276f284d5";
+var dropOptionId: string = "e8b30f6f-039d-4d34-969c-449bbe9c3b9e";
+
+exports.pluginName = function () {
+    return "copyToStagingFolder";
+}
+
+// what shows in progress view
+exports.pluginTitle = function () {
+	return "Copying files to staging folder"
+}
+
+exports.afterJob = function (ctx: ctxm.PluginContext, callback) {
+    /**
+     * this plugin handles both the "copy to staging folder" and "create drop" build options
+     * this way we can ensure that they happen in the correct order
+     */
+    if (ctx.job.environment.options) {
+        var funcs = [];
+
+        var stagingOption: ifm.JobOption = ctx.job.environment.options[stagingOptionId];
+        if (stagingOption) {
+            funcs.push(() => copyToStagingFolder(ctx, stagingOption));
+        }
+
+        var dropOption: ifm.JobOption = ctx.job.environment.options[dropOptionId];
+        if (dropOption) {
+            funcs.push(() => createDrop(ctx, dropOption));
+        }
+
+        funcs.reduce(Q.when, Q(null))
+            .then(() => {
+                callback();
+            }, (err) => {
+                // this will be called if anything in funcs fails
+                callback(err);
+            });
+    }
+    else {
+        callback();
+    }
+}
+
+exports.shouldRun = function (jobSuccess: boolean, ctx: ctxm.JobContext) {
+    if (jobSuccess && !!ctx.job.environment.options) {
+        return !!ctx.job.environment.options[stagingOptionId] || !!ctx.job.environment.options[dropOptionId];
+    }
+    else {
+        return false;
+    }
+}
+
+function copyToStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption): Q.IPromise<any> {
+    // determine root: $(build.sourcesdirectory)
+    ctx.info("looking for source in " + ctxm.WellKnownVariables.sourceFolder);
+    var sourcesRoot: string = ctx.job.environment.variables[ctxm.WellKnownVariables.sourceFolder].replaceVars(ctx.job.environment.variables);
+
+    // determine staging folder: $(build.stagingdirectory)[/{stagingfolder}]
+    ctx.info("looking for staging folder in " + ctxm.WellKnownVariables.stagingFolder);
+    var stagingFolder = ctx.job.environment.variables[ctxm.WellKnownVariables.stagingFolder].replaceVars(ctx.job.environment.variables)
+    var relativeStagingPath = stagingOption.data["stagingfolder"];
+    if (relativeStagingPath) {
+        stagingFolder = path.join(stagingFolder, relativeStagingPath.replaceVars(ctx.job.environment.variables));
+    }
+
+    var searchPattern = stagingOption.data["pattern"];
+    if (searchPattern) {
+        // root the search pattern
+        searchPattern = searchPattern.replaceVars(ctx.job.environment.variables);
+        if (!isPathRooted(searchPattern) && sourcesRoot) {
+            searchPattern = path.join(sourcesRoot, searchPattern);
+        }
+
+        // get list of files to copy
+        var filesPromise: Q.IPromise<string[]>;
+        if (searchPattern.indexOf('*') > -1 || searchPattern.indexOf('?') > -1) {
+            ctx.info("Pattern found in pattern parameter.");
+            filesPromise = findMatchingFiles(ctx, null, searchPattern, false, true);
+        }
+        else {
+            filesPromise = Q([searchPattern]);
+        }
+
+        // create the staging folder
+        ctx.info("Creating folder " + stagingFolder);
+        var createStagingFolderPromise = Q.nfcall(fs.mkdir, stagingFolder).
+            then(() => {
+            },
+            (error) => {
+                ctx.error(error);
+            });
+
+        return Q.all([filesPromise, createStagingFolderPromise])
+            .then((results: any[]) => {
+
+                var files: string[] = results[0];
+                ctx.info("found " + files.length + " files");
+
+                var commonRoot = getCommonLocalPath(files);
+                var useCommonRoot = !!commonRoot;
+                if (useCommonRoot) {
+                    ctx.info("There is a common root (" + commonRoot + ") for the files. Using the remaining path elements in staging folder.");
+                }
+
+                files.forEach((file: string) => {
+                    var targetPath = stagingFolder;
+                    if (useCommonRoot) {
+                        var relativePath = file.substring(commonRoot.length)
+                            .replace(/^\\/g, "")
+                            .replace(/^\//g, "");
+                        targetPath = path.join(stagingFolder, relativePath);
+                    }
+
+                    ctx.info("Copying all files from " + file + " to " + targetPath);
+
+                    shelljs.cp("-Rf", file, targetPath);
+                });
+            });
+    }
+    else {
+        ctx.warning("No pattern specified. Nothing to copy.");
+        return Q(null);
+    }
+}
+
+function createDrop(ctx: ctxm.PluginContext, dropOption: ifm.JobOption): Q.IPromise<any> {
+    // TODO: file container or unc share
+    var artifactLocation: string = "";
+
+    var buildClient = new buildApi.BuildApi(ctx.job.authorization.serverUrl,
+        new basicm.BasicCredentialHandler(ctx.agentCtx.config.creds.username, ctx.agentCtx.config.creds.password));
+
+    return buildClient.postArtifact(parseInt(ctx.variables[ctxm.WellKnownVariables.buildId]), {
+        name: "drop",
+        resource: {
+            data: artifactLocation
+        }
+    });
+}
+
+function getCommonLocalPath(files: string[]): string {
+    if (!files || files.length === 0) {
+        return "";
+    }
+    else {
+        var root: string = files[0];
+
+        for (var index = 1; index < files.length; index++) {
+            root = _getCommonLocalPath(root, files[index]);
+            if (!root) {
+                break;
+            }
+        }
+
+        return root;
+    }
+}
+
+function _getCommonLocalPath(path1: string, path2: string): string {
+    var path1Depth = getFolderDepth(path1);
+    var path2Depth = getFolderDepth(path2);
+
+    var shortPath: string;
+    var longPath: string;
+    if (path1Depth >= path2Depth) {
+        shortPath = path2;
+        longPath = path1;
+    }
+    else {
+        shortPath = path1;
+        longPath = path2;
+    }
+
+    while (!isSubItem(longPath, shortPath)) {
+        var parentPath = path.dirname(shortPath);
+        if (path.normalize(parentPath) === path.normalize(shortPath)) {
+            break;
+        }
+        shortPath = parentPath;
+    }
+
+    return shortPath;
+}
+
+function isSubItem(item: string, parent: string): boolean {
+    item = path.normalize(item);
+    parent = path.normalize(parent);
+    return item.substring(0, parent.length) == parent
+        && (item.length == parent.length || (parent.length > 0 && parent[parent.length - 1] === path.sep) || (item[parent.length] === path.sep));
+}
+
+function getFolderDepth(fullPath: string): number {
+    if (!fullPath) {
+        return 0;
+    }
+
+    var current = path.normalize(fullPath);
+    var parentPath = path.dirname(current);
+    var count = 0;
+    while (parentPath !== current) {
+        ++count;
+        current = parentPath;
+        parentPath = path.dirname(current);
+    }
+
+    return count;
+}
+
+function findMatchingFiles(ctx: ctxm.PluginContext, rootFolder: string, pattern: string, includeFiles: boolean, includeFolders: boolean): Q.IPromise<string[]> {
+    pattern = pattern.replace(';;', '\0');
+    var patterns = pattern.split(';');
+
+    var includePatterns: string[] = [];
+    var excludePatterns: RegExp[] = [];
+
+    patterns.forEach((p: string, index: number) => {
+        p = p.replace('\0', ';');
+
+        var isIncludePattern: boolean = true;
+        if (p.substring(0, 2) === "+:") {
+            p = p.substring(2);
+        }
+        else if (p.substring(0, 2) === "-:") {
+            isIncludePattern = false;
+            p = p.substring(2);
+        }
+
+        if (!isPathRooted(p) && rootFolder) {
+            p = path.join(rootFolder, p);
+        }
+
+        if (!isValidPattern(p)) {
+            // TODO: report error
+            ctx.error("invalid pattern " + p);
+        }
+
+        if (isIncludePattern) {
+            includePatterns.push(p);
+        }
+        else {
+            excludePatterns.push(convertPatternToRegExp(p));
+        }
+    });
+
+    return getMatchingItems(ctx, includePatterns, excludePatterns, includeFiles, includeFolders);
+}
+
+function getMatchingItems(ctx: ctxm.PluginContext, includePatterns: string[], excludePatterns: RegExp[], includeFiles: boolean, includeFolders: boolean): Q.IPromise<string[]> {
+    var fileMap: any = {};
+
+    var funcs = includePatterns.map((includePattern: string, index: number) => {
+        return (files: string[]) => {
+            var pathPrefix = getPathPrefix(includePattern);
+            var patternRegex = convertPatternToRegExp(includePattern);
+
+            return readDirectory(ctx, pathPrefix, includeFiles, includeFolders)
+                .then((paths: string[]) => {
+                    paths.forEach((path: string, index: number) => {
+                        var normalizedPath = path.replace(/\\/g, '/');
+                        var alternatePath = normalizedPath + "//";
+
+                        var isMatch = false;
+                        if (patternRegex.test(normalizedPath) || (includeFolders && patternRegex.test(alternatePath))) {
+                            isMatch = true;
+                            for (var i = 0; i < excludePatterns.length; i++) {
+                                var excludePattern = excludePatterns[i];
+                                if (excludePattern.test(normalizedPath) || (includeFolders && excludePattern.test(alternatePath))) {
+                                    isMatch = false;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (isMatch && !fileMap[path]) {
+                            fileMap[path] = true;
+                            files.push(path);
+                        }
+                    });
+
+                    return files;
+                });
+        }
+    });
+
+    return funcs.reduce(Q.when, Q([]));
+}
+
+function readDirectory(ctx: ctxm.PluginContext, directory: string, includeFiles: boolean, includeFolders: boolean): Q.IPromise<string[]> {
+    var results: string[] = [];
+    var deferred = Q.defer<string[]>();
+
+    if (includeFolders) {
+        results.push(directory);
+    }
+
+    Q.nfcall(fs.readdir, directory)
+        .then((files: string[]) => {
+            var count = files.length;
+            if (count > 0) {
+                files.forEach((file: string, index: number) => {
+                    var fullPath = path.join(directory, file);
+                    Q.nfcall(fs.stat, fullPath)
+                        .then((stat: fs.Stats) => {
+                            if (stat && stat.isDirectory()) {
+                                readDirectory(ctx, fullPath, includeFiles, includeFolders)
+                                    .then((moreFiles: string[]) => {
+                                        results = results.concat(moreFiles);
+                                        if (--count === 0) {
+                                            deferred.resolve(results);
+                                        }
+                                    },
+                                    (error) => {
+                                        ctx.error(error.toString());
+                                    });
+                            }
+                            else {
+                                if (includeFiles) {
+                                    results.push(fullPath);
+                                }
+                                if (--count === 0) {
+                                    deferred.resolve(results);
+                                }
+                            }
+                        });
+                });
+            }
+            else {
+                deferred.resolve(results);
+            }
+        },
+        (error) => {
+            ctx.error(error.toString());
+        });
+
+    return deferred.promise;
+}
+
+function getPathPrefix(pattern: string): string {
+    var starIndex = pattern.indexOf('*');
+    var questionIndex = pattern.indexOf('?');
+
+    var index: number;
+    if (starIndex > -1 && questionIndex > -1) {
+        index = Math.min(starIndex, questionIndex);
+    }
+    else {
+        index = Math.max(starIndex, questionIndex);
+    }
+
+    if (index < 0) {
+        return path.dirname(pattern);
+    }
+    else {
+        return pattern.substring(0, index);
+    }
+}
+
+function isPathRooted(filePath: string): boolean {
+    if (filePath.substring(0, 2) === "\\\\") {
+        return true;
+    }
+    else if (filePath.charAt(0) === "/") {
+        return true;
+    }
+    else {
+        var regex = /^[a-zA-Z]:/;
+        return regex.test(filePath);
+    }
+}
+
+function isValidPattern(pattern: string): boolean {
+    if (pattern.length > 0 && pattern.charAt(pattern.length - 1) === "\\" || pattern.charAt(pattern.length - 1) === "/") {
+        return false;
+    }
+    else {
+        return true;
+    }
+}
+
+function convertPatternToRegExp(pattern: string): RegExp {
+    pattern = pattern.replace(/\\/g, '/')
+        .replace(/([.?*+^$[\]\\(){}|-])/g, "$1")
+        .replace(/\/\*\*\//g, "((/.+/)|(/))")
+        .replace(/\*\*/g, ".*")
+        .replace("*", "[^/]*")
+        .replace(/\?/g, ".");
+    return new RegExp('^' + pattern + '$', "i");
+}

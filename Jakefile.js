@@ -76,7 +76,7 @@ task('package', [], function() {
 	jake.mkdirP(packagePath);
 	jake.cpR(buildPath, packageRoot);
 
-	jake.cpR('src/agent/plugins', path.join(packagePath, 'agent', 'plugins'));
+	jake.cpR('src/agent/plugins/build', path.join(packagePath, 'agent', 'plugins'));
 
 	// populate the task cache in work directory
 	// TODO: this should go away after agent downloads tasks and they're all on the server

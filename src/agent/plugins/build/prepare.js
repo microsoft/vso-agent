@@ -78,7 +78,8 @@ exports.beforeJob = function(ctx, callback) {
 
         var repoPath = path.resolve(options.localPath);        
         ctx.job.environment.variables['build.sourceDirectory'] = repoPath;
-        
+        ctx.job.environment.variables['build.stagingdirectory'] = path.resolve("staging");
+
         // TODO: remove compat variable
         ctx.job.environment.variables['sys.sourcesFolder'] = repoPath;
     	gitrepo.getcode(ctx, options, done);
