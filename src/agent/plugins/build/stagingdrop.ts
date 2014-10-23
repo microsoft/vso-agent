@@ -30,7 +30,7 @@ var stagingOptionId: string = "82f9a3e8-3930-482e-ac62-ae3276f284d5";
 var dropOptionId: string = "e8b30f6f-039d-4d34-969c-449bbe9c3b9e";
 
 exports.pluginName = function () {
-    return "copyToStagingFolder";
+    return "buildDrop";
 }
 
 // what shows in progress view
@@ -53,7 +53,7 @@ exports.afterJob = function (ctx: ctxm.PluginContext, callback) {
 
         var dropOption: ifm.JobOption = ctx.job.environment.options[dropOptionId];
         if (dropOption) {
-            funcs.push(() => createDrop(ctx, dropOption));
+            funcs.push(() => createDrop(ctx, stagingOption, dropOption));
         }
 
         funcs.reduce(Q.when, Q(null))
@@ -83,13 +83,7 @@ function copyToStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOpti
     ctx.info("looking for source in " + ctxm.WellKnownVariables.sourceFolder);
     var sourcesRoot: string = ctx.job.environment.variables[ctxm.WellKnownVariables.sourceFolder].replaceVars(ctx.job.environment.variables);
 
-    // determine staging folder: $(build.stagingdirectory)[/{stagingfolder}]
-    ctx.info("looking for staging folder in " + ctxm.WellKnownVariables.stagingFolder);
-    var stagingFolder = ctx.job.environment.variables[ctxm.WellKnownVariables.stagingFolder].replaceVars(ctx.job.environment.variables)
-    var relativeStagingPath = stagingOption.data["stagingfolder"];
-    if (relativeStagingPath) {
-        stagingFolder = path.join(stagingFolder, relativeStagingPath.replaceVars(ctx.job.environment.variables));
-    }
+    var stagingFolder = getStagingFolder(ctx, stagingOption);
 
     var searchPattern = stagingOption.data["pattern"];
     if (searchPattern) {
@@ -141,7 +135,7 @@ function copyToStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOpti
 
                     ctx.info("Copying all files from " + file + " to " + targetPath);
 
-                    shelljs.cp("-Rf", file, targetPath);
+                    shelljs.cp("-Rf", path.join(file, "*"), targetPath);
                 });
             });
     }
@@ -151,19 +145,76 @@ function copyToStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOpti
     }
 }
 
-function createDrop(ctx: ctxm.PluginContext, dropOption: ifm.JobOption): Q.IPromise<any> {
-    // TODO: file container or unc share
-    var artifactLocation: string = "";
+function createDrop(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption, dropOption: ifm.JobOption): Q.IPromise<any> {
+    var location = dropOption.data["location"];
+    var path = dropOption.data["path"];
+    var stagingFolder = getStagingFolder(ctx, stagingOption);
 
-    var buildClient = new buildApi.BuildApi(ctx.job.authorization.serverUrl,
-        new basicm.BasicCredentialHandler(ctx.agentCtx.config.creds.username, ctx.agentCtx.config.creds.password));
+    if (location) {
+        location = location.replaceVars(ctx.job.environment.variables);
+    }
+    if (path) {
+        path = path.replaceVars(ctx.job.environment.variables);
+    }
 
-    return buildClient.postArtifact(parseInt(ctx.variables[ctxm.WellKnownVariables.buildId]), {
-        name: "drop",
-        resource: {
-            data: artifactLocation
+    ctx.info("drop location = " + location);
+    ctx.info("drop path = " + path);
+
+    // determine drop provider
+    var dropPromise: Q.IPromise<string> = Q(null);
+    switch (location) {
+        case "filecontainer":
+            dropPromise = copyToFileContainer(ctx, path);
+            break;
+        case "uncpath":
+            dropPromise = copyToUncPath(ctx, stagingFolder, path);
+            break;
+    }
+
+    return dropPromise.then((artifactLocation: string) => {
+        if (artifactLocation) {
+            var buildClient = new buildApi.BuildApi(ctx.job.authorization.serverUrl,
+                new basicm.BasicCredentialHandler(ctx.agentCtx.config.creds.username, ctx.agentCtx.config.creds.password));
+
+            return buildClient.postArtifact(parseInt(ctx.variables[ctxm.WellKnownVariables.buildId]), {
+                name: "drop",
+                resource: {
+                    data: artifactLocation
+                }
+            });
+        }
+        else {
+            ctx.warning("Drop location/path is missing or not supported. Not creating a build drop artifact.");
+            return Q(null);
         }
     });
+}
+
+function getStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption): string {
+    // determine staging folder: $(build.stagingdirectory)[/{stagingfolder}]
+    ctx.info("looking for staging folder in " + ctxm.WellKnownVariables.stagingFolder);
+    var stagingFolder = ctx.job.environment.variables[ctxm.WellKnownVariables.stagingFolder].replaceVars(ctx.job.environment.variables)
+
+    if (stagingOption) {
+        var relativeStagingPath = stagingOption.data["stagingfolder"];
+        if (relativeStagingPath) {
+            stagingFolder = path.join(stagingFolder, relativeStagingPath.replaceVars(ctx.job.environment.variables));
+        }
+    }
+
+    return stagingFolder;
+}
+
+function copyToFileContainer(ctx: ctxm.PluginContext, path: string): Q.IPromise<string> {
+    return Q(null);
+}
+
+function copyToUncPath(ctx: ctxm.PluginContext, stagingFolder: string, uncPath: string): Q.IPromise<string> {
+    ctx.info("Copying all files from " + stagingFolder + " to " + uncPath);
+
+    shelljs.cp("-Rf", path.join(stagingFolder, "*"), uncPath);
+
+    return Q(uncPath);
 }
 
 function getCommonLocalPath(files: string[]): string {
