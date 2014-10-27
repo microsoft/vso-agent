@@ -18,6 +18,8 @@
 // API Client Interfaces
 //----------------------------------------------------------------------------
 
+/// <reference path="../definitions/node.d.ts" />
+
 export interface IAgentApi {
     accountUrl: string;
     httpClient: IHttpClient;
@@ -53,7 +55,7 @@ export interface IHttpResponse {
 export interface IHttpClient {
     get(verb: string, requestUrl: string, headers: any, onResult: (err: any, res: IHttpResponse, contents: string) => void): void;
     send(verb: string, requestUrl: string, objs: any, headers: any, onResult: (err: any, res: IHttpResponse, contents: string) => void): void;
-    sendFile(verb: string, requestUrl: string, content: ReadableStream, headers: any, onResult: (err: any, res: IHttpResponse, contents: string) => void): void;
+    sendFile(verb: string, requestUrl: string, content: NodeJS.ReadableStream, headers: any, onResult: (err: any, res: IHttpResponse, contents: string) => void): void;
     request(protocol: any, options: any, body, onResult: (err: any, res: IHttpResponse, contents: string) => void): void;
 }
 

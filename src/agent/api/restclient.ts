@@ -66,7 +66,7 @@ var httpCodes = {
     504: "Gateway Timeout"
 }
 
-var processResponse = function (url, res, contents, onResult) {
+export function processResponse(url, res, contents, onResult) {
     if (process.env.XPLAT_TRACE_HTTP) {
         console.log('********* RESPONSE ***********');
         console.log('statusCode: ' + res.statusCode);
@@ -191,7 +191,7 @@ export class RestClient implements ifm.IRestClient {
             }
 
             var postUrl = this.resolveUrl(relativeUrl);
-            var contentStream: ReadableStream = fs.createReadStream(filePath);
+            var contentStream: NodeJS.ReadableStream = fs.createReadStream(filePath);
 
             var headers = {};
             headers["Accept"] = 'application/json; api-version=' + this.apiVersion;
@@ -209,8 +209,6 @@ export class RestClient implements ifm.IRestClient {
                 processResponse(postUrl, res, contents, onResult);
             });
         });
-
-
     }
 
     replace(relativeUrl: string, resources: any, onResult: (err: any, statusCode: number, obj: any) => void): void {

@@ -19,11 +19,15 @@
 
 import path = require('path');
 import fs = require('fs');
+import zlib = require('zlib');
+import stream = require('stream');
+import crypto = require('crypto');
 import Q = require("q");
 import shelljs = require("shelljs");
 import ctxm = require('../../context');
 import ifm = require('../../api/interfaces');
 import buildApi = require("./buildapi");
+import fileContainerApi = require("./filecontainerapi");
 import basicm = require('../../api/basiccreds');
 
 var stagingOptionId: string = "82f9a3e8-3930-482e-ac62-ae3276f284d5";
@@ -164,7 +168,7 @@ function createDrop(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption, dropO
     var dropPromise: Q.IPromise<string> = Q(null);
     switch (location) {
         case "filecontainer":
-            dropPromise = copyToFileContainer(ctx, path);
+            dropPromise = copyToFileContainer(ctx, stagingFolder, path);
             break;
         case "uncpath":
             dropPromise = copyToUncPath(ctx, stagingFolder, path);
@@ -205,8 +209,211 @@ function getStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption)
     return stagingFolder;
 }
 
-function copyToFileContainer(ctx: ctxm.PluginContext, path: string): Q.IPromise<string> {
-    return Q(null);
+interface ContainerItemInfo {
+    fullPath: string;
+    containerItem?: fileContainerApi.FileContainerItem;
+    contentIdentifier?: Buffer;
+    compressedLength?: number;
+    uncompressedLength?: number;
+    isGzipped: boolean;
+}
+
+function copyToFileContainer(ctx: ctxm.PluginContext, stagingFolder: string, fileContainerPath: string): Q.IPromise<string> {
+    var fileContainerRegExp = /^#\/(\d+)(\/.*)$/;
+    var containerId: number;
+    var containerPath: string = "/";
+
+    var match = fileContainerPath.match(fileContainerRegExp);
+    if (match) {
+        containerId = parseInt(match[1]);
+        if (match.length > 2) {
+            containerPath = match[2];
+        }
+    }
+    else {
+        ctx.error("invalid file container path '" + fileContainerPath + "'");
+        return Q(null);
+    }
+
+    var containerRoot = containerPath;
+    if (containerRoot.charAt(containerPath.length) !== '/') {
+        containerRoot += '/';
+    }
+    if (containerRoot.charAt(0) === '/') {
+        containerRoot = containerRoot.substr(1);
+    }
+
+    var contentMap: { [path: string]: ContainerItemInfo; } = {}
+
+    var fileContainerClient = new fileContainerApi.FileContainerApi(ctx.job.authorization.serverUrl,
+        new basicm.BasicCredentialHandler(ctx.agentCtx.config.creds.username, ctx.agentCtx.config.creds.password));
+
+    return readDirectory(ctx, stagingFolder, true, false)
+        .then((files: string[]) => {
+            return Q.all(files.map((fullPath: string) => {
+                return Q.nfcall(fs.stat, fullPath)
+                    .then((stat: fs.Stats) => {
+                        return uploadFileToContainer(fileContainerClient, containerId, {
+                            fullPath: fullPath,
+                            containerItem: {
+                                containerId: containerId,
+                                itemType: fileContainerApi.ContainerItemType.File,
+                                path: containerRoot + fullPath.substring(stagingFolder.length + 1)
+                            },
+                            uncompressedLength: stat.size,
+                            isGzipped: false
+                        });
+                    });
+            }))
+        })
+        // generate content identifiers
+        /*.then((files: string[]) => {
+            // TODO: process files in batches of up to 1000
+            var promises: Q.IPromise<ContainerItemInfo>[] = [];
+
+            for (var fileIndex: number = 0; fileIndex < files.length; fileIndex++) {
+                var fullPath = files[fileIndex];
+                var directory = path.dirname(fullPath);
+
+                promises.push(calculateContentIdentifier(fullPath, true)
+                    .then((info: ContainerItemInfo) => {
+                        info.containerItem = {
+                            containerId: containerId,
+                            itemType: fileContainerApi.ContainerItemType.File,
+                            path: containerRoot + fullPath.substring(stagingFolder.length + 1),
+                            contentId: Array.prototype.slice.call(info.contentIdentifier, 0),
+                            fileLength: info.compressedLength
+                        };
+
+                        console.log("generated content id for " + fullPath);
+                        console.log("added " + info.containerItem.path + " to content map");
+                        contentMap[info.containerItem.path] = info;
+                        return info;
+                    }));
+            }
+
+            return Q.all(promises);
+        })
+        // query file container for duplicates
+        .then((tuples: ContainerItemInfo[]) => {
+            console.log("generated " + tuples.length + " content ids");
+            return fileContainerClient.createItems(containerId, tuples.map((item) => item.containerItem));
+        })
+        // upload files
+        .then((containerItems: fileContainerApi.FileContainerItem[]) => {
+            console.log("created " + containerItems.length + " container items");
+            return Q.all(containerItems
+                .filter((item) => item.itemType === fileContainerApi.ContainerItemType.File)
+                .map((item: fileContainerApi.FileContainerItem) => {
+                    console.log("item.path = " + item.path);
+                    var tuple = contentMap[item.path];
+                    return uploadFileToContainer(fileContainerClient, containerId, tuple);
+                }));
+        })*/
+        .then(() => {
+            console.log("container items uploaded");
+            return fileContainerPath;
+        });
+}
+
+var PagesPerBlock = 32;
+var BytesPerPage = 64 * 1024;
+var BlockSize = PagesPerBlock * BytesPerPage;
+
+function calculateContentIdentifier(fullPath: string, includesFinalBlock: boolean): Q.IPromise<ContainerItemInfo> {
+    var deferred = Q.defer<ContainerItemInfo>();
+    var compressedLength: number = 0;
+
+    var rollingContentIdentifier: Buffer = new Buffer("VSO Content Identifier Seed", "ascii");
+    var savedRollingIdentifier: Buffer;
+    var blockIdentifier: Buffer;
+    var lastBlockSize: number = 0;
+
+    Q.nfcall(fs.stat, fullPath)
+        .then((stat: fs.Stats) => {
+            if (stat) {
+                var compressedStream = getCompressedStream(fullPath);
+
+                compressedStream.on("readable", () => {
+                    var buffer: Buffer;
+                    while (null !== (buffer = compressedStream.read(BlockSize))) {
+                        lastBlockSize = buffer.length;
+                        compressedLength += lastBlockSize;
+                        savedRollingIdentifier = rollingContentIdentifier;
+                        blockIdentifier = calculateSingleBlockIdentifier(buffer);
+                        rollingContentIdentifier = calculateRollingBlockIdentifier(blockIdentifier, rollingContentIdentifier, false);
+                    }
+                });
+
+                compressedStream.on("end", () => {
+                    if (includesFinalBlock) {
+                        rollingContentIdentifier = calculateRollingBlockIdentifier(blockIdentifier, savedRollingIdentifier, true);
+                    }
+
+                    deferred.resolve({
+                        fullPath: fullPath,
+                        contentIdentifier: rollingContentIdentifier,
+                        compressedLength: compressedLength,
+                        uncompressedLength: stat.size,
+                        isGzipped: true
+                    });
+                });
+            }
+        });
+
+    return deferred.promise;
+}
+
+function calculateSingleBlockIdentifier(buffer: Buffer): Buffer {
+    var pageCounter: number = 0;
+    var pageIdentifiersBuffer: Buffer = new Buffer(0);
+
+    while (buffer.length > pageCounter * BytesPerPage) {
+        var bytesToCopy = Math.min(buffer.length - (pageCounter * BytesPerPage), BytesPerPage);
+        var pageBuffer = new Buffer(bytesToCopy);
+        buffer.copy(pageBuffer, 0, pageCounter * BytesPerPage, (pageCounter * BytesPerPage) + bytesToCopy);
+
+        var pageHash = calculateHash(pageBuffer);
+        pageCounter++;
+        pageIdentifiersBuffer = Buffer.concat([pageIdentifiersBuffer, pageHash]);
+    }
+
+    return calculateHash(pageIdentifiersBuffer);
+}
+
+function calculateRollingBlockIdentifier(currentBlockIdentifier: Buffer, previousBlockIdentifier: Buffer, isFinalBlock: boolean): Buffer {
+    return calculateHash(Buffer.concat([previousBlockIdentifier, currentBlockIdentifier, new Buffer([isFinalBlock ? 1 : 0])]));
+}
+
+function calculateHash(buffer: Buffer): Buffer {
+    var hashProvider = crypto.createHash("sha256");
+    hashProvider.update(buffer);
+    return hashProvider.digest();
+}
+
+function getCompressedStream(filename: string): stream.PassThrough {
+    var gzip = zlib.createGzip();
+    var inputStream = fs.createReadStream(filename);
+    return inputStream.pipe(gzip);
+}
+
+
+function uploadFileToContainer(fileContainerClient: fileContainerApi.FileContainerApi, containerId: number, containerItemTuple: ContainerItemInfo): Q.IPromise<any> {
+    var contentStream: NodeJS.ReadableStream;
+    if (containerItemTuple.isGzipped) {
+        contentStream = getCompressedStream(containerItemTuple.fullPath);
+    }
+    else {
+        contentStream = fs.createReadStream(containerItemTuple.fullPath);
+    }
+
+    return fileContainerClient.uploadFile(containerId,
+        containerItemTuple.containerItem.path,
+        contentStream,
+        containerItemTuple.contentIdentifier,
+        containerItemTuple.uncompressedLength,
+        containerItemTuple.compressedLength,
+        containerItemTuple.isGzipped);
 }
 
 function copyToUncPath(ctx: ctxm.PluginContext, stagingFolder: string, uncPath: string): Q.IPromise<string> {

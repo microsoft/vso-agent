@@ -53,7 +53,7 @@ export class PagingLogger extends events.EventEmitter implements cm.IDiagnosticW
 	private logPath: string;
 	private pageFolder: string;
 	private pageFilePath: string;
-	private stream: WritableStream = null;
+	private stream: NodeJS.WritableStream = null;
 	private pageCount: number = 0;
 	private lineCount: number = 0;
 	private _fd:any;

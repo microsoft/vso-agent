@@ -44,7 +44,7 @@ export class HttpClient implements ifm.IHttpClient {
         this.request(options.protocol, options.options, objs, onResult);
     }
 
-    sendFile(verb: string, requestUrl: string, content: ReadableStream, headers: any, onResult: (err: any, res: http.ClientResponse, contents: string) => void): void {
+    sendFile(verb: string, requestUrl: string, content: NodeJS.ReadableStream, headers: any, onResult: (err: any, res: http.ClientResponse, contents: string) => void): void {
         var options = this._getOptions(verb, requestUrl, headers);
 
         if (process.env.XPLAT_TRACE_HTTP) {
