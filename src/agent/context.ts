@@ -140,8 +140,8 @@ export class AgentContext extends Context implements cm.ITraceWriter {
 	constructor(hostProcess: string, config: cm.IConfiguration) {
 		this.config = config;
 
-		// Set full path for work folder, as it is used by others
-		if (!this.config.settings.workFolder.startsWith('/')) {
+        // Set full path for work folder, as it is used by others
+		if (path.resolve(this.config.settings.workFolder) !== this.config.settings.workFolder) {
         	this.config.settings.workFolder = path.join(__dirname, this.config.settings.workFolder);
     	}
 
