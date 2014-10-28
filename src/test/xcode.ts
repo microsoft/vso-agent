@@ -23,7 +23,7 @@ import fm = require('./lib/feedback');
 import wk = require('../agent/vsoworker');
 import cm = require('../agent/common');
 
-describe('Xcode Job', function() {
+describe('Xcode Job', util.hasCapability('xcode') ? function() {
 	var repo: gm.GitRepo;
 
 	beforeEach(function(done) {
@@ -54,7 +54,7 @@ describe('Xcode Job', function() {
 			config: config,
 			data: messageBody
 		}
-		wk.run(workerMsg,
+		wk.run(workerMsg, false,
 			function(agentUrl, taskUrl, jobInfo, ag) {
 				return feedbackChannel;
 			},
@@ -63,4 +63,4 @@ describe('Xcode Job', function() {
 				done();
 		});
 	});
-});
+} : function() { it ('current system does not support xcode');});

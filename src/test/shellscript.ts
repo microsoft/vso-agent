@@ -25,7 +25,7 @@ import cm = require('../agent/common');
 
 var shell = require('shelljs');
 
-describe('ShellScript Job', function() {
+describe('ShellScript Job', util.hasCapability('sh') ? function() {
 	var repo: gm.GitRepo;
 
 	beforeEach(function(done) {
@@ -57,7 +57,7 @@ describe('ShellScript Job', function() {
 			config: config,
 			data: messageBody
 		}
-		wk.run(workerMsg,
+		wk.run(workerMsg, false,
 			function(agentUrl, taskUrl, jobInfo, ag) {
 				return feedbackChannel;
 			},
@@ -66,4 +66,4 @@ describe('ShellScript Job', function() {
 				done();
 		});
 	});
-});
+} : function() { it ('current system does not support sh');});

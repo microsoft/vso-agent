@@ -16,6 +16,7 @@
 
 import gm = require('./lib/gitrepo');
 import cm = require('../agent/common');
+import env = require('../agent/environment');
 var fs = require('fs');
 var shell = require('shelljs');
 var uuid = require('node-uuid');
@@ -80,6 +81,11 @@ export function createTestConfig(): cm.IConfiguration {
 	config.poolId = 1;
 
 	return config;
+}
+
+export function hasCapability(cap: string): boolean {
+	var caps = env.getCapabilities();
+	return (cap in caps);
 }
 
 

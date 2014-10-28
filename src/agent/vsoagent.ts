@@ -109,7 +109,7 @@ cfgr.ensureConfigured((err: any, settings: cm.ISettings, creds:any) => {
 	}
 
 	initAgent(settings, creds, (err:any, agent: ifm.TaskAgent, config: cm.IConfiguration) => {
-		ag = new ctxm.AgentContext('agent', config);
+		ag = new ctxm.AgentContext('agent', config, true);
         trace = new tm.Tracing(__filename, ag);
         trace.callback('initAgent');
 
