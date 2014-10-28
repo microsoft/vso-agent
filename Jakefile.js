@@ -26,6 +26,11 @@ var testRoot = path.join(__dirname, '_test');
 var testPath = path.join(testRoot, 'test');
 var packagePath = path.join(packageRoot, 'vsoxplat');
 
+var writeHeader = function(title) {
+	console.log();
+	console.log('********** ' + title + ' **********');
+}
+
 desc('This is the default task.');
 task('default', ['clean', 'package', 'tar'], function () {
 
@@ -33,6 +38,7 @@ task('default', ['clean', 'package', 'tar'], function () {
 
 desc('Build');
 task('build', {async: true}, function () {	
+	writeHeader('build');
 	jake.rmRf(buildRoot);
 	jake.mkdirP(buildPath);
 	
@@ -48,16 +54,17 @@ task('build', {async: true}, function () {
 });
 
 desc('Run tests')
-task('test', ['clean'], function() {
+task('test', ['default'], function() {
+	writeHeader('test');
 	console.log('Creating _test folder');
 	jake.rmRf(testRoot);
 	console.log('Copying files');
 	jake.cpR(buildPath, testRoot);
 	jake.cpR('src/test/messages', path.join(testRoot, 'test'));
 	jake.cpR('src/test/projects', path.join(testRoot, 'test'));
+	jake.cpR(path.join(packagePath, 'agent'), testRoot);
+
 	jake.mkdirP(path.join(testRoot, 'agent', 'work'));
-	jake.cpR('src/agent/tasks', path.join(testRoot, 'agent', 'work', 'tasks'));
-	jake.cpR('src/agent/plugins', path.join(testRoot, 'agent', 'plugins'));
 
 	var runner = new mocha({reporter: 'spec', ui: 'bdd'});
 
@@ -78,6 +85,7 @@ task('test', ['clean'], function() {
 
 desc('Drop build')
 task('drop', [], function() {
+	writeHeader('drop build');
 	console.log('Dropping _build');
 	jake.rmRf('_build');
 	console.log('Dropping _package');
@@ -106,7 +114,8 @@ task('update', {async: true}, function() {
 
 desc('Packaging')
 task('package', [], function() {
-	console.log('Creating Package...');	
+	writeHeader('package');
+	
 	jake.rmRf(packageRoot);
 	jake.mkdirP(packagePath);
 	jake.cpR(buildPath, packageRoot);
@@ -123,6 +132,8 @@ task('package', [], function() {
 
 desc('Create Tar')
 task('tar', [], function() {
+	writeHeader('create tar');
+
 	console.log('Creating _tar/vsoxplat.tar');
 
 	shell.rm('-rf', '_tar');
@@ -140,12 +151,4 @@ task('tar', [], function() {
 	console.log('done.');
 });
 
-desc('Run host')
-task('run', {async: true}, function() {
-	console.log('Run host');
-	jake.exec(['node ' + path.join('_pkgPath', 'host.js')], {printStdout: true, printStderr: true}, function(){
-		console.log('Run done');
-		complete();
-	});
-});
 
