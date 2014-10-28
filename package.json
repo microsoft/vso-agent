@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Visual Studio Xplat Build Agent Installer",
   "main": "bin/install.js",
-  "preferGlobal": true,  
+  "preferGlobal": true,
   "bin": {
     "install-vsoagent": "./bin/install.js"
   },
@@ -30,6 +30,7 @@
     "nconf": "0.6.x",
     "node-uuid": "1.x",
     "python-shell": "0.0.3",
+    "q": "^1.0.1",
     "shelljs": "0.2.x",
     "svchost": "0.1.x",
     "svcinstall": "0.1.x",

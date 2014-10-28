@@ -33,6 +33,7 @@ import basicm = require('../../api/basiccreds');
 var stagingOptionId: string = "82f9a3e8-3930-482e-ac62-ae3276f284d5";
 var dropOptionId: string = "e8b30f6f-039d-4d34-969c-449bbe9c3b9e";
 
+/*
 exports.pluginName = function () {
     return "buildDrop";
 }
@@ -41,6 +42,7 @@ exports.pluginName = function () {
 exports.pluginTitle = function () {
 	return "Copying files to staging folder"
 }
+*/
 
 exports.afterJob = function (ctx: ctxm.PluginContext, callback) {
     /**
