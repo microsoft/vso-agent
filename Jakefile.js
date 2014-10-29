@@ -54,8 +54,15 @@ task('build', {async: true}, function () {
 });
 
 desc('Run tests')
-task('test', ['default'], function() {
+task('test', ['default'], function(mode) {
 	writeHeader('test');
+	var useColors = true;
+	if (mode) {
+		console.log('mode: ' + mode);
+		if (mode.toLowerCase() == 'ci') {
+			useColors = false;
+		}
+	}
 	console.log('Creating _test folder');
 	jake.rmRf(testRoot);
 	console.log('Copying files');
@@ -66,7 +73,7 @@ task('test', ['default'], function() {
 
 	jake.mkdirP(path.join(testRoot, 'agent', 'work'));
 
-	var runner = new mocha({reporter: 'spec', ui: 'bdd'});
+	var runner = new mocha({reporter: 'spec', ui: 'bdd', useColors:useColors});
 
 	fs.readdirSync(testPath).filter(function(file){
 		return file.substr(-3) === '.js';
