@@ -27,10 +27,17 @@ http.globalAgent.maxSockets = 100;
 export class HttpClient implements ifm.IHttpClient {
     userAgent: string;
     handler: ifm.IRequestHandler;
+    socketTimeout: number;
 
-    constructor(userAgent: string, handler?: ifm.IRequestHandler) {
+    constructor(userAgent: string, handler?: ifm.IRequestHandler, socketTimeout?: number) {
         this.userAgent = userAgent;
         this.handler = handler;
+        if (socketTimeout) {
+            this.socketTimeout = socketTimeout;
+        } else {
+            // Default 3 minutes
+            this.socketTimeout = 3 * 60000;
+        }
     }
 
     get(verb: string, requestUrl: string, headers: any, onResult: (err: any, res: http.ClientResponse, contents: string) => void): void {
@@ -115,6 +122,7 @@ export class HttpClient implements ifm.IHttpClient {
 
     request(protocol: any, options: any, objs: any, onResult: (err: any, res: http.ClientResponse, contents: string) => void): void {
         var reqData;
+        var socket;
 
         if (objs) {
             reqData = JSON.stringify(objs, null, 2);
@@ -142,6 +150,17 @@ export class HttpClient implements ifm.IHttpClient {
                 // res has statusCode and headers
                 onResult(null, res, output);
             });
+        });
+
+        req.on('socket', function(sock) {
+            socket = sock;
+        });
+
+        // If we ever get disconnected, we want the socket to timeout eventually
+        req.setTimeout(this.socketTimeout, function() {
+            if (socket) {
+                socket.end();
+            }
         });
 
         req.on('error', function (err) {

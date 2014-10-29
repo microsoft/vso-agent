@@ -120,6 +120,10 @@ Typescript is compiled using Jake tasks
 sudo npm install -g typescript
 sudo npm install -g jake
 ```
+Install remaining pre-reqs (run from root of repo)
+```bash
+npm install
+```
 
 ###Build and Create Package with Jake
 run jake in the root of the repo

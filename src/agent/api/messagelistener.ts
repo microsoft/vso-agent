@@ -30,49 +30,53 @@ export class MessageListener {
 		this.poolId = poolId;
 	}
 
-	getMessages(callback: (err: any, message: ifm.TaskAgentMessage) => void): void {
+	getMessages(callback: (message: ifm.TaskAgentMessage) => void, error: (err: any) => void): void {
 
 		this.agentapi.getMessage(this.poolId, this.sessionId, (err:any, statusCode: number, obj: any) => {
 			
 			// resetting the long poll - reconnect immediately
 			if (statusCode == 202 || (err && err.code === 'ECONNRESET')) {
-				this.getMessages(callback);
+				this.getMessages(callback, error);
 				return;
 			}
 
 			// the queue should be robust to the server being unreachable - wait and reconnect
 			if (err) {
-	        	console.error('Could not connect to the queue.  Retrying in ' + QUEUE_RETRY_DELAY/1000 + ' sec');
+	        	error('Could not connect to the queue.  Retrying in ' + QUEUE_RETRY_DELAY/1000 + ' sec');
 	            setTimeout(() => {
-	            		this.getMessages(callback);
+	            		this.getMessages(callback, error);
 	            	}, QUEUE_RETRY_DELAY);
 				return;
 			}
 
-			callback(null, obj);
+			callback(obj);
 
 			// the message has been handed off to the caller - delete the message and listen for the next one
 			var messageId = obj.messageId;
 			this.agentapi.deleteMessage(this.poolId, this.sessionId, messageId, (err:any, statusCode: number) => {
 				// TODO: how to handle failure in deleting message?  Just log?  we need to continue nd get the next message ...
-				this.getMessages(callback);
+				if (err) {
+					error(err);
+				}
+                this.getMessages(callback, error);
 			});
 		});
 	}
 
-	start(callback: (err: any, message: any) => void): void {
+	start(callback: (message: any) => void, error: (err: any) => void): void {
 		var session: ifm.TaskAgentSession = <ifm.TaskAgentSession>{};
 		session.agent = this.agent;
 		session.ownerName = uuid.v1();
 
 		this.agentapi.createSession(this.poolId, session, (err, statusCode, session) => {
 			if (err) {
-				callback(err, null);
+				error(err);
+				this.start(callback, error);
 				return;
 			}
 
 			this.sessionId = session.sessionId;
-			this.getMessages(callback);	
+			this.getMessages(callback, error);
 		});	
 	}
 

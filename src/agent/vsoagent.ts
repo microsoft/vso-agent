@@ -123,14 +123,9 @@ cfgr.ensureConfigured((err: any, settings: cm.ISettings, creds:any) => {
 
 		// TODO: messageListener event emmitter for listening and reset
 
-		messageListener.start((err: any, message: ifm.TaskAgentMessage) => {
+		messageListener.start((message: ifm.TaskAgentMessage) => {
             trace.callback('listener.start');
             
-			if (err) {
-				ag.error(err.message);
-				return;
-			}
-
 			ag.info('Message received');
             trace.state('message', message);
 
@@ -156,7 +151,10 @@ cfgr.ensureConfigured((err: any, settings: cm.ISettings, creds:any) => {
 			else {
 				ag.error('Unknown Message Type');
 			}
-		});	
+        },
+        (err: any) => {
+            ag.error(err);
+        });
 	});
 });
 
