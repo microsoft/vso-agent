@@ -63,7 +63,7 @@
         "displayName": "Jake jaketask",
         "version":"1.0.1",
         "inputs":{
-            "scriptPath": "jakefile.js", 
+            "scriptPath": "Jakefile.js", 
             "target": "jaketask", 
             "cwd": ""  
         }
@@ -74,7 +74,7 @@
         "displayName": "Jake asyncTask",
         "version":"1.0.1",
         "inputs":{
-            "scriptPath": "jakefile.js", 
+            "scriptPath": "Jakefile.js", 
             "target": "asyncTask", 
             "cwd": ""  
         }

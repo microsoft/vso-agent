@@ -14,12 +14,15 @@
 // limitations under the License.
 //
 
-import gm = require('./lib/gitrepo');
 import cm = require('../agent/common');
+import env = require('../agent/environment');
+import gm = require('./lib/gitrepo');
+
 var fs = require('fs');
+var os = require('os');
+var path = require('path');
 var shell = require('shelljs');
 var uuid = require('node-uuid');
-var path = require('path');
 
 export function createTestProjectRepo(projectName: string, callback: (err, repo) => void){
 	var folder = createTmpFolder();
@@ -53,7 +56,7 @@ export function cleanup(repo: gm.GitRepo) {
 }
 
 export function createTmpFolder(): string {
-	var folder = path.join(process.env['TMPDIR'], uuid.v1());
+	var folder = path.join(os.tmpdir(), uuid.v1());
 	shell.mkdir('-p', folder);
 	return folder;
 }
@@ -80,6 +83,11 @@ export function createTestConfig(): cm.IConfiguration {
 	config.poolId = 1;
 
 	return config;
+}
+
+export function hasCapability(cap: string): boolean {
+	var caps = env.getCapabilities();
+	return (cap in caps);
 }
 
 

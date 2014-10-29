@@ -57,8 +57,8 @@ function setVariables(job: ifm.JobRequestMessage, agentContext: ctxm.AgentContex
 // Worker process waits for a job message, processes and then exits
 //
 
-export function run(msg, createFeedbackChannel: (agentUrl, taskUrl, jobInfo, ag) => cm.IFeedbackChannel, finished: () => void) {
-	ag = new ctxm.AgentContext('worker', msg.config);
+export function run(msg, consoleOutput: boolean, createFeedbackChannel: (agentUrl, taskUrl, jobInfo, ag) => cm.IFeedbackChannel, finished: () => void) {
+	ag = new ctxm.AgentContext('worker', msg.config, consoleOutput);
 	trace = new tm.Tracing(__filename, ag);
 	trace.enter('.onMessage');
 	trace.state('message', msg);
@@ -116,7 +116,7 @@ export function run(msg, createFeedbackChannel: (agentUrl, taskUrl, jobInfo, ag)
 }
 
 process.on('message',function(msg){
-	run(msg, 
+	run(msg, true, 
 		function(agentUrl, taskUrl, jobInfo, ag) {
 			return new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, ag);
 		},

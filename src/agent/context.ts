@@ -137,7 +137,7 @@ export class Context extends events.EventEmitter {
 }
 
 export class AgentContext extends Context implements cm.ITraceWriter {
-	constructor(hostProcess: string, config: cm.IConfiguration) {
+	constructor(hostProcess: string, config: cm.IConfiguration, consoleOutput: boolean) {
 		this.config = config;
 
         // Set full path for work folder, as it is used by others
@@ -149,10 +149,11 @@ export class AgentContext extends Context implements cm.ITraceWriter {
 					path.join(path.resolve(this.config.settings.workFolder), '_diag', hostProcess), 
 					new Date().toISOString().replace(/:/gi, '_') + '_' + process.pid + '.log');
 
-		var writers: cm.IDiagnosticWriter[] = [
-					new dm.DiagnosticConsoleWriter(cm.DiagnosticLevel.Status), 
-					this.fileWriter
-					];
+		var writers: cm.IDiagnosticWriter[] = [this.fileWriter];
+
+		if (consoleOutput) {
+			writers.push(new dm.DiagnosticConsoleWriter(cm.DiagnosticLevel.Status));
+		}
 
 		super(writers);
 	}
