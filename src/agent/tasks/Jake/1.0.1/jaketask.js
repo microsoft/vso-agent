@@ -21,9 +21,13 @@ var jake = require('jake')
 
 exports.execute = function(ctx, callback) {
 
-	var scriptPath = ctx.inputs.scriptPath;
+	var scriptPath = ctx.inputs.scriptPath || ctx.inputs.scriptName; // back compat
+	ctx.verbose('scriptPath: ' + scriptPath);
+	
 	if (!scriptPath || !fs.existsSync(scriptPath)) {
-		callback(new Error('scriptPath is not valid'));
+		var errMsg = 'scriptPath is not valid';
+		ctx.error(errMsg)
+		callback(new Error(errMsg));
 		return;
 	}
 
