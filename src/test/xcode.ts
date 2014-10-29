@@ -44,7 +44,7 @@ describe('Xcode Job', util.hasCapability('xcode') ? function() {
 	});
 
 	it('should run', function(done) {
-		this.timeout(10000);
+		this.timeout(30000);
 		var config: cm.IConfiguration = util.createTestConfig();
 		var messageBody = require('./messages/xcode.json');
 		messageBody.environment.endpoints[0].url = repo.repo;
