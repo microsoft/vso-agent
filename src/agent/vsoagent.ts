@@ -153,7 +153,11 @@ cfgr.ensureConfigured((err: any, settings: cm.ISettings, creds:any) => {
 			}
         },
         (err: any) => {
-            ag.error(err);
+            if (!err || !err.hasOwnProperty('message')) {
+                ag.error("Unkown error occurred while connecting to the message queue.");
+            } else {
+                ag.error(err.message);
+            }
         });
 	});
 });
