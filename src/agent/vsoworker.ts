@@ -26,6 +26,7 @@ import fm = require('./feedback');
 import os = require('os');
 import tm = require('./tracing');
 import path = require('path');
+import crypto = require('crypto');
 
 var ag: ctxm.AgentContext;
 var trace: tm.Tracing;
@@ -37,13 +38,22 @@ function setVariables(job: ifm.JobRequestMessage, agentContext: ctxm.AgentContex
     var workingFolder = agentContext.config.settings.workFolder;
     var variables = job.environment.variables;
 
-    // TODO: remove the back compat vars in a sprint 
-	var sys = variables[cm.sysVars.system] || variables['sys'];
-	var collId = variables[cm.sysVars.collectionId] || variables['sys.collectionId'];
-	var defId = variables[cm.sysVars.definitionId] || variables['sys.definitionId'];
+	var sys = variables[cm.sysVars.system];
+	var collId = variables[cm.sysVars.collectionId];
+	var defId = variables[cm.sysVars.definitionId];
+	var hashInput = collId + ':' + defId;
+
+	if (job.environment.endpoints) {
+		job.environment.endpoints.forEach(function(endpoint) {
+			hashInput = hashInput + ':' + endpoint.url;
+		});
+	}
 
 	// TODO: build dir should be defined in the build plugin - not in core agent
-	var buildDirectory = path.join(workingFolder, sys, collId, defId);
+    var hashProvider = crypto.createHash("sha256");
+    hashProvider.update(hashInput, 'utf8');
+    var hash = hashProvider.digest('hex');
+	var buildDirectory = path.join(workingFolder, sys, hash);
 	variables[cm.agentVars.workingDirectory] = workingFolder;
 	variables[cm.agentVars.buildDirectory] = buildDirectory;
 
