@@ -73,7 +73,8 @@ exports.beforeJob = function(ctx, callback) {
     		ref: selectedRef,
     		creds: creds,
     		localPath: 'repo', // not allowing custom local paths - we always put in repo
-            submodules: endpoint.data.checkoutSubmodules === "True" 
+            submodules: endpoint.data.checkoutSubmodules === "True",
+            clean: endpoint.data.clean === "true"
     	};
 
         var repoPath = path.resolve(options.localPath);        

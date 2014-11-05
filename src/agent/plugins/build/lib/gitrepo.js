@@ -70,6 +70,12 @@ exports.getcode = function(ctx, options, callback) {
 	}
 	
 	var repoDirName = path.dirname(repoPath);
+
+	if (options.clean && fs.existsSync(repoDirName)) {
+		ctx.info('Cleaning/Deleting repo dir: ' + repoDirName);
+		rm('-rf', repoDirName);
+	}
+
 	if (!fs.existsSync (repoDirName)) {
 		ctx.info('Creating repo dir: ' + repoDirName)
 		mkdir('-p', repoDirName);
