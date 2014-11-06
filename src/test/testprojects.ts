@@ -46,15 +46,8 @@ describe('Test Projects', function() {
 	describe('XCode', util.hasCapability('xcode') ? function() {
 		it('runs', function(done) {
 			this.timeout(10000);
-			var config: cm.IConfiguration = util.createTestConfig();
-			var messageBody = require('./messages/xcode.json');
-			messageBody.environment.endpoints[0].url = repo.repo;
+			var workerMsg = util.createTestMessage('xcode', repo.repo);
 			var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
-			var workerMsg = { 
-				messageType:"job",
-				config: config,
-				data: messageBody
-			}
 			wk.run(workerMsg, false,
 				function(agentUrl, taskUrl, jobInfo, ag) {
 					return feedbackChannel;
@@ -69,15 +62,8 @@ describe('Test Projects', function() {
 	describe('Jake', util.hasCapability('jake') ? function() {
 		it('runs', function(done) {
 			this.timeout(10000);
-			var config: cm.IConfiguration = util.createTestConfig();
-			var messageBody = require('./messages/jake.json');
-			messageBody.environment.endpoints[0].url = repo.repo;
+			var workerMsg = util.createTestMessage('jake', repo.repo);
 			var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
-			var workerMsg = { 
-				messageType:"job",
-				config: config,
-				data: messageBody
-			}
 			wk.run(workerMsg, false,
 				function(agentUrl, taskUrl, jobInfo, ag) {
 					return feedbackChannel;
@@ -92,15 +78,8 @@ describe('Test Projects', function() {
 	describe('Shellscript', util.hasCapability('sh') ? function() {
 		it('runs', function(done) {
 			this.timeout(10000);
-			var config: cm.IConfiguration = util.createTestConfig();
-			var messageBody = require('./messages/shellscript.json');
-			messageBody.environment.endpoints[0].url = repo.repo;
+			var workerMsg = util.createTestMessage('shellscript', repo.repo);
 			var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
-			var workerMsg = { 
-				messageType:"job",
-				config: config,
-				data: messageBody
-			}
 			wk.run(workerMsg, false,
 				function(agentUrl, taskUrl, jobInfo, ag) {
 					return feedbackChannel;

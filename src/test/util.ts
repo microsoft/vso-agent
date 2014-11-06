@@ -86,5 +86,16 @@ export function hasCapability(cap: string): boolean {
 	return (cap in caps);
 }
 
+export function createTestMessage(project: string, repoPath: string): {} {
+	var config: cm.IConfiguration = createTestConfig();
+	var messageBody = require('./messages/' + project + '.json');
+	messageBody.environment.endpoints[0].url = repoPath;
+	return { 
+		messageType:"job",
+		config: config,
+		data: messageBody
+	}
+}
+
 
 
