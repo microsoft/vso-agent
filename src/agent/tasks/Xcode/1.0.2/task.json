@@ -8,26 +8,24 @@
     "version": {
         "Major": 1,
         "Minor": 0,
-        "Patch": 0,
+        "Patch": 2,
         "IsTest": false
     },
     "demands" : [
         "xcode"
     ],
-    "instanceNameFormat": "Xcode $(xcWorkspacePath)",
+    "instanceNameFormat": "Xcode $(actions)",
     "inputs": [
-        { "name": "xcWorkspacePath", "type": "filePath", "label": "Workspace Path", "defaultValue":"src/myproject.xcodeproject/project.xcworkspace", "required":false },
-        { "name": "projectPath", "type": "filePath", "label": "Project Path", "defaultValue":"", "required":false },
-        { "name": "targetName", "type": "string", "label": "Target Name", "defaultValue":"", "required":false },
+        { "name": "xcWorkspacePath", "type": "filePath", "label": "Workspace Path", "defaultValue":"", "required":true },
         { "name": "scheme", "type": "string", "label": "Scheme", "defaultValue":"", "required":true },
-        { "name": "xcodeApp", "type": "string", "label": "Xcode App", "defaultValue":"$(XcodeApp)", "required":true },
+        { "name": "actions", "type": "string", "label": "Actions", "defaultValue":"build", "required":true },
         { "name": "configuration", "type": "string", "label": "Configuration", "defaultValue":"$(Configuration)", "required":true },
         { "name": "sdk", "type": "string", "label": "SDK", "defaultValue":"$(SDK)", "required":true },
-        { "name": "clean", "type": "boolean", "label": "Clean", "defaultValue": "False", "required": false }
+        { "name": "outputPattern", "type": "string", "label": "Output", "defaultValue":"$(SDK)/$(Configuration)", "required":true }
     ],
     "execution": {
-        "ShellScript": {
-            "target": "xcodebuild.sh",
+        "JavaScript": {
+            "target": "xcodebuild.js",
             "argumentFormat": ""
         }
     }    

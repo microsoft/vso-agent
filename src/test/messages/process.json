@@ -6,12 +6,12 @@
   "timeline": {
     "id": "cceb04f7-135a-465c-8c4b-a4a114eb3ec4",
     "changeId": 0
-  },
+  },  
   "plan": {
     "planId": "cb2fb9c9-974a-4c1b-8bba-83b99670309d",
     "artifactUri": "vstfs:///Build/Build/2",
     "artifactLocation": null
-  },    
+  },  
   "environment": {
     "data": {
       "buildId": {
@@ -29,13 +29,13 @@
           "localPath": "repo/default",
           "rootFolder": null,
           "sourceVersion": "",
-          "checkoutSubmodules": "True"
+          "checkoutSubmodules": "False"
         },
         "id": 1,
         "name": "default repo",
         "type": "Git",
         "authorization": "TfsBuild",
-        "url": "/Test/Repos/super"
+        "url": "https://git01.codeplex.com/buildsamples"
       },
       {
         "name": "TfsBuild",
@@ -49,17 +49,17 @@
     },
     "variables": {
       "system": "build",
-      "system.collectionId": "d55d99c3-3bd6-43d3-82d7-ad77a29e0d35",
+      "system.collectionId": "e66d99c3-3bd6-43d3-82d7-ad77a29e0d45",
       "system.teamProject": "test",
-      "system.definitionId": "77",
+      "system.definitionId": "76",
       "build.definitionVersion": "1",
       "build.sourceBranch": "refs/heads/master",
       "forceClean": "false",
-      "config": "debug",
-      "platform": "any cpu",
-      "dropLocation": "#/54/drop"
+      "Configuration": "Debug",
+      "SDK": "iphonesimulator",
+      "dropLocation": "#/53/drop"
     }    
-  },
+  },  
   "authorization": {
     "servicePrincipalId": "TeamFoundationService (TEAM FOUNDATION)",
     "servicePrincipalToken": "http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fname=TeamFoundationService+(TEAM+FOUNDATION)&http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fnameidentifier=37eae97c-1f3f-4a1f-8689-0633cc609ea3&http%3a%2f%2fschemas.microsoft.com%2faccesscontrolservice%2f2010%2f07%2fclaims%2fidentityprovider=https%3a%2f%2ftfsdev.accesscontrol.windows.net%2f&Audience=https%3a%2f%2fapp.tfsbuildhost8.tfsallin.net%2f&ExpiresOn=1399531568&Issuer=https%3a%2f%2ftfsdev.accesscontrol.windows.net%2f&HMACSHA256=MbcDawHrTmF2WLFlMKjs4qiB9Ht1xD%2b2hnQr9NGzV3Y%3d",
@@ -68,16 +68,25 @@
   },
   "tasks": [
     {
-        "instanceId": "1796e5b0-2fb1-4a44-ad34-c1c2525bd78e",
-        "id": "7D831C3C-3C68-459A-A5C9-BDE6E659596C",
-        "name": "CMake",
-        "displayName": "CMake",
-        "version":"1.0.0",
+        "instanceId": "f554e370-d9e7-4762-83ed-f2169edfd842",
+        "id": "D9BAFED4-0B18-4F58-968D-86655B4D2CE9",
+        "name": "ProcessRunner",
+        "version":"1.0.2",
         "inputs":{
-            "args": "", 
-            "buildDirName": "build", 
-            "srcRoot": ""  
+            "filename": "node", 
+            "arguments": "-v",
+            "workingFolder": ""
         }
-    }
+    }, {      
+        "instanceId": "3ce1ada5-9df0-43ab-a1b2-1a492703c854",
+        "id": "D9BAFED4-0B18-4F58-968D-86655B4D2CE9",
+        "name": "ProcessRunner",
+        "version":"1.0.2",
+        "inputs":{
+            "filename": "ls", 
+            "arguments": ".",
+            "workingFolder": ""
+        }        
+    } 
   ]
 }

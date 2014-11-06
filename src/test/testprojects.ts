@@ -45,7 +45,7 @@ describe('Test Projects', function() {
 
 	describe('XCode', util.hasCapability('xcode') ? function() {
 		it('runs', function(done) {
-			this.timeout(10000);
+			this.timeout(30000);
 			var workerMsg = util.createTestMessage('xcode', repo.repo);
 			var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
 			wk.run(workerMsg, false,
@@ -63,6 +63,22 @@ describe('Test Projects', function() {
 		it('runs', function(done) {
 			this.timeout(10000);
 			var workerMsg = util.createTestMessage('jake', repo.repo);
+			var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
+			wk.run(workerMsg, false,
+				function(agentUrl, taskUrl, jobInfo, ag) {
+					return feedbackChannel;
+				},
+				function() {
+					assert(feedbackChannel.jobsCompletedSuccessfully(), feedbackChannel.getRecordsString());
+					done();
+			});
+		});
+	} : function() { it ('current system does not support jake');});
+
+	describe('Cmake', util.hasCapability('cmake') ? function() {
+		it('runs', function(done) {
+			this.timeout(10000);
+			var workerMsg = util.createTestMessage('cmake', repo.repo);
 			var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
 			wk.run(workerMsg, false,
 				function(agentUrl, taskUrl, jobInfo, ag) {

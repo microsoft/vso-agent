@@ -23,38 +23,29 @@ exports.execute = function(ctx, callback) {
 	var cmakePath = which('cmake');
 	if (!cmakePath) {
 		callback(new Error('cmake not found'));
+		return;
 	}
+
 	ctx.verbose('using cmake: ' + cmakePath);
 
-	var repoRoot = ctx.variables['build.sourceDirectory'];
-	var srcRoot = path.resolve(repoRoot, ctx.inputs.srcRoot);
-	ctx.verbose('srcRoot: ' + srcRoot);
+	var args = [];
 
-	if (!fs.existsSync(srcRoot)) {
-		callback(new Error('srcRoot does not exist: ' + srcRoot));
-		return;	
+	var argsInput = ctx.inputs.args;
+	ctx.verbose('argsInput: ' + argsInput);
+	if (argsInput && argsInput.length > 0) {
+		args = args.concat(ctx.util.argStringToArray(argsInput));
 	}
-	cd(srcRoot);
 
-	// TODO: validate dir name is not a path.  We are going to create the dir if not exist and then run cmake build ..
-	var buildDirName = ctx.inputs.buildDirName;
-	var buildPath = path.join(srcRoot, buildDirName);
-	if (!fs.existsSync(buildPath)) {
-		ctx.verbose('creating build folder: ' + buildDirName)
-		mkdir(buildDirName);	
+	var cwd = ctx.inputs.cwd;
+	ctx.verbose('working: ' + cwd);
+
+	if (!fs.existsSync(cwd)) {
+		callback(new Error('working does not exist: ' + cwd));	
+		return;
 	}
-	cd(buildDirName);
+	cd(cwd);
 
 	var cwd = process.cwd();
-	ctx.info('Generating Files');
-	ctx.util.spawn(cmakePath, [srcRoot], { cwd: cwd, failOnStdErr: false }, function(err) {
-		if (err) {
-			callback(err);
-			return;
-		}
-
-		// TODO: join args from input
-		ctx.info('Building');
-		ctx.util.spawn(cmakePath, ['--build', buildPath], { cwd: cwd, failOnStdErr: false }, callback);	
-	});
+	ctx.info('Calling cmake');
+	ctx.util.spawn(cmakePath, args, { cwd: cwd, failOnStdErr: false }, callback);
 }

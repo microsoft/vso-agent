@@ -1,0 +1,2 @@
+#define sqrt_VERSION_MAJOR @sqrt_VERSION_MAJOR@
+#define sqrt_VERSION_MINOR @sqrt_VERSION_MINOR@

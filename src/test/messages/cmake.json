@@ -1,0 +1,100 @@
+{
+  "requestId": 1,
+  "lockToken": "978ef675-8aa2-4c27-a4ec-9a799aa40f2e",  
+  "jobId": "d9abbcc0-8e9d-4263-ae9c-89bb7ee9a31c",
+  "jobName": "Build",
+  "timeline": {
+    "id": "cceb04f7-135a-465c-8c4b-a4a114eb3ec4",
+    "changeId": 0
+  },  
+  "plan": {
+    "planId": "cb2fb9c9-974a-4c1b-8bba-83b99670309d",
+    "artifactUri": "vstfs:///Build/Build/2",
+    "artifactLocation": null
+  },  
+  "environment": {
+    "data": {
+      "buildId": {
+        "$type": "System.Int32",
+        "$value": 1
+      },
+      "reservationId": {
+        "$type": "System.Int32",
+        "$value": 1
+      }
+    },
+    "endpoints": [
+      {
+        "data": {
+          "localPath": "repo/default",
+          "rootFolder": null,
+          "sourceVersion": "",
+          "checkoutSubmodules": "False"
+        },
+        "id": 1,
+        "name": "default repo",
+        "type": "Git",
+        "authorization": "TfsBuild",
+        "url": "https://git01.codeplex.com/buildsamples"
+      },
+      {
+        "name": "TfsBuild",
+        "type": "BuildService",
+        "authorization": "TfsBuild",
+        "url": "http://localhost:3000/DefaultCollection"
+      }
+    ],
+    "secrets": {
+      "TfsBuild": "TeamFoundationService (TEAM FOUNDATION);http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fname=TeamFoundationService+(TEAM+FOUNDATION)&http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fnameidentifier=37eae97c-1f3f-4a1f-8689-0633cc609ea3&http%3a%2f%2fschemas.microsoft.com%2faccesscontrolservice%2f2010%2f07%2fclaims%2fidentityprovider=https%3a%2f%2ftfsdev.accesscontrol.windows.net%2f&Audience=https%3a%2f%2fapp.tfsbuildhost8.tfsallin.net%2f&ExpiresOn=1399531565&Issuer=https%3a%2f%2ftfsdev.accesscontrol.windows.net%2f&HMACSHA256=aD%2fAyf4WEluDE2fgx5nVAhY4xZhGSCmdd3ZKhkIXpQs%3d"
+    },
+    "variables": {
+      "system": "build",
+      "system.collectionId": "e66d99c3-3bd6-43d3-82d7-ad77a29e0d45",
+      "system.teamProject": "test",
+      "system.definitionId": "76",
+      "build.definitionVersion": "1",
+      "build.sourceBranch": "refs/heads/master",
+      "forceClean": "false",
+      "Configuration": "Debug",
+      "SDK": "iphonesimulator",
+      "dropLocation": "#/53/drop"
+    }    
+  },  
+  "authorization": {
+    "servicePrincipalId": "TeamFoundationService (TEAM FOUNDATION)",
+    "servicePrincipalToken": "http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fname=TeamFoundationService+(TEAM+FOUNDATION)&http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fnameidentifier=37eae97c-1f3f-4a1f-8689-0633cc609ea3&http%3a%2f%2fschemas.microsoft.com%2faccesscontrolservice%2f2010%2f07%2fclaims%2fidentityprovider=https%3a%2f%2ftfsdev.accesscontrol.windows.net%2f&Audience=https%3a%2f%2fapp.tfsbuildhost8.tfsallin.net%2f&ExpiresOn=1399531568&Issuer=https%3a%2f%2ftfsdev.accesscontrol.windows.net%2f&HMACSHA256=MbcDawHrTmF2WLFlMKjs4qiB9Ht1xD%2b2hnQr9NGzV3Y%3d",
+    "serverId": "bbda04f7-135a-465c-8c4b-a4a114eb3fd2",
+    "serverUrl": "http://localhost:3000/DefaultCollection"
+  },
+  "tasks": [
+    {
+        "instanceId": "f554e370-d9e7-4762-83ed-f2169edfd842",
+        "id": "D9BAFED4-0B18-4F58-968D-86655B4D2CE9",
+        "name": "ProcessRunner",
+        "version":"1.0.2",
+        "inputs":{
+            "filename": "mkdir", 
+            "arguments": "-p build",
+            "workingFolder": "cmake"
+        }   
+    }, {
+        "instanceId": "fbdbf31b-2801-4ad7-b512-112033cff5d6",
+        "id": "1E78DC1B-9132-4B18-9C75-0E7ECC634B74",
+        "name": "Cmake",
+        "version":"1.0.2",
+        "inputs":{
+            "cwd": "cmake/build", 
+            "args": ".."
+        }
+    }, {      
+        "instanceId": "ce4df292-9b68-4a6f-b996-2d366585b977",
+        "id": "1E78DC1B-9132-4B18-9C75-0E7ECC634B74",
+        "name": "Cmake",
+        "version":"1.0.2",
+        "inputs":{
+            "cwd": "cmake/build", 
+            "args": "--build ."
+        }        
+    } 
+  ]
+}

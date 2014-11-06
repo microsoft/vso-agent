@@ -40,6 +40,7 @@ export class Utilities {
 	public spawn(name: string, args: string[], options, callback: (err: any, returnCode: number) => void) {
 		var failed = false;
 		options = options || {};
+		args = args || [];
 
 		var ops = {
 			cwd: process.cwd(),
@@ -54,7 +55,7 @@ export class Utilities {
 		}
 
         this.ctx.verbose('cwd: ' + ops.cwd);
-        this.ctx.verbose(name + ' ' + args);
+        this.ctx.info('running: ' + name + ' ' + args.join(' '));
 
 		var cp = require('child_process').spawn;
 
