@@ -24,9 +24,9 @@ var path = require('path');
 var shell = require('shelljs');
 var uuid = require('node-uuid');
 
-export function createTestProjectRepo(projectName: string, callback: (err, repo) => void){
+export function createTestProjectRepo(callback: (err, repo) => void){
 	var folder = createTmpFolder();
-	copyTestProject(projectName, folder);
+	copyTestProjects(folder);
 	var repo = new gm.GitRepo(folder);
 	repo.init(function (err) {
 		if (!err) {
@@ -61,12 +61,8 @@ export function createTmpFolder(): string {
 	return folder;
 }
 
-function copyTestProject(projectName: string, destination: string) {
-	shell.cp('-rf', path.join(__dirname, 'projects', projectName, '*'), destination);
-}
-
-export function createTestMessage() {
-
+function copyTestProjects(destination: string) {
+	shell.cp('-rf', path.join(__dirname, 'projects', '*'), destination);
 }
 
 export function createTestConfig(): cm.IConfiguration {

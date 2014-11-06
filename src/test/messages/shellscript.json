@@ -63,7 +63,7 @@
 			"name": "ShellScript",
 			"version": "1.0.1",
 			"inputs": {
-				"scriptPath": "shell.sh",
+				"scriptPath": "shellscript/shell.sh",
 				"cwd":""
 			}
 		}
