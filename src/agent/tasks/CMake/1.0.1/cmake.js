@@ -26,7 +26,7 @@ exports.execute = function(ctx, callback) {
 	}
 	ctx.verbose('using cmake: ' + cmakePath);
 
-	var srcRoot = ctx.inputs.srcRoot);
+	var srcRoot = ctx.inputs.srcRoot;
 	ctx.verbose('srcRoot: ' + srcRoot);
 
 	if (!fs.existsSync(srcRoot)) {
