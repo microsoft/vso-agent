@@ -89,6 +89,8 @@ export class MessageListener {
 			this.agentapi.deleteSession(this.poolId, this.sessionId, (err, statusCode) => {
 				callback(err);
 			});
+		} else {
+			callback(null);
 		}
 	}
 }
