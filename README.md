@@ -44,9 +44,14 @@ sudo npm install
 
 Determine which account the agent will run as.
 
-  1. Enable alternate credentials
-  2. Add to collection level *Build Service Accounts* group
-  3. Add to *Agent Pool Service Accounts* group
+   1. Enable alternate credentials for account agent will run builds as.
+   2. Project Admin UI: (from project, gear upper right) 
+      * Ensure queue created.  Name first default. (elect to create a pool if creating)
+   3. Collection Admin UI: Security tab, 
+      * Add user to Project Collection Build Service Accounts (allows agent to write back build data)
+   4. Account Admin (Control Panel): Agent Pools tab, expand pool
+      * Add user to Agent Pool Administrators (allows adding agent to pool)
+      * Add user to Agent Pool Service Accounts (allows agent to listen to the build queue)
 
 ##Configure Agent
 
