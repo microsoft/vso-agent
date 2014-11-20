@@ -20,7 +20,7 @@ import ifm = require('../../agent/api/interfaces');
 export class TestFeedbackChannel implements cm.IFeedbackChannel {
 	public agentUrl: string;
 	public taskUrl: string;
-	public taskApi: ifm.ITaskApi;
+	public timelineApi: ifm.ITimelineApi;
 	public jobInfo: cm.IJobInfo;	
 	public enabled: boolean;
 

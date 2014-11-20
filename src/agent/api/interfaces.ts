@@ -36,11 +36,16 @@ export interface IAgentApi {
     updateJobRequest(poolId: number, lockToken: string, jobRequest: TaskAgentJobRequest, onResult: (err: any, statusCode: number, jobRequest: TaskAgentJobRequest) => void): void;
 }
 
-export interface ITaskApi {
+export interface ITimelineApi {
     updateTimelineRecords(planId: string, timelineId: string, record: TimelineRecord[], onResult: (err: any, statusCode: number, records: TimelineRecord[]) => void): void;
     appendTimelineRecordFeed(planId: string, timelineId: string, recordId: string, lines: string[], onResult: (err: any, statusCode: number, obj: any) => void): void;
     createLog(planId: string, logPath: string, onResult: (err: any, statusCode: number, log: TaskLog) => void): void;
     uploadLogFile(planId: string, logId: number, filePath: string, onResult: (err: any, statusCode: number, obj: any) => void): void;    
+}
+
+export interface ITaskApi {
+    getTasks(taskId: string, onResult: (err: any, statusCode: number, obj: any) => void): void;
+    downloadTask(taskId: string, version: string, filePath: string, onResult: (err: any, statusCode: number) => void): void
 }
 
 export interface IRequestHandler {
@@ -56,6 +61,7 @@ export interface IHttpClient {
     get(verb: string, requestUrl: string, headers: any, onResult: (err: any, res: IHttpResponse, contents: string) => void): void;
     send(verb: string, requestUrl: string, objs: any, headers: any, onResult: (err: any, res: IHttpResponse, contents: string) => void): void;
     sendFile(verb: string, requestUrl: string, content: NodeJS.ReadableStream, headers: any, onResult: (err: any, res: IHttpResponse, contents: string) => void): void;
+    getFile(requestUrl: string, destination: NodeJS.WritableStream, headers: any, onResult: (err: any, res: IHttpResponse) => void): void
     request(protocol: any, options: any, body, onResult: (err: any, res: IHttpResponse, contents: string) => void): void;
 }
 

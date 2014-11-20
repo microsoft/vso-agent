@@ -29,6 +29,7 @@
     "minimist": "^0.2.0",
     "nconf": "0.6.x",
     "node-uuid": "1.x",
+    "adm-zip": "0.4.x",
     "python-shell": "0.0.3",
     "q": "^1.0.1",
     "shelljs": "0.2.x",

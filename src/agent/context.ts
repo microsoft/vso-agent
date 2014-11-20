@@ -358,7 +358,7 @@ export class PluginContext extends ExecutionContext {
 
 	public job: ifm.JobRequestMessage;
 	private agentApi: ifm.IAgentApi;
-	private taskApi: ifm.ITaskApi;
+	private timelineApi: ifm.ITimelineApi;
 }
 
 //=================================================================================================

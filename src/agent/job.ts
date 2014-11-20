@@ -24,6 +24,7 @@ import ifm = require('./api/interfaces');
 import lm = require('./logging');
 import path = require('path');
 import plgm = require('./plugins');
+import taskm = require('./taskmanager');
 import tm = require('./tracing');
 import cm = require('./common');
 
@@ -75,134 +76,141 @@ export class JobRunner {
 		var _this: JobRunner = this;
 		var jobCtx: ctxm.JobContext = this.jobContext;
 
-		// prepare (might download) up to 5 tasks in parallel and then run tasks seuentially
-		ag.status('Preparing Tasks');
-		async.forEach(this.job.tasks, 
-			function(pTask, callback){
-				_this.prepareTask(pTask, callback);
-			}, 
-			function(err){
-		        if (err) {
-		        	trace.write('error preparing tasks');
-		            complete(err, ifm.TaskResult.Failed);
-		            return;
-		        }
-		        			
-				ag.info('Task preparations complete.');
+		ag.info('Setting job to in progress');
+		jobCtx.setJobInProgress();
+		jobCtx.writeConsoleSection('Preparing tasks');
 
-				// TODO: replace build with sender id once confirm how sent
+		jobCtx.status('Donloading required tasks');
+		var taskManager = new taskm.TaskManager(ag);
+		taskManager.ensureTasksExist(this.job.tasks, function(err) {
+			if (err) {
+				complete(err, ifm.TaskResult.Failed);
+				return;
+			}
+			// prepare (might download) up to 5 tasks in parallel and then run tasks seuentially
+			ag.status('Preparing Tasks');
+			async.forEach(_this.job.tasks, 
+				function(pTask, callback){
+					_this.prepareTask(pTask, callback);
+				},
+				function(err){
+			        if (err) {
+			        	trace.write('error preparing tasks');
+			            complete(err, ifm.TaskResult.Failed);
+			            return;
+			        }
+			        			
+					ag.info('Task preparations complete.');
 
-				ag.info('loading plugins...');
-				plgm.load('build', ag, (err:any, plugins:any) => {
-					if (err) {
-						trace.write('error loading plugins');
-						complete(err, ifm.TaskResult.Failed);
-						return;
-					}
+					// TODO: replace build with sender id once confirm how sent
 
-					//
-					// Write out plug-ins and tasks we are about to run.
-					// Create timeline entries for each in Pending state
-					//
-					ag.info('beforeJob Plugins:')
-					plugins['beforeJob'].forEach(function(plugin) {
-						ag.info(plugin.pluginName() + ":" + plugin.beforeId);
-						jobCtx.registerPendingTask(plugin.beforeId, plugin.pluginName());
-					});
+					ag.info('loading plugins...');
+					plgm.load('build', ag, (err:any, plugins:any) => {
+						if (err) {
+							trace.write('error loading plugins');
+							complete(err, ifm.TaskResult.Failed);
+							return;
+						}
 
-					ag.info('tasks:')
-					jobCtx.job.tasks.forEach(function(task) {
-						ag.info(task.name + ":" + task.id);
-						jobCtx.registerPendingTask(task.instanceId, task.name);
-					});
+						//
+						// Write out plug-ins and tasks we are about to run.
+						// Create timeline entries for each in Pending state
+						//
+						ag.info('beforeJob Plugins:')
+						plugins['beforeJob'].forEach(function(plugin) {
+							ag.info(plugin.pluginName() + ":" + plugin.beforeId);
+							jobCtx.registerPendingTask(plugin.beforeId, plugin.pluginName());
+						});
 
-					ag.info('afterJob Plugins:')
-					plugins['afterJob'].forEach(function(plugin) {
-						ag.info(plugin.name + ":" + plugin.afterId);
-						jobCtx.registerPendingTask(plugin.afterId, plugin.pluginName());
-					});
+						ag.info('tasks:')
+						jobCtx.job.tasks.forEach(function(task) {
+							ag.info(task.name + ":" + task.id);
+							jobCtx.registerPendingTask(task.instanceId, task.name);
+						});
 
-					ag.info('buildDirectory: ' + jobCtx.buildDirectory);
-					shell.mkdir('-p', jobCtx.buildDirectory);
-					shell.cd(jobCtx.buildDirectory);
-					trace.write(process.cwd());
+						ag.info('afterJob Plugins:')
+						plugins['afterJob'].forEach(function(plugin) {
+							ag.info(plugin.name + ":" + plugin.afterId);
+							jobCtx.registerPendingTask(plugin.afterId, plugin.pluginName());
+						});
 
-					var jobSuccess = true;
-					async.series([
-							function(done) {
-								ag.info('Setting job to in progress');
-								jobCtx.setJobInProgress();
-								done(err);
-							},
-							function(done) {
-								ag.info('Running beforeJob Plugins ...');
-								plgm.beforeJob(plugins, jobCtx, ag, function(err, success) {
-									ag.info('Finished running beforeJob plugins');
-									trace.state('variables after plugins:', _this.job.environment.variables);
+						ag.info('buildDirectory: ' + jobCtx.buildDirectory);
+						shell.mkdir('-p', jobCtx.buildDirectory);
+						shell.cd(jobCtx.buildDirectory);
+						trace.write(process.cwd());
 
-									// plugins can contribute to vars so replace again
-									_this._replaceTaskInputVars();
+						var jobSuccess = true;
+						async.series([
+								function(done) {
+									ag.info('Running beforeJob Plugins ...');
+									plgm.beforeJob(plugins, jobCtx, ag, function(err, success) {
+										ag.info('Finished running beforeJob plugins');
+										trace.state('variables after plugins:', _this.job.environment.variables);
 
-									jobSuccess = !err && success;
-									trace.write('jobSuccess: ' + jobSuccess);
+										// plugins can contribute to vars so replace again
+										_this._replaceTaskInputVars();
 
-									if (err) {
-										ag.error(err);
+										jobSuccess = !err && success;
+										trace.write('jobSuccess: ' + jobSuccess);
+
+										if (err) {
+											ag.error(err);
+										}
+
+										// we always run afterJob plugins
+										done(null);
+									})
+								},
+								function(done) {
+									// if prepare plugins fail, we should not run tasks (getting code failed etc...)
+									if (!jobSuccess) {
+										done(null);
+										trace.write('skipping running tasks since prepare plugins failed.');
+										return;
 									}
 
-									// we always run afterJob plugins
-									done(null);
-								})
-							},
-							function(done) {
-								// if prepare plugins fail, we should not run tasks (getting code failed etc...)
-								if (!jobSuccess) {
-									done(null);
-									trace.write('skipping running tasks since prepare plugins failed.');
-									return;
+									ag.info('Running Tasks ...');
+									_this.runTasks((err: any, success: boolean) => {
+										ag.info('Finished running tasks');
+										jobSuccess = jobSuccess && !err && success;
+										trace.write('jobSuccess: ' + jobSuccess);
+
+										if (err) {
+											ag.error(err);
+										}
+
+										done(null);
+									});
+								},
+								function(done) {
+									ag.info('Running afterJob Plugins ...');
+									plgm.afterJob(plugins, jobCtx, ag, jobSuccess, function(err, success) {
+										ag.info('Finished running afterJob plugins');
+										jobSuccess = jobSuccess && !err && success;
+										trace.write('jobSuccess: ' + jobSuccess);
+
+										if (err) {
+											ag.error(err);
+	                                    }
+
+	                                    done(err);
+									});
+								}			
+							], 
+	                        function (err) {
+								var jobResult = jobSuccess ? ifm.TaskResult.Succeeded : ifm.TaskResult.Failed;
+								trace.write('jobResult: ' + jobResult);
+
+								if (err) {
+									jobResult = ifm.TaskResult.Failed; 
 								}
 
-								ag.info('Running Tasks ...');
-								_this.runTasks((err: any, success: boolean) => {
-									ag.info('Finished running tasks');
-									jobSuccess = jobSuccess && !err && success;
-									trace.write('jobSuccess: ' + jobSuccess);
+								complete(err, jobResult);
+							});
+					});
 
-									if (err) {
-										ag.error(err);
-									}
-
-									done(null);
-								});
-							},
-							function(done) {
-								ag.info('Running afterJob Plugins ...');
-								plgm.afterJob(plugins, jobCtx, ag, jobSuccess, function(err, success) {
-									ag.info('Finished running afterJob plugins');
-									jobSuccess = jobSuccess && !err && success;
-									trace.write('jobSuccess: ' + jobSuccess);
-
-									if (err) {
-										ag.error(err);
-                                    }
-
-                                    done(err);
-								});
-							}			
-						], 
-                        function (err) {
-							var jobResult = jobSuccess ? ifm.TaskResult.Succeeded : ifm.TaskResult.Failed;
-							trace.write('jobResult: ' + jobResult);
-
-							if (err) {
-								jobResult = ifm.TaskResult.Failed; 
-							}
-
-							complete(err, jobResult);
-						});
-				});
-
-			})
+			});
+		});
 	}
 
 	private runTasks(callback: (err:any, success:boolean) => void): void {
@@ -275,8 +283,6 @@ export class JobRunner {
 		var taskJsonPath = path.join(taskPath, 'task.json');
 		trace.write('taskJsonPath: ' + taskJsonPath);
 
-		// TODO (bryanmac): support downloading - check if exists
-
 		fs.readFile(taskJsonPath, 'utf8', (err, data) => {
 			if (err) {
 				trace.write('error reading: ' + taskJsonPath);
@@ -314,7 +320,6 @@ export class JobRunner {
 				instructions['target'] = path.join(taskPath, instructions.target);
 				trace.state('instructions', instructions);
 				this.taskExecution[task.id] = instructions;
-
 				callback();
 			}
 			catch (e) {

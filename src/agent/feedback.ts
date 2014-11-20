@@ -165,7 +165,7 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
                                         agentCtx.config.creds.username, 
                                         agentCtx.config.creds.password);
 
-		this.taskApi = cm.createTaskApi(taskUrl, 
+		this.timelineApi = cm.createTimelineApi(taskUrl, 
                                         agentCtx.config.creds.username, 
                                         agentCtx.config.creds.password);
 
@@ -179,7 +179,7 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 
 	public agentUrl: string;
 	public taskUrl: string;
-	public taskApi: ifm.ITaskApi;
+	public timelineApi: ifm.ITimelineApi;
 	public agentCtx: ctxm.AgentContext;
 	public jobInfo: cm.IJobInfo;
 
@@ -333,7 +333,7 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 		trace.enter('servicechannel:_sendTimelineRecords');
 		trace.state('records', records);
 
-    	this.taskApi.updateTimelineRecords(this.jobInfo.planId, 
+    	this.timelineApi.updateTimelineRecords(this.jobInfo.planId, 
     									   this.jobInfo.timelineId, records, 
     									   (err, status, records) => {
     											callback(err);
@@ -361,7 +361,7 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 export class WebConsoleQueue extends TimedQueue {
 	constructor(feedback: cm.IFeedbackChannel) {
 		this._jobInfo = feedback.jobInfo;
-		this._taskApi = feedback.taskApi;
+		this._timelineApi = feedback.timelineApi;
 		super(CONSOLE_DELAY);
 	}
 
@@ -370,12 +370,12 @@ export class WebConsoleQueue extends TimedQueue {
 	}
 
 	private _jobInfo: cm.IJobInfo;
-	private _taskApi: ifm.ITaskApi;
+	private _timelineApi: ifm.ITimelineApi;
 
 	public processQueue(queue: any[], callback: (err: any) => void): void {
 		trace.state('queue', queue);
 		trace.state('jobInfo', this._jobInfo);
-    	this._taskApi.appendTimelineRecordFeed(this._jobInfo.planId, 
+    	this._timelineApi.appendTimelineRecordFeed(this._jobInfo.planId, 
     										  this._jobInfo.timelineId, 
     										  this._jobInfo.jobId, 
     										  queue, 
@@ -397,7 +397,7 @@ export class LogPageQueue extends TimedQueue {
 
 		this._feedback = feedback;
 		this._jobInfo = feedback.jobInfo;
-		this._taskApi = feedback.taskApi;
+		this._timelineApi = feedback.timelineApi;
 		this._agentCtx = agentCtx;
 		this._recordToLogIdMap = {};
 
@@ -408,7 +408,7 @@ export class LogPageQueue extends TimedQueue {
 	private _trace: tm.Tracing;
 	private _agentCtx: ctxm.AgentContext;
 	private _jobInfo: cm.IJobInfo;
-	private _taskApi: ifm.ITaskApi;
+	private _timelineApi: ifm.ITimelineApi;
 
     //
 	// TODO: delete the file after uploading.  should probably leave on disk and wait for clean up procedure
@@ -449,7 +449,7 @@ export class LogPageQueue extends TimedQueue {
 						//
 						if (!this._recordToLogIdMap.hasOwnProperty(logPageInfo.logInfo.recordId)) {
 							serverLogPath = 'logs\\' + recordId; // FCS expects \
-    						this._taskApi.createLog(planId, 
+    						this._timelineApi.createLog(planId, 
     							                    serverLogPath, 
     							                    (err: any, statusCode: number, log: ifm.TaskLog) => {
     							if (err) {
@@ -473,7 +473,7 @@ export class LogPageQueue extends TimedQueue {
 						logId = this._recordToLogIdMap[recordId]; 
 						if (logId) {
 							trace.write('uploading log page: ' + pagePath);
-							this._taskApi.uploadLogFile(planId, 
+							this._timelineApi.uploadLogFile(planId, 
 								                        logId, 
 								                        pagePath, 
 								                        (err: any, statusCode: number, obj: any) => {

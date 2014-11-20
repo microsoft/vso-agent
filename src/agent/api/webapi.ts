@@ -16,6 +16,7 @@
 
 import ifm = require('./interfaces');
 import agentm = require('./agentapi');
+import timelinem = require('./timelineapi');
 import taskm = require('./taskapi');
 
 // ---------------------------------------------------------------------------
@@ -25,6 +26,10 @@ export function AgentApi(serverUrl: string, handler: ifm.IRequestHandler): ifm.I
 	return new agentm.AgentApi(serverUrl, handler);	
 }
 
-export function TaskApi(collectionUrl: string, handler: ifm.IRequestHandler): ifm.ITaskApi {
-	return new taskm.TaskApi(collectionUrl, handler);	
+export function TimelineApi(collectionUrl: string, handler: ifm.IRequestHandler): ifm.ITimelineApi {
+	return new timelinem.TimelineApi(collectionUrl, handler);	
+}
+
+export function TaskApi(serverUrl: string, handler: ifm.IRequestHandler): ifm.ITaskApi {
+	return new taskm.TaskApi(serverUrl, handler);
 }

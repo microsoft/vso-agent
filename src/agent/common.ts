@@ -23,6 +23,8 @@ import webapi = require('./api/webapi');
 import cfgm = require('./configuration');
 
 var crypto = require('crypto');
+var zip = require('adm-zip');
+var fs = require('fs');
 
 require('./extensions');
 
@@ -96,7 +98,7 @@ export interface IConfiguration {
 export interface IFeedbackChannel {
 	agentUrl: string;
 	taskUrl: string;
-	taskApi: ifm.ITaskApi;
+	timelineApi: ifm.ITimelineApi;
 	jobInfo: IJobInfo;	
 	enabled: boolean;
 
@@ -195,20 +197,45 @@ export function jobInfoFromJob (job: ifm.JobRequestMessage): IJobInfo {
     return info;
 }
 
+export function versionStringFromTaskDef(task: ifm.TaskDefinition): string {
+	return task.version.major + '.' + task.version.minor + '.' + task.version.patch;
+}
+
 export function sha1HexHash(content: string) {
 	return crypto.createHash('sha1').update(content).digest('hex');
 }
 
-export function createTaskApi(collectionUrl: string, username: string, password: string): ifm.ITaskApi {
+export function extractFile(source: string, dest: string, done: (err: any) => void) {
+	if (!fs.existsSync(source)) {
+		done(new Error('Source file ' + source + ' does not exist.'));
+		return;
+	}
+
+	try {
+		var file = new zip(source);
+		file.extractAllTo(dest, true);
+		done(null);
+	} catch(err) {
+		done(err);
+	}
+}
+
+export function createTimelineApi(collectionUrl: string, username: string, password: string): ifm.ITimelineApi {
 	var creds: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(username, password);
-	var taskapi: ifm.ITaskApi = webapi.TaskApi(collectionUrl, creds);
-	return taskapi;
+	var timelineApi: ifm.ITimelineApi = webapi.TimelineApi(collectionUrl, creds);
+	return timelineApi;
 }
 
 export function createAgentApi(serverUrl: string, username: string, password: string): ifm.IAgentApi {
 	var creds: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(username, password);
 	var agentapi: ifm.IAgentApi = webapi.AgentApi(serverUrl, creds);
 	return agentapi;
+}
+
+export function createTaskApi(serverUrl: string, username: string, password: string): ifm.ITaskApi {
+	var creds: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(username, password);
+	var taskapi: ifm.ITaskApi = webapi.TaskApi(serverUrl, creds);
+	return taskapi;
 }
 
 export function initAgentApi(serverUrl: string, done: (err:any, api:ifm.IAgentApi, creds: any) => void): void {

@@ -87,6 +87,34 @@ export class HttpClient implements ifm.IHttpClient {
         content.pipe(req);
     }
 
+    getFile(requestUrl: string, destination: NodeJS.WritableStream, headers: any, onResult: (err: any, res: http.ClientResponse) => void): void {
+        var options = this._getOptions('GET', requestUrl, headers);
+
+        if (process.env.XPLAT_TRACE_HTTP) {
+            console.log('======= REQUEST =========');
+            console.log('-- getFile --');
+            console.log(JSON.stringify(options.options, null, 2));
+            console.log('=========================');
+        }
+
+        var req = options.protocol.request(options.options, function(res) {
+            // Wait on the pipe command closing the destination stream
+            // res could 'end' before it made it through the pipe
+            destination.on('finish', function() {
+                onResult(null, res);
+            });
+
+            res.pipe(destination)
+        });
+
+        req.on('error', function(err) {
+            destination.end();
+            onResult(err, null);
+        });
+
+        req.end();
+    }
+
     _getOptions(method: string, requestUrl: string, headers: any): any {
 
         // TODO: implement http tracing

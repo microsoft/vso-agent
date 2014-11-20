@@ -27,6 +27,7 @@ import dm = require('./diagnostics');
 import path = require('path');
 import cm = require('./common');
 import tm = require('./tracing');
+import taskm = require('./taskmanager');
 
 var inDebugger = (typeof global.v8debug === 'object');
 
@@ -114,6 +115,15 @@ cfgr.ensureConfigured((err: any, settings: cm.ISettings, creds:any) => {
         trace.callback('initAgent');
 
 		ag.status('Agent Started.');
+
+        ag.info('Downloading latest tasks');
+        var taskManager = new taskm.TaskManager(ag);
+        taskManager.ensureLatestExist(function(err) {
+            if (err) {
+                ag.error('Issue downloading tasks');
+                ag.error(JSON.stringify(err));
+            }
+        });
 		var queueName = agent.name;
 		ag.info('Listening for agent: ' + queueName);
 

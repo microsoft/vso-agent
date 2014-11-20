@@ -20,6 +20,7 @@ import fs = require("fs");
 import url = require("url");
 import path = require("path");
 import http = require("http");
+import shell = require("shelljs");
 import httpm = require("./httpclient");
 import ifm = require('./interfaces');
 
@@ -208,6 +209,38 @@ export class RestClient implements ifm.IRestClient {
 
                 processResponse(postUrl, res, contents, onResult);
             });
+        });
+    }
+
+    downloadFile(relativeUrl: string, filePath: string, fileType: string, onResult: (err: any, statusCode: number) => void): void {
+        if (process.env.XPLAT_TRACE_HTTP) {
+            console.log('======= downloadFile =========');
+            console.log(filePath);
+            console.log(relativeUrl);
+            console.log('=========================');
+        }
+
+        if (fs.existsSync(filePath)) {
+            onResult(new Error('File ' + filePath + ' already exists.'), null);
+            return;
+        }
+
+        var getUrl = this.resolveUrl(relativeUrl);
+        var fileStream: NodeJS.WritableStream = fs.createWriteStream(filePath);
+
+        var headers = {};
+        headers["Accept"] = fileType + '; api-version=' + this.apiVersion;
+
+        this.httpClient.getFile(getUrl, fileStream, headers, (err: any, res: ifm.IHttpResponse) => {
+            if (err) {
+                shell.rm('-rf', filePath);
+                onResult(err, err.statusCode);
+            } else if(res.statusCode > 299) {
+                shell.rm('-rf', filePath);
+                onResult(new Error('Unable to download file'), res.statusCode);
+            } else {
+                onResult(null, res.statusCode);
+            }
         });
     }
 

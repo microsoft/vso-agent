@@ -17,6 +17,7 @@ src/agent/logging.ts
 src/agent/plugins/build/stagingdrop.ts
 src/agent/plugins.ts
 src/agent/service.ts
+src/agent/taskmanager.ts
 src/agent/tracing.ts
 src/agent/utilities.ts
 src/agent/vsoagent.ts
