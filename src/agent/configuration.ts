@@ -31,6 +31,11 @@ import inputs = require('./inputs');
 var configPath = path.join(__dirname, '.agent');
 var envPath = path.join(__dirname, 'env.agent');
 
+
+export function exists(): boolean {
+	return fs.existsSync(configPath);
+}
+
 //
 // creds are not persisted in the file.  
 // They are tacked on after reading from CL or prompting

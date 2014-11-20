@@ -17,16 +17,16 @@
 var path = require('path') 
   , si = require('svcinstall')
   , argparser = require('minimist')
+  , url = require('url')
   , shelljs = require('shelljs');
 
-import cm = require('./common');  
+import cm = require('./common');
+import cfgm = require('./configuration');
 
 // on OSX (Darwin), a launchd daemon will get installed as: com.sample.myserver
 // on Linux, a start-stop-daemon will get installed as: myserver
 
 var args = argparser(process.argv.slice(2));
-var svcinstall = new si.SvcInstall('vsoagent', 'com.microsoft');
-
 var action = args['_'][0];
 
 var showUsage = function(code) {
@@ -39,6 +39,22 @@ var showUsage = function(code) {
 if (!action || action === '-?') {
 	showUsage(action ? 0 : 1);
 }
+
+if (!cfgm.exists()) {
+    console.error('The agent must be configured before running as a service. Run the agent and configure.');
+    process.exit(1);
+}
+
+// servicename: vsoagent.{accountName}.{agentName}
+var cfg = cfgm.read();
+var hostName = url.parse(cfg.serverUrl).hostname;
+var accountName = hostName.split('.')[0];
+var agentName = cfg.agentName;
+
+var svcName = accountName + '.' + agentName;
+console.log('serviceName: vsoagent.' + svcName);
+
+var svcinstall = new si.SvcInstall(svcName, 'vsoagent');
 
 if (typeof svcinstall[action] !== 'function') {
 	showUsage(1);

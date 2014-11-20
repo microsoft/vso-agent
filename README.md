@@ -108,7 +108,9 @@ start: Success.
 
 ###Contents
 ```bash
-$ cat /Library/LaunchDaemons/com.microsoft.vsoagent.plist 
+
+OSX:
+/Library/LaunchDaemons/vsoagent.{accountName}.{agentName}.plist 
 ```
 
 ##Building From Source
