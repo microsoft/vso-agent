@@ -27,6 +27,7 @@ describe('Test Projects', function() {
 	var repo: gm.GitRepo;
 
 	before(function(done) {
+		util.createTasksDirectory('../agent');
 		util.createTestProjectRepo(function(err, createdRepo) {
 			if (!err) {
 				repo = createdRepo;
@@ -41,6 +42,7 @@ describe('Test Projects', function() {
 		if (repo) {
 			util.cleanup(repo);
 		}
+		util.deleteTasksDirectory('../agent');
 	});
 
 	describe('XCode', util.hasCapability('xcode') ? function() {

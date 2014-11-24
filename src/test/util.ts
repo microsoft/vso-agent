@@ -97,5 +97,15 @@ export function createTestMessage(project: string, repoPath: string): {} {
 	}
 }
 
+export function createTasksDirectory(agentFolder: string): void {
+	var tasksDir = path.resolve(__dirname, agentFolder, 'work');
+	shell.mkdir('-p', tasksDir);
+	shell.cp('-rf', path.join(__dirname, 'tasks'), tasksDir);
+}
+
+export function deleteTasksDirectory(agentFolder: string): void {
+	shell.rm('-rf', path.resolve(__dirname, agentFolder, 'work', 'tasks'));
+}
+
 
 

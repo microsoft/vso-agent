@@ -69,6 +69,7 @@ task('test', ['default'], function(mode) {
 	jake.cpR(buildPath, testRoot);
 	jake.cpR('src/test/messages', path.join(testRoot, 'test'));
 	jake.cpR('src/test/projects', path.join(testRoot, 'test'));
+	jake.cpR('src/test/tasks', path.join(testRoot, 'test'));
 	jake.cpR(path.join(packagePath, 'agent'), testRoot);
 
 	jake.mkdirP(path.join(testRoot, 'agent', 'work'));
@@ -127,13 +128,7 @@ task('package', [], function() {
 	jake.mkdirP(packagePath);
 	jake.cpR(buildPath, packageRoot);
 
-	jake.cpR('src/agent/plugins/build', path.join(packagePath, 'agent', 'plugins'));
-
-	// populate the task cache in work directory
-	// TODO: this should go away after agent downloads tasks and they're all on the server
-	jake.mkdirP(path.join(packagePath, 'agent', 'work'));
-	jake.cpR('src/agent/tasks', path.join(packagePath, 'agent', 'work', 'tasks'));
-	
+	jake.cpR('src/agent/plugins/build', path.join(packagePath, 'agent', 'plugins'));	
 	console.log('Package created.');
 });
 
