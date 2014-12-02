@@ -2,6 +2,8 @@
 
 A cross platform build agent for Microsoft Visual Studio Online (VSO) and Team Foundation Server (TFS).  Supported on Mac OSX and Linux.
 
+*NOTE: This is for the unreleased build.vnext service which is in preview for a subset of accounts*
+
 ##Pre-Reqs
 
 ###Node and Npm:
@@ -18,7 +20,9 @@ v0.10.29
 
 ##Agent From Package
 
-Installs the agent installer once globally
+Installs the agent installer once globally.
+
+NOTE: This is not published yet.  Use the build and tar zip options below for now.
 
 ```bash
 $ sudo npm install install-vsoagent -g

@@ -13,15 +13,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://mseng.visualstudio.com/DefaultCollection/VSOnline/_git/Agent.Xplat"
+    "url": "https://github.com/Microsoft/vso-agent"
   },
   "author": "Microsoft Corporation",
   "contributors": [
     "Bryan MacFarlane <bryanmac@microsoft.com>",
+    "Christopher Johnson (CJ) <chjohn@microsoft.com>",
     "Patrick Carnahan <patcarna@microsoft.com>",
     "Chris Patterson <chrispat@microsoft.com>"
   ],
-  "license": "Apache 2.0",
+  "license": "MIT",
   "dependencies": {
     "async": "0.x",
     "iniparser": "~1.0.5",
