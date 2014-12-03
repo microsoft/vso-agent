@@ -64,18 +64,7 @@
         "version":"1.0.2",
         "inputs":{
             "scriptPath": "jakeSample/Jakefile.js", 
-            "target": "sample:jaketask", 
-            "cwd": ""  
-        }
-    }, {
-        "instanceId": "1686e5b0-2fb1-4a44-ad34-c1c2525bd89f",
-        "id": "900E03D8-4D8A-4976-867A-EB5113DB0636",
-        "name": "Jake",
-        "displayName": "Jake asyncTask",
-        "version":"1.0.2",
-        "inputs":{
-            "scriptPath": "jakeSample/Jakefile.js", 
-            "target": "asyncTask", 
+            "target": "exception", 
             "cwd": ""  
         }
     }

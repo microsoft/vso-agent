@@ -62,6 +62,20 @@ describe('Test Projects', function() {
 					done();
 			});
 		});
+
+		it('fails on Exception', function(done) {
+			var workerMsg = util.createTestMessage('jakefailure', repo.repo);
+			var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
+			wk.run(workerMsg, false,
+				function(agentUrl, taskUrl, jobInfo, ag) {
+					return feedbackChannel;
+				},
+				function() {
+					assert(!feedbackChannel.jobsCompletedSuccessfully(), feedbackChannel.getRecordsString());
+					assert(workerMsg['data'].tasks[0].instanceId, feedbackChannel.getRecordsString());
+					done();
+			});
+		});
 	} : function() { it ('current system does not support jake');});
 
 	describe('Cmake', util.hasCapability('cmake') ? function() {
