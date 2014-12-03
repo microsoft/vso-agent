@@ -284,7 +284,11 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 
 	public setLogId(recordId: string, logRef: ifm.TaskLogReference): void {
 		this._getFromBatch(recordId).log = logRef;
-	}	
+	}
+
+	public setOrder(recordId: string, order: number): void {
+		this._getFromBatch(recordId).order = order;
+	}
 
     //------------------------------------------------------------------
 	// Timeline internal batching

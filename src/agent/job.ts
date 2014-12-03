@@ -103,22 +103,26 @@ export class JobRunner {
 						// Write out plug-ins and tasks we are about to run.
 						// Create timeline entries for each in Pending state
 						//
+						var order = 1;
 						ag.info('beforeJob Plugins:')
 						plugins['beforeJob'].forEach(function(plugin) {
 							ag.info(plugin.pluginName() + ":" + plugin.beforeId);
-							jobCtx.registerPendingTask(plugin.beforeId, plugin.pluginName());
+							jobCtx.registerPendingTask(plugin.beforeId, plugin.pluginName(), order);
+							order++;
 						});
 
 						ag.info('tasks:')
 						jobCtx.job.tasks.forEach(function(task) {
 							ag.info(task.name + ":" + task.id);
-							jobCtx.registerPendingTask(task.instanceId, task.name);
+							jobCtx.registerPendingTask(task.instanceId, task.name, order);
+							order++;
 						});
 
 						ag.info('afterJob Plugins:')
 						plugins['afterJob'].forEach(function(plugin) {
 							ag.info(plugin.name + ":" + plugin.afterId);
-							jobCtx.registerPendingTask(plugin.afterId, plugin.pluginName());
+							jobCtx.registerPendingTask(plugin.afterId, plugin.pluginName(), order);
+							order++;
 						});
 
 						ag.info('buildDirectory: ' + jobCtx.buildDirectory);

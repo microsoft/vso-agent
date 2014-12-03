@@ -108,6 +108,7 @@ export interface IFeedbackChannel {
 	setParentId(recordId: string, parentId: string): void;
 	setWorkerName(recordId: string, workerName: string): void;
 	setLogId(recordId: string, logRef: ifm.TaskLogReference): void;
+	setOrder(recordId: string, order: number): void;
 
 	// job
 	updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void;

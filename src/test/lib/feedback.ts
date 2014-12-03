@@ -82,6 +82,10 @@ export class TestFeedbackChannel implements cm.IFeedbackChannel {
 		this._getFromBatch(recordId).log = logRef;
 	}
 
+	public setOrder(recordId: string, order: number): void {
+		this._getFromBatch(recordId).order = order;
+	}
+
 	public updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void {
 		callback(null);
 	}
