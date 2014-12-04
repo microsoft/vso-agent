@@ -141,7 +141,7 @@ export class JobRunner {
 										trace.write('jobSuccess: ' + jobSuccess);
 
 										if (err) {
-											ag.error(err);
+											ag.error(err.message);
 										}
 
 										// we always run afterJob plugins
@@ -163,7 +163,7 @@ export class JobRunner {
 										trace.write('jobSuccess: ' + jobSuccess);
 
 										if (err) {
-											ag.error(err);
+											ag.error(err.message);
 										}
 
 										done(null);
@@ -177,7 +177,7 @@ export class JobRunner {
 										trace.write('jobSuccess: ' + jobSuccess);
 
 										if (err) {
-											ag.error(err);
+											ag.error(err.message);
 	                                    }
 
 	                                    done(err);
