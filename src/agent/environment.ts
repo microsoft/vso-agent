@@ -134,6 +134,7 @@ export function getCapabilities(): { [key: string]: string } {
 	setIfNot(cap, 'jake', '.');
 
 	checkWhich(cap, 'cmake');
+    checkWhich(cap, 'ant');
 	checkTool(cap, 'xcode-select', '-p', 'xcode');
 
 	return cap;
