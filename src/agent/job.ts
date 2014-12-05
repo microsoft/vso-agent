@@ -274,16 +274,19 @@ export class JobRunner {
 		var taskJsonPath = path.join(taskPath, 'task.json');
 		trace.write('taskJsonPath: ' + taskJsonPath);
 
-		fs.readFile(taskJsonPath, 'utf8', (err, data) => {
-			if (err) {
-				trace.write('error reading: ' + taskJsonPath);
-				callback(err);
+		fs.exists(taskJsonPath,  (exists) => {
+			if (!exists) {
+				trace.write('cannot find task: ' + taskJsonPath);
+				callback(new Error('Could not find task: ' + taskJsonPath));
 				return;
 			}
 
 			// TODO: task metadata should be typed
 			try {
-				var taskMetadata = JSON.parse(data);
+				// Using require to help strip out BOM information
+				// Using JSON.stringify/JSON.parse in order to clone the task.json object
+				// Otherwise we modify the cached object for everyone
+				var taskMetadata = JSON.parse(JSON.stringify(require(taskJsonPath)));
 				trace.state('taskMetadata', taskMetadata);
 				this.taskMetadata[task.id] = taskMetadata;
 
