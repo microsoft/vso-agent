@@ -19,7 +19,13 @@ export class Utilities {
 	// [ '-a', '-b', '"quoted b value"', '-c', '-d', '"quoted d value"' ]
 	//
 	public argStringToArray(argString: string): string[] {
-		return argString.match(/([^" ]*("[^"]*")[^" ]*)|[^" ]+/g);	
+		var args = argString.match(/([^" ]*("[^"]*")[^" ]*)|[^" ]+/g);	
+        //remove double quotes from each string in args as child_process.spawn() cannot handle literla quotes as part of arguments
+        for(var i = 0; i < args; i ++)
+        {
+            args[i] = args[i].replace(/"/g", "");
+        }
+        return args;
 	}
 
     // spawn a process with stdout/err piped to context's logger
@@ -42,6 +48,7 @@ export class Utilities {
 		}
 
         this.ctx.verbose('cwd: ' + ops.cwd);
+        this.ctx.verbose('args: ' + args.toString());
         this.ctx.info('running: ' + name + ' ' + args.join(' '));
 
 		var cp = require('child_process').spawn;
