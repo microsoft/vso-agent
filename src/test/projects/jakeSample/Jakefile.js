@@ -56,6 +56,11 @@ task('asyncTask', {async: true}, function () {
   }, 3000);
 });
 
+desc('This is a failing task with Exceptions.');
+task('exception', [], function () {
+  throw new Error('Failure!');
+});
+
 // namespaces: use namespace:task
 //
 namespace('sample', function () {
@@ -84,7 +89,7 @@ namespace('sample', function () {
     console.log('running jaketask');
     console.log(util.inspect(arguments));
     jake.Task['sample:outputMsg'].invoke(tag, msg);
-  });  
+  });
 });
 
 // Cleanup - on complete.  Runs when jake script is complete

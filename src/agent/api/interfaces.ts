@@ -437,6 +437,7 @@ export interface TimelineRecord {
     location: any;
     log: TaskLogReference;
     name: string;
+    order: number;
     parentId: string;
     percentComplete: number;
     result: TaskResult;

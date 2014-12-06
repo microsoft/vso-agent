@@ -288,14 +288,15 @@ export class JobContext extends ExecutionContext {
     	this.feedback.setWorkerName(jobId, this.config.settings.agentName);
     }
 
-    public registerPendingTask(id: string, name: string): void {
+    public registerPendingTask(id: string, name: string, order: number): void {
     	trace.enter('registerPendingTask');
     	this.feedback.setCurrentOperation(id, "Initializing");
     	this.feedback.setParentId(id, this.job.jobId);
     	this.feedback.setName(id, name);
     	this.feedback.setState(id, ifm.TimelineRecordState.Pending);
     	this.feedback.setType(id, "Task");
-    	this.feedback.setWorkerName(id, this.config.settings.agentName);    	
+    	this.feedback.setWorkerName(id, this.config.settings.agentName);
+    	this.feedback.setOrder(id, order);  	
     }
 
     public setTaskStarted(id: string, name: string): void {

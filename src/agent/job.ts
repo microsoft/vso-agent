@@ -103,22 +103,26 @@ export class JobRunner {
 						// Write out plug-ins and tasks we are about to run.
 						// Create timeline entries for each in Pending state
 						//
+						var order = 1;
 						ag.info('beforeJob Plugins:')
 						plugins['beforeJob'].forEach(function(plugin) {
 							ag.info(plugin.pluginName() + ":" + plugin.beforeId);
-							jobCtx.registerPendingTask(plugin.beforeId, plugin.pluginName());
+							jobCtx.registerPendingTask(plugin.beforeId, plugin.pluginName(), order);
+							order++;
 						});
 
 						ag.info('tasks:')
 						jobCtx.job.tasks.forEach(function(task) {
 							ag.info(task.name + ":" + task.id);
-							jobCtx.registerPendingTask(task.instanceId, task.name);
+							jobCtx.registerPendingTask(task.instanceId, task.name, order);
+							order++;
 						});
 
 						ag.info('afterJob Plugins:')
 						plugins['afterJob'].forEach(function(plugin) {
 							ag.info(plugin.name + ":" + plugin.afterId);
-							jobCtx.registerPendingTask(plugin.afterId, plugin.pluginName());
+							jobCtx.registerPendingTask(plugin.afterId, plugin.pluginName(), order);
+							order++;
 						});
 
 						ag.info('buildDirectory: ' + jobCtx.buildDirectory);
@@ -141,7 +145,7 @@ export class JobRunner {
 										trace.write('jobSuccess: ' + jobSuccess);
 
 										if (err) {
-											ag.error(err);
+											ag.error(err.message);
 										}
 
 										// we always run afterJob plugins
@@ -163,7 +167,7 @@ export class JobRunner {
 										trace.write('jobSuccess: ' + jobSuccess);
 
 										if (err) {
-											ag.error(err);
+											ag.error(err.message);
 										}
 
 										done(null);
@@ -177,7 +181,7 @@ export class JobRunner {
 										trace.write('jobSuccess: ' + jobSuccess);
 
 										if (err) {
-											ag.error(err);
+											ag.error(err.message);
 	                                    }
 
 	                                    done(err);
@@ -270,16 +274,19 @@ export class JobRunner {
 		var taskJsonPath = path.join(taskPath, 'task.json');
 		trace.write('taskJsonPath: ' + taskJsonPath);
 
-		fs.readFile(taskJsonPath, 'utf8', (err, data) => {
-			if (err) {
-				trace.write('error reading: ' + taskJsonPath);
-				callback(err);
+		fs.exists(taskJsonPath,  (exists) => {
+			if (!exists) {
+				trace.write('cannot find task: ' + taskJsonPath);
+				callback(new Error('Could not find task: ' + taskJsonPath));
 				return;
 			}
 
 			// TODO: task metadata should be typed
 			try {
-				var taskMetadata = JSON.parse(data);
+				// Using require to help strip out BOM information
+				// Using JSON.stringify/JSON.parse in order to clone the task.json object
+				// Otherwise we modify the cached object for everyone
+				var taskMetadata = JSON.parse(JSON.stringify(require(taskJsonPath)));
 				trace.state('taskMetadata', taskMetadata);
 				this.taskMetadata[task.id] = taskMetadata;
 

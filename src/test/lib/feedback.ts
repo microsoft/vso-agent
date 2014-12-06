@@ -82,6 +82,10 @@ export class TestFeedbackChannel implements cm.IFeedbackChannel {
 		this._getFromBatch(recordId).log = logRef;
 	}
 
+	public setOrder(recordId: string, order: number): void {
+		this._getFromBatch(recordId).order = order;
+	}
+
 	public updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void {
 		callback(null);
 	}
@@ -114,6 +118,18 @@ export class TestFeedbackChannel implements cm.IFeedbackChannel {
 			}
 		}
 		return true;
+	}
+
+	public confirmFailure(recordId: string): boolean {
+		if (!this._records.hasOwnProperty(recordId)) {
+			var record = this._records[recordId];
+
+			if (record.result && record.result == ifm.TaskResult.Failed) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private _getFromBatch(recordId: string) {
