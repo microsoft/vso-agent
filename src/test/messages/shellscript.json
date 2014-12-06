@@ -61,7 +61,7 @@
 			"displayName": null,
 			"id": "6c731c3c-3c68-459a-a5c9-bde6e6595b5b",
 			"name": "ShellScript",
-			"version": "1.0.1",
+			"version": "1.0.2",
 			"inputs": {
 				"scriptPath": "shellscript/shell.sh",
 				"cwd":""

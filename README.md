@@ -22,7 +22,7 @@ v0.10.29
 
 Installs the agent installer once globally.
 
-NOTE: This is not published yet.  Use the build and tar zip options below for now.
+NOTE: This is not published yet.  Use the "Build from Source" section below.
 
 ```bash
 $ sudo npm install install-vsoagent -g
@@ -34,14 +34,6 @@ From a directory you created for the agent, run the installer.  Repeat from diff
 
 ```bash
 $ install-vsoagent
-```
-
-##Agent From Tar Zip
-Create a directory for the agent.  Copy the tar zip into it.
-```bash
-tar xvzf ./vsoxplat.tar.gz
-cd agent
-sudo npm install
 ```
 
 ##Provide Permissions to Account
@@ -136,7 +128,7 @@ Install remaining pre-reqs (run from root of repo)
 npm install
 ```
 
-###Build and Create Package with Jake
+###Build and Create Tar Gzip
 run jake in the root of the repo
 ```bash
 $ jake
@@ -144,15 +136,17 @@ $ jake
 Package done.
 ```
 
-This creates a _package folder.  Install globally from that folder
+This creates a _tar folder with a tar.gzip.  Follow next instructions for tar.
 
-###Install Agent
+##Agent From Tar Zip
+Create a directory for the agent.  Copy the tar zip into it.
 ```bash
-_package$ sudo npm install ./vsoxplat -g
-...
+tar xvzf ./vsoxplat.tar.gz
+cd agent
+sudo npm install
 ```
 
-Now you can create the agent (section above).
+Now you can configure the agent as in instructions above.
 
 Note:  You can alternatively build and package independantly
 
