@@ -21,9 +21,9 @@ export class Utilities {
     public argStringToArray(argString: string): string[] {
         var args = argString.match(/([^" ]*("[^"]*")[^" ]*)|[^" ]+/g);	
         //remove double quotes from each string in args as child_process.spawn() cannot handle literla quotes as part of arguments
-        for(var i = 0; i < args; i ++)
+        for(var i = 0; i < args.length; i ++)
         {
-            args[i] = args[i].replace(/"/g", "");
+            args[i] = args[i].replace(/"/g, "");
         }
         return args;
     }
