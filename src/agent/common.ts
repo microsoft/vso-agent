@@ -98,6 +98,8 @@ export interface IFeedbackChannel {
 	queueConsoleSection(line: string): void;
 
 	// timelines
+	addError(recordId: string, category: string, message: string, data: any): void;
+	addWarning(recordId: string, category: string, message: string, data: any): void;
 	setCurrentOperation(recordId: string, operation: string): void;
 	setName(recordId: string, name: string): void;
 	setStartTime(recordId: string, startTime: Date): void;
