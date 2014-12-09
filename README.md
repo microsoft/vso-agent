@@ -22,10 +22,8 @@ v0.10.29
 
 Installs the agent installer once globally.
 
-NOTE: This is not published yet.  Use the "Build from Source" section below.
-
 ```bash
-$ sudo npm install install-vsoagent -g
+$ sudo npm install vsoagent-installer -g
 ```
 
 ###Create Agents
