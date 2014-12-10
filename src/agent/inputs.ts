@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 var readline = require("readline")
+  , read = require('read')
   , async = require('async')
   , argparser = require('minimist');
 
@@ -29,11 +30,6 @@ export function get(inputs, done) {
 	var result = {};
 	result['_'] = args['_'];
 
-    var rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-    });
-
     async.forEachSeries(inputs, function (input, inputDone) {
     	if (args[input.arg]) {
     		result[input.name] = args[input.arg];
@@ -47,13 +43,13 @@ export function get(inputs, done) {
     	} 
     	msg += ' > ';
 
-        rl.question(msg, function (answer) {
+        var silent = input.type === 'password';
+        read({ prompt: msg, silent: silent }, function(err, answer) {
             var useVal = answer === "" ? input.def : answer;
             result[input.name] = getValueFromString(useVal, input.type, input.default);
             inputDone(null, null);
-        });    		
+        });
     }, function(err) {
-        rl.close();
         
     	if (err) {
     		done(err, null);
@@ -62,7 +58,7 @@ export function get(inputs, done) {
 
     	// final validation
     	inputs.forEach(function(input) {
-    		//console.log(input.name, input.req, result[input.name], result.hasOwnProperty(input.name));
+
     		if (input.req && !result[input.name]) {
     			done(new Error(input.description + ' is required.'), null);
     			return;

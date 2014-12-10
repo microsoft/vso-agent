@@ -161,7 +161,7 @@ export function getCreds(done: (err:any, creds:any) => void): void {
 			name: 'username', description: 'alternate username', arg: 'u', type: 'string', req: true
 		},
 		{
-			name: 'password', description: 'alternate password', arg: 'p', type: 'string', req: true
+			name: 'password', description: 'alternate password', arg: 'p', type: 'password', req: true
 		}
 	];
 
