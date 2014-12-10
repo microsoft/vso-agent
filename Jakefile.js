@@ -115,7 +115,8 @@ task('package', [], function() {
 	jake.mkdirP(packagePath);
 	jake.cpR(buildPath, packageRoot);
 
-	jake.cpR('src/agent/plugins/build', path.join(packagePath, 'agent', 'plugins'));	
+	jake.cpR('src/agent/plugins/build', path.join(packagePath, 'agent', 'plugins'));
+	jake.cpR('README.md', path.join(packagePath));	
 	console.log('Package created.');
 });
 
