@@ -42,6 +42,34 @@ export class TestFeedbackChannel implements cm.IFeedbackChannel {
 		this._webConsole.push('[section] ' + line);
 	}
 
+	public addError(recordId: string, category: string, message: string, data: any): void {
+		var record = this._getFromBatch(recordId);
+		if (record.errorCount < 10) {
+			var error = <ifm.TaskIssue> {};
+			error.category = category;
+			error.issueType = ifm.TaskIssueType.Error;
+			error.message = message;
+			error.data = data;
+			record.issues.push(error);
+		}
+
+		record.errorCount++;
+	}
+
+	public addWarning(recordId: string, category: string, message: string, data: any): void {
+		var record = this._getFromBatch(recordId);
+		if (record.warningCount < 10) {
+			var warning = <ifm.TaskIssue> {};
+			warning.category = category;
+			warning.issueType = ifm.TaskIssueType.Error;
+			warning.message = message;
+			warning.data = data;
+			record.issues.push(warning);
+		}
+
+		record.warningCount++;
+	}
+
 	public setCurrentOperation(recordId: string, operation: string): void {
 		this._getFromBatch(recordId).currentOperation = operation;
 	}

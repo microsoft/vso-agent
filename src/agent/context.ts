@@ -190,6 +190,16 @@ export class ExecutionContext extends Context {
 		super([logger]);
 	}
 
+	public error(message: string): void {
+		this.feedback.addError(this.recordId, "Console", message, null);
+		super.error(message);
+	}
+
+	public warning(message: string): void {
+		this.feedback.addWarning(this.recordId, "Console", message, null);
+		super.warning(message);
+	}
+
 	public agentCtx: AgentContext;
 	public jobInfo: cm.IJobInfo;
 	public variables: { [key: string]: string };
@@ -320,7 +330,7 @@ export class JobContext extends ExecutionContext {
     	this.feedback.setResult(id, result);
         this.feedback.setType(id, "Task");
         this.feedback.setName(id, name);
-    }      
+    }
 }
 
 //=================================================================================================

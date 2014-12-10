@@ -431,8 +431,10 @@ export interface TimelineRecord {
     changeId: number;
     currentOperation: string;
     details: TimelineReference;
+    errorCount: number;
     finishTime: Date;
     id: string;
+    issues: TaskIssue[];
     lastModified: Date;
     location: any;
     log: TaskLogReference;
@@ -445,6 +447,7 @@ export interface TimelineRecord {
     startTime: Date;
     state: TimelineRecordState;
     type: string;
+    warningCount: number;
     workerName: string;
 }
 
@@ -458,6 +461,18 @@ export interface TimelineReference {
     changeId: number;
     id: string;
     location: any;
+}
+
+export interface TaskIssue {
+    category: string;
+    data: any;
+    issueType: TaskIssueType;
+    message: string;
+}
+
+export enum TaskIssueType {
+    Error = 0,
+    Warning = 1
 }
 
 export var TypeInfo = {

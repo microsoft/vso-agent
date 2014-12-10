@@ -146,6 +146,7 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 		// timelines
 		this._batch = {};
 		this._recordCount = 0;
+		this._issues = {};
 
 		// service apis
 		this._agentApi = cm.createAgentApi(agentUrl, 
@@ -177,6 +178,7 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 
 	private _agentApi: ifm.IAgentApi;
 	
+	private _issues: any;
 
 	private _batch: any;
 	private _recordCount: number;
@@ -246,6 +248,39 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
     //------------------------------------------------------------------
 	// Timeline APIs
 	//------------------------------------------------------------------  
+	public addError(recordId: string, category: string, message: string, data: any): void {
+		var current = this._getIssues(recordId);
+		var record = this._getFromBatch(recordId);
+		if (current.errorCount < process.env.VSO_ERROR_COUNT ? process.env.VSO_ERROR_COUNT : 10) {
+			var error = <ifm.TaskIssue> {};
+			error.category = category;
+			error.issueType = ifm.TaskIssueType.Error;
+			error.message = message;
+			error.data = data;
+			current.issues.push(error);
+			record.issues = current.issues;
+		}
+
+		current.errorCount++;
+		record.errorCount = current.errorCount;
+	}
+
+	public addWarning(recordId: string, category: string, message: string, data: any): void {
+		var current = this._getIssues(recordId);
+		var record = this._getFromBatch(recordId);
+		if (current.warningCount < process.env.VSO_WARNING_COUNT ? process.env.VSO_WARNING_COUNT : 10) {
+			var warning = <ifm.TaskIssue> {};
+			warning.category = category;
+			warning.issueType = ifm.TaskIssueType.Error;
+			warning.message = message;
+			warning.data = data;
+			current.issues.push(warning);
+			record.issues = current.issues;
+		}
+
+		current.warningCount++;
+		record.warningCount = current.warningCount;
+	}
 	public setCurrentOperation(recordId: string, operation: string): void {
 		this._getFromBatch(recordId).currentOperation = operation;
 	}
@@ -318,7 +353,15 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 		}
 
 		return this._batch[recordId];
-	}  	
+	}
+
+	private _getIssues(recordId: string) {
+		if (!this._issues.hasOwnProperty(recordId)) {
+			this._issues[recordId] = {errorCount: 0, warningCount: 0, issues: []};
+		}
+
+		return this._issues[recordId];
+	}
 
 	private _sendTimelineRecords(records: ifm.TimelineRecord[], callback: (err: any) => void): void {
 		trace.enter('servicechannel:_sendTimelineRecords');
