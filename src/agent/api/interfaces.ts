@@ -7,6 +7,14 @@
 
 /// <reference path="../definitions/node.d.ts" />
 
+export interface IBasicCredential {
+    username: string;
+    password: string;
+}
+
+//-----------------------------------------------------
+// Agent Api
+//-----------------------------------------------------
 export interface IAgentApi {
     accountUrl: string;
     httpClient: IHttpClient;
@@ -23,6 +31,14 @@ export interface IAgentApi {
     updateJobRequest(poolId: number, lockToken: string, jobRequest: TaskAgentJobRequest, onResult: (err: any, statusCode: number, jobRequest: TaskAgentJobRequest) => void): void;
 }
 
+// Q Promise Interface
+export interface IQAgentApi {
+    connect(): IPromise;
+}
+
+//-----------------------------------------------------
+// Timeline Api
+//-----------------------------------------------------
 export interface ITimelineApi {
     updateTimelineRecords(planId: string, timelineId: string, record: TimelineRecord[], onResult: (err: any, statusCode: number, records: TimelineRecord[]) => void): void;
     appendTimelineRecordFeed(planId: string, timelineId: string, recordId: string, lines: string[], onResult: (err: any, statusCode: number, obj: any) => void): void;

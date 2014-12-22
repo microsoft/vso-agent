@@ -2,6 +2,16 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 /// <reference path="./definitions/nconf.d.ts"/>
+/// <reference path="./definitions/Q.d.ts" />
+
+import Q = require('q');
+import ifm = require('./api/interfaces');
+import cm = require('./common');
+import env = require('./environment');
+import inputs = require('./inputs');
+import webapi = require('./api/webapi');
+import util = require('./utilities');
+
 var os = require('os');
 var nconf = require("nconf");	
 var async = require("async");
@@ -9,11 +19,6 @@ var path = require("path");
 var fs = require('fs');
 var check = require('validator');
 var shell = require('shelljs');
-
-import ifm = require('./api/interfaces');
-import cm = require('./common');
-import env = require('./environment');
-import inputs = require('./inputs');
 
 var configPath = path.join(__dirname, '.agent');
 var envPath = path.join(__dirname, 'env.agent');
@@ -42,6 +47,7 @@ export function read(): cm.ISettings {
 	return settings;
 }
 
+/*
 var ifOK = function(err, complete, onSuccess) {
 	if (err) {
 		complete(err);
@@ -50,6 +56,7 @@ var ifOK = function(err, complete, onSuccess) {
 		complete();
 	}
 }
+*/
 
 var throwIf = function(condition, message) {
 	if (condition) {
@@ -60,132 +67,78 @@ var throwIf = function(condition, message) {
 export class Configurator {
 	constructor() {}
 
-	public agentApi: ifm.IAgentApi;
+	public agentApi: ifm.IQAgentApi;
 
-	public ensureConfigured(complete: (err: any, settings: cm.ISettings, creds:any) => void): void {
+	//
+	// ensure configured and return ISettings.  That's it
+	// returns promise
+	//
+	public QensureConfigured(creds: ifm.IBasicCredentials): Q.Promise<cm.ISettings> {
+		var defer = Q.defer<cm.ISettings>();
+
 		var settings: cm.ISettings = read();
-		if (!settings.serverUrl) {
-			console.log("no settings found. configuring...");
-			this.create((err, agent, config) => {
-				if (err) {
-					complete(err, null, null);
-					return;
-				}
 
-				complete(err, config.settings, config.creds);
-			});
-			return;
+		if (!settings.serverUrl) {
+			// not configured
+			console.log("no settings found. configuring...");
+
+			// create should return a promise
+			this.Qcreate(creds)
+				.then(function(settings) {
+					defer.resolve(settings);
+				})
 		}
 		else {
-			cm.initAgentApi(settings.serverUrl, (err, agentapi, creds) => {
-		        if (err) {
-		            complete(err, null, null);
-		            return;
-		        }
-		        this.agentApi = agentapi;
-				complete(null, settings, creds);
-			});
+			// already configured
+			defer.resolve(settings);
 		}
+
+		return defer.promise;
 	}
 
-	public create(complete: (err: any, agent: ifm.TaskAgent, config: cm.IConfiguration) => void): void {
-		var config:cm.IConfiguration = <cm.IConfiguration>{};
+	//
+	// Gether settings, register with the server and save the settings
+	//
+	public Qcreate(): ifm.IPromise {
 		var settings:cm.ISettings;
 		var newAgent: ifm.TaskAgent;
 		var agentPoolId = 0;
 
 		var cfgInputs = [
-			{
-				name: 'serverUrl', description: 'server url', arg: 's', type: 'string', req: true
-			},
-			{
-                name: 'agentName', description: 'agent name', arg: 'a', def: os.hostname(), type: 'string', req: true
-            },
-			{
-				name: 'poolName', description: 'agent pool name', arg: 'l', def: 'default', type: 'string', req: true
-			},
-			{
-				name: 'workFolder', description: 'agent work folder', arg: 'f', def: './work', type: 'string', req: true
-			}		
+			{ name: 'serverUrl', description: 'server url', arg: 's', type: 'string', req: true },
+			{ name: 'agentName', description: 'agent name', arg: 'a', def: os.hostname(), type: 'string', req: true },
+			{ name: 'poolName', description: 'agent pool name', arg: 'l', def: 'default', type: 'string', req: true },
+			{ name: 'workFolder', description: 'agent work folder', arg: 'f', def: './work', type: 'string', req: true }		
 		];
 
-		var inst = this;
-		async.series([
-			// get the cfg inputs
-			function(stepDone) {
-				inputs.get(cfgInputs, function(err, result) {
-					settings = <cm.ISettings>{};
-					settings['poolName'] = result['poolName'];
-					settings['serverUrl'] = result['serverUrl'];
-					settings['agentName'] = result['agentName'];
-					settings['workFolder'] = result['workFolder'];
-					config.settings = settings;
-					stepDone(err);
-				});
-			},
-			// get the creds
-			function(stepDone) {
-				cm.initAgentApi(settings['serverUrl'], (err, api, creds) => {
-					inst.agentApi = api;
-					config.creds = creds;
-					stepDone(err);
-				});
-			},
-			// validate and register the agent
-			function(stepDone) {
-				console.log('Register the agent ...');
-				try {
-					inst.validate(settings);
-				} catch (e) {
-					stepDone(new Error(e.message));
-					return;
-				}
+		return inputs.Qget(cfgInputs)
+		.then((result) => {
+			settings = <cm.ISettings>{};
+			settings['poolName'] = result['poolName'];
+			settings['serverUrl'] = result['serverUrl'];
+			settings['agentName'] = result['agentName'];
+			settings['workFolder'] = result['workFolder'];
 
-				inst.writeAgentToPool(settings, inst.agentApi, (err, agent, poolId) => {
-					if (err) { stepDone (err); return;}
-					config.poolId = poolId;
-					newAgent = agent; 
-					stepDone();
-				});
-			},
-			// create the work folder if it doesn't exist
-			function(stepDone) {
-				var wf = settings.workFolder;
-				if (fs.exists(wf, function(exists) {
-					if (!exists) {
-						console.log('Creating work folder ...');
-						try {
-							shell.mkdir('-p', wf);	
-						}
-						catch (e) {
-							console.log('Could not create the work folder');
-						}
-					}
-					stepDone();
-				}));
-			},
-			// if not exist, create a starter env vars file
-			function (stepDone) {
-				env.ensureEnvFile(envPath, (err) => {
-					stepDone(err);
-				});
-			},	
-			// save the input
-			function(stepDone) {
-				console.log('Saving ...');
-
-				fs.writeFile(configPath, JSON.stringify(config.settings, null, 2), (err) => {
-						stepDone(err);	
-					});
-			}
-		], function(err) {
-			if (err) {
-				console.error('Failed to register agent');
-				complete(err, null, null);
-				return;
-			}
-			complete(null, newAgent, config);
-		});
+			this.validate(settings);
+			this.agentapi = webapi.QAgentApi(settings.serverUrl, creds);
+			return this.writeAgentToPool(settings);
+		})
+		.then(() => {
+			console.log('Creating work folder ...');
+			var wf = settings.workFolder;
+			return util.QensurePathExists(wf);
+		})
+		.then(() => {
+			console.log('Creating env file ...');
+			return env.QensureEnvFile(envPath);
+		})
+		.then(() => {
+			console.log('Saving configuration ...');
+			return util.QobjectToFile(configPath, config.settings);
+		})
+		.then(() => {
+			return settings;
+		})
 	}
 
 	public readAgentPool(agentapi: ifm.IAgentApi, settings: cm.ISettings, complete: (err: any, agent: ifm.TaskAgent, poolId: number) => void): void {
@@ -334,5 +287,7 @@ export class Configurator {
 	}
 
 }
+
+
 
 

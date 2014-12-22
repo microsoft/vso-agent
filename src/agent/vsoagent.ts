@@ -16,6 +16,8 @@ import cm = require('./common');
 import tm = require('./tracing');
 import taskm = require('./taskmanager');
 
+var Q = require('q');
+
 var inDebugger = (typeof global.v8debug === 'object');
 
 var ag: ctxm.AgentContext;
@@ -90,18 +92,21 @@ var initAgent = function(settings: cm.ISettings, creds: any, complete: (err:any,
     doInit(settings, creds, complete);
 } 
 
-cfgr.ensureConfigured((err: any, settings: cm.ISettings, creds:any) => {
-	if (err) {
-		console.error(err);
-		process.exit(1);
-	}
 
-	initAgent(settings, creds, (err:any, agent: ifm.TaskAgent, config: cm.IConfiguration) => {
-		ag = new ctxm.AgentContext('agent', config, true);
+cm.readBasicCreds()
+.then(function(credentials: ifm.IBasicCredentials) {
+    _creds = credentials;
+    return cfgr.QensureConfigured(creds);
+})
+.then(function(settings: cm.ISettings) {
+
+    // after ensuring settings written, read config
+    initAgent(settings, creds, (err:any, agent: ifm.TaskAgent, config: cm.IConfiguration) => {
+        ag = new ctxm.AgentContext('agent', config, true);
         trace = new tm.Tracing(__filename, ag);
         trace.callback('initAgent');
 
-		ag.status('Agent Started.');
+        ag.status('Agent Started.');
 
         ag.info('Downloading latest tasks');
         var taskManager = new taskm.TaskManager(ag);
@@ -111,22 +116,22 @@ cfgr.ensureConfigured((err: any, settings: cm.ISettings, creds:any) => {
                 ag.error(JSON.stringify(err));
             }
         });
-		var queueName = agent.name;
-		ag.info('Listening for agent: ' + queueName);
+        var queueName = agent.name;
+        ag.info('Listening for agent: ' + queueName);
 
-		messageListener = new listener.MessageListener(cfgr.agentApi, agent, config.poolId);
+        messageListener = new listener.MessageListener(cfgr.agentApi, agent, config.poolId);
         trace.write('created message listener');
-		ag.info('starting listener...');
+        ag.info('starting listener...');
 
-		// TODO: messageListener event emmitter for listening and reset
+        // TODO: messageListener event emmitter for listening and reset
 
-		messageListener.start((message: ifm.TaskAgentMessage) => {
+        messageListener.start((message: ifm.TaskAgentMessage) => {
             trace.callback('listener.start');
             
-			ag.info('Message received');
+            ag.info('Message received');
             trace.state('message', message);
 
-			var messageBody = null;
+            var messageBody = null;
             try  {
                 messageBody = JSON.parse(message.body);
             } catch (e) {
@@ -134,20 +139,20 @@ cfgr.ensureConfigured((err: any, settings: cm.ISettings, creds:any) => {
                 return;
             }
 
-			ag.verbose(JSON.stringify(messageBody, null, 2));
-			
-			if (message.messageType === 'JobRequest') {
-				var workerMsg = { 
-					messageType:"job",
-					config: config,
-					data: messageBody
-				}
+            ag.verbose(JSON.stringify(messageBody, null, 2));
+            
+            if (message.messageType === 'JobRequest') {
+                var workerMsg = { 
+                    messageType:"job",
+                    config: config,
+                    data: messageBody
+                }
 
-				runWorker(ag, workerMsg);
-			}
-			else {
-				ag.error('Unknown Message Type');
-			}
+                runWorker(ag, workerMsg);
+            }
+            else {
+                ag.error('Unknown Message Type');
+            }
         },
         (err: any) => {
             if (!err || !err.hasOwnProperty('message')) {
@@ -156,8 +161,15 @@ cfgr.ensureConfigured((err: any, settings: cm.ISettings, creds:any) => {
                 ag.error(err.message);
             }
         });
-	});
-});
+    });
+})
+.fail(function(err) {
+    console.error(err);
+    process.exit(1);
+})
+
+
+
 
 process.on('uncaughtException', function (err) {
     if (ag) {

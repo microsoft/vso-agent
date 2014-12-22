@@ -1,11 +1,18 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+/// <reference path="./definitions/Q.d.ts" />
+
+import Q = require('q');
 import ctxm = require('./context');
+
+var shell = require('shelljs');
+var fs = require('fs');
 
 //
 // Utilities passed to each task
 // which provides contextual logging to server etc...
+// also contains general utility methods that would be useful to all task authors
 //
 export class Utilities {
     constructor(context: ctxm.Context) {
@@ -83,5 +90,41 @@ export class Utilities {
                 callback(new Error(msg), code);
             }
         });			
-    }	
+    }
+
+    public QensurePathExists(path: string): Q.Promise<void> {
+        var defer = Q.defer<void>();
+
+        if (fs.exists(path, function(exists) {
+            if (!exists) {
+                shell.mkdir('-p', wf);
+
+                var errMsg = shell.error();
+
+                if (errMsg) {
+                    defer.reject(new Error('Could not create path (' + path + '): ' + errMsg));
+                }
+                else {
+                    defer.resolve(null);
+                }
+            }
+        }));
+
+        return defer.promise;        
+    }
+
+    public QobjectToFile(filePath, obj): Q.Promise<void> {
+        var defer = Q.defer<void>();
+
+        fs.writeFile(filePath, JSON.stringify(obj, null, 2), (err) => {
+            if (err) {
+                defer.reject(new Error('Could not save to file (' + filePath + '): ' + err.message));
+            }
+            else {
+                defer.resolve(null);
+            }
+        });
+
+        return defer.promise;        
+    }
 }

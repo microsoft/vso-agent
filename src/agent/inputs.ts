@@ -1,6 +1,11 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+/// <reference path="./definitions/Q.d.ts" />
+
+import cm = require('./common');
+import Q = require('q');
+
 var readline = require("readline")
   , read = require('read')
   , async = require('async')
@@ -25,9 +30,26 @@ var getValueFromString = function (val, valtype, fallback) {
     return retVal;
 };
 
+// Q wrapper
+export function Qget(inputs: any): Q.Promise<cm.IStringDictionary> {
+    var defer - Q.defer<cm.IStringDictionary>();
+
+    this.get(inputs, (err, result: cm.IStringDictionary) => {
+        if (err) {
+            defer.reject(err);
+            return;
+        }
+
+        defer.resolve(result);
+    }); 
+
+    return Q.promise;
+}
+
 // done(err, result)
-export function get(inputs, done) {
-	var result = {};
+export function get(inputs, done: (err: Error, result: cm.IStringDictionary) => void): void {
+	var result: cm.IStringDictionary = <cm.IStringDictionary>{};
+    
 	result['_'] = args['_'];
 
     async.forEachSeries(inputs, function (input, inputDone) {

@@ -2,11 +2,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 /// <reference path="./definitions/node.d.ts"/>
+/// <reference path="./definitions/Q.d.ts" />
 
-var shell = require('shelljs');
+import Q = require('q');
 import fs = require('fs');
 import os = require('os');
 import cm = require('./common');
+
+var shell = require('shelljs');
 
 /*
 set env var for additional envvars to ignore sending as capabilities
@@ -37,6 +40,7 @@ var getFilteredEnv = function(): { [key: string]: string } {
     return filtered;
 }
 
+/*
 export function ensureEnvFile(envPath, done) {
     fs.exists(envPath, function(exists) {
         if (exists) {
@@ -55,6 +59,36 @@ export function ensureEnvFile(envPath, done) {
             done(err);	
         });
     });
+}
+*/
+
+export function QensureEnvFile(envPath): Q.Promise<void> {
+    var defer = Q.defer<void>();
+
+    fs.exists(envPath, function(exists) {
+        if (exists) {
+            defer.resolve(null);
+            return;
+        };
+
+        var vars: { [key: string]: string } = getFilteredEnv();
+
+        var contents = "";
+        for (var envvar in process.env) {
+            contents += envvar + '=' + process.env[envvar] + os.EOL;
+        }
+
+        fs.writeFile(envPath, contents, 'utf8', (err) => {
+            if (err) {
+                defer.reject(new Error('Could not create env file: ' + err.message));
+            }
+            else {
+                defer.resolve();
+            } 
+        });
+    });  
+
+    return defer.promise; 
 }
 
 //

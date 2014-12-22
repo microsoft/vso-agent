@@ -12,6 +12,7 @@ import cfgm = require('./configuration');
 var crypto = require('crypto');
 var zip = require('adm-zip');
 var fs = require('fs');
+var Q = require('q');
 
 require('./extensions');
 
@@ -55,6 +56,9 @@ export enum DiagnosticLevel {
 //-----------------------------------------------------------
 // Interfaces
 //-----------------------------------------------------------
+
+export interface IStringDictionary { [name: string] : string }
+
 export interface IDiagnosticWriter {
 	level: DiagnosticLevel;
 	write(message: string): void;
@@ -78,8 +82,9 @@ export interface ISettings {
 // this is not persisted but read from settings, server and/or user at runtime
 export interface IConfiguration {
 	settings: ISettings;
-	poolId: number;
 	creds: any;
+	poolId: number;
+	agent: ifm.TaskAgent;
 }
 
 export interface IFeedbackChannel {
@@ -228,6 +233,7 @@ export function createTaskApi(serverUrl: string, username: string, password: str
 	return taskapi;
 }
 
+/*
 export function initAgentApi(serverUrl: string, done: (err:any, api:ifm.IAgentApi, creds: any) => void): void {
 	getCreds((err, res) => {
 		var agentapi: ifm.IAgentApi = createAgentApi(serverUrl, res['username'], res['password']);
@@ -238,4 +244,33 @@ export function initAgentApi(serverUrl: string, done: (err:any, api:ifm.IAgentAp
 
 		done(err, agentapi, creds);
 	});
+}
+*/
+
+// gets basic creds from args or prompts
+export function readBasicCreds(): ifm.IPromise {
+	var defer = Q.defer();
+
+	var credInputs = [
+		{
+			name: 'username', description: 'alternate username', arg: 'u', type: 'string', req: true
+		},
+		{
+			name: 'password', description: 'alternate password', arg: 'p', type: 'password', req: true
+		}
+	];
+
+	inputs.get(credInputs, (err, result) => {
+		if (err) {
+			defer.reject(err);
+			return;
+		}
+
+		var cred: ifm.IBasicCredential = <ifm.IBasicCredential>{};
+		cred.username = result['username'];
+		cred.password = result['password'];
+		defer.resolve(cred);
+	});
+
+	return defer.promise;
 }
