@@ -67,8 +67,6 @@ var throwIf = function(condition, message) {
 export class Configurator {
 	constructor() {}
 
-	public agentApi: ifm.IQAgentApi;
-
 	//
 	// ensure configured and return ISettings.  That's it
 	// returns promise
@@ -76,9 +74,9 @@ export class Configurator {
 	public QensureConfigured(creds: ifm.IBasicCredentials): Q.Promise<cm.ISettings> {
 		var defer = Q.defer<cm.ISettings>();
 
-		var settings: cm.ISettings = read();
+		var readSettings: cm.ISettings = read();
 
-		if (!settings.serverUrl) {
+		if (!readSettings.serverUrl) {
 			// not configured
 			console.log("no settings found. configuring...");
 
@@ -90,7 +88,7 @@ export class Configurator {
 		}
 		else {
 			// already configured
-			defer.resolve(settings);
+			defer.resolve(readSettings);
 		}
 
 		return defer.promise;
@@ -99,7 +97,7 @@ export class Configurator {
 	//
 	// Gether settings, register with the server and save the settings
 	//
-	public Qcreate(): ifm.IPromise {
+	public Qcreate(): Q.Promise<cm.ISettings> {
 		var settings:cm.ISettings;
 		var newAgent: ifm.TaskAgent;
 		var agentPoolId = 0;
@@ -120,7 +118,7 @@ export class Configurator {
 			settings['workFolder'] = result['workFolder'];
 
 			this.validate(settings);
-			this.agentapi = webapi.QAgentApi(settings.serverUrl, creds);
+			
 			return this.writeAgentToPool(settings);
 		})
 		.then(() => {
@@ -141,46 +139,43 @@ export class Configurator {
 		})
 	}
 
-	public readAgentPool(agentapi: ifm.IAgentApi, settings: cm.ISettings, complete: (err: any, agent: ifm.TaskAgent, poolId: number) => void): void {
+	public readConfiguration(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
+		var agentApi: ifm.IQAgentApi = webapi.QAgentApi(settings.serverUrl, creds);
 		var agentPoolId = 0;
 		var agentQueue = '';
 		var agent;
 
-		async.series([
-			// connect
-			function(stepComplete) {
-				agentapi.connect((err:any, statusCode: number, obj: any) => {
-					ifOK(err, stepComplete, () => {
-						console.log('successful connect as ' + obj.authenticatedUser.customDisplayName); 
-					});
-				});
-			},
-			// get pool so we can use id
-			function(stepComplete) {
-				agentapi.getAgentPools(settings.poolName, (err:any, statusCode: number, agentPools: ifm.TaskAgentPool[]) => {
-					ifOK(err, stepComplete, () => {
-						agentPoolId = agentPools[0].id;
-						console.log('Retrieved agent pool: ' + agentPools[0].name + ' (' + agentPoolId + ')'); 
-					});
-				});	
-			},
-			// get the hosts in that pool - if exist, we patch the host, else we post to create	
-			function(stepComplete) {
-				agentapi.getAgents(agentPoolId, settings.agentName, (err:any, statusCode: number, agents: ifm.TaskAgent[]) => {
-					ifOK(err, stepComplete, () => {
-						// should be one host.  if 0, needs to be configured
-						if (agents.length > 0)
-							agent = agents[0];
-					});
-				});
-			},
-		], function(err) {
-			if (err) { 
-				console.error('Failed to read agent');
-				complete(err, null, 0); return; 
+		return agentApi.connect()
+		.then((connected: any) => {
+			console.log('successful connect as ' + connected.authenticatedUser.customDisplayName);
+			return agentApi.getAgentPools(settings.poolName);
+		})
+		.then((agentPools: ifm.TaskAgentPool[]) => {
+			if (agentPools.length == 0) {
+				throw new Error(settings.poolName + ' pool does not exist.');
 			}
-			complete(null, agent, agentPoolId);
-		});
+
+			// we queried by name so should only get 1
+			agentPoolId = agentPools[0].id;
+			console.log('Retrieved agent pool: ' + agentPools[0].name + ' (' + agentPoolId + ')'); 
+
+			return agentApi.getAgents(agentPoolId, settings.agentName);
+		}) 
+		.then((agents: ifm.TaskAgent[]) => {
+			if (agents.length == 0) {
+				throw new Error(settings.agentName + ' does not exist in pool ' + settings.poolName);
+			}
+
+			// should be exactly one agent by name in a given pool by id
+			var agent = agents[0];
+
+            var config: cm.IConfiguration = <cm.IConfiguration>{};
+            config.creds = creds;
+            config.poolId = agnetPoolId;
+            config.settings = settings;
+
+            return config;
+		})
 	}
 
 	//-------------------------------------------------------------
@@ -196,6 +191,7 @@ export class Configurator {
 	}
 
 	private writeAgentToPool(settings: cm.ISettings, agentapi: ifm.IAgentApi, complete: (err: any, agent: ifm.TaskAgent, poolId: number) => void): void {
+		var agentApi: ifm.IQAgentApi = webapi.QAgentApi(settings.serverUrl, creds);
 		var agentPoolId = 0;
 		var updateAgents = false;
 		var newAgent:ifm.TaskAgent;

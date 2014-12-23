@@ -6,8 +6,9 @@
 //----------------------------------------------------------------------------
 
 /// <reference path="../definitions/node.d.ts" />
+/// <reference path="../definitions/Q.d.ts" />
 
-export interface IBasicCredential {
+export interface IBasicCredentials {
     username: string;
     password: string;
 }
@@ -33,7 +34,7 @@ export interface IAgentApi {
 
 // Q Promise Interface
 export interface IQAgentApi {
-    connect(): IPromise;
+    connect(): Q.Promise<any>;
 }
 
 //-----------------------------------------------------

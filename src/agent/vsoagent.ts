@@ -32,9 +32,6 @@ var runWorker = function(ag: ctxm.AgentContext, workerMsg) {
     	execArgv: []
     });
 
-    // TODO: replace with server LogggingQueues
-    //var consoleWriter = require('./logging/consoleWriter');
-
     // worker ipc callbacks
     worker.on('message', function(msg){
     	try {
@@ -56,42 +53,30 @@ var runWorker = function(ag: ctxm.AgentContext, workerMsg) {
 }
 
 var INIT_RETRY_DELAY = 15000;
-var doInit = function(settings: cm.ISettings, creds: any, complete: (err:any, agent: ifm.TaskAgent, config: cm.IConfiguration) => void): void {
-    cfgr.readAgentPool(cfgr.agentApi, settings, (err, agent, poolId) => {
-        if (err) {
-        	console.error('Could not initialize.  Retrying in ' + INIT_RETRY_DELAY/1000 + ' sec');
-        	console.error(err.message);
-            setTimeout(() => {
-            		initAgent(settings, creds, complete);
-            	}, INIT_RETRY_DELAY);
-            return;
-        }
-
-        if (agent) {
-            var config: cm.IConfiguration = <cm.IConfiguration>{};
-
-            // config = read();
-            config.creds = creds;
-            config.poolId = poolId;
-            config.settings = settings;
-            complete(null, agent, config);
-            return;
-        }
-        else {
-            console.error('No agent returned from server.  Configure the agent and restart the agent.');
-        }
-    });
+var ensureInitialized = function(settings: cm.ISettings, creds: any, complete: (err:any, config: cm.IConfiguration) => void): void {
+    cfgr.readConfiguration(creds, settings)
+    .then((config: cm.IConfiguration) => {
+        complete(null, config);
+    })
+    .fail(err) {
+        console.error('Could not initialize.  Retrying in ' + INIT_RETRY_DELAY/1000 + ' sec');
+        console.error(err.message);
+        setTimeout(() => {
+                ensureInitialized(settings, creds, complete);
+            }, INIT_RETRY_DELAY);        
+    }
 }
 
+/*
 var initAgent = function(settings: cm.ISettings, creds: any, complete: (err:any, agent: ifm.TaskAgent, config: cm.IConfiguration) => void): void {
     //
     // Once configured, initializing the agent will not fail on an unavailable service.
     // If the agent starts up (most likely as a service) and the server goes unavailable,
     // the agent should
     //
-    doInit(settings, creds, complete);
+    ensureInitialized(settings, creds, complete);
 } 
-
+*/
 
 cm.readBasicCreds()
 .then(function(credentials: ifm.IBasicCredentials) {
@@ -100,8 +85,8 @@ cm.readBasicCreds()
 })
 .then(function(settings: cm.ISettings) {
 
-    // after ensuring settings written, read config
-    initAgent(settings, creds, (err:any, agent: ifm.TaskAgent, config: cm.IConfiguration) => {
+    ensureInitialized(settings, creds, (err:any, config: cm.IConfiguration) => {
+        var agent: ifm.TaskAgent = config.agent;
         ag = new ctxm.AgentContext('agent', config, true);
         trace = new tm.Tracing(__filename, ag);
         trace.callback('initAgent');

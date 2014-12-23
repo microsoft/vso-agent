@@ -83,7 +83,7 @@ export function QensureEnvFile(envPath): Q.Promise<void> {
                 defer.reject(new Error('Could not create env file: ' + err.message));
             }
             else {
-                defer.resolve();
+                defer.resolve(null);
             } 
         });
     });  

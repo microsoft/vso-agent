@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 // q promise wrapper for agent api
+/// <reference path="../definitions/Q.d.ts" />
 
 import ifm = require('./interfaces');
 import httpm = require('./httpclient');
@@ -22,7 +23,7 @@ export class QAgentApi {
 		this.agentApi = new agentm.AgentApi(accountUrl, handler);
 	}
 
-	connect() {
+	connect(): Q.Promise<any> {
 		var defer = Q.defer();
 
 		this.agentApi.connect(function(err: any, statusCode: number, obj: any) {

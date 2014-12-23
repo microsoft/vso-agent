@@ -32,7 +32,7 @@ var getValueFromString = function (val, valtype, fallback) {
 
 // Q wrapper
 export function Qget(inputs: any): Q.Promise<cm.IStringDictionary> {
-    var defer - Q.defer<cm.IStringDictionary>();
+    var defer = Q.defer<cm.IStringDictionary>();
 
     this.get(inputs, (err, result: cm.IStringDictionary) => {
         if (err) {
@@ -43,7 +43,7 @@ export function Qget(inputs: any): Q.Promise<cm.IStringDictionary> {
         defer.resolve(result);
     }); 
 
-    return Q.promise;
+    return defer.promise;
 }
 
 // done(err, result)

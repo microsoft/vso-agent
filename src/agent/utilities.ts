@@ -97,7 +97,7 @@ export class Utilities {
 
         if (fs.exists(path, function(exists) {
             if (!exists) {
-                shell.mkdir('-p', wf);
+                shell.mkdir('-p', path);
 
                 var errMsg = shell.error();
 
