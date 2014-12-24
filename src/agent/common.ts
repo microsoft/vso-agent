@@ -48,11 +48,11 @@ export var envService: string = 'VSO_AGENT_SVC';
 // Enums
 //-----------------------------------------------------------
 export enum DiagnosticLevel {
-	Error = 1,
-	Warning = 2,
-	Status = 3,
-	Info = 4,
-	Verbose = 5
+    Error = 1,
+    Warning = 2,
+    Status = 3,
+    Info = 4,
+    Verbose = 5
 }
 
 //-----------------------------------------------------------
@@ -62,90 +62,90 @@ export enum DiagnosticLevel {
 export interface IStringDictionary { [name: string] : string }
 
 export interface IDiagnosticWriter {
-	level: DiagnosticLevel;
-	write(message: string): void;
-	writeError(message: string): void;
-	end(): void;
+    level: DiagnosticLevel;
+    write(message: string): void;
+    writeError(message: string): void;
+    end(): void;
 }
 
 export interface ITraceWriter {
-	trace(message: string): void;
+    trace(message: string): void;
 }
 
 // settings are user input & stored in settings file (.agent)
 export interface ISettings {
-	poolName: string;
-	serverUrl: string;
-	agentName: string;
-	workFolder: string;
+    poolName: string;
+    serverUrl: string;
+    agentName: string;
+    workFolder: string;
 }
 
 // contains configuration data from server, runtime creds + settings
 // this is not persisted but read from settings, server and/or user at runtime
 export interface IConfiguration {
-	settings: ISettings;
-	creds: any;
-	poolId: number;
-	agent: ifm.TaskAgent;
+    settings: ISettings;
+    creds: any;
+    poolId: number;
+    agent: ifm.TaskAgent;
 }
 
 export interface IFeedbackChannel {
-	agentUrl: string;
-	taskUrl: string;
-	timelineApi: ifm.ITimelineApi;
-	jobInfo: IJobInfo;	
-	enabled: boolean;
+    agentUrl: string;
+    taskUrl: string;
+    timelineApi: ifm.ITimelineApi;
+    jobInfo: IJobInfo;  
+    enabled: boolean;
 
-	// lifetime
-	drain(callback: (err: any) => void): void;
+    // lifetime
+    drain(callback: (err: any) => void): void;
 
-	// queues
-	queueLogPage(page: ILogPageInfo): void;
-	queueConsoleLine(line: string): void;
-	queueConsoleSection(line: string): void;
+    // queues
+    queueLogPage(page: ILogPageInfo): void;
+    queueConsoleLine(line: string): void;
+    queueConsoleSection(line: string): void;
 
-	// timelines
-	addError(recordId: string, category: string, message: string, data: any): void;
-	addWarning(recordId: string, category: string, message: string, data: any): void;
-	setCurrentOperation(recordId: string, operation: string): void;
-	setName(recordId: string, name: string): void;
-	setStartTime(recordId: string, startTime: Date): void;
-	setFinishTime(recordId: string, finishTime: Date): void;
-	setState(recordId: string, state: ifm.TimelineRecordState): void;
-	setResult(recordId: string, result: ifm.TaskResult): void;
-	setType(recordId: string, type: string): void;
-	setParentId(recordId: string, parentId: string): void;
-	setWorkerName(recordId: string, workerName: string): void;
-	setLogId(recordId: string, logRef: ifm.TaskLogReference): void;
-	setOrder(recordId: string, order: number): void;
+    // timelines
+    addError(recordId: string, category: string, message: string, data: any): void;
+    addWarning(recordId: string, category: string, message: string, data: any): void;
+    setCurrentOperation(recordId: string, operation: string): void;
+    setName(recordId: string, name: string): void;
+    setStartTime(recordId: string, startTime: Date): void;
+    setFinishTime(recordId: string, finishTime: Date): void;
+    setState(recordId: string, state: ifm.TimelineRecordState): void;
+    setResult(recordId: string, result: ifm.TaskResult): void;
+    setType(recordId: string, type: string): void;
+    setParentId(recordId: string, parentId: string): void;
+    setWorkerName(recordId: string, workerName: string): void;
+    setLogId(recordId: string, logRef: ifm.TaskLogReference): void;
+    setOrder(recordId: string, order: number): void;
 
-	// job
-	updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void;
+    // job
+    updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void;
 }
 
 
 // high level ids for job to avoid passing full job to lower priviledged code
 export interface IJobInfo {
-	description: string;
-	jobId: string;
-	planId: string;
-	timelineId: string;
-	requestId: number;
-	lockToken: string;
-	variables: { [key: string]: string };
+    description: string;
+    jobId: string;
+    planId: string;
+    timelineId: string;
+    requestId: number;
+    lockToken: string;
+    variables: { [key: string]: string };
 }
 
 export interface ILogMetadata {
-	recordId: string;
-	jobInfo: IJobInfo;
-	pagesId: string;
-	logPath: string;
+    recordId: string;
+    jobInfo: IJobInfo;
+    pagesId: string;
+    logPath: string;
 }
 
 export interface ILogPageInfo {
-	logInfo: ILogMetadata;
-	pagePath: string;
-	pageNumber: number;
+    logInfo: ILogMetadata;
+    pagePath: string;
+    pageNumber: number;
 }
 
 //-----------------------------------------------------------
@@ -153,32 +153,32 @@ export interface ILogPageInfo {
 //-----------------------------------------------------------
 
 export function jsonString(obj: any) {
-	if (!obj) {
-		return '(null)';
-	}
+    if (!obj) {
+        return '(null)';
+    }
 
-	return JSON.stringify(obj, null, 2);
+    return JSON.stringify(obj, null, 2);
 }
 
 //
 // get creds from CL args or prompt user if not in args
 //
 export function getCreds(done: (err:any, creds:any) => void): void {
-	var creds = {};
-	var credInputs = [
-		{
-			name: 'username', description: 'alternate username', arg: 'u', type: 'string', req: true
-		},
-		{
-			name: 'password', description: 'alternate password', arg: 'p', type: 'password', req: true
-		}
-	];
+    var creds = {};
+    var credInputs = [
+        {
+            name: 'username', description: 'alternate username', arg: 'u', type: 'string', req: true
+        },
+        {
+            name: 'password', description: 'alternate password', arg: 'p', type: 'password', req: true
+        }
+    ];
 
-	inputs.get(credInputs, (err, result) => {
-		creds['username'] = result['username'];
-		creds['password'] = result['password'];
-		done(err, creds);
-	});
+    inputs.get(credInputs, (err, result) => {
+        creds['username'] = result['username'];
+        creds['password'] = result['password'];
+        done(err, creds);
+    });
 }
 
 export function jobInfoFromJob (job: ifm.JobRequestMessage): IJobInfo {
@@ -187,7 +187,7 @@ export function jobInfoFromJob (job: ifm.JobRequestMessage): IJobInfo {
     info.jobId = job.jobId;
     info.planId = job.plan.planId;
     info.timelineId = job.timeline.id;
-    info.requestId = job.requestId;	
+    info.requestId = job.requestId; 
     info.lockToken = job.lockToken;
     info.variables = job.environment.variables;
 
@@ -195,76 +195,76 @@ export function jobInfoFromJob (job: ifm.JobRequestMessage): IJobInfo {
 }
 
 export function versionStringFromTaskDef(task: ifm.TaskDefinition): string {
-	return task.version.major + '.' + task.version.minor + '.' + task.version.patch;
+    return task.version.major + '.' + task.version.minor + '.' + task.version.patch;
 }
 
 export function sha1HexHash(content: string) {
-	return crypto.createHash('sha1').update(content).digest('hex');
+    return crypto.createHash('sha1').update(content).digest('hex');
 }
 
 export function extractFile(source: string, dest: string, done: (err: any) => void) {
-	if (!fs.existsSync(source)) {
-		done(new Error('Source file ' + source + ' does not exist.'));
-		return;
-	}
+    if (!fs.existsSync(source)) {
+        done(new Error('Source file ' + source + ' does not exist.'));
+        return;
+    }
 
-	try {
-		var file = new zip(source);
-		file.extractAllTo(dest, true);
-		done(null);
-	} catch(err) {
-		done(err);
-	}
+    try {
+        var file = new zip(source);
+        file.extractAllTo(dest, true);
+        done(null);
+    } catch(err) {
+        done(err);
+    }
 }
 
 export function createTimelineApi(collectionUrl: string, username: string, password: string): ifm.ITimelineApi {
-	var creds: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(username, password);
-	var timelineApi: ifm.ITimelineApi = webapi.TimelineApi(collectionUrl, creds);
-	return timelineApi;
+    var creds: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(username, password);
+    var timelineApi: ifm.ITimelineApi = webapi.TimelineApi(collectionUrl, creds);
+    return timelineApi;
 }
 
 export function createAgentApi(serverUrl: string, username: string, password: string): ifm.IAgentApi {
-	var creds: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(username, password);
-	var agentapi: ifm.IAgentApi = webapi.AgentApi(serverUrl, creds);
-	return agentapi;
+    var creds: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(username, password);
+    var agentapi: ifm.IAgentApi = webapi.AgentApi(serverUrl, creds);
+    return agentapi;
 }
 
 export function createQAgentApi(serverUrl: string, creds: ifm.IBasicCredentials): ifm.IQAgentApi {
-	var handler: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(creds.username, creds.password);
-	var agentapi: ifm.IQAgentApi = webapi.QAgentApi(serverUrl, handler);
-	return agentapi;
+    var handler: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(creds.username, creds.password);
+    var agentapi: ifm.IQAgentApi = webapi.QAgentApi(serverUrl, handler);
+    return agentapi;
 }
 
 export function createTaskApi(serverUrl: string, username: string, password: string): ifm.ITaskApi {
-	var creds: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(username, password);
-	var taskapi: ifm.ITaskApi = webapi.TaskApi(serverUrl, creds);
-	return taskapi;
+    var creds: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(username, password);
+    var taskapi: ifm.ITaskApi = webapi.TaskApi(serverUrl, creds);
+    return taskapi;
 }
 
 // gets basic creds from args or prompts
 export function readBasicCreds(): Q.Promise<ifm.IBasicCredentials> {
-	var defer = Q.defer();
+    var defer = Q.defer();
 
-	var credInputs = [
-		{
-			name: 'username', description: 'alternate username', arg: 'u', type: 'string', req: true
-		},
-		{
-			name: 'password', description: 'alternate password', arg: 'p', type: 'password', req: true
-		}
-	];
+    var credInputs = [
+        {
+            name: 'username', description: 'alternate username', arg: 'u', type: 'string', req: true
+        },
+        {
+            name: 'password', description: 'alternate password', arg: 'p', type: 'password', req: true
+        }
+    ];
 
-	inputs.get(credInputs, (err, result) => {
-		if (err) {
-			defer.reject(err);
-			return;
-		}
+    inputs.get(credInputs, (err, result) => {
+        if (err) {
+            defer.reject(err);
+            return;
+        }
 
-		var cred: ifm.IBasicCredentials = <ifm.IBasicCredentials>{};
-		cred.username = result['username'];
-		cred.password = result['password'];
-		defer.resolve(cred);
-	});
+        var cred: ifm.IBasicCredentials = <ifm.IBasicCredentials>{};
+        cred.username = result['username'];
+        cred.password = result['password'];
+        defer.resolve(cred);
+    });
 
-	return <Q.Promise<ifm.IBasicCredentials>>defer.promise;
+    return <Q.Promise<ifm.IBasicCredentials>>defer.promise;
 }

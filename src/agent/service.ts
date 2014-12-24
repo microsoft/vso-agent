@@ -20,11 +20,11 @@ var showUsage = function(code) {
     console.log('usage: sudo node service [action] [-u <altusername>] [-p <altpassword>]');
     console.log('\taction=install, start, stop');
     console.log('\tnote: only install needs username and password');
-	process.exit(code);	
+    process.exit(code); 
 }
 
 if (!action || action === '-?') {
-	showUsage(action ? 0 : 1);
+    showUsage(action ? 0 : 1);
 }
 
 if (!cfgm.exists()) {
@@ -44,63 +44,63 @@ console.log('serviceName: vsoagent.' + svcName);
 var svcinstall = new si.SvcInstall(svcName, 'vsoagent');
 
 if (typeof svcinstall[action] !== 'function') {
-	showUsage(1);
+    showUsage(1);
 }
 
 // node is known as nodejs on some *nix installs
 var nodePath = shelljs.which('nodejs') || shelljs.which('node');
 
 switch (action) {
-	case 'install':        	
-		cm.getCreds((err, creds) => {
-			var username = creds['username'];
-			var password = creds['password'];
+    case 'install':         
+        cm.getCreds((err, creds) => {
+            var username = creds['username'];
+            var password = creds['password'];
 
-			if (!username || !password) {
-				console.log(username, password);
-				showUsage(1);
-			}
+            if (!username || !password) {
+                console.log(username, password);
+                showUsage(1);
+            }
 
-			if (err) {
-				console.error('Error:', err.message);
-				return;
-			}
+            if (err) {
+                console.error('Error:', err.message);
+                return;
+            }
 
-			var scriptPath = path.join(__dirname, 'host.js');
-			var env = {};
-			env[cm.envService] = '1';
-			var options = { 
-					args: [nodePath, scriptPath, '-u', username, '-p', password],
-					env: env,
-					workingDirectory: path.dirname(scriptPath)
-				};
+            var scriptPath = path.join(__dirname, 'host.js');
+            var env = {};
+            env[cm.envService] = '1';
+            var options = { 
+                    args: [nodePath, scriptPath, '-u', username, '-p', password],
+                    env: env,
+                    workingDirectory: path.dirname(scriptPath)
+                };
 
-			svcinstall.install(options, function(err){
-				if (err) {
-					console.error('Error:', err.message);
-					return;
-				}
+            svcinstall.install(options, function(err){
+                if (err) {
+                    console.error('Error:', err.message);
+                    return;
+                }
 
-				console.log('Installed Successfully');
+                console.log('Installed Successfully');
 
-				svcinstall.start(function(err) {
-					if (err) {
-						console.error('Failed to start: ', err);
-					}
+                svcinstall.start(function(err) {
+                    if (err) {
+                        console.error('Failed to start: ', err);
+                    }
 
-					console.log('Started Successfully');
-				});
-			});
-		});
-		break;
-	default:
-		svcinstall[action](function(err) {
-			if (err) {
-				console.error('Error: ', err);
-				return;
-			}
+                    console.log('Started Successfully');
+                });
+            });
+        });
+        break;
+    default:
+        svcinstall[action](function(err) {
+            if (err) {
+                console.error('Error: ', err);
+                return;
+            }
 
-			console.log(action + ': Success.');			
-		});
+            console.log(action + ': Success.');         
+        });
 }
 

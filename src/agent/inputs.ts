@@ -48,22 +48,22 @@ export function Qget(inputs: any): Q.Promise<cm.IStringDictionary> {
 
 // done(err, result)
 export function get(inputs, done: (err: Error, result: cm.IStringDictionary) => void): void {
-	var result: cm.IStringDictionary = <cm.IStringDictionary>{};
+    var result: cm.IStringDictionary = <cm.IStringDictionary>{};
     
-	result['_'] = args['_'];
+    result['_'] = args['_'];
 
     async.forEachSeries(inputs, function (input, inputDone) {
-    	if (args[input.arg]) {
-    		result[input.name] = args[input.arg];
-    		inputDone(null, null);
-    		return;
-    	}
+        if (args[input.arg]) {
+            result[input.name] = args[input.arg];
+            inputDone(null, null);
+            return;
+        }
 
-    	var msg = 'Enter ' + input.description;
-    	if (input.def) {
-    		msg += ' (enter sets ' + input.def + ') ';
-    	} 
-    	msg += ' > ';
+        var msg = 'Enter ' + input.description;
+        if (input.def) {
+            msg += ' (enter sets ' + input.def + ') ';
+        } 
+        msg += ' > ';
 
         var silent = input.type === 'password';
         read({ prompt: msg, silent: silent }, function(err, answer) {
@@ -73,20 +73,20 @@ export function get(inputs, done: (err: Error, result: cm.IStringDictionary) => 
         });
     }, function(err) {
         
-    	if (err) {
-    		done(err, null);
-    		return;
-    	}
+        if (err) {
+            done(err, null);
+            return;
+        }
 
-    	// final validation
-    	inputs.forEach(function(input) {
+        // final validation
+        inputs.forEach(function(input) {
 
-    		if (input.req && !result[input.name]) {
-    			done(new Error(input.description + ' is required.'), null);
-    			return;
-    		}
-    	});
+            if (input.req && !result[input.name]) {
+                done(new Error(input.description + ' is required.'), null);
+                return;
+            }
+        });
 
-    	done(null, result);
+        done(null, result);
     });
 }

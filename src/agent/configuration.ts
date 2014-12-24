@@ -13,7 +13,7 @@ import webapi = require('./api/webapi');
 import utilm = require('./utilities');
 
 var os = require('os');
-var nconf = require("nconf");	
+var nconf = require("nconf");   
 var async = require("async");
 var path = require("path");
 var fs = require('fs');
@@ -25,7 +25,7 @@ var envPath = path.join(__dirname, 'env.agent');
 
 
 export function exists(): boolean {
-	return fs.existsSync(configPath);
+    return fs.existsSync(configPath);
 }
 
 //
@@ -33,33 +33,33 @@ export function exists(): boolean {
 // They are tacked on after reading from CL or prompting
 //
 export function read(): cm.ISettings {
-	nconf.argv()
-	       .env()
-	       .file({ file: configPath }); 
+    nconf.argv()
+           .env()
+           .file({ file: configPath }); 
 
-	var settings: cm.ISettings  = {
-		poolName : nconf.get("poolName"),
-		serverUrl : nconf.get("serverUrl"),
-		agentName : nconf.get("agentName"),
-		workFolder: nconf.get("workFolder")
-	}
+    var settings: cm.ISettings  = {
+        poolName : nconf.get("poolName"),
+        serverUrl : nconf.get("serverUrl"),
+        agentName : nconf.get("agentName"),
+        workFolder: nconf.get("workFolder")
+    }
 
-	return settings;
+    return settings;
 }
 
 var throwIf = function(condition, message) {
-	if (condition) {
-		throw new Error(message);
-	}
+    if (condition) {
+        throw new Error(message);
+    }
 }
 
 export class Configurator {
-	constructor() {}
+    constructor() {}
 
-	//
-	// ensure configured and return ISettings.  That's it
-	// returns promise
-	//
+    //
+    // ensure configured and return ISettings.  That's it
+    // returns promise
+    //
     public ensureConfigured (creds: ifm.IBasicCredentials): Q.Promise<cm.ISettings> {
         var readSettings = exports.read();
 
@@ -72,78 +72,78 @@ export class Configurator {
         }
     }
 
-	//
-	// Gether settings, register with the server and save the settings
-	//
-	public create(creds: ifm.IBasicCredentials): Q.Promise<cm.ISettings> {
-		var settings:cm.ISettings;
-		var newAgent: ifm.TaskAgent;
-		var agentPoolId = 0;
+    //
+    // Gether settings, register with the server and save the settings
+    //
+    public create(creds: ifm.IBasicCredentials): Q.Promise<cm.ISettings> {
+        var settings:cm.ISettings;
+        var newAgent: ifm.TaskAgent;
+        var agentPoolId = 0;
 
-		var cfgInputs = [
-			{ name: 'serverUrl', description: 'server url', arg: 's', type: 'string', req: true },
-			{ name: 'agentName', description: 'agent name', arg: 'a', def: os.hostname(), type: 'string', req: true },
-			{ name: 'poolName', description: 'agent pool name', arg: 'l', def: 'default', type: 'string', req: true },
-			{ name: 'workFolder', description: 'agent work folder', arg: 'f', def: './work', type: 'string', req: true }		
-		];
+        var cfgInputs = [
+            { name: 'serverUrl', description: 'server url', arg: 's', type: 'string', req: true },
+            { name: 'agentName', description: 'agent name', arg: 'a', def: os.hostname(), type: 'string', req: true },
+            { name: 'poolName', description: 'agent pool name', arg: 'l', def: 'default', type: 'string', req: true },
+            { name: 'workFolder', description: 'agent work folder', arg: 'f', def: './work', type: 'string', req: true }        
+        ];
 
-		return inputs.Qget(cfgInputs)
-		.then((result) => {
-			settings = <cm.ISettings>{};
-			settings.poolName = result['poolName'];
-			settings.serverUrl = result['serverUrl'];
-			settings.agentName = result['agentName'];
-			settings.workFolder = result['workFolder'];
+        return inputs.Qget(cfgInputs)
+        .then((result) => {
+            settings = <cm.ISettings>{};
+            settings.poolName = result['poolName'];
+            settings.serverUrl = result['serverUrl'];
+            settings.agentName = result['agentName'];
+            settings.workFolder = result['workFolder'];
 
-			this.validate(settings);
-			
-			return this.writeAgentToPool(creds, settings);
-		})
-		.then(() => {
-			console.log('Creating work folder ...');
-			return utilm.ensurePathExists(settings.workFolder);
-		})
-		.then(() => {
-			console.log('Creating env file ...');
-			return env.ensureEnvFile(envPath);
-		})
-		.then(() => {
-			console.log('Saving configuration ...');
-			return utilm.objectToFile(configPath, settings);
-		})
-		.then(() => {
-			return settings;
-        })	
-	}
+            this.validate(settings);
+            
+            return this.writeAgentToPool(creds, settings);
+        })
+        .then(() => {
+            console.log('Creating work folder ...');
+            return utilm.ensurePathExists(settings.workFolder);
+        })
+        .then(() => {
+            console.log('Creating env file ...');
+            return env.ensureEnvFile(envPath);
+        })
+        .then(() => {
+            console.log('Saving configuration ...');
+            return utilm.objectToFile(configPath, settings);
+        })
+        .then(() => {
+            return settings;
+        })  
+    }
 
-	public readConfiguration(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
-		var agentApi: ifm.IQAgentApi = cm.createQAgentApi(settings.serverUrl, creds);
-		var agentPoolId = 0;
-		var agent;
+    public readConfiguration(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
+        var agentApi: ifm.IQAgentApi = cm.createQAgentApi(settings.serverUrl, creds);
+        var agentPoolId = 0;
+        var agent;
 
-		return agentApi.connect()
-		.then((connected: any) => {
-			console.log('successful connect as ' + connected.authenticatedUser.customDisplayName);
-			return agentApi.getAgentPools(settings.poolName);
-		})
-		.then((agentPools: ifm.TaskAgentPool[]) => {
-			if (agentPools.length == 0) {
-				throw new Error(settings.poolName + ' pool does not exist.');
-			}
+        return agentApi.connect()
+        .then((connected: any) => {
+            console.log('successful connect as ' + connected.authenticatedUser.customDisplayName);
+            return agentApi.getAgentPools(settings.poolName);
+        })
+        .then((agentPools: ifm.TaskAgentPool[]) => {
+            if (agentPools.length == 0) {
+                throw new Error(settings.poolName + ' pool does not exist.');
+            }
 
-			// we queried by name so should only get 1
-			agentPoolId = agentPools[0].id;
-			console.log('Retrieved agent pool: ' + agentPools[0].name + ' (' + agentPoolId + ')'); 
+            // we queried by name so should only get 1
+            agentPoolId = agentPools[0].id;
+            console.log('Retrieved agent pool: ' + agentPools[0].name + ' (' + agentPoolId + ')'); 
 
-			return agentApi.getAgents(agentPoolId, settings.agentName);
-		}) 
-		.then((agents: ifm.TaskAgent[]) => {
-			if (agents.length == 0) {
-				throw new Error(settings.agentName + ' does not exist in pool ' + settings.poolName);
-			}
+            return agentApi.getAgents(agentPoolId, settings.agentName);
+        }) 
+        .then((agents: ifm.TaskAgent[]) => {
+            if (agents.length == 0) {
+                throw new Error(settings.agentName + ' does not exist in pool ' + settings.poolName);
+            }
 
-			// should be exactly one agent by name in a given pool by id
-			var agent = agents[0];
+            // should be exactly one agent by name in a given pool by id
+            var agent = agents[0];
 
             var config: cm.IConfiguration = <cm.IConfiguration>{};
             config.creds = creds;
@@ -152,74 +152,74 @@ export class Configurator {
             config.agent = agent;
 
             return config;
-		})	
-	}
+        })  
+    }
 
-	//-------------------------------------------------------------
-	// Private
-	//-------------------------------------------------------------
-	private validate(settings: cm.ISettings) {
-		throwIf(!check.isURL(settings.serverUrl), settings.serverUrl + ' is not a valid URL');
-	}
+    //-------------------------------------------------------------
+    // Private
+    //-------------------------------------------------------------
+    private validate(settings: cm.ISettings) {
+        throwIf(!check.isURL(settings.serverUrl), settings.serverUrl + ' is not a valid URL');
+    }
 
-	private writeAgentToPool(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
-		var agentApi: ifm.IQAgentApi = cm.createQAgentApi(settings.serverUrl, creds);
-		var agentPoolId = 0;
+    private writeAgentToPool(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
+        var agentApi: ifm.IQAgentApi = cm.createQAgentApi(settings.serverUrl, creds);
+        var agentPoolId = 0;
 
-		return agentApi.connect()
-		.then((connected: any) => {
-			console.log('successful connect as ' + connected.authenticatedUser.customDisplayName);
-			return agentApi.getAgentPools(settings.poolName);
-		})
-		.then((agentPools: ifm.TaskAgentPool[]) => {
-			if (agentPools.length == 0) {
-				throw new Error(settings.poolName + ' pool does not exist.');
-			}
+        return agentApi.connect()
+        .then((connected: any) => {
+            console.log('successful connect as ' + connected.authenticatedUser.customDisplayName);
+            return agentApi.getAgentPools(settings.poolName);
+        })
+        .then((agentPools: ifm.TaskAgentPool[]) => {
+            if (agentPools.length == 0) {
+                throw new Error(settings.poolName + ' pool does not exist.');
+            }
 
-			// we queried by name so should only get 1
-			agentPoolId = agentPools[0].id;
-			console.log('Retrieved agent pool: ' + agentPools[0].name + ' (' + agentPoolId + ')'); 
+            // we queried by name so should only get 1
+            agentPoolId = agentPools[0].id;
+            console.log('Retrieved agent pool: ' + agentPools[0].name + ' (' + agentPoolId + ')'); 
 
-			return agentApi.getAgents(agentPoolId, settings.agentName);
-		}) 
-		.then((agents: ifm.TaskAgent[]) => {
+            return agentApi.getAgents(agentPoolId, settings.agentName);
+        }) 
+        .then((agents: ifm.TaskAgent[]) => {
 
-			var caps: cm.IStringDictionary = env.getCapabilities();
-			caps['Agent.Name'] = settings.agentName;
-			caps['Agent.OS'] = process.platform;
+            var caps: cm.IStringDictionary = env.getCapabilities();
+            caps['Agent.Name'] = settings.agentName;
+            caps['Agent.OS'] = process.platform;
 
-			if (agents.length == 0) {
-				// doesn't exist, we need to create the agent
-				console.log('creating agent...');
+            if (agents.length == 0) {
+                // doesn't exist, we need to create the agent
+                console.log('creating agent...');
 
-				var newAgent: ifm.TaskAgent = <ifm.TaskAgent>{
-					maxParallelism: 1,
-					name: settings.agentName,
-					systemCapabilities: caps
-				}
+                var newAgent: ifm.TaskAgent = <ifm.TaskAgent>{
+                    maxParallelism: 1,
+                    name: settings.agentName,
+                    systemCapabilities: caps
+                }
 
-				return agentApi.createAgent(agentPoolId, newAgent);
-			}
-			else {
-				console.log('updating agent...');
-				var agentUpdate: ifm.TaskAgent = agents[0];
+                return agentApi.createAgent(agentPoolId, newAgent);
+            }
+            else {
+                console.log('updating agent...');
+                var agentUpdate: ifm.TaskAgent = agents[0];
 
-				// update just the properties user entered
-				agentUpdate['maxParallelism'] = 1;
-	            agentUpdate['name'] = settings.agentName;
-	            agentUpdate['systemCapabilities'] = caps;				
+                // update just the properties user entered
+                agentUpdate['maxParallelism'] = 1;
+                agentUpdate['name'] = settings.agentName;
+                agentUpdate['systemCapabilities'] = caps;               
 
-				// TODO: we should implement force so overwrite is explicit
-				return agentApi.updateAgent(agentPoolId, agentUpdate);
-			}
-		})
-		.then((agent: ifm.TaskAgent) => {
+                // TODO: we should implement force so overwrite is explicit
+                return agentApi.updateAgent(agentPoolId, agentUpdate);
+            }
+        })
+        .then((agent: ifm.TaskAgent) => {
             var config: cm.IConfiguration = <cm.IConfiguration>{};
             config.creds = creds;
             config.poolId = agentPoolId;
             config.settings = settings;
 
             return config;
-		})
-	}
+        })
+    }
 }

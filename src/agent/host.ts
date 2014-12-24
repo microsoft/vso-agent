@@ -9,43 +9,43 @@ import env = require('./environment');
 
 // agent must be configured before run as a service
 if (!shell.test('-f', path.join(__dirname, '.agent'))) {
-	console.error('Agent must be configured.  Run vsoagent configure');
-	process.exit(1);
+    console.error('Agent must be configured.  Run vsoagent configure');
+    process.exit(1);
 }
 
 var banner = function(str) {
-	console.log('--------------------------------------------');
-	console.log(str);
-	console.log('--------------------------------------------');
+    console.log('--------------------------------------------');
+    console.log(str);
+    console.log('--------------------------------------------');
 }
 
 var formatOutput = function(level, output) {
-	return '[' + level + ']' + (new Date()).toTimeString() + ': ' + output;
+    return '[' + level + ']' + (new Date()).toTimeString() + ': ' + output;
 }
 
 var host = new sh.SvcHost();
 host.on('start', function(pid, starts){
-	banner('started (' + pid + ') - ' + starts + ' starts');
+    banner('started (' + pid + ') - ' + starts + ' starts');
 });
 
 host.on('restart', function(){
-	banner('restart.  ');
-});		
+    banner('restart.  ');
+});     
 
 host.on('exit', function(code, reason){
-	banner('exit (' + code + ') : ' + reason);
-});	
+    banner('exit (' + code + ') : ' + reason);
+}); 
 
 host.on('abort', function(){
-	banner('abort after restarts');
+    banner('abort after restarts');
 });
 
 host.on('stdout', function(data){
-	process.stdout.write(formatOutput('out', data));
+    process.stdout.write(formatOutput('out', data));
 });
 
 host.on('stderr', function(data){
-	process.stdout.write(formatOutput('err', data));
+    process.stdout.write(formatOutput('err', data));
 });
 
 //
@@ -56,33 +56,33 @@ var maxStarts = 10;
 var RESTART_DELAY = 1000;  // 1 sec
 
 var handleRestart = function(starts, relaunch) {
-	console.log(starts, 'starts');
-	if (starts < maxStarts) {
-		console.log('waiting to restart');
-		setTimeout(function(){
-				relaunch(true);
-			}, 
-			RESTART_DELAY*starts);			
-	} 
-	else {
-		console.log('fail');
-		relaunch(false);
-	}
+    console.log(starts, 'starts');
+    if (starts < maxStarts) {
+        console.log('waiting to restart');
+        setTimeout(function(){
+                relaunch(true);
+            }, 
+            RESTART_DELAY*starts);          
+    } 
+    else {
+        console.log('fail');
+        relaunch(false);
+    }
 }
 
 // set additional env vars for the service from a file
 // then start up the service's host
 
 env.getEnv(path.join(__dirname, 'env.agent'), (err, env) => {
-	if (err) {
-		console.error(err);
-		return;
-	}
+    if (err) {
+        console.error(err);
+        return;
+    }
 
-	console.log(JSON.stringify(env, null, 2));
+    console.log(JSON.stringify(env, null, 2));
 
-	host.start(path.join(__dirname, 'vsoagent.js'),
-				{ args:process.argv.slice(2), env: env },                       
-				handleRestart);  	
+    host.start(path.join(__dirname, 'vsoagent.js'),
+                { args:process.argv.slice(2), env: env },                       
+                handleRestart);     
 });
 

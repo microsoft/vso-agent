@@ -28,23 +28,23 @@ var messageListener: listener.MessageListener;
 var runWorker = function(ag: ctxm.AgentContext, workerMsg) {
 
     var worker: childProcess.ChildProcess = childProcess.fork(path.join(__dirname, 'vsoworker'), [], {
-    	env: process.env,
-    	execArgv: []
+        env: process.env,
+        execArgv: []
     });
 
     // worker ipc callbacks
     worker.on('message', function(msg){
-    	try {
-	        if (msg.messageType === 'log') {
-	        	// log data event - need to send to server
-				// console.log('pageComplete: ', msg.data.logInfo.recordId, msg.data.pageNumber, msg.data.pagePath);
-	        }
-	        else if (msg.messageType === 'status') {
-	        	// consoleWriter.writeStatus(msg.data);
-	        }
-    	}
+        try {
+            if (msg.messageType === 'log') {
+                // log data event - need to send to server
+                // console.log('pageComplete: ', msg.data.logInfo.recordId, msg.data.pageNumber, msg.data.pagePath);
+            }
+            else if (msg.messageType === 'status') {
+                // consoleWriter.writeStatus(msg.data);
+            }
+        }
         catch (err) {
-        	ag.error("host" + err);
+            ag.error("host" + err);
         }
     });
 
@@ -157,7 +157,7 @@ process.on('uncaughtException', function (err) {
         ag.error(err.message);
     }
     else {
-    	console.error(err.message);
+        console.error(err.message);
     }
 });
 

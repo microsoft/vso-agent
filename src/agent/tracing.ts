@@ -7,33 +7,33 @@ var os = require('os');
 import cm = require('./common');
 
 export class Tracing {
-	constructor(fullPath: string, writer: cm.ITraceWriter) {
-		var ext = path.extname(fullPath);
-		this.scope = path.basename(fullPath, ext);
-		this.writer = writer;
-	}
+    constructor(fullPath: string, writer: cm.ITraceWriter) {
+        var ext = path.extname(fullPath);
+        this.scope = path.basename(fullPath, ext);
+        this.writer = writer;
+    }
 
-	public location: string;
-	private scope: string;
-	private writer: cm.ITraceWriter;
+    public location: string;
+    private scope: string;
+    private writer: cm.ITraceWriter;
 
-	public enter(location: string) {
-		this.write(location + '>>>>>>>>>> ');
-	}
+    public enter(location: string) {
+        this.write(location + '>>>>>>>>>> ');
+    }
 
-	public callback(location: string) {
-		this.write(location + '<<<<<<<<<< ');
-	}
+    public callback(location: string) {
+        this.write(location + '<<<<<<<<<< ');
+    }
 
-	public state(name: string, data: any) {
-		this.write(name + ':' + JSON.stringify(data, null, 2));
-	}
+    public state(name: string, data: any) {
+        this.write(name + ':' + JSON.stringify(data, null, 2));
+    }
 
-	public write(message: string) {
-		if (!process.env[cm.envTrace]) {
-	        return;
-	    }
+    public write(message: string) {
+        if (!process.env[cm.envTrace]) {
+            return;
+        }
 
-		this.writer.trace('[' + new Date().toISOString()  + '] ' + this.scope + ':' + '> ' + message + os.EOL);
-	}
+        this.writer.trace('[' + new Date().toISOString()  + '] ' + this.scope + ':' + '> ' + message + os.EOL);
+    }
 }

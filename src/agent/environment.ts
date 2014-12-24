@@ -40,28 +40,6 @@ var getFilteredEnv = function(): { [key: string]: string } {
     return filtered;
 }
 
-/*
-export function ensureEnvFile(envPath, done) {
-    fs.exists(envPath, function(exists) {
-        if (exists) {
-            done();
-            return;
-        };
-
-        var vars: { [key: string]: string } = getFilteredEnv();
-
-        var contents = "";
-        for (var envvar in process.env) {
-            contents += envvar + '=' + process.env[envvar] + os.EOL;
-        }
-
-        fs.writeFile(envPath, contents, 'utf8', (err) => {
-            done(err);	
-        });
-    });
-}
-*/
-
 export function ensureEnvFile(envPath): Q.Promise<void> {
     var defer = Q.defer<void>();
 
@@ -121,8 +99,8 @@ export function getEnv(envPath: string, complete: (err: any, env: {[key: string]
                 }
 
                 complete(null, env);
-            });			
-        }	
+            });         
+        }   
     });
 }
 
@@ -131,7 +109,7 @@ var checkWhich = function(cap: any, tool: string, capability?:string) {
     var toolpath = shell.which(tool);
     if (toolpath) {
         cap[capability || tool] = toolpath;
-    }	
+    }   
 }
 
 var checkTool = function(cap: any, command: string, args: string, capability: string) {
@@ -149,7 +127,7 @@ var checkTool = function(cap: any, command: string, args: string, capability: st
 var setIfNot = function(cap, name, val) {
     if (!cap.hasOwnProperty(name)) {
         cap[name] = val;
-    }	
+    }   
 }
 
 export function getCapabilities(): cm.IStringDictionary {

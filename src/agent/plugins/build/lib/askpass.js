@@ -20,19 +20,19 @@ String.prototype.startsWith = function (str) {
 var prompt = process.argv[2];
 
 if (prompt) {
-	if (prompt.startsWith('Username')) {
-		var uname = process.env['altusername'];
-		if (uname) {
-			process.stdout.write(uname);
-		}
-	}
+    if (prompt.startsWith('Username')) {
+        var uname = process.env['altusername'];
+        if (uname) {
+            process.stdout.write(uname);
+        }
+    }
 
-	if (prompt.startsWith('Password')) {
-		var pwd = process.env['altpassword'];
-		if (pwd) {
-			process.stdout.write(pwd);
-		}
-	}	
+    if (prompt.startsWith('Password')) {
+        var pwd = process.env['altpassword'];
+        if (pwd) {
+            process.stdout.write(pwd);
+        }
+    }   
 }
 
 

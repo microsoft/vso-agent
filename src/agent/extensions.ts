@@ -17,14 +17,14 @@ String.prototype.endsWith = function (str) {
 }
 
 String.prototype.isEqual = function(ignoreCase, str) {
-	var str1 = this;
+  var str1 = this;
 
-	if (ignoreCase) {
-		str1 = str1.toLowerCase();
-	    str = str.toLowerCase();			
-	}
+  if (ignoreCase) {
+    str1 = str1.toLowerCase();
+      str = str.toLowerCase();      
+  }
 
-	return str1 === str;
+  return str1 === str;
 }
 
 //
@@ -32,11 +32,11 @@ String.prototype.isEqual = function(ignoreCase, str) {
 //
 String.prototype.replaceVars = function (vars) {
     return this.replace(/\$\(([^\)]+)\)/g, function (placeholder, variable) {
-    	if (vars[variable]) {
-    		return vars[variable];
-    	}
-    	else {
-    		return placeholder;
-    	}
+      if (vars[variable]) {
+        return vars[variable];
+      }
+      else {
+        return placeholder;
+      }
     });
 };

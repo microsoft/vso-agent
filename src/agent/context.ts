@@ -17,9 +17,9 @@ import um = require('./utilities');
 var trace: tm.Tracing;
 
 function ensureTrace(writer: cm.ITraceWriter) {
-	if (!trace) {
-		trace = new tm.Tracing(__filename, writer);	
-	}
+    if (!trace) {
+        trace = new tm.Tracing(__filename, writer); 
+    }
 }
 
 export class WellKnownVariables {
@@ -29,185 +29,185 @@ export class WellKnownVariables {
 }
 
 export class Context extends events.EventEmitter {
-	constructor(writers: cm.IDiagnosticWriter[]) {
-		super();
-		this.writers = writers;
-		this.hasErrors = false;
-	}
+    constructor(writers: cm.IDiagnosticWriter[]) {
+        super();
+        this.writers = writers;
+        this.hasErrors = false;
+    }
 
-	public config: cm.IConfiguration;
-	public hasErrors: boolean;
-	private writers: cm.IDiagnosticWriter[];
+    public config: cm.IConfiguration;
+    public hasErrors: boolean;
+    private writers: cm.IDiagnosticWriter[];
 
-	// TODO: parse line to direct appropriately
-	public output(line: string) { 
-		this.writers.forEach((writer) => {
-			writer.write(line);
-		});
-	}
+    // TODO: parse line to direct appropriately
+    public output(line: string) { 
+        this.writers.forEach((writer) => {
+            writer.write(line);
+        });
+    }
 
-	public error(message: string) {
-		this.hasErrors = true;
-		this._write(cm.DiagnosticLevel.Error, 'Error', message);
-	}
+    public error(message: string) {
+        this.hasErrors = true;
+        this._write(cm.DiagnosticLevel.Error, 'Error', message);
+    }
 
-	public warning(message: string) {
-		this._write(cm.DiagnosticLevel.Warning, 'Warning', message);
-	}
+    public warning(message: string) {
+        this._write(cm.DiagnosticLevel.Warning, 'Warning', message);
+    }
 
-	public info(message: string) {
-		this._write(cm.DiagnosticLevel.Info, null, message);
-	}
+    public info(message: string) {
+        this._write(cm.DiagnosticLevel.Info, null, message);
+    }
 
-	public verbose(message: string) {
-		this._write(cm.DiagnosticLevel.Verbose, null, message);
-	}
+    public verbose(message: string) {
+        this._write(cm.DiagnosticLevel.Verbose, null, message);
+    }
 
-	private _write(level: cm.DiagnosticLevel, tag: string, message: string) {
+    private _write(level: cm.DiagnosticLevel, tag: string, message: string) {
         if (typeof (message) !== 'string') {
             console.error('non-string write: ' + level, tag);
             console.error(JSON.stringify(message, null, 2));
             return;
         }
 
-		var lines = message.split(os.EOL);
+        var lines = message.split(os.EOL);
 
-		for (var i in lines) {
-			var line = lines[i].replace(/(\r\n|\n|\r)/gm, '');
+        for (var i in lines) {
+            var line = lines[i].replace(/(\r\n|\n|\r)/gm, '');
 
-			var prefix = tag ? '[' + tag + '] ' : '';
-			var dateTime = new Date().toISOString() + ': ';
+            var prefix = tag ? '[' + tag + '] ' : '';
+            var dateTime = new Date().toISOString() + ': ';
 
-			this.emit('message', prefix + line);
-			var logLine = prefix + dateTime + line + os.EOL;
-			
-			this.writers.forEach((writer) => {
-				if (writer.level >= level) {
-					if (level == cm.DiagnosticLevel.Error) {
-						writer.writeError(logLine);
-					}
-					else {
-						writer.write(logLine);	
-					}
-				}
-			});			
-		}
-	}
+            this.emit('message', prefix + line);
+            var logLine = prefix + dateTime + line + os.EOL;
+            
+            this.writers.forEach((writer) => {
+                if (writer.level >= level) {
+                    if (level == cm.DiagnosticLevel.Error) {
+                        writer.writeError(logLine);
+                    }
+                    else {
+                        writer.write(logLine);  
+                    }
+                }
+            });         
+        }
+    }
 
-	public heading(message: string) {
-		this.writers.forEach((writer) => {
+    public heading(message: string) {
+        this.writers.forEach((writer) => {
 
-			if (writer.level >= cm.DiagnosticLevel.Status) {
-				var delim = '----------------------------------------------------------------------' + os.EOL;
-				this._write(cm.DiagnosticLevel.Info, null, delim + message + delim);
-			}
-		});	
-	}
+            if (writer.level >= cm.DiagnosticLevel.Status) {
+                var delim = '----------------------------------------------------------------------' + os.EOL;
+                this._write(cm.DiagnosticLevel.Info, null, delim + message + delim);
+            }
+        }); 
+    }
 
-	public status(message: string) {
-		this._write(cm.DiagnosticLevel.Status, null, message);
-	}
-	
-	public section(message: string) {
-		this.writers.forEach((writer) => {
-			if (writer.level >= cm.DiagnosticLevel.Status) {
-				this._write(cm.DiagnosticLevel.Info, null, ' ' + os.EOL + '+++++++' + message + ' ' + os.EOL);
-			}
-		});	
-	}
+    public status(message: string) {
+        this._write(cm.DiagnosticLevel.Status, null, message);
+    }
+    
+    public section(message: string) {
+        this.writers.forEach((writer) => {
+            if (writer.level >= cm.DiagnosticLevel.Status) {
+                this._write(cm.DiagnosticLevel.Info, null, ' ' + os.EOL + '+++++++' + message + ' ' + os.EOL);
+            }
+        }); 
+    }
 
-	public end(): void {
-		this.writers.forEach((writer) => {
-			writer.end();
-		});		
-	}	
+    public end(): void {
+        this.writers.forEach((writer) => {
+            writer.end();
+        });     
+    }   
 }
 
 export class AgentContext extends Context implements cm.ITraceWriter {
-	constructor(hostProcess: string, config: cm.IConfiguration, consoleOutput: boolean) {
-		this.config = config;
+    constructor(hostProcess: string, config: cm.IConfiguration, consoleOutput: boolean) {
+        this.config = config;
 
         // Set full path for work folder, as it is used by others
-		if (path.resolve(this.config.settings.workFolder) !== this.config.settings.workFolder) {
-        	this.config.settings.workFolder = path.join(__dirname, this.config.settings.workFolder);
-    	}
+        if (path.resolve(this.config.settings.workFolder) !== this.config.settings.workFolder) {
+            this.config.settings.workFolder = path.join(__dirname, this.config.settings.workFolder);
+        }
 
         this.fileWriter = new dm.DiagnosticFileWriter(process.env[cm.envVerbose] ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info, 
-					path.join(path.resolve(this.config.settings.workFolder), '_diag', hostProcess), 
-					new Date().toISOString().replace(/:/gi, '_') + '_' + process.pid + '.log');
+                    path.join(path.resolve(this.config.settings.workFolder), '_diag', hostProcess), 
+                    new Date().toISOString().replace(/:/gi, '_') + '_' + process.pid + '.log');
 
-		var writers: cm.IDiagnosticWriter[] = [this.fileWriter];
+        var writers: cm.IDiagnosticWriter[] = [this.fileWriter];
 
-		if (consoleOutput) {
-			writers.push(new dm.DiagnosticConsoleWriter(cm.DiagnosticLevel.Status));
-		}
+        if (consoleOutput) {
+            writers.push(new dm.DiagnosticConsoleWriter(cm.DiagnosticLevel.Status));
+        }
 
-		super(writers);
-	}
+        super(writers);
+    }
 
-	private fileWriter: cm.IDiagnosticWriter;
+    private fileWriter: cm.IDiagnosticWriter;
 
-	// ITraceWriter
-	public trace(message: string) {
-		this.fileWriter.write(message);
-	}
+    // ITraceWriter
+    public trace(message: string) {
+        this.fileWriter.write(message);
+    }
 }
 
 export class ExecutionContext extends Context {
-	constructor(jobInfo: cm.IJobInfo, 
-				recordId: string, 
-				feedback: cm.IFeedbackChannel,
-				agentCtx: AgentContext) {
-		
-		ensureTrace(agentCtx);
-		trace.enter('ExecutionContext');
+    constructor(jobInfo: cm.IJobInfo, 
+                recordId: string, 
+                feedback: cm.IFeedbackChannel,
+                agentCtx: AgentContext) {
+        
+        ensureTrace(agentCtx);
+        trace.enter('ExecutionContext');
 
-		this.jobInfo = jobInfo;
-		this.variables = jobInfo.variables;
-		this.recordId = recordId;
-		this.agentCtx = agentCtx;
-		this.feedback = feedback;
-		this.config = agentCtx.config;
+        this.jobInfo = jobInfo;
+        this.variables = jobInfo.variables;
+        this.recordId = recordId;
+        this.agentCtx = agentCtx;
+        this.feedback = feedback;
+        this.config = agentCtx.config;
 
         this.buildDirectory = this.variables[cm.agentVars.buildDirectory];
         this.workingDirectory = this.variables[cm.agentVars.workingDirectory];
-		var logFolder = path.join(this.workingDirectory, '_logs');
+        var logFolder = path.join(this.workingDirectory, '_logs');
 
-		var logData = <cm.ILogMetadata>{};
-		logData.jobInfo = jobInfo;
-		logData.recordId = recordId;
+        var logData = <cm.ILogMetadata>{};
+        logData.jobInfo = jobInfo;
+        logData.recordId = recordId;
 
-		var logger: lm.PagingLogger = new lm.PagingLogger(logFolder, logData);
-		logger.level = this.variables[cm.sysVars.debug] == 'true' ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info;
+        var logger: lm.PagingLogger = new lm.PagingLogger(logFolder, logData);
+        logger.level = this.variables[cm.sysVars.debug] == 'true' ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info;
 
         logger.on('pageComplete', (info: cm.ILogPageInfo) => {
-        	trace.state('pageComplete', info);
-        	feedback.queueLogPage(info);
+            trace.state('pageComplete', info);
+            feedback.queueLogPage(info);
          });
 
-		this.util = new um.Utilities(this);
+        this.util = new um.Utilities(this);
 
-		super([logger]);
-	}
+        super([logger]);
+    }
 
-	public error(message: string): void {
-		this.feedback.addError(this.recordId, "Console", message, null);
-		super.error(message);
-	}
+    public error(message: string): void {
+        this.feedback.addError(this.recordId, "Console", message, null);
+        super.error(message);
+    }
 
-	public warning(message: string): void {
-		this.feedback.addWarning(this.recordId, "Console", message, null);
-		super.warning(message);
-	}
+    public warning(message: string): void {
+        this.feedback.addWarning(this.recordId, "Console", message, null);
+        super.warning(message);
+    }
 
-	public agentCtx: AgentContext;
-	public jobInfo: cm.IJobInfo;
-	public variables: { [key: string]: string };
-	public recordId: string;
-	public buildDirectory: string;
-	public workingDirectory: string;
-	public feedback: cm.IFeedbackChannel;
-	public util: any;
+    public agentCtx: AgentContext;
+    public jobInfo: cm.IJobInfo;
+    public variables: { [key: string]: string };
+    public recordId: string;
+    public buildDirectory: string;
+    public workingDirectory: string;
+    public feedback: cm.IFeedbackChannel;
+    public util: any;
 }
 
 
@@ -230,14 +230,14 @@ export class ExecutionContext extends Context {
 var LOCK_RENEWAL_MS = 60 * 1000;
 
 export class JobContext extends ExecutionContext {
-	constructor(job: ifm.JobRequestMessage,
-				feedback: cm.IFeedbackChannel,
-		        agentCtx: AgentContext) {
+    constructor(job: ifm.JobRequestMessage,
+                feedback: cm.IFeedbackChannel,
+                agentCtx: AgentContext) {
 
-		ensureTrace(agentCtx);
-		trace.enter('JobContext');
+        ensureTrace(agentCtx);
+        trace.enter('JobContext');
 
-		this.job = job;
+        this.job = job;
 
         var info: cm.IJobInfo = cm.jobInfoFromJob(job);
 
@@ -247,21 +247,21 @@ export class JobContext extends ExecutionContext {
         this.config = agentCtx.config;
         trace.state('this.config', this.config);
 
-		super(info, job.timeline.id, feedback, agentCtx);
-	}
+        super(info, job.timeline.id, feedback, agentCtx);
+    }
 
-	public job: ifm.JobRequestMessage;
-	public jobInfo: cm.IJobInfo;
-	public feedback: cm.IFeedbackChannel;
+    public job: ifm.JobRequestMessage;
+    public jobInfo: cm.IJobInfo;
+    public feedback: cm.IFeedbackChannel;
 
     //------------------------------------------------------------------------------------
     // Job/Task Status
     //------------------------------------------------------------------------------------
     public finishJob(result: ifm.TaskResult, callback: (err: any) => void): void {
-    	trace.enter('finishJob');
-    	trace.state('result', ifm.TaskResult[result]);
+        trace.enter('finishJob');
+        trace.state('result', ifm.TaskResult[result]);
 
-    	this.setTaskResult(this.job.jobId, this.job.jobName, result);
+        this.setTaskResult(this.job.jobId, this.job.jobName, result);
 
         var jobRequest: ifm.TaskAgentJobRequest = <ifm.TaskAgentJobRequest>{};
         jobRequest.requestId = this.job.requestId;
@@ -273,61 +273,61 @@ export class JobContext extends ExecutionContext {
 
         // marking the job complete and then drain so the next worker can start
         this.feedback.updateJobRequest(this.config.poolId, 
-        	                           this.job.lockToken, 
-        	                           jobRequest, 
-        	                           (err: any) => {
-        	                           		trace.write('draining feedback');
-        	                           		this.feedback.drain(callback);
-        	                           	}); 	
+                                       this.job.lockToken, 
+                                       jobRequest, 
+                                       (err: any) => {
+                                            trace.write('draining feedback');
+                                            this.feedback.drain(callback);
+                                        });     
     }
 
     public writeConsoleSection(message: string) {
-    	this.feedback.queueConsoleSection(message);
+        this.feedback.queueConsoleSection(message);
     }
 
     public setJobInProgress(): void {
-    	trace.enter('setJobInProgress');
-    	var jobId = this.job.jobId;
+        trace.enter('setJobInProgress');
+        var jobId = this.job.jobId;
 
-    	// job
-    	this.feedback.setCurrentOperation(jobId, "Starting");
-    	this.feedback.setName(jobId, this.job.jobName);
-    	this.feedback.setStartTime(jobId, new Date());
-    	this.feedback.setState(jobId, ifm.TimelineRecordState.InProgress);
-    	this.feedback.setType(jobId, "Job");
-    	this.feedback.setWorkerName(jobId, this.config.settings.agentName);
+        // job
+        this.feedback.setCurrentOperation(jobId, "Starting");
+        this.feedback.setName(jobId, this.job.jobName);
+        this.feedback.setStartTime(jobId, new Date());
+        this.feedback.setState(jobId, ifm.TimelineRecordState.InProgress);
+        this.feedback.setType(jobId, "Job");
+        this.feedback.setWorkerName(jobId, this.config.settings.agentName);
     }
 
     public registerPendingTask(id: string, name: string, order: number): void {
-    	trace.enter('registerPendingTask');
-    	this.feedback.setCurrentOperation(id, "Initializing");
-    	this.feedback.setParentId(id, this.job.jobId);
-    	this.feedback.setName(id, name);
-    	this.feedback.setState(id, ifm.TimelineRecordState.Pending);
-    	this.feedback.setType(id, "Task");
-    	this.feedback.setWorkerName(id, this.config.settings.agentName);
-    	this.feedback.setOrder(id, order);  	
+        trace.enter('registerPendingTask');
+        this.feedback.setCurrentOperation(id, "Initializing");
+        this.feedback.setParentId(id, this.job.jobId);
+        this.feedback.setName(id, name);
+        this.feedback.setState(id, ifm.TimelineRecordState.Pending);
+        this.feedback.setType(id, "Task");
+        this.feedback.setWorkerName(id, this.config.settings.agentName);
+        this.feedback.setOrder(id, order);      
     }
 
     public setTaskStarted(id: string, name: string): void {
-    	trace.enter('setTaskStarted');
-    	// set the job operation
-		this.feedback.setCurrentOperation(this.job.jobId, 'Starting ' + name);
+        trace.enter('setTaskStarted');
+        // set the job operation
+        this.feedback.setCurrentOperation(this.job.jobId, 'Starting ' + name);
 
-		// update the task
-    	this.feedback.setCurrentOperation(id, "Starting " + name);
-    	this.feedback.setStartTime(id, new Date());
-    	this.feedback.setState(id, ifm.TimelineRecordState.InProgress);
+        // update the task
+        this.feedback.setCurrentOperation(id, "Starting " + name);
+        this.feedback.setStartTime(id, new Date());
+        this.feedback.setState(id, ifm.TimelineRecordState.InProgress);
         this.feedback.setType(id, "Task");
         this.feedback.setName(id, name);
     }
 
     public setTaskResult(id: string, name: string, result: ifm.TaskResult): void {
-		trace.enter('setTaskResult');
-    	this.feedback.setCurrentOperation(id, "Completed " + name);
-    	this.feedback.setState(id, ifm.TimelineRecordState.Completed);
-    	this.feedback.setFinishTime(id, new Date());
-    	this.feedback.setResult(id, result);
+        trace.enter('setTaskResult');
+        this.feedback.setCurrentOperation(id, "Completed " + name);
+        this.feedback.setState(id, ifm.TimelineRecordState.Completed);
+        this.feedback.setFinishTime(id, new Date());
+        this.feedback.setResult(id, result);
         this.feedback.setType(id, "Task");
         this.feedback.setName(id, name);
     }
@@ -343,20 +343,20 @@ export class JobContext extends ExecutionContext {
 //=================================================================================================
 
 export class PluginContext extends ExecutionContext {
-	constructor(job: ifm.JobRequestMessage, 
-				recordId: string, 
-				feedback: cm.IFeedbackChannel,
-				agentCtx: AgentContext) {
+    constructor(job: ifm.JobRequestMessage, 
+                recordId: string, 
+                feedback: cm.IFeedbackChannel,
+                agentCtx: AgentContext) {
 
-		this.job = job;
-		var jobInfo: cm.IJobInfo = cm.jobInfoFromJob(job);
+        this.job = job;
+        var jobInfo: cm.IJobInfo = cm.jobInfoFromJob(job);
 
-		super(jobInfo, recordId, feedback, agentCtx);
-	}
+        super(jobInfo, recordId, feedback, agentCtx);
+    }
 
-	public job: ifm.JobRequestMessage;
-	private agentApi: ifm.IAgentApi;
-	private timelineApi: ifm.ITimelineApi;
+    public job: ifm.JobRequestMessage;
+    private agentApi: ifm.IAgentApi;
+    private timelineApi: ifm.ITimelineApi;
 }
 
 //=================================================================================================
@@ -370,13 +370,13 @@ export class PluginContext extends ExecutionContext {
 //=================================================================================================
 
 export class TaskContext extends ExecutionContext {
-	constructor(jobInfo: cm.IJobInfo, 
-				recordId: string, 
-				feedback: cm.IFeedbackChannel,
-				agentCtx: AgentContext) {
+    constructor(jobInfo: cm.IJobInfo, 
+                recordId: string, 
+                feedback: cm.IFeedbackChannel,
+                agentCtx: AgentContext) {
 
-		super(jobInfo, recordId, feedback, agentCtx);
-	}
+        super(jobInfo, recordId, feedback, agentCtx);
+    }
 
-	public inputs: ifm.TaskInputs;		
+    public inputs: ifm.TaskInputs;      
 }

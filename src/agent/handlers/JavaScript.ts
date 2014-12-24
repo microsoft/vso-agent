@@ -10,18 +10,18 @@ import ctxm = require('../context');
 //--------------------------------------------------------------------------------
 // Handle Task authored in JavaScript (exec ends with js)
 //
-// 		scriptPath: abs path to script in tasks folder (infra figures that out)
+//    scriptPath: abs path to script in tasks folder (infra figures that out)
 ///-------------------------------------------------------------------------------
 export function runTask(scriptPath: string, ctx: ctxm.TaskContext, callback): void {
   var mod = require(scriptPath);
 
   try {
         mod.execute(ctx, function(err) {
-        	if (err) {
-        		ctx.error(err.message);	
-        	}
-        	
-        	callback(err);
+          if (err) {
+            ctx.error(err.message); 
+          }
+          
+          callback(err);
         });
   }
   catch (err) {

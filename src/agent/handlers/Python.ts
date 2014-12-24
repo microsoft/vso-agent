@@ -10,19 +10,19 @@ import ctxm = require('../context');
 //--------------------------------------------------------------------------------
 // Handle Task authored in Python (exec ends with py: somefile.py)
 //
-// 		scriptPath: abs path to script in tasks folder (infra figures that out)
+//    scriptPath: abs path to script in tasks folder (infra figures that out)
 ///-------------------------------------------------------------------------------
 export function runTask(scriptPath: string, ctx: ctxm.TaskContext, callback): void {
 
-	// ensure our vso.py infra module is loadable by tasks script
-	process.env['PYTHONPATH'] = __dirname;
+  // ensure our vso.py infra module is loadable by tasks script
+  process.env['PYTHONPATH'] = __dirname;
 
-	// we need to send the task context to it (goes over stdin)
-	var begin = function(py) {
-		py.send(JSON.stringify(ctx));
-	}
+  // we need to send the task context to it (goes over stdin)
+  var begin = function(py) {
+    py.send(JSON.stringify(ctx));
+  }
 
-	run(scriptPath, [], begin, callback);
+  run(scriptPath, [], begin, callback);
 }
 
 //----------------------------------------------------------------
@@ -50,7 +50,7 @@ export function run(script, args, begin, done): void {
   var py = new pyshell(pys, options);
 
   if (begin) {
-  	begin(py);  	
+    begin(py);    
   }
   
   py.on('message', function (message) {

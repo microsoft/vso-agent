@@ -63,7 +63,7 @@ export class Utilities {
     // [ '-a', '-b', '"quoted b value"', '-c', '-d', '"quoted d value"' ]
     //
     public argStringToArray(argString: string): string[] {
-        var args = argString.match(/([^" ]*("[^"]*")[^" ]*)|[^" ]+/g);	
+        var args = argString.match(/([^" ]*("[^"]*")[^" ]*)|[^" ]+/g);  
         //remove double quotes from each string in args as child_process.spawn() cannot handle literla quotes as part of arguments
         for(var i = 0; i < args.length; i ++)
         {
@@ -99,7 +99,7 @@ export class Utilities {
 
         var runCP = cp(name, args, ops);
 
-        runCP.stdout.on('data', (data) => { 			
+        runCP.stdout.on('data', (data) => {             
             this.ctx.info(data.toString('utf8'));
         });
 
@@ -126,7 +126,7 @@ export class Utilities {
 
                 callback(new Error(msg), code);
             }
-        });			
+        });         
     }
 
 
