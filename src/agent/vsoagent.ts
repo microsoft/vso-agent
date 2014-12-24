@@ -58,13 +58,13 @@ var ensureInitialized = function(settings: cm.ISettings, creds: any, complete: (
     .then((config: cm.IConfiguration) => {
         complete(null, config);
     })
-    .fail(err) {
+    .fail((err) => {
         console.error('Could not initialize.  Retrying in ' + INIT_RETRY_DELAY/1000 + ' sec');
         console.error(err.message);
         setTimeout(() => {
                 ensureInitialized(settings, creds, complete);
             }, INIT_RETRY_DELAY);        
-    }
+    })
 }
 
 /*
@@ -81,7 +81,7 @@ var initAgent = function(settings: cm.ISettings, creds: any, complete: (err:any,
 cm.readBasicCreds()
 .then(function(credentials: ifm.IBasicCredentials) {
     _creds = credentials;
-    return cfgr.QensureConfigured(creds);
+    return cfgr.ensureConfigured(creds);
 })
 .then(function(settings: cm.ISettings) {
 
@@ -152,8 +152,6 @@ cm.readBasicCreds()
     console.error(err);
     process.exit(1);
 })
-
-
 
 
 process.on('uncaughtException', function (err) {

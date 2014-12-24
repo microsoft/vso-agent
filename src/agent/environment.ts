@@ -62,7 +62,7 @@ export function ensureEnvFile(envPath, done) {
 }
 */
 
-export function QensureEnvFile(envPath): Q.Promise<void> {
+export function ensureEnvFile(envPath): Q.Promise<void> {
     var defer = Q.defer<void>();
 
     fs.exists(envPath, function(exists) {
@@ -152,8 +152,8 @@ var setIfNot = function(cap, name, val) {
     }	
 }
 
-export function getCapabilities(): { [key: string]: string } {
-    var cap: { [key: string]: string } = getFilteredEnv();
+export function getCapabilities(): cm.IDictionary {
+    var cap: cm.IDictionary = getFilteredEnv();
 
     checkWhich(cap, 'sh');
     checkWhich(cap, 'git');

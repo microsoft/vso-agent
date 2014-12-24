@@ -78,3 +78,29 @@ export class AgentApi {
         this.restClient.update(resPath, genericRecord, onResult);		
 	}
 }
+
+// Q wrapper
+
+export class QAgentApi {
+	agentApi: ifm.IAgentApi;
+
+	constructor(accountUrl:string, handler: ifm.IRequestHandler) {
+		this.agentApi = new AgentApi(accountUrl, handler);
+	}
+
+	connect(): Q.Promise<any> {
+		var defer = Q.defer();
+
+		this.agentApi.connect(function(err: any, statusCode: number, obj: any) {
+			if (err) {
+				err.statusCode = statusCode;
+				defer.reject(err);
+			}
+			else {
+				defer.resolve(obj);
+			}
+		});
+
+		return defer.promise;		
+	}
+}

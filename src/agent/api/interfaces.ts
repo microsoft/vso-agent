@@ -34,7 +34,7 @@ export interface IAgentApi {
 
 // Q Promise Interface
 export interface IQAgentApi {
-    connect(): Q.Promise<any>;
+    connect(): Q.Promise<void>;
 }
 
 //-----------------------------------------------------

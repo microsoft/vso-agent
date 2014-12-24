@@ -3,7 +3,6 @@
 
 import ifm = require('./interfaces');
 import agentm = require('./agentapi');
-import qagentm = require('./qagentapi');
 import timelinem = require('./timelineapi');
 import taskm = require('./taskapi');
 
@@ -15,7 +14,7 @@ export function AgentApi(serverUrl: string, handler: ifm.IRequestHandler): ifm.I
 }
 
 export function QAgentApi(serverUrl: string, handler: ifm.IRequestHandler): ifm.IQAgentApi {
-	return new qagentm.QAgentApi(serverUrl, handler);	
+	return new agentm.QAgentApi(serverUrl, handler);	
 }
 
 export function TimelineApi(collectionUrl: string, handler: ifm.IRequestHandler): ifm.ITimelineApi {

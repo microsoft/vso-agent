@@ -6,9 +6,16 @@ import ifm = require('./api/interfaces');
 import dm = require('./diagnostics');
 import cm = require('./common');
 
-var config: cfgm.Configurator = new cfgm.Configurator();
-config.create((err, host) => {
-	if (err) {
-		console.error(err);
-	}
+var cfgr: cfgm.Configurator = new cfgm.Configurator();
+cm.readBasicCreds()
+.then((credentials: ifm.IBasicCredentials) => {
+    _creds = credentials;
+    return cfgr.create(creds);
+})
+.then((settings: cm.ISettings) => {
+	console.log('Configured ' + settings.agentName + ' in pool ' + settings.poolName);
+})
+.fail((err) => {
+	console.err('Configuration Failed:');
+	console.err(err.message);
 });
