@@ -152,8 +152,8 @@ var setIfNot = function(cap, name, val) {
     }	
 }
 
-export function getCapabilities(): cm.IDictionary {
-    var cap: cm.IDictionary = getFilteredEnv();
+export function getCapabilities(): cm.IStringDictionary {
+    var cap: cm.IStringDictionary = getFilteredEnv();
 
     checkWhich(cap, 'sh');
     checkWhich(cap, 'git');

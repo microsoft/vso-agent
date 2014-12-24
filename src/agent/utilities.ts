@@ -9,6 +9,43 @@ import ctxm = require('./context');
 var shell = require('shelljs');
 var fs = require('fs');
 
+// TODO: offer these module level context-less helper functions in utilities below
+export function ensurePathExists(path: string): Q.Promise<void> {
+    var defer = Q.defer<void>();
+
+    if (fs.exists(path, function(exists) {
+        if (!exists) {
+            shell.mkdir('-p', path);
+
+            var errMsg = shell.error();
+
+            if (errMsg) {
+                defer.reject(new Error('Could not create path (' + path + '): ' + errMsg));
+            }
+            else {
+                defer.resolve(null);
+            }
+        }
+    }));
+
+    return defer.promise;        
+}
+
+export function objectToFile(filePath: string, obj: any): Q.Promise<void> {
+    var defer = Q.defer<void>();
+
+    fs.writeFile(filePath, JSON.stringify(obj, null, 2), (err) => {
+        if (err) {
+            defer.reject(new Error('Could not save to file (' + filePath + '): ' + err.message));
+        }
+        else {
+            defer.resolve(null);
+        }
+    });
+
+    return defer.promise;        
+}
+
 //
 // Utilities passed to each task
 // which provides contextual logging to server etc...
@@ -92,39 +129,5 @@ export class Utilities {
         });			
     }
 
-    public QensurePathExists(path: string): Q.Promise<void> {
-        var defer = Q.defer<void>();
 
-        if (fs.exists(path, function(exists) {
-            if (!exists) {
-                shell.mkdir('-p', path);
-
-                var errMsg = shell.error();
-
-                if (errMsg) {
-                    defer.reject(new Error('Could not create path (' + path + '): ' + errMsg));
-                }
-                else {
-                    defer.resolve(null);
-                }
-            }
-        }));
-
-        return defer.promise;        
-    }
-
-    public QobjectToFile(filePath, obj): Q.Promise<void> {
-        var defer = Q.defer<void>();
-
-        fs.writeFile(filePath, JSON.stringify(obj, null, 2), (err) => {
-            if (err) {
-                defer.reject(new Error('Could not save to file (' + filePath + '): ' + err.message));
-            }
-            else {
-                defer.resolve(null);
-            }
-        });
-
-        return defer.promise;        
-    }
 }

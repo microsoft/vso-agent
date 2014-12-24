@@ -88,10 +88,10 @@ export class QAgentApi {
 		this.agentApi = new AgentApi(accountUrl, handler);
 	}
 
-	connect(): Q.Promise<any> {
+	public connect(): Q.Promise<any> {
 		var defer = Q.defer();
 
-		this.agentApi.connect(function(err: any, statusCode: number, obj: any) {
+		this.agentApi.connect((err: any, statusCode: number, obj: any) => {
 			if (err) {
 				err.statusCode = statusCode;
 				defer.reject(err);
@@ -103,4 +103,68 @@ export class QAgentApi {
 
 		return defer.promise;		
 	}
+
+	public getAgentPools(poolName: string): Q.Promise<ifm.TaskAgentPool[]> {
+		var defer = Q.defer();
+
+		this.agentApi.getAgentPools(poolName, (err: any, statusCode: number, pools: ifm.TaskAgentPool[]) => {
+			if (err) {
+				err.statusCode = statusCode;
+				defer.reject(err);
+			}
+			else {
+				defer.resolve(pools);
+			}
+		});
+
+		return <Q.Promise<ifm.TaskAgentPool[]>>defer.promise;		
+	}
+
+	public getAgents(poolId: number, agentName: string): Q.Promise<ifm.TaskAgent[]> {
+		var defer = Q.defer();
+
+		this.agentApi.getAgents(poolId, agentName, (err: any, statusCode: number, agents: ifm.TaskAgent[]) => {
+			if (err) {
+				err.statusCode = statusCode;
+				defer.reject(err);
+			}
+			else {
+				defer.resolve(agents);
+			}
+		});
+
+		return <Q.Promise<ifm.TaskAgent[]>>defer.promise;
+	}
+
+	public createAgent(poolId: number, agent: ifm.TaskAgent): Q.Promise<ifm.TaskAgent> {
+		var defer = Q.defer();
+
+		this.agentApi.createAgent(poolId, agent, (err: any, statusCode: number, agent: ifm.TaskAgent) => {
+			if (err) {
+				err.statusCode = statusCode;
+				defer.reject(err);
+			}
+			else {
+				defer.resolve(agent);
+			}
+		});
+
+		return <Q.Promise<ifm.TaskAgent>>defer.promise;
+	}
+
+	public updateAgent(poolId: number, agent: ifm.TaskAgent): Q.Promise<ifm.TaskAgent> {
+		var defer = Q.defer();
+
+		this.agentApi.updateAgent(poolId, agent, (err: any, statusCode: number, agent: ifm.TaskAgent) => {
+			if (err) {
+				err.statusCode = statusCode;
+				defer.reject(err);
+			}
+			else {
+				defer.resolve(agent);
+			}
+		});
+
+		return <Q.Promise<ifm.TaskAgent>>defer.promise;
+	}	
 }

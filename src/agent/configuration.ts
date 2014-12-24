@@ -10,7 +10,7 @@ import cm = require('./common');
 import env = require('./environment');
 import inputs = require('./inputs');
 import webapi = require('./api/webapi');
-import util = require('./utilities');
+import utilm = require('./utilities');
 
 var os = require('os');
 var nconf = require("nconf");	
@@ -86,7 +86,7 @@ export class Configurator {
 	//
 	// Gether settings, register with the server and save the settings
 	//
-	public create(): Q.Promise<cm.ISettings> {
+	public create(creds: ifm.IBasicCredentials): Q.Promise<cm.ISettings> {
 		var settings:cm.ISettings;
 		var newAgent: ifm.TaskAgent;
 		var agentPoolId = 0;
@@ -108,20 +108,19 @@ export class Configurator {
 
 			this.validate(settings);
 			
-			return this.writeAgentToPool(settings);
+			return this.writeAgentToPool(creds, settings);
 		})
 		.then(() => {
 			console.log('Creating work folder ...');
-			var wf = settings.workFolder;
-			return util.QensurePathExists(wf);
+			return utilm.ensurePathExists(settings.workFolder);
 		})
 		.then(() => {
 			console.log('Creating env file ...');
-			return env.QensureEnvFile(envPath);
+			return env.ensureEnvFile(envPath);
 		})
 		.then(() => {
 			console.log('Saving configuration ...');
-			return util.QobjectToFile(configPath, config.settings);
+			return utilm.objectToFile(configPath, settings);
 		})
 		.then(() => {
 			return settings;
@@ -129,7 +128,7 @@ export class Configurator {
 	}
 
 	public readConfiguration(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
-		var agentApi: ifm.IQAgentApi = webapi.QAgentApi(settings.serverUrl, creds);
+		var agentApi: ifm.IQAgentApi = cm.createQAgentApi(settings.serverUrl, creds);
 		var agentPoolId = 0;
 		var agent;
 
@@ -159,7 +158,7 @@ export class Configurator {
 
             var config: cm.IConfiguration = <cm.IConfiguration>{};
             config.creds = creds;
-            config.poolId = agnetPoolId;
+            config.poolId = agentPoolId;
             config.settings = settings;
 
             return config;
@@ -174,7 +173,7 @@ export class Configurator {
 	}
 
 	private writeAgentToPool(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
-		var agentApi: ifm.IQAgentApi = webapi.QAgentApi(settings.serverUrl, creds);
+		var agentApi: ifm.IQAgentApi = cm.createQAgentApi(settings.serverUrl, creds);
 		var agentPoolId = 0;
 
 		return agentApi.connect()
@@ -203,6 +202,13 @@ export class Configurator {
 				// doesn't exist, we need to create the agent
 				console.log('creating agent...');
 
+				var newAgent: ifm.TaskAgent = <ifm.TaskAgent>{
+					maxParallelism: 1,
+					name: settings.agentName,
+					systemCapabilities: caps
+				}
+
+				return agentApi.createAgent(agentPoolId, newAgent);
 			}
 			else {
 				console.log('updating agent...');
@@ -214,13 +220,8 @@ export class Configurator {
 	            agentUpdate['systemCapabilities'] = caps;				
 
 				// TODO: we should implement force so overwrite is explicit
-				agentapi.updateAgent(agentPoolId, agentUpdate);
+				return agentApi.updateAgent(agentPoolId, agentUpdate);
 			}
-
-			// should be exactly one agent by name in a given pool by id
-			var agent = agents[0];
-
-
 		})
 		.then((agent: ifm.TaskAgent) => {
             var config: cm.IConfiguration = <cm.IConfiguration>{};

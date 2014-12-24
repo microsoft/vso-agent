@@ -35,6 +35,10 @@ export interface IAgentApi {
 // Q Promise Interface
 export interface IQAgentApi {
     connect(): Q.Promise<void>;
+    getAgentPools(poolName: string): Q.Promise<TaskAgentPool[]>;
+    getAgents(poolId: number, agentName: string): Q.Promise<TaskAgent[]>;
+    createAgent(poolId: number, agent: TaskAgent): Q.Promise<TaskAgent>;
+    updateAgent(poolId: number, agent: TaskAgent): Q.Promise<TaskAgent>;
 }
 
 //-----------------------------------------------------

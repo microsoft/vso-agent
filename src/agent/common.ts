@@ -1,6 +1,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+/// <reference path="./definitions/Q.d.ts" />
+
+import Q = require('q');
 import dm = require('./diagnostics');
 import path = require('path');
 import inputs = require('./inputs');
@@ -12,7 +15,6 @@ import cfgm = require('./configuration');
 var crypto = require('crypto');
 var zip = require('adm-zip');
 var fs = require('fs');
-var Q = require('q');
 
 require('./extensions');
 
@@ -227,28 +229,20 @@ export function createAgentApi(serverUrl: string, username: string, password: st
 	return agentapi;
 }
 
+export function createQAgentApi(serverUrl: string, creds: ifm.IBasicCredentials): ifm.IQAgentApi {
+	var handler: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(creds.username, creds.password);
+	var agentapi: ifm.IQAgentApi = webapi.QAgentApi(serverUrl, handler);
+	return agentapi;
+}
+
 export function createTaskApi(serverUrl: string, username: string, password: string): ifm.ITaskApi {
 	var creds: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(username, password);
 	var taskapi: ifm.ITaskApi = webapi.TaskApi(serverUrl, creds);
 	return taskapi;
 }
 
-/*
-export function initAgentApi(serverUrl: string, done: (err:any, api:ifm.IAgentApi, creds: any) => void): void {
-	getCreds((err, res) => {
-		var agentapi: ifm.IAgentApi = createAgentApi(serverUrl, res['username'], res['password']);
-		var creds = {
-			username: res['username'], 
-			password: res['password']
-		};
-
-		done(err, agentapi, creds);
-	});
-}
-*/
-
 // gets basic creds from args or prompts
-export function readBasicCreds(): ifm.IPromise {
+export function readBasicCreds(): Q.Promise<ifm.BasicCredentials> {
 	var defer = Q.defer();
 
 	var credInputs = [
