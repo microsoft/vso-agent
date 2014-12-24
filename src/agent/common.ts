@@ -242,7 +242,7 @@ export function createTaskApi(serverUrl: string, username: string, password: str
 }
 
 // gets basic creds from args or prompts
-export function readBasicCreds(): Q.Promise<ifm.BasicCredentials> {
+export function readBasicCreds(): Q.Promise<ifm.IBasicCredentials> {
 	var defer = Q.defer();
 
 	var credInputs = [
@@ -260,11 +260,11 @@ export function readBasicCreds(): Q.Promise<ifm.BasicCredentials> {
 			return;
 		}
 
-		var cred: ifm.IBasicCredential = <ifm.IBasicCredential>{};
+		var cred: ifm.IBasicCredentials = <ifm.IBasicCredentials>{};
 		cred.username = result['username'];
 		cred.password = result['password'];
 		defer.resolve(cred);
 	});
 
-	return defer.promise;
+	return <Q.Promise<ifm.IBasicCredentials>>defer.promise;
 }

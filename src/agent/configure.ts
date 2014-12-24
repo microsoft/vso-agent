@@ -9,13 +9,12 @@ import cm = require('./common');
 var cfgr: cfgm.Configurator = new cfgm.Configurator();
 cm.readBasicCreds()
 .then((credentials: ifm.IBasicCredentials) => {
-    _creds = credentials;
-    return cfgr.create(creds);
+    return cfgr.create(credentials);
 })
 .then((settings: cm.ISettings) => {
 	console.log('Configured ' + settings.agentName + ' in pool ' + settings.poolName);
 })
-.fail((err) => {
-	console.err('Configuration Failed:');
-	console.err(err.message);
+.fail((err: Error) => {
+	console.error('Configuration Failed:');
+	console.error(err.message);
 });

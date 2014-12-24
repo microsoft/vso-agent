@@ -60,28 +60,17 @@ export class Configurator {
 	// ensure configured and return ISettings.  That's it
 	// returns promise
 	//
-	public ensureConfigured(creds: ifm.IBasicCredentials): Q.Promise<cm.ISettings> {
-		var defer = Q.defer<cm.ISettings>();
+    public ensureConfigured (creds: ifm.IBasicCredentials): Q.Promise<cm.ISettings> {
+        var readSettings = exports.read();
 
-		var readSettings: cm.ISettings = read();
-
-		if (!readSettings.serverUrl) {
-			// not configured
-			console.log("no settings found. configuring...");
-
-			// create should return a promise
-			this.create(creds)
-				.then(function(settings) {
-					defer.resolve(settings);
-				})
-		}
-		else {
-			// already configured
-			defer.resolve(readSettings);
-		}
-
-		return defer.promise;
-	}
+        if (!readSettings.serverUrl) {
+            return this.create(creds);
+        } else {
+            var defer = Q.defer();
+            defer.resolve(readSettings);
+            return <Q.Promise<cm.ISettings>>defer.promise;
+        }
+    }
 
 	//
 	// Gether settings, register with the server and save the settings
@@ -101,10 +90,10 @@ export class Configurator {
 		return inputs.Qget(cfgInputs)
 		.then((result) => {
 			settings = <cm.ISettings>{};
-			settings['poolName'] = result['poolName'];
-			settings['serverUrl'] = result['serverUrl'];
-			settings['agentName'] = result['agentName'];
-			settings['workFolder'] = result['workFolder'];
+			settings.poolName = result['poolName'];
+			settings.serverUrl = result['serverUrl'];
+			settings.agentName = result['agentName'];
+			settings.workFolder = result['workFolder'];
 
 			this.validate(settings);
 			
@@ -124,7 +113,7 @@ export class Configurator {
 		})
 		.then(() => {
 			return settings;
-		})
+        })	
 	}
 
 	public readConfiguration(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
@@ -160,9 +149,10 @@ export class Configurator {
             config.creds = creds;
             config.poolId = agentPoolId;
             config.settings = settings;
+            config.agent = agent;
 
             return config;
-		})
+		})	
 	}
 
 	//-------------------------------------------------------------

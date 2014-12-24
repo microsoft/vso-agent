@@ -67,25 +67,20 @@ var ensureInitialized = function(settings: cm.ISettings, creds: any, complete: (
     })
 }
 
-/*
-var initAgent = function(settings: cm.ISettings, creds: any, complete: (err:any, agent: ifm.TaskAgent, config: cm.IConfiguration) => void): void {
-    //
-    // Once configured, initializing the agent will not fail on an unavailable service.
-    // If the agent starts up (most likely as a service) and the server goes unavailable,
-    // the agent should
-    //
-    ensureInitialized(settings, creds, complete);
-} 
-*/
+var _creds: ifm.IBasicCredentials;
 
 cm.readBasicCreds()
 .then(function(credentials: ifm.IBasicCredentials) {
     _creds = credentials;
-    return cfgr.ensureConfigured(creds);
+    return cfgr.ensureConfigured(credentials);
 })
 .then(function(settings: cm.ISettings) {
 
-    ensureInitialized(settings, creds, (err:any, config: cm.IConfiguration) => {
+    ensureInitialized(settings, _creds, (err:any, config: cm.IConfiguration) => {
+        if (!settings) {
+            throw (new Error('Settings not configured.'));
+        }
+
         var agent: ifm.TaskAgent = config.agent;
         ag = new ctxm.AgentContext('agent', config, true);
         trace = new tm.Tracing(__filename, ag);
@@ -104,7 +99,8 @@ cm.readBasicCreds()
         var queueName = agent.name;
         ag.info('Listening for agent: ' + queueName);
 
-        messageListener = new listener.MessageListener(cfgr.agentApi, agent, config.poolId);
+        var agentApi: ifm.IAgentApi = cm.createAgentApi(settings.serverUrl, _creds.username, _creds.password);
+        messageListener = new listener.MessageListener(agentApi, agent, config.poolId);
         trace.write('created message listener');
         ag.info('starting listener...');
 
@@ -149,7 +145,8 @@ cm.readBasicCreds()
     });
 })
 .fail(function(err) {
-    console.error(err);
+    console.error('Error starting the agent');
+    console.error(err.message);
     process.exit(1);
 })
 
