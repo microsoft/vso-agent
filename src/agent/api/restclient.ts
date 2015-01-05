@@ -164,7 +164,7 @@ export class RestClient implements ifm.IRestClient {
         this._sendWrappedJson('PATCH', relativeUrl, resources, onResult);
     }
 
-    uploadFile(relativeUrl: string, filePath: string, onResult: (err: any, statusCode: number, obj: any) => void): void {
+    uploadFile(relativeUrl: string, filePath: string, customHeaders: any, onResult: (err: any, statusCode: number, obj: any) => void): void {
         if (process.env.XPLAT_TRACE_HTTP) {
             console.log('======= uploadFile =========');
             console.log(filePath);
@@ -178,26 +178,33 @@ export class RestClient implements ifm.IRestClient {
                 return;
             }
 
-            var postUrl = this.resolveUrl(relativeUrl);
-            var contentStream: NodeJS.ReadableStream = fs.createReadStream(filePath);
-
-            var headers = {};
-            headers["Accept"] = 'application/json; api-version=' + this.apiVersion;
+            var headers = customHeaders || {};
             headers["Content-Length"] = stats.size;
 
-            this.httpClient.sendFile('POST', postUrl, contentStream, headers, (err: any, res: ifm.IHttpResponse, contents: string) => {
-                if (err) {
-                    if (process.env.XPLAT_TRACE_HTTP) {
-                        console.log('ERR: ' + err.message + ':' + err.statusCode);
-                    }
-                    onResult(err, err.statusCode, null);
-                    return;
-                }
+            var contentStream: NodeJS.ReadableStream = fs.createReadStream(filePath);
 
-                processResponse(postUrl, res, contents, onResult);
-            });
+            this.uploadStream(relativeUrl, contentStream, customHeaders, onResult);
         });
     }
+
+    uploadStream(relativeUrl: string, contentStream: NodeJS.ReadableStream, customHeaders: any, onResult: (err: any, statusCode: number, obj: any) => void): void {
+        var postUrl = this.resolveUrl(relativeUrl);
+
+        var headers = customHeaders || {};
+        headers["Accept"] = 'application/json; api-version=' + this.apiVersion;
+
+        this.httpClient.sendFile('POST', postUrl, contentStream, headers, (err: any, res: ifm.IHttpResponse, contents: string) => {
+            if (err) {
+                if (process.env.XPLAT_TRACE_HTTP) {
+                    console.log('ERR: ' + err.message + ':' + err.statusCode);
+                }
+                onResult(err, err.statusCode, contents);
+                return;
+            }
+
+            processResponse(postUrl, res, contents, onResult);
+        });
+    }    
 
     downloadFile(relativeUrl: string, filePath: string, fileType: string, onResult: (err: any, statusCode: number) => void): void {
         if (process.env.XPLAT_TRACE_HTTP) {

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 /// <reference path="../definitions/node.d.ts"/>
+/// <reference path="../definitions/Q.d.ts" />
 
 import Q = require('q');
 import ifm = require('./interfaces');

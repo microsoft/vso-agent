@@ -91,8 +91,7 @@ export interface IConfiguration {
 
 export interface IFeedbackChannel {
     agentUrl: string;
-    taskUrl: string;
-    timelineApi: ifm.ITimelineApi;
+    collectionUrl: string;
     jobInfo: IJobInfo;  
     enabled: boolean;
 
@@ -118,6 +117,9 @@ export interface IFeedbackChannel {
     setWorkerName(recordId: string, workerName: string): void;
     setLogId(recordId: string, logRef: ifm.TaskLogReference): void;
     setOrder(recordId: string, order: number): void;
+
+    // drops
+    uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.IPromise<any> {
 
     // job
     updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void;
@@ -217,28 +219,11 @@ export function extractFile(source: string, dest: string, done: (err: any) => vo
     }
 }
 
-export function createTimelineApi(collectionUrl: string, username: string, password: string): ifm.ITimelineApi {
-    var creds: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(username, password);
-    var timelineApi: ifm.ITimelineApi = webapi.TimelineApi(collectionUrl, creds);
-    return timelineApi;
-}
-
-export function createAgentApi(serverUrl: string, username: string, password: string): ifm.IAgentApi {
-    var creds: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(username, password);
-    var agentapi: ifm.IAgentApi = webapi.AgentApi(serverUrl, creds);
-    return agentapi;
-}
 
 export function createQAgentApi(serverUrl: string, creds: ifm.IBasicCredentials): ifm.IQAgentApi {
     var handler: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(creds.username, creds.password);
     var agentapi: ifm.IQAgentApi = webapi.QAgentApi(serverUrl, handler);
     return agentapi;
-}
-
-export function createTaskApi(serverUrl: string, username: string, password: string): ifm.ITaskApi {
-    var creds: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(username, password);
-    var taskapi: ifm.ITaskApi = webapi.TaskApi(serverUrl, creds);
-    return taskapi;
 }
 
 // gets basic creds from args or prompts

@@ -4,6 +4,7 @@
 import ifm = require('./interfaces');
 import agentm = require('./agentapi');
 import timelinem = require('./timelineapi');
+import filecontainerm = require('./filecontainerapi');
 import taskm = require('./taskapi');
 
 // ---------------------------------------------------------------------------
@@ -15,6 +16,10 @@ export function AgentApi(serverUrl: string, handler: ifm.IRequestHandler): ifm.I
 
 export function QAgentApi(serverUrl: string, handler: ifm.IRequestHandler): ifm.IQAgentApi {
     return new agentm.QAgentApi(serverUrl, handler);    
+}
+
+export function QFileContainerApi(serverUrl: string, handler: ifm.IRequestHandler): ifm.IQFileContainerApi {
+    return new filecontainerm.QFileContainerApi(serverUrl, handler);    
 }
 
 export function TimelineApi(collectionUrl: string, handler: ifm.IRequestHandler): ifm.ITimelineApi {

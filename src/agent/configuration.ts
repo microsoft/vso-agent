@@ -117,7 +117,8 @@ export class Configurator {
     }
 
     public readConfiguration(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
-        var agentApi: ifm.IQAgentApi = cm.createQAgentApi(settings.serverUrl, creds);
+        var handler: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(creds.username, creds.password);
+        var agentapi: ifm.IQAgentApi = webapi.QAgentApi(settings.serverUrl, handler);
         var agentPoolId = 0;
         var agent;
 

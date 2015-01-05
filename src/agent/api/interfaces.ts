@@ -53,7 +53,31 @@ export interface ITimelineApi {
 
 export interface ITaskApi {
     getTasks(taskId: string, onResult: (err: any, statusCode: number, obj: any) => void): void;
-    downloadTask(taskId: string, version: string, filePath: string, onResult: (err: any, statusCode: number) => void): void
+    downloadTask(taskId: string, version: string, filePath: string, onResult: (err: any, statusCode: number) => void): void;
+}
+
+//-----------------------------------------------------
+// FileContainer Api
+//-----------------------------------------------------
+export interface IFileContainerApi {
+    uploadFile(containerId: number, 
+              itemPath: string, 
+              contentStream: NodeJS.ReadableStream, 
+              contentIdentifier: Buffer, 
+              uncompressedLength: number, 
+              compressedLength: number, 
+              isGzipped: boolean,
+              onResult: (err: any, statusCode: number, item: ifm.FileContainerItem) => void): void;
+}
+
+export interface IQFileContainerApi {
+    uploadFile(containerId: number, 
+        itemPath: string, 
+        contentStream: NodeJS.ReadableStream, 
+        contentIdentifier: Buffer, 
+        uncompressedLength: number, 
+        compressedLength: number, 
+        isGzipped: boolean): Q.IPromise<ifm.FileContainerItem>
 }
 
 export interface IRequestHandler {
@@ -98,6 +122,18 @@ export interface JobVariables {
     [key: string]: string;
 }
 
+
+// ---------------------------------------------------------------------------
+// File Container Interfaces
+//----------------------------------------------------------------------------
+interface ContainerItemInfo {
+    fullPath: string;
+    containerItem?: fileContainerApi.FileContainerItem;
+    contentIdentifier?: Buffer;
+    compressedLength?: number;
+    uncompressedLength?: number;
+    isGzipped: boolean;
+}
 
 //*******************************************************************************************************
 // DO NOT EDIT BELOW THIS POINT

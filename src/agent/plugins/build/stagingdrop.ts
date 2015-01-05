@@ -14,22 +14,18 @@ import shelljs = require("shelljs");
 import ctxm = require('../../context');
 import ifm = require('../../api/interfaces');
 import buildApi = require("./buildapi");
-import fileContainerApi = require("./filecontainerapi");
-import basicm = require('../../api/basiccreds');
 
 var stagingOptionId: string = "82f9a3e8-3930-482e-ac62-ae3276f284d5";
 var dropOptionId: string = "e8b30f6f-039d-4d34-969c-449bbe9c3b9e";
 
-/*
 exports.pluginName = function () {
     return "buildDrop";
 }
 
 // what shows in progress view
 exports.pluginTitle = function () {
-	return "Copying files to staging folder"
+	return "Creating build drop"
 }
-*/
 
 exports.afterJob = function (ctx: ctxm.PluginContext, callback) {
     /**
@@ -198,14 +194,6 @@ function getStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption)
     return stagingFolder;
 }
 
-interface ContainerItemInfo {
-    fullPath: string;
-    containerItem?: fileContainerApi.FileContainerItem;
-    contentIdentifier?: Buffer;
-    compressedLength?: number;
-    uncompressedLength?: number;
-    isGzipped: boolean;
-}
 
 function copyToFileContainer(ctx: ctxm.PluginContext, stagingFolder: string, fileContainerPath: string): Q.IPromise<string> {
     var fileContainerRegExp = /^#\/(\d+)(\/.*)$/;
@@ -378,31 +366,6 @@ function calculateHash(buffer: Buffer): Buffer {
     var hashProvider = crypto.createHash("sha256");
     hashProvider.update(buffer);
     return hashProvider.digest();
-}
-
-function getCompressedStream(filename: string): stream.PassThrough {
-    var gzip = zlib.createGzip();
-    var inputStream = fs.createReadStream(filename);
-    return inputStream.pipe(gzip);
-}
-
-
-function uploadFileToContainer(fileContainerClient: fileContainerApi.FileContainerApi, containerId: number, containerItemTuple: ContainerItemInfo): Q.IPromise<any> {
-    var contentStream: NodeJS.ReadableStream;
-    if (containerItemTuple.isGzipped) {
-        contentStream = getCompressedStream(containerItemTuple.fullPath);
-    }
-    else {
-        contentStream = fs.createReadStream(containerItemTuple.fullPath);
-    }
-
-    return fileContainerClient.uploadFile(containerId,
-        containerItemTuple.containerItem.path,
-        contentStream,
-        containerItemTuple.contentIdentifier,
-        containerItemTuple.uncompressedLength,
-        containerItemTuple.compressedLength,
-        containerItemTuple.isGzipped);
 }
 
 function copyToUncPath(ctx: ctxm.PluginContext, stagingFolder: string, uncPath: string): Q.IPromise<string> {
