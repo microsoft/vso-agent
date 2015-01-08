@@ -23,7 +23,7 @@ export class TimelineApi implements ifm.ITimelineApi {
     }
 
     uploadLogFile(planId: string, logId: number, filePath: string, onResult: (err: any, statusCode: number, obj: any) => void): void {
-        this.restClient.uploadFile('_apis/distributedtask/plans/' + planId + '/logs/' + logId, filePath, onResult);
+        this.restClient.uploadFile('_apis/distributedtask/plans/' + planId + '/logs/' + logId, filePath, null, onResult);
     }
 
     updateTimelineRecords(planId: string, timelineId: string, records: ifm.TimelineRecord[], onResult: (err: any, statusCode: number, records: ifm.TimelineRecord[]) => void): void {

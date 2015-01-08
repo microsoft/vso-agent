@@ -57,8 +57,62 @@ export interface ITaskApi {
 }
 
 //-----------------------------------------------------
+// Build Api
+//-----------------------------------------------------
+export interface ArtifactResource {
+    data: string;
+    downloadUrl?: string;
+    type?: ArtifactResourceType;
+    url?: string;
+}
+
+export enum ArtifactResourceType {
+    Unknown = 0,
+    LocalPath = 1,
+    VersionControl = 2,
+    Container = 3,
+}
+
+export interface BuildArtifact {
+    id?: number;
+    name: string;
+    resource: ArtifactResource;
+}
+
+export interface IBuildApi {
+    postArtifact(buildId: number, artifact: BuildArtifact, onResult: (err: any, statusCode: number, artifact: BuildArtifact) => void): void;
+}
+
+export interface IQBuildApi {
+    postArtifact(buildId: number, artifact: BuildArtifact): Q.IPromise<BuildArtifact>
+}
+
+//-----------------------------------------------------
 // FileContainer Api
 //-----------------------------------------------------
+export enum ContainerItemType {
+    Any = 0,
+    Folder = 1,
+    File = 2
+}
+
+export interface ContainerItemInfo {
+    fullPath: string;
+    containerItem?: FileContainerItem;
+    contentIdentifier?: Buffer;
+    compressedLength?: number;
+    uncompressedLength?: number;
+    isGzipped: boolean;
+}
+
+export interface FileContainerItem {
+    containerId: number;
+    itemType: ContainerItemType;
+    path: string;
+    contentId?: string;
+    fileLength?: number;
+}
+
 export interface IFileContainerApi {
     uploadFile(containerId: number, 
               itemPath: string, 
@@ -67,7 +121,7 @@ export interface IFileContainerApi {
               uncompressedLength: number, 
               compressedLength: number, 
               isGzipped: boolean,
-              onResult: (err: any, statusCode: number, item: ifm.FileContainerItem) => void): void;
+              onResult: (err: any, statusCode: number, item: FileContainerItem) => void): void;
 }
 
 export interface IQFileContainerApi {
@@ -77,7 +131,7 @@ export interface IQFileContainerApi {
         contentIdentifier: Buffer, 
         uncompressedLength: number, 
         compressedLength: number, 
-        isGzipped: boolean): Q.IPromise<ifm.FileContainerItem>
+        isGzipped: boolean): Q.IPromise<FileContainerItem>
 }
 
 export interface IRequestHandler {
@@ -106,7 +160,8 @@ export interface IRestClient {
     createJsonWrappedArray(relativeUrl: string, resources: any[], onResult: (err: any, statusCode: number, obj: any) => void): void;
     update(relativeUrl: string, resources: any, onResult: (err: any, statusCode: number, obj: any) => void): void;
     updateJsonWrappedArray(relativeUrl: string, resources: any[], onResult: (err: any, statusCode: number, obj: any) => void): void;
-    uploadFile(relativeUrl: string, filePath: string, onResult: (err: any, statusCode: number, obj: any) => void): void;
+    uploadFile(relativeUrl: string, filePath: string, customHeaders: any, onResult: (err: any, statusCode: number, obj: any) => void): void;
+    uploadStream(relativeUrl: string, contentStream: NodeJS.ReadableStream, customHeaders: any, onResult: (err: any, statusCode: number, obj: any) => void): void;
     replace(relativeUrl: string, resources: any, onResult: (err: any, statusCode: number, obj: any) => void): void;
 }
 
@@ -120,19 +175,6 @@ export interface TaskInputs {
 
 export interface JobVariables {
     [key: string]: string;
-}
-
-
-// ---------------------------------------------------------------------------
-// File Container Interfaces
-//----------------------------------------------------------------------------
-interface ContainerItemInfo {
-    fullPath: string;
-    containerItem?: fileContainerApi.FileContainerItem;
-    contentIdentifier?: Buffer;
-    compressedLength?: number;
-    uncompressedLength?: number;
-    isGzipped: boolean;
 }
 
 //*******************************************************************************************************

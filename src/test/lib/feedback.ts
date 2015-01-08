@@ -6,7 +6,7 @@ import ifm = require('../../agent/api/interfaces');
 
 export class TestFeedbackChannel implements cm.IFeedbackChannel {
 	public agentUrl: string;
-	public taskUrl: string;
+	public collectionUrl: string;
 	public timelineApi: ifm.ITimelineApi;
 	public jobInfo: cm.IJobInfo;	
 	public enabled: boolean;
@@ -117,6 +117,14 @@ export class TestFeedbackChannel implements cm.IFeedbackChannel {
 	public updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void {
 		callback(null);
 	}
+
+    public uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.IPromise<any> {
+    	return Q(containerItemTuple);
+    }  
+
+    public postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.IPromise<ifm.BuildArtifact> {
+        return Q(artifact);
+    }	
 
 	public printConsole(): void {
 		console.log(this._webConsole);

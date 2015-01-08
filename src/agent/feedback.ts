@@ -5,6 +5,9 @@ import cm = require('./common');
 import ctxm = require('./context');
 import ifm = require('./api/interfaces');
 import webapi = require('./api/webapi');
+import basicm = require('./api/basiccreds');
+import zlib = require('zlib');
+import fs = require('fs');
 import tm = require('./tracing');
 
 var async = require('async');
@@ -138,7 +141,7 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
         trace.enter('ServiceChannel');
 
         this.agentUrl = agentUrl;
-        this.collectionUrl = taskUrl;
+        this.collectionUrl = collectionUrl;
 
         this.jobInfo = jobInfo;
         this.agentCtx = agentCtx;
@@ -150,11 +153,10 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
         this._issues = {};
 
         // service apis
-        var handler: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(agentCtx.config.creds.username, 
-                                                                                       agentCtx.config.creds.password);
-        this._agentApi = webapi.AgentApi(agentUrl, handler);
-        this._timelineApi = webapi.TimelineApi(collectionUrl, handler);
-        this._fileContainerApi = webapi.QFileContainerApi(collectionUrl, handler);
+        this._agentApi = webapi.AgentApi(agentUrl, cm.basicHandlerFromCreds(agentCtx.config.creds));
+        this.timelineApi = webapi.TimelineApi(collectionUrl, cm.basicHandlerFromCreds(agentCtx.config.creds));
+        this._fileContainerApi = webapi.QFileContainerApi(collectionUrl, cm.basicHandlerFromCreds(agentCtx.config.creds));
+        this._buildApi = webapi.QBuildApi(collectionUrl, cm.basicHandlerFromCreds(agentCtx.config.creds));
 
         this._totalWaitTime = 0;
         this._logQueue = new LogPageQueue(this, agentCtx);
@@ -165,7 +167,7 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
     }
 
     public agentUrl: string;
-    public taskUrl: string;
+    public collectionUrl: string;
     
     public agentCtx: ctxm.AgentContext;
     public jobInfo: cm.IJobInfo;
@@ -175,9 +177,10 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
     private _consoleQueue: WebConsoleQueue;
     private _lockRenewer: LockRenewer;
 
+    private _buildApi: ifm.IQBuildApi;
     private _agentApi: ifm.IAgentApi;
     private _fileContainerApi: ifm.IQFileContainerApi;
-    private _timelineApi: ifm.ITimelineApi;
+    public timelineApi: ifm.ITimelineApi;
 
     private _issues: any;
 
@@ -330,21 +333,25 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
         var contentStream: NodeJS.ReadableStream;
         if (containerItemTuple.isGzipped) {
             var gzip = zlib.createGzip();
-            var inputStream = fs.createReadStream(filename);            
+            var inputStream = fs.createReadStream(containerItemTuple.fullPath);            
             contentStream = inputStream.pipe(gzip);
         }
         else {
             contentStream = fs.createReadStream(containerItemTuple.fullPath);
         }
 
-        return fileContainerClient.uploadFile(containerId,
+        return this._fileContainerApi.uploadFile(containerId,
             containerItemTuple.containerItem.path,
             contentStream,
             containerItemTuple.contentIdentifier,
             containerItemTuple.uncompressedLength,
             containerItemTuple.compressedLength,
             containerItemTuple.isGzipped);
-    }    
+    }  
+
+    public postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.IPromise<ifm.BuildArtifact> {
+        return this._buildApi.postArtifact(buildId, artifact);
+    }  
 
     //------------------------------------------------------------------
     // Timeline internal batching
@@ -388,7 +395,7 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
         trace.enter('servicechannel:_sendTimelineRecords');
         trace.state('records', records);
 
-        this._timelineApi.updateTimelineRecords(this.jobInfo.planId, 
+        this.timelineApi.updateTimelineRecords(this.jobInfo.planId, 
                                            this.jobInfo.timelineId, records, 
                                            (err, status, records) => {
                                                 callback(err);

@@ -9,14 +9,15 @@ import async = require('async');
 import fs = require('fs');
 import path = require('path');
 import shell = require('shelljs');
+import webapi = require('./api/webapi');
+import basicm = require('./api/basiccreds');
 
 export class TaskManager {
 
     constructor(agentContext: ctxm.AgentContext) {
         this.context = agentContext;
-        this.taskApi = cm.createTaskApi(agentContext.config.settings.serverUrl, 
-                                        agentContext.config.creds.username, 
-                                        agentContext.config.creds.password);
+        this.taskApi = webapi.TaskApi(agentContext.config.settings.serverUrl, 
+                                      cm.basicHandlerFromCreds(agentContext.config.creds));
         this.taskFolder = path.resolve(agentContext.config.settings.workFolder, 'tasks');
     }
 

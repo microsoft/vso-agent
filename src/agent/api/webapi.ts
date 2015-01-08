@@ -3,6 +3,7 @@
 
 import ifm = require('./interfaces');
 import agentm = require('./agentapi');
+import buildm = require('./buildapi');
 import timelinem = require('./timelineapi');
 import filecontainerm = require('./filecontainerapi');
 import taskm = require('./taskapi');
@@ -16,6 +17,10 @@ export function AgentApi(serverUrl: string, handler: ifm.IRequestHandler): ifm.I
 
 export function QAgentApi(serverUrl: string, handler: ifm.IRequestHandler): ifm.IQAgentApi {
     return new agentm.QAgentApi(serverUrl, handler);    
+}
+
+export function QBuildApi(serverUrl: string, handler: ifm.IRequestHandler): ifm.IQBuildApi {
+    return new buildm.QBuildApi(serverUrl, handler);    
 }
 
 export function QFileContainerApi(serverUrl: string, handler: ifm.IRequestHandler): ifm.IQFileContainerApi {

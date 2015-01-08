@@ -9,7 +9,7 @@ import ifm = require('./interfaces');
 import httpm = require('./httpclient');
 import restm = require('./restclient');
 
-export class AgentApi {
+export class AgentApi implements ifm.IAgentApi {
     accountUrl: string;
     httpClient: httpm.HttpClient;
     restClient: restm.RestClient;

@@ -7,8 +7,12 @@ var path = require('path')
   , url = require('url')
   , shelljs = require('shelljs');
 
+/// <reference path="./definitions/Q.d.ts" />
+
+import Q = require('q');
 import cm = require('./common');
 import cfgm = require('./configuration');
+import ifm = require('./api/interfaces');
 
 // on OSX (Darwin), a launchd daemon will get installed as: com.sample.myserver
 // on Linux, a start-stop-daemon will get installed as: myserver
@@ -51,19 +55,15 @@ if (typeof svcinstall[action] !== 'function') {
 var nodePath = shelljs.which('nodejs') || shelljs.which('node');
 
 switch (action) {
-    case 'install':         
-        cm.getCreds((err, creds) => {
-            var username = creds['username'];
-            var password = creds['password'];
+    case 'install':
+        cm.readBasicCreds()
+        .then(function(creds: ifm.IBasicCredentials) {
+            var username = creds.username;
+            var password = creds.password;
 
             if (!username || !password) {
                 console.log(username, password);
                 showUsage(1);
-            }
-
-            if (err) {
-                console.error('Error:', err.message);
-                return;
             }
 
             var scriptPath = path.join(__dirname, 'host.js');
@@ -91,6 +91,10 @@ switch (action) {
                     console.log('Started Successfully');
                 });
             });
+        })
+        .fail(function(err){
+            console.error('Error:', err.message);
+            return;
         });
         break;
     default:

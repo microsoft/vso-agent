@@ -94,6 +94,7 @@ export interface IFeedbackChannel {
     collectionUrl: string;
     jobInfo: IJobInfo;  
     enabled: boolean;
+    timelineApi: ifm.ITimelineApi;
 
     // lifetime
     drain(callback: (err: any) => void): void;
@@ -119,7 +120,8 @@ export interface IFeedbackChannel {
     setOrder(recordId: string, order: number): void;
 
     // drops
-    uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.IPromise<any> {
+    uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.IPromise<any>;
+    postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.IPromise<ifm.BuildArtifact>;
 
     // job
     updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void;
@@ -162,27 +164,6 @@ export function jsonString(obj: any) {
     return JSON.stringify(obj, null, 2);
 }
 
-//
-// get creds from CL args or prompt user if not in args
-//
-export function getCreds(done: (err:any, creds:any) => void): void {
-    var creds = {};
-    var credInputs = [
-        {
-            name: 'username', description: 'alternate username', arg: 'u', type: 'string', req: true
-        },
-        {
-            name: 'password', description: 'alternate password', arg: 'p', type: 'password', req: true
-        }
-    ];
-
-    inputs.get(credInputs, (err, result) => {
-        creds['username'] = result['username'];
-        creds['password'] = result['password'];
-        done(err, creds);
-    });
-}
-
 export function jobInfoFromJob (job: ifm.JobRequestMessage): IJobInfo {
     var info = <IJobInfo>{};
     info.description = job.jobName;
@@ -220,11 +201,35 @@ export function extractFile(source: string, dest: string, done: (err: any) => vo
 }
 
 
-export function createQAgentApi(serverUrl: string, creds: ifm.IBasicCredentials): ifm.IQAgentApi {
-    var handler: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(creds.username, creds.password);
-    var agentapi: ifm.IQAgentApi = webapi.QAgentApi(serverUrl, handler);
-    return agentapi;
+//-----------------------------------------------------------
+// Cred Utilities
+//-----------------------------------------------------------
+export function basicHandlerFromCreds(creds: ifm.IBasicCredentials): basicm.BasicCredentialHandler {
+    return new basicm.BasicCredentialHandler(creds.username, creds.password);    
 }
+
+//
+// get creds from CL args or prompt user if not in args
+//
+/*
+export function getCreds(done: (err:any, creds: ifm.IBasicCredentials) => void): void {
+    var creds: ifm.IBasicCredentials = <ifm.IBasicCredentials>{};
+    var credInputs = [
+        {
+            name: 'username', description: 'alternate username', arg: 'u', type: 'string', req: true
+        },
+        {
+            name: 'password', description: 'alternate password', arg: 'p', type: 'password', req: true
+        }
+    ];
+
+    inputs.get(credInputs, (err, result) => {
+        creds.username = result['username'];
+        creds.password = result['password'];
+        done(err, creds);
+    });
+}
+*/
 
 // gets basic creds from args or prompts
 export function readBasicCreds(): Q.Promise<ifm.IBasicCredentials> {

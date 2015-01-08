@@ -1,34 +1,14 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-/// <reference path="../../definitions/Q.d.ts" />
+/// <reference path="../definitions/Q.d.ts" />
 
-import ifm = require('../../api/interfaces');
-import httpm = require('../../api/httpclient');
-import restm = require('../../api/restclient');
+import ifm = require('./interfaces');
+import httpm = require('./httpclient');
+import restm = require('./restclient');
 import Q = require("q");
 
-export interface ArtifactResource {
-    data: string;
-    downloadUrl?: string;
-    type?: ArtifactResourceType;
-    url?: string;
-}
-
-export enum ArtifactResourceType {
-    Unknown = 0,
-    LocalPath = 1,
-    VersionControl = 2,
-    Container = 3,
-}
-
-export interface BuildArtifact {
-    id?: number;
-    name: string;
-    resource: ArtifactResource;
-}
-
-export class BuildApi {
+export class BuildApi implements ifm.IBuildApi {
     collectionUrl: string;
     httpClient: httpm.HttpClient;
     restClient: restm.RestClient;
@@ -44,15 +24,28 @@ export class BuildApi {
     //       or replace this with the auto-generated typescript client
     //
 
-    public postArtifact(buildId: number, artifact: BuildArtifact): Q.IPromise<BuildArtifact> {
-        var deferred = Q.defer<BuildArtifact>();
+    public postArtifact(buildId: number, artifact: ifm.BuildArtifact, onResult: (err: any, statusCode: number, artifact: ifm.BuildArtifact) => void): void {
+        this.restClient.create("_apis/build/builds/" + buildId + "/artifacts", artifact, onResult);
+    }
+}
 
-        this.restClient.create("_apis/build/builds/" + buildId + "/artifacts", artifact, (err: any, statusCode: number, obj: any) => {
+export class QBuildApi {
+    _buildApi: ifm.IBuildApi;
+
+    constructor(accountUrl:string, handler: ifm.IRequestHandler) {
+        this._buildApi = new BuildApi(accountUrl, handler);
+    }
+
+    public postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.IPromise<ifm.BuildArtifact> {
+        var deferred = Q.defer<ifm.BuildArtifact>();
+
+        this._buildApi.postArtifact(buildId, artifact, (err: any, statusCode: number, artifact: ifm.BuildArtifact) => {
             if (err) {
+                err.statusCode = statusCode;
                 deferred.reject(err);
             }
             else {
-                deferred.resolve(obj);
+                deferred.resolve(artifact);
             }
         });
 

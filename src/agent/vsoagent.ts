@@ -15,6 +15,7 @@ import path = require('path');
 import cm = require('./common');
 import tm = require('./tracing');
 import taskm = require('./taskmanager');
+import webapi = require('./api/webapi');
 
 var Q = require('q');
 
@@ -99,7 +100,7 @@ cm.readBasicCreds()
         var queueName = agent.name;
         ag.info('Listening for agent: ' + queueName);
 
-        var agentApi: ifm.IAgentApi = cm.createAgentApi(settings.serverUrl, _creds.username, _creds.password);
+        var agentApi: ifm.IAgentApi = webapi.AgentApi(settings.serverUrl, cm.basicHandlerFromCreds(_creds));
         messageListener = new listener.MessageListener(agentApi, agent, config.poolId);
         trace.write('created message listener');
         ag.info('starting listener...');

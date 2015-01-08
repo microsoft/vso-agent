@@ -12,8 +12,9 @@ import crypto = require('crypto');
 import Q = require("q");
 import shelljs = require("shelljs");
 import ctxm = require('../../context');
+import cm = require('../../common');
 import ifm = require('../../api/interfaces');
-import buildApi = require("./buildapi");
+import webapi = require("../../api/webapi");
 
 var stagingOptionId: string = "82f9a3e8-3930-482e-ac62-ae3276f284d5";
 var dropOptionId: string = "e8b30f6f-039d-4d34-969c-449bbe9c3b9e";
@@ -162,10 +163,10 @@ function createDrop(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption, dropO
 
     return dropPromise.then((artifactLocation: string) => {
         if (artifactLocation) {
-            var buildClient = new buildApi.BuildApi(ctx.job.authorization.serverUrl,
-                new basicm.BasicCredentialHandler(ctx.agentCtx.config.creds.username, ctx.agentCtx.config.creds.password));
+            var buildClient = webapi.QBuildApi(ctx.job.authorization.serverUrl,
+                cm.basicHandlerFromCreds(ctx.agentCtx.config.creds));
 
-            return buildClient.postArtifact(parseInt(ctx.variables[ctxm.WellKnownVariables.buildId]), {
+            return ctx.feedback.postArtifact(parseInt(ctx.variables[ctxm.WellKnownVariables.buildId]), {
                 name: "drop",
                 resource: {
                     data: artifactLocation
@@ -220,21 +221,18 @@ function copyToFileContainer(ctx: ctxm.PluginContext, stagingFolder: string, fil
         containerRoot = containerRoot.substr(1);
     }
 
-    var contentMap: { [path: string]: ContainerItemInfo; } = {}
-
-    var fileContainerClient = new fileContainerApi.FileContainerApi(ctx.job.authorization.serverUrl,
-        new basicm.BasicCredentialHandler(ctx.agentCtx.config.creds.username, ctx.agentCtx.config.creds.password));
+    var contentMap: { [path: string]: ifm.ContainerItemInfo; } = {}
 
     return readDirectory(ctx, stagingFolder, true, false)
         .then((files: string[]) => {
             return Q.all(files.map((fullPath: string) => {
                 return Q.nfcall(fs.stat, fullPath)
                     .then((stat: fs.Stats) => {
-                        return uploadFileToContainer(fileContainerClient, containerId, {
+                        return ctx.feedback.uploadFileToContainer(containerId, {
                             fullPath: fullPath,
                             containerItem: {
                                 containerId: containerId,
-                                itemType: fileContainerApi.ContainerItemType.File,
+                                itemType: ifm.ContainerItemType.File,
                                 path: containerRoot + fullPath.substring(stagingFolder.length + 1)
                             },
                             uncompressedLength: stat.size,
@@ -296,9 +294,9 @@ function copyToFileContainer(ctx: ctxm.PluginContext, stagingFolder: string, fil
 var PagesPerBlock = 32;
 var BytesPerPage = 64 * 1024;
 var BlockSize = PagesPerBlock * BytesPerPage;
-
-function calculateContentIdentifier(fullPath: string, includesFinalBlock: boolean): Q.IPromise<ContainerItemInfo> {
-    var deferred = Q.defer<ContainerItemInfo>();
+/*
+function calculateContentIdentifier(fullPath: string, includesFinalBlock: boolean): Q.IPromise<ifm.ContainerItemInfo> {
+    var deferred = Q.defer<ifm.ContainerItemInfo>();
     var compressedLength: number = 0;
 
     var rollingContentIdentifier: Buffer = new Buffer("VSO Content Identifier Seed", "ascii");
@@ -367,6 +365,7 @@ function calculateHash(buffer: Buffer): Buffer {
     hashProvider.update(buffer);
     return hashProvider.digest();
 }
+*/
 
 function copyToUncPath(ctx: ctxm.PluginContext, stagingFolder: string, uncPath: string): Q.IPromise<string> {
     ctx.info("Copying all files from " + stagingFolder + " to " + uncPath);

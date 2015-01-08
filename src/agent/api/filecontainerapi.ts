@@ -9,22 +9,6 @@ import httpm = require('./httpclient');
 import restm = require('./restclient');
 import stream = require("stream");
 
-export enum ContainerItemType {
-    Any = 0,
-    Folder = 1,
-    File = 2
-}
-
-/*
-export interface FileContainerItem {
-    containerId: number;
-    itemType: ContainerItemType;
-    path: string;
-    contentId?: string;
-    fileLength?: number;
-}
-*/
-
 export class FileContainerApi {
     collectionUrl: string;
     httpClient: httpm.HttpClient;
@@ -71,23 +55,23 @@ export class FileContainerApi {
             addtlHeaders["Accept-Encoding"] = "gzip";
             addtlHeaders["Content-Encoding"] = "gzip";
             addtlHeaders["x-tfs-filelength"] = compressedLength;
-            headers["Content-Length"] = compressedLength;
+            addtlHeaders["Content-Length"] = compressedLength;
         }
         else {
-            headers["Content-Length"] = uncompressedLength;
+            addtlHeaders["Content-Length"] = uncompressedLength;
         }
 
         if (contentIdentifier) {
-            headers["x-vso-contentId"] = contentIdentifier.toString("base64");
+            addtlHeaders["x-vso-contentId"] = contentIdentifier.toString("base64");
         }
 
-        this.restClient.uploadStream(targetUrl, contentStream, addtlheaders, (err: any, statusCode: number, obj: any) => {
-            FileContainerItem item = err ? null : this._deserializeFileContainerItem(obj);
+        this.restClient.uploadStream(targetUrl, contentStream, addtlHeaders, (err: any, statusCode: number, obj: any) => {
+            var item: ifm.FileContainerItem  = err ? null : this._deserializeFileContainerItem(obj);
             onResult(err, statusCode, item);
         });
     }
 
-    private _deserializeFileContainerItem(item: ifm.FileContainerItem): FileContainerItem {
+    private _deserializeFileContainerItem(item: ifm.FileContainerItem): ifm.FileContainerItem {
         item.itemType = TypeInfo.ContainerItemType.enumValues[item.itemType];
         return item;
     }
@@ -104,10 +88,10 @@ var TypeInfo = {
 }
 
 export class QFileContainerApi {
-    containerApi: ifm.IFileContainerApi;
+    _containerApi: ifm.IFileContainerApi;
 
     constructor(accountUrl:string, handler: ifm.IRequestHandler) {
-        this.containerApi = new FileContainerApi(accountUrl, handler);
+        this._containerApi = new FileContainerApi(accountUrl, handler);
     }
 
     public uploadFile(containerId: number, 
@@ -117,16 +101,16 @@ export class QFileContainerApi {
                       uncompressedLength: number, 
                       compressedLength: number, 
                       isGzipped: boolean): Q.IPromise<ifm.FileContainerItem> {
-        
-        var deferred = Q.defer<FileContainerItem>();
 
-        containerApi.uploadFile(containerId, 
+        var deferred = Q.defer<ifm.FileContainerItem>();
+
+        this._containerApi.uploadFile(containerId, 
             itemPath, 
             contentStream, 
             contentIdentifier, 
             uncompressedLength, 
             compressedLength, 
-            isGzipped, (err: any, statusCode: number, item: FileContainerItem) => {
+            isGzipped, (err: any, statusCode: number, item: ifm.FileContainerItem) => {
                 if (err) {
                     err.statusCode = statusCode;
                     deferred.reject(err);

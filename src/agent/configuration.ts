@@ -10,6 +10,7 @@ import cm = require('./common');
 import env = require('./environment');
 import inputs = require('./inputs');
 import webapi = require('./api/webapi');
+import basicm = require('./api/basiccreds');
 import utilm = require('./utilities');
 
 var os = require('os');
@@ -117,8 +118,7 @@ export class Configurator {
     }
 
     public readConfiguration(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
-        var handler: basicm.BasicCredentialHandler = new basicm.BasicCredentialHandler(creds.username, creds.password);
-        var agentapi: ifm.IQAgentApi = webapi.QAgentApi(settings.serverUrl, handler);
+        var agentApi: ifm.IQAgentApi = webapi.QAgentApi(settings.serverUrl, cm.basicHandlerFromCreds(creds));
         var agentPoolId = 0;
         var agent;
 
@@ -164,7 +164,7 @@ export class Configurator {
     }
 
     private writeAgentToPool(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
-        var agentApi: ifm.IQAgentApi = cm.createQAgentApi(settings.serverUrl, creds);
+        var agentApi: ifm.IQAgentApi = webapi.QAgentApi(settings.serverUrl, cm.basicHandlerFromCreds(creds));
         var agentPoolId = 0;
 
         return agentApi.connect()
