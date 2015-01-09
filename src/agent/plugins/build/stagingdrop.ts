@@ -25,7 +25,7 @@ exports.pluginName = function () {
 
 // what shows in progress view
 exports.pluginTitle = function () {
-	return "Creating build drop"
+	return "Build Drop"
 }
 
 exports.afterJob = function (ctx: ctxm.PluginContext, callback) {
@@ -70,6 +70,7 @@ exports.shouldRun = function (jobSuccess: boolean, ctx: ctxm.JobContext) {
 
 function copyToStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption): Q.IPromise<any> {
     // determine root: $(build.sourcesdirectory)
+
     ctx.info("looking for source in " + ctxm.WellKnownVariables.sourceFolder);
     var sourcesRoot: string = ctx.job.environment.variables[ctxm.WellKnownVariables.sourceFolder].replaceVars(ctx.job.environment.variables);
 
@@ -241,50 +242,6 @@ function copyToFileContainer(ctx: ctxm.PluginContext, stagingFolder: string, fil
                     });
             }))
         })
-        // generate content identifiers
-        /*.then((files: string[]) => {
-            // TODO: process files in batches of up to 1000
-            var promises: Q.IPromise<ContainerItemInfo>[] = [];
-
-            for (var fileIndex: number = 0; fileIndex < files.length; fileIndex++) {
-                var fullPath = files[fileIndex];
-                var directory = path.dirname(fullPath);
-
-                promises.push(calculateContentIdentifier(fullPath, true)
-                    .then((info: ContainerItemInfo) => {
-                        info.containerItem = {
-                            containerId: containerId,
-                            itemType: fileContainerApi.ContainerItemType.File,
-                            path: containerRoot + fullPath.substring(stagingFolder.length + 1),
-                            contentId: Array.prototype.slice.call(info.contentIdentifier, 0),
-                            fileLength: info.compressedLength
-                        };
-
-                        console.log("generated content id for " + fullPath);
-                        console.log("added " + info.containerItem.path + " to content map");
-                        contentMap[info.containerItem.path] = info;
-                        return info;
-                    }));
-            }
-
-            return Q.all(promises);
-        })
-        // query file container for duplicates
-        .then((tuples: ContainerItemInfo[]) => {
-            console.log("generated " + tuples.length + " content ids");
-            return fileContainerClient.createItems(containerId, tuples.map((item) => item.containerItem));
-        })
-        // upload files
-        .then((containerItems: fileContainerApi.FileContainerItem[]) => {
-            console.log("created " + containerItems.length + " container items");
-            return Q.all(containerItems
-                .filter((item) => item.itemType === fileContainerApi.ContainerItemType.File)
-                .map((item: fileContainerApi.FileContainerItem) => {
-                    console.log("item.path = " + item.path);
-                    var tuple = contentMap[item.path];
-                    return uploadFileToContainer(fileContainerClient, containerId, tuple);
-                }));
-        })*/
         .then(() => {
             console.log("container items uploaded");
             return fileContainerPath;
@@ -294,78 +251,6 @@ function copyToFileContainer(ctx: ctxm.PluginContext, stagingFolder: string, fil
 var PagesPerBlock = 32;
 var BytesPerPage = 64 * 1024;
 var BlockSize = PagesPerBlock * BytesPerPage;
-/*
-function calculateContentIdentifier(fullPath: string, includesFinalBlock: boolean): Q.IPromise<ifm.ContainerItemInfo> {
-    var deferred = Q.defer<ifm.ContainerItemInfo>();
-    var compressedLength: number = 0;
-
-    var rollingContentIdentifier: Buffer = new Buffer("VSO Content Identifier Seed", "ascii");
-    var savedRollingIdentifier: Buffer;
-    var blockIdentifier: Buffer;
-    var lastBlockSize: number = 0;
-
-    Q.nfcall(fs.stat, fullPath)
-        .then((stat: fs.Stats) => {
-            if (stat) {
-                var compressedStream = getCompressedStream(fullPath);
-
-                compressedStream.on("readable", () => {
-                    var buffer: Buffer;
-                    while (null !== (buffer = compressedStream.read(BlockSize))) {
-                        lastBlockSize = buffer.length;
-                        compressedLength += lastBlockSize;
-                        savedRollingIdentifier = rollingContentIdentifier;
-                        blockIdentifier = calculateSingleBlockIdentifier(buffer);
-                        rollingContentIdentifier = calculateRollingBlockIdentifier(blockIdentifier, rollingContentIdentifier, false);
-                    }
-                });
-
-                compressedStream.on("end", () => {
-                    if (includesFinalBlock) {
-                        rollingContentIdentifier = calculateRollingBlockIdentifier(blockIdentifier, savedRollingIdentifier, true);
-                    }
-
-                    deferred.resolve({
-                        fullPath: fullPath,
-                        contentIdentifier: rollingContentIdentifier,
-                        compressedLength: compressedLength,
-                        uncompressedLength: stat.size,
-                        isGzipped: true
-                    });
-                });
-            }
-        });
-
-    return deferred.promise;
-}
-
-function calculateSingleBlockIdentifier(buffer: Buffer): Buffer {
-    var pageCounter: number = 0;
-    var pageIdentifiersBuffer: Buffer = new Buffer(0);
-
-    while (buffer.length > pageCounter * BytesPerPage) {
-        var bytesToCopy = Math.min(buffer.length - (pageCounter * BytesPerPage), BytesPerPage);
-        var pageBuffer = new Buffer(bytesToCopy);
-        buffer.copy(pageBuffer, 0, pageCounter * BytesPerPage, (pageCounter * BytesPerPage) + bytesToCopy);
-
-        var pageHash = calculateHash(pageBuffer);
-        pageCounter++;
-        pageIdentifiersBuffer = Buffer.concat([pageIdentifiersBuffer, pageHash]);
-    }
-
-    return calculateHash(pageIdentifiersBuffer);
-}
-
-function calculateRollingBlockIdentifier(currentBlockIdentifier: Buffer, previousBlockIdentifier: Buffer, isFinalBlock: boolean): Buffer {
-    return calculateHash(Buffer.concat([previousBlockIdentifier, currentBlockIdentifier, new Buffer([isFinalBlock ? 1 : 0])]));
-}
-
-function calculateHash(buffer: Buffer): Buffer {
-    var hashProvider = crypto.createHash("sha256");
-    hashProvider.update(buffer);
-    return hashProvider.digest();
-}
-*/
 
 function copyToUncPath(ctx: ctxm.PluginContext, stagingFolder: string, uncPath: string): Q.IPromise<string> {
     ctx.info("Copying all files from " + stagingFolder + " to " + uncPath);

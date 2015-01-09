@@ -208,29 +208,6 @@ export function basicHandlerFromCreds(creds: ifm.IBasicCredentials): basicm.Basi
     return new basicm.BasicCredentialHandler(creds.username, creds.password);    
 }
 
-//
-// get creds from CL args or prompt user if not in args
-//
-/*
-export function getCreds(done: (err:any, creds: ifm.IBasicCredentials) => void): void {
-    var creds: ifm.IBasicCredentials = <ifm.IBasicCredentials>{};
-    var credInputs = [
-        {
-            name: 'username', description: 'alternate username', arg: 'u', type: 'string', req: true
-        },
-        {
-            name: 'password', description: 'alternate password', arg: 'p', type: 'password', req: true
-        }
-    ];
-
-    inputs.get(credInputs, (err, result) => {
-        creds.username = result['username'];
-        creds.password = result['password'];
-        done(err, creds);
-    });
-}
-*/
-
 // gets basic creds from args or prompts
 export function readBasicCreds(): Q.Promise<ifm.IBasicCredentials> {
     var defer = Q.defer();

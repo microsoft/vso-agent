@@ -183,7 +183,7 @@ export class RestClient implements ifm.IRestClient {
 
             var contentStream: NodeJS.ReadableStream = fs.createReadStream(filePath);
 
-            this.uploadStream(relativeUrl, contentStream, customHeaders, onResult);
+            this.uploadStream(relativeUrl, contentStream, headers, onResult);
         });
     }
 

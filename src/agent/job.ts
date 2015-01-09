@@ -107,22 +107,23 @@ export class JobRunner {
                         ag.info('beforeJob Plugins:')
                         plugins['beforeJob'].forEach(function(plugin) {
                             ag.info(plugin.pluginName() + ":" + plugin.beforeId);
-                            jobCtx.registerPendingTask(plugin.beforeId, plugin.pluginName(), order);
-                            order++;
+                            jobCtx.registerPendingTask(plugin.beforeId, plugin.pluginName(), order++);
                         });
 
                         ag.info('tasks:')
                         jobCtx.job.tasks.forEach(function(task) {
                             ag.info(task.name + ":" + task.id);
-                            jobCtx.registerPendingTask(task.instanceId, task.name, order);
-                            order++;
+                            jobCtx.registerPendingTask(task.instanceId, task.name, order++);
                         });
 
                         ag.info('afterJob Plugins:')
                         plugins['afterJob'].forEach(function(plugin) {
-                            ag.info(plugin.name + ":" + plugin.afterId);
-                            jobCtx.registerPendingTask(plugin.afterId, plugin.pluginName(), order);
-                            order++;
+                            ag.info(plugin.pluginName() + ":" + plugin.afterId);
+
+                            if (plugin.shouldRun(true, jobCtx)) {
+                                ag.info('shouldRun');
+                                jobCtx.registerPendingTask(plugin.afterId, plugin.pluginName(), order++);    
+                            }
                         });
 
                         ag.info('buildDirectory: ' + jobCtx.buildDirectory);

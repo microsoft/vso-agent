@@ -68,7 +68,7 @@ export function load(pluginType, ctx: ctxm.AgentContext, callback) {
 
 export function beforeJob(plugins, ctx: ctxm.JobContext, agentCtx: ctxm.AgentContext, callback: (err: any, success: boolean) => void): void {
     trace = new tm.Tracing(__filename, agentCtx);
-    trace.enter('beforeJob');
+    trace.enter('beforeJob plugins');
 
     async.forEachSeries(plugins['beforeJob'],
         function (plugin, done) {
@@ -110,9 +110,15 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, agentCtx: ctxm.AgentCon
 }
 
 export function afterJob(plugins, ctx: ctxm.JobContext, agentCtx: ctxm.AgentContext, jobSuccess: Boolean, callback: (err: any, success: boolean) => void): void {
+    trace = new tm.Tracing(__filename, agentCtx);
+    trace.enter('afterJob plugins');
+
     async.forEachSeries(plugins['afterJob'],
         function (plugin, done) {
+            trace.write('afterJob plugin: ' + plugin.pluginName());
+
             if (!plugin.shouldRun(jobSuccess, ctx)) {
+                trace.write('should not run');
                 done();
                 return;
             }
