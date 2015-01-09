@@ -107,7 +107,7 @@ function copyToStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOpti
             .then((results: any[]) => {
 
                 var files: string[] = results[0];
-                ctx.info("found " + files.length + " files");
+                ctx.info("found " + files.length + " files or folders");
 
                 var commonRoot = getCommonLocalPath(files);
                 var useCommonRoot = !!commonRoot;
