@@ -452,6 +452,7 @@ function readDirectory(ctx: ctxm.PluginContext, directory: string, includeFiles:
         },
         (error) => {
             ctx.error(error.toString());
+            deferred.reject(error);
         });
 
     return deferred.promise;

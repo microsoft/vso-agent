@@ -253,6 +253,11 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
     // Timeline APIs
     //------------------------------------------------------------------  
     public addError(recordId: string, category: string, message: string, data: any): void {
+        // only add errors to existing records (registered tasks ...)
+        if (!this._recordExists(recordId)){
+            return;
+        }
+
         var current = this._getIssues(recordId);
         var record = this._getFromBatch(recordId);
         if (current.errorCount < process.env.VSO_ERROR_COUNT ? process.env.VSO_ERROR_COUNT : 10) {
@@ -270,6 +275,11 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
     }
 
     public addWarning(recordId: string, category: string, message: string, data: any): void {
+        // only add warnings to existing records (registered tasks ...)
+        if (!this._recordExists(recordId)){
+            return;
+        }
+
         var current = this._getIssues(recordId);
         var record = this._getFromBatch(recordId);
         if (current.warningCount < process.env.VSO_WARNING_COUNT ? process.env.VSO_WARNING_COUNT : 10) {
@@ -371,6 +381,10 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
     public shouldDoWork(): boolean {
         trace.enter('servicechannel:shouldDoWork');
         return this._recordCount > 0;
+    }
+
+    private _recordExists(recordId: string) {
+        return this._batch.hasOwnProperty(recordId);
     }
 
     private _getFromBatch(recordId: string) {
