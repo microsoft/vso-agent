@@ -15,9 +15,17 @@ import ctxm = require('../../context');
 import cm = require('../../common');
 import ifm = require('../../api/interfaces');
 import webapi = require("../../api/webapi");
+import tm = require('../../tracing');
 
 var stagingOptionId: string = "82f9a3e8-3930-482e-ac62-ae3276f284d5";
 var dropOptionId: string = "e8b30f6f-039d-4d34-969c-449bbe9c3b9e";
+
+var _trace: tm.Tracing;
+
+function _ensureTracing(ctx: ctxm.ExecutionContext, area: string) {
+    _trace = new tm.Tracing(__filename, ctx.agentCtx);
+    _trace.enter(area);
+}
 
 exports.pluginName = function () {
     return "buildDrop";
@@ -29,11 +37,14 @@ exports.pluginTitle = function () {
 }
 
 exports.afterJob = function (ctx: ctxm.PluginContext, callback) {
+    _ensureTracing(ctx, 'afterJob');
+
     /**
      * this plugin handles both the "copy to staging folder" and "create drop" build options
      * this way we can ensure that they happen in the correct order
      */
     if (ctx.job.environment.options) {
+
         var funcs = [];
 
         var stagingOption: ifm.JobOption = ctx.job.environment.options[stagingOptionId];
@@ -60,20 +71,25 @@ exports.afterJob = function (ctx: ctxm.PluginContext, callback) {
 }
 
 exports.shouldRun = function (jobSuccess: boolean, ctx: ctxm.JobContext) {
+    _ensureTracing(ctx, 'shouldRun');
+
+    var should = false;
     if (jobSuccess && !!ctx.job.environment.options) {
-        return !!ctx.job.environment.options[stagingOptionId] || !!ctx.job.environment.options[dropOptionId];
+        should = !!ctx.job.environment.options[stagingOptionId] || !!ctx.job.environment.options[dropOptionId];
     }
-    else {
-        return false;
-    }
+
+    _trace.write('shouldRun: ' + should);
+    return should;
 }
 
 function copyToStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption): Q.IPromise<any> {
     // determine root: $(build.sourcesdirectory)
+    _ensureTracing(ctx, 'copyToStagingFolder');
 
     ctx.info("looking for source in " + ctxm.WellKnownVariables.sourceFolder);
     var sourcesRoot: string = ctx.job.environment.variables[ctxm.WellKnownVariables.sourceFolder].replaceVars(ctx.job.environment.variables);
-
+    _trace.state('sourcesRoot', sourcesRoot);
+    
     var stagingFolder = getStagingFolder(ctx, stagingOption);
 
     var searchPattern = stagingOption.data["pattern"];
@@ -83,6 +99,8 @@ function copyToStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOpti
         if (!isPathRooted(searchPattern) && sourcesRoot) {
             searchPattern = path.join(sourcesRoot, searchPattern);
         }
+
+        _trace.state('searchPattern', searchPattern);
 
         // get list of files to copy
         var filesPromise: Q.IPromise<string[]>;
@@ -108,6 +126,7 @@ function copyToStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOpti
 
                 var files: string[] = results[0];
                 ctx.info("found " + files.length + " files or folders");
+                _trace.state('files', files);
 
                 var commonRoot = getCommonLocalPath(files);
                 var useCommonRoot = !!commonRoot;
@@ -123,7 +142,7 @@ function copyToStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOpti
                             .replace(/^\//g, "");
                         targetPath = path.join(stagingFolder, relativePath);
                     }
-
+                    _trace.state('targetPath', targetPath);
                     ctx.info("Copying all files from " + file + " to " + targetPath);
 
                     shelljs.cp("-Rf", path.join(file, "*"), targetPath);
@@ -137,6 +156,8 @@ function copyToStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOpti
 }
 
 function createDrop(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption, dropOption: ifm.JobOption): Q.IPromise<any> {
+    _ensureTracing(ctx, 'createDrop');
+
     var location = dropOption.data["location"];
     var path = dropOption.data["path"];
     var stagingFolder = getStagingFolder(ctx, stagingOption);
@@ -198,6 +219,8 @@ function getStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption)
 
 
 function copyToFileContainer(ctx: ctxm.PluginContext, stagingFolder: string, fileContainerPath: string): Q.IPromise<string> {
+    _ensureTracing(ctx, 'copyToFileContainer');
+
     var fileContainerRegExp = /^#\/(\d+)(\/.*)$/;
     var containerId: number;
     var containerPath: string = "/";
@@ -221,14 +244,20 @@ function copyToFileContainer(ctx: ctxm.PluginContext, stagingFolder: string, fil
     if (containerRoot.charAt(0) === '/') {
         containerRoot = containerRoot.substr(1);
     }
+    _trace.state('containerRoot', containerRoot);
 
     var contentMap: { [path: string]: ifm.ContainerItemInfo; } = {}
 
     return readDirectory(ctx, stagingFolder, true, false)
         .then((files: string[]) => {
+            _trace.state('files', files);
+
             return Q.all(files.map((fullPath: string) => {
                 return Q.nfcall(fs.stat, fullPath)
                     .then((stat: fs.Stats) => {
+                        _trace.state('fullPath', fullPath);
+                        _trace.state('size', stat.size);
+
                         return ctx.feedback.uploadFileToContainer(containerId, {
                             fullPath: fullPath,
                             containerItem: {
@@ -243,7 +272,8 @@ function copyToFileContainer(ctx: ctxm.PluginContext, stagingFolder: string, fil
             }))
         })
         .then(() => {
-            console.log("container items uploaded");
+            ctx.info("container items uploaded");
+            _trace.state('fileContainerPath', fileContainerPath);
             return fileContainerPath;
         });
 }

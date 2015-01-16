@@ -296,50 +296,62 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
         record.warningCount = current.warningCount;
     }
     public setCurrentOperation(recordId: string, operation: string): void {
+        trace.state('operation', operation);
         this._getFromBatch(recordId).currentOperation = operation;
     }
 
     public setName(recordId: string, name: string): void {
+        trace.state('name', name);
         this._getFromBatch(recordId).name = name;
     }
 
     public setStartTime(recordId: string, startTime: Date): void {
+        trace.state('startTime', startTime);
         this._getFromBatch(recordId).startTime = startTime;
     }
 
     public setFinishTime(recordId: string, finishTime: Date): void {
+        trace.state('finishTime', finishTime);
         this._getFromBatch(recordId).finishTime = finishTime;
     }
 
     public setState(recordId: string, state: ifm.TimelineRecordState): void {
+        trace.state('state', state);
         this._getFromBatch(recordId).state = state;
     }
 
     public setResult(recordId: string, result: ifm.TaskResult): void {
+        trace.state('result', result);
         this._getFromBatch(recordId).result = result;
     }
 
     public setType(recordId: string, type: string): void {
+        trace.state('type', type);
         this._getFromBatch(recordId).type = type;
     }
 
     public setParentId(recordId: string, parentId: string): void {
+        trace.state('parentId', parentId);
         this._getFromBatch(recordId).parentId = parentId;
     }
 
     public setWorkerName(recordId: string, workerName: string): void {
+        trace.state('workerName', workerName);
         this._getFromBatch(recordId).workerName = workerName;
     }
 
     public setLogId(recordId: string, logRef: ifm.TaskLogReference): void {
+        trace.state('logRef', logRef);
         this._getFromBatch(recordId).log = logRef;
     }
 
     public setOrder(recordId: string, order: number): void {
+        trace.state('order', order);
         this._getFromBatch(recordId).order = order;
     }
 
     public uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.IPromise<any> {
+        trace.state('containerItemTuple', containerItemTuple);
         var contentStream: NodeJS.ReadableStream;
         if (containerItemTuple.isGzipped) {
             var gzip = zlib.createGzip();
@@ -360,6 +372,7 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
     }  
 
     public postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.IPromise<ifm.BuildArtifact> {
+        trace.state('artifact', artifact);
         return this._buildApi.postArtifact(buildId, artifact);
     }  
 
@@ -388,7 +401,6 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
     }
 
     private _getFromBatch(recordId: string) {
-        trace.enter('servicechannel:_getFromBatch');
         if (!this._batch.hasOwnProperty(recordId)) {
             this._batch[recordId] = {};
             ++this._recordCount;

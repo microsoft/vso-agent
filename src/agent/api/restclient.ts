@@ -183,17 +183,17 @@ export class RestClient implements ifm.IRestClient {
 
             var contentStream: NodeJS.ReadableStream = fs.createReadStream(filePath);
 
-            this.uploadStream(relativeUrl, contentStream, headers, onResult);
+            this.uploadStream('POST', relativeUrl, contentStream, headers, onResult);
         });
     }
 
-    uploadStream(relativeUrl: string, contentStream: NodeJS.ReadableStream, customHeaders: any, onResult: (err: any, statusCode: number, obj: any) => void): void {
+    uploadStream(verb: string, relativeUrl: string, contentStream: NodeJS.ReadableStream, customHeaders: any, onResult: (err: any, statusCode: number, obj: any) => void): void {
         var postUrl = this.resolveUrl(relativeUrl);
 
         var headers = customHeaders || {};
         headers["Accept"] = 'application/json; api-version=' + this.apiVersion;
 
-        this.httpClient.sendFile('POST', postUrl, contentStream, headers, (err: any, res: ifm.IHttpResponse, contents: string) => {
+        this.httpClient.sendFile(verb, postUrl, contentStream, headers, (err: any, res: ifm.IHttpResponse, contents: string) => {
             if (err) {
                 if (process.env.XPLAT_TRACE_HTTP) {
                     console.log('ERR: ' + err.message + ':' + err.statusCode);

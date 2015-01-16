@@ -107,13 +107,19 @@ export class JobRunner {
                         ag.info('beforeJob Plugins:')
                         plugins['beforeJob'].forEach(function(plugin) {
                             ag.info(plugin.pluginName() + ":" + plugin.beforeId);
-                            jobCtx.registerPendingTask(plugin.beforeId, plugin.pluginName(), order++);
+
+                            jobCtx.registerPendingTask(plugin.beforeId, 
+                                                       plugin.pluginTitle(), 
+                                                       order++);
                         });
 
                         ag.info('tasks:')
                         jobCtx.job.tasks.forEach(function(task) {
                             ag.info(task.name + ":" + task.id);
-                            jobCtx.registerPendingTask(task.instanceId, task.name, order++);
+
+                            jobCtx.registerPendingTask(task.instanceId, 
+                                                       task.name, 
+                                                       order++);
                         });
 
                         ag.info('afterJob Plugins:')
@@ -122,7 +128,10 @@ export class JobRunner {
 
                             if (plugin.shouldRun(true, jobCtx)) {
                                 ag.info('shouldRun');
-                                jobCtx.registerPendingTask(plugin.afterId, plugin.pluginName(), order++);    
+
+                                jobCtx.registerPendingTask(plugin.afterId, 
+                                                           plugin.pluginTitle(), 
+                                                           order++);    
                             }
                         });
 
@@ -135,6 +144,7 @@ export class JobRunner {
                         async.series([
                                 function(done) {
                                     ag.info('Running beforeJob Plugins ...');
+
                                     plgm.beforeJob(plugins, jobCtx, ag, function(err, success) {
                                         ag.info('Finished running beforeJob plugins');
                                         trace.state('variables after plugins:', _this.job.environment.variables);
@@ -162,6 +172,7 @@ export class JobRunner {
                                     }
 
                                     ag.info('Running Tasks ...');
+
                                     _this.runTasks((err: any, success: boolean) => {
                                         ag.info('Finished running tasks');
                                         jobSuccess = jobSuccess && !err && success;
@@ -176,6 +187,7 @@ export class JobRunner {
                                 },
                                 function(done) {
                                     ag.info('Running afterJob Plugins ...');
+                                    
                                     plgm.afterJob(plugins, jobCtx, ag, jobSuccess, function(err, success) {
                                         ag.info('Finished running afterJob plugins');
                                         jobSuccess = jobSuccess && !err && success;

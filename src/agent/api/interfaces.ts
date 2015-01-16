@@ -161,7 +161,7 @@ export interface IRestClient {
     update(relativeUrl: string, resources: any, onResult: (err: any, statusCode: number, obj: any) => void): void;
     updateJsonWrappedArray(relativeUrl: string, resources: any[], onResult: (err: any, statusCode: number, obj: any) => void): void;
     uploadFile(relativeUrl: string, filePath: string, customHeaders: any, onResult: (err: any, statusCode: number, obj: any) => void): void;
-    uploadStream(relativeUrl: string, contentStream: NodeJS.ReadableStream, customHeaders: any, onResult: (err: any, statusCode: number, obj: any) => void): void;
+    uploadStream(verb: string, relativeUrl: string, contentStream: NodeJS.ReadableStream, customHeaders: any, onResult: (err: any, statusCode: number, obj: any) => void): void;
     replace(relativeUrl: string, resources: any, onResult: (err: any, statusCode: number, obj: any) => void): void;
 }
 

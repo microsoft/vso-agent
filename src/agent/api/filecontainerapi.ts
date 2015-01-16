@@ -65,7 +65,7 @@ export class FileContainerApi {
             addtlHeaders["x-vso-contentId"] = contentIdentifier.toString("base64");
         }
 
-        this.restClient.uploadStream(targetUrl, contentStream, addtlHeaders, (err: any, statusCode: number, obj: any) => {
+        this.restClient.uploadStream('PUT', targetUrl, contentStream, addtlHeaders, (err: any, statusCode: number, obj: any) => {
             var item: ifm.FileContainerItem  = err ? null : this._deserializeFileContainerItem(obj);
             onResult(err, statusCode, item);
         });
