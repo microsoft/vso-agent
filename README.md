@@ -31,7 +31,7 @@ $ sudo npm install vsoagent-installer -g
 From a directory you created for the agent, run the installer.  Repeat from different folders for multiple agents.
 
 ```bash
-$ install-vsoagent
+$ vsoagent-installer
 ```
 
 ##Provide Permissions to Account
@@ -123,7 +123,7 @@ sudo npm install -g jake
 ```
 Install remaining pre-reqs (run from root of repo)
 ```bash
-npm install
+sudo npm install
 ```
 
 ###Build and Create Tar Gzip
