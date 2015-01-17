@@ -9,6 +9,8 @@ import basicm = require('./api/basiccreds');
 import zlib = require('zlib');
 import fs = require('fs');
 import tm = require('./tracing');
+import cq = require('./concurrentqueue');
+import Q = require('q');
 
 var async = require('async');
 
@@ -68,54 +70,6 @@ export class TimedWorker {
     }
 }
 
-export class TimedQueue extends TimedWorker {
-    constructor(msDelay: number) {
-        this._queue = [];
-        this.isProcessing = false;
-        super(msDelay);
-    }
-
-    public _queue: any[];
-    public isProcessing: boolean;
-
-    //------------------------------------------------------------------
-    // Queueing
-    //------------------------------------------------------------------
-    public add(item: any): void {
-        this._queue.push(item);
-    }
-
-    public getLength(): number {
-        return this._queue.length;
-    }
-
-    //------------------------------------------------------------------
-    // Sending
-    //------------------------------------------------------------------
-
-    // need to override
-    public processQueue(queue: any[], callback: (err: any) => void): void {
-        callback(null);
-    }
-
-    //------------------------------------------------------------------
-    // Overrides
-    //------------------------------------------------------------------
-    public doWork(callback: (err: any) => void): void {
-        var toSend = this._queue;
-        this._queue = [];
-        this.isProcessing = true;
-        this.processQueue(toSend, (err) => {
-            this.isProcessing = false;
-            this.continueSending();
-        });
-    }
-
-    public shouldDoWork(): boolean {
-        return this._queue.length > 0;
-    }
-}
-
 //----------------------------------------------------------------------------------------
 // Feedback Channels
 // - All customer feedback funnels through this point
@@ -131,7 +85,7 @@ function ensureTrace(writer: cm.ITraceWriter) {
     }
 }
 
-export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
+export class ServiceChannel implements cm.IFeedbackChannel {
     constructor(agentUrl: string,
                 collectionUrl: string,
                 jobInfo: cm.IJobInfo,
@@ -146,6 +100,9 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
         this.jobInfo = jobInfo;
         this.agentCtx = agentCtx;
 
+        this._recordCount = 0;
+        this._issues = {};
+
         // service apis
         this._agentApi = webapi.AgentApi(agentUrl, cm.basicHandlerFromCreds(agentCtx.config.creds));
         this.timelineApi = webapi.TimelineApi(collectionUrl, cm.basicHandlerFromCreds(agentCtx.config.creds));
@@ -153,13 +110,44 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
         this._buildApi = webapi.QBuildApi(collectionUrl, cm.basicHandlerFromCreds(agentCtx.config.creds));
 
         this._totalWaitTime = 0;
-        this._logQueue = new LogPageQueue(this, agentCtx);
-        this._consoleQueue = new WebConsoleQueue(this);
         this._lockRenewer = new LockRenewer(jobInfo, agentCtx.config.poolId, this._agentApi);
 
-        super(TIMELINE_DELAY);
+        // timelines
+        this._timelineRecordQueue = new cq.ConcurrentBatch<ifm.TimelineRecord>(
+            (key: string) => {
+                return <ifm.TimelineRecord>{
+                    id: key
+                };
+            },
+            (values: ifm.TimelineRecord[], callback: (err: any) => void) => {
+                if (values.length === 0) {
+                    callback(0);
+                }
+                else {
+                    this.timelineApi.updateTimelineRecords(this.jobInfo.planId,
+                        this.jobInfo.timelineId, values,
+                        (err, status, records) => {
+                            callback(err);
+                        });
+                }
+            },
+            (err: any) => {
+                trace.write(err);
+            },
+            TIMELINE_DELAY);
+
+        // console lines
+        this._consoleQueue = new WebConsoleQueue(this, this.agentCtx, CONSOLE_DELAY);
+
+        // log pages
+        this._logPageQueue = new LogPageQueue(this, this.agentCtx, LOG_DELAY);
+
+        this._timelineRecordQueue.startProcessing();
+        this._consoleQueue.startProcessing();
+        this._logPageQueue.startProcessing();
     }
 
+    public enabled: boolean;
     public agentUrl: string;
     public collectionUrl: string;
     
@@ -168,7 +156,6 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 
     private _totalWaitTime: number;
     private _logQueue: LogPageQueue;
-    private _consoleQueue: WebConsoleQueue;
     private _lockRenewer: LockRenewer;
 
     private _buildApi: ifm.IQBuildApi;
@@ -178,46 +165,36 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 
     private _issues: any;
 
-    private _batch: any;
     private _recordCount: number;
+
+    private _timelineRecordQueue: cq.ConcurrentBatch<ifm.TimelineRecord>;
+    private _consoleQueue: WebConsoleQueue;
+    private _logPageQueue: LogPageQueue;
 
     // wait till all the queues are empty and not processing.
     public drain(callback: (err: any) => void): void {
         trace.enter('servicechannel:drain');
-        //this._lockRenewer.stop();
-        this._waitOnProcessing((err: any) => {
-            if (this.shouldDoWork()) {
-                this.doWork(callback);
-            }
-            else {
-                callback(err);
-            }
+
+        var consoleFinished = this._consoleQueue.waitForEmpty();
+        var logFinished = this._logPageQueue.waitForEmpty();
+        var timelineFinished = this._timelineRecordQueue.waitForEmpty();
+
+        // no more console lines or log pages should be generated
+        this._consoleQueue.finishAdding();
+        this._logPageQueue.finishAdding();
+
+        // don't complete the timeline queue until the log queue is done
+        logFinished.then(() => {
+            this._timelineRecordQueue.finishAdding();
         });
-    }
 
-    private _queuesBusy(): boolean {
-        trace.write('console queue : ' + this._consoleQueue.isProcessing + ' ' + this._consoleQueue.getLength());
-        trace.write('log queue     : ' + this._logQueue.isProcessing + ' ' + this._logQueue.getLength());
-
-        var busy = (this._consoleQueue.isProcessing || this._consoleQueue.getLength() > 0) ||
-            (this._logQueue.isProcessing || this._logQueue.getLength() > 0);
-
-        trace.write('busy: ' + busy);
-        return busy;
-    }
-
-    private _waitOnProcessing(callback: (err: any) => void): void {
-        trace.write('Waiting on processing: ' + this._totalWaitTime / 1000 + ' sec');
-        setTimeout(() => {
-            this._totalWaitTime += CHECK_INTERVAL;
-            if (this._queuesBusy() && this._totalWaitTime <= MAX_DRAIN_WAIT) {
-                trace.write('continue waiting');
-                this._waitOnProcessing(callback);
-            }
-            else {
+        Q.all([consoleFinished, logFinished, timelineFinished])
+            .fail((err: any) => {
+                callback(err);
+            })
+            .then((results: any) => {
                 callback(null);
-            }
-        }, CHECK_INTERVAL);
+            });
     }
 
     //------------------------------------------------------------------
@@ -226,12 +203,12 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
     public queueLogPage(page: cm.ILogPageInfo): void {
         trace.enter('servicechannel:queueLogPage');
         trace.state('page', page);
-        this._logQueue.add(page);
+        this._logPageQueue.push(page);
     }
 
     public queueConsoleLine(line: string): void {
         trace.write('qline: ' + line);
-        this._consoleQueue.add(line);
+        this._consoleQueue.push(line);
     }
 
     public queueConsoleSection(line: string): void {
@@ -254,11 +231,6 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
     // Timeline APIs
     //------------------------------------------------------------------  
     public addError(recordId: string, category: string, message: string, data: any): void {
-        // only add errors to existing records (registered tasks ...)
-        if (!this._recordExists(recordId)){
-            return;
-        }
-
         var current = this._getIssues(recordId);
         var record = this._getFromBatch(recordId);
         if (current.errorCount < process.env.VSO_ERROR_COUNT ? process.env.VSO_ERROR_COUNT : 10) {
@@ -276,11 +248,6 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
     }
 
     public addWarning(recordId: string, category: string, message: string, data: any): void {
-        // only add warnings to existing records (registered tasks ...)
-        if (!this._recordExists(recordId)){
-            return;
-        }
-
         var current = this._getIssues(recordId);
         var record = this._getFromBatch(recordId);
         if (current.warningCount < process.env.VSO_WARNING_COUNT ? process.env.VSO_WARNING_COUNT : 10) {
@@ -380,33 +347,9 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
     //------------------------------------------------------------------
     // Timeline internal batching
     //------------------------------------------------------------------
-
-    public doWork(callback: (err: any) => void): void {
-        trace.enter('servicechannel:doWork');
-        var records: ifm.TimelineRecord[] = this._recordsFromBatch();
-        trace.write('record count: ' + records.length);
-
-        this._batch = {};
-        this._recordCount = 0;
-        this._sendTimelineRecords(records, callback);
-    }
-
-
-    public shouldDoWork(): boolean {
-        return this._recordCount > 0;
-    }
-
-    private _recordExists(recordId: string) {
-        return this._batch.hasOwnProperty(recordId);
-    }
-
-    private _getFromBatch(recordId: string) {
-        if (!this._batch.hasOwnProperty(recordId)) {
-            this._batch[recordId] = {};
-            ++this._recordCount;
-        }
-
-        return this._batch[recordId];
+    private _getFromBatch(recordId: string): ifm.TimelineRecord {
+        trace.enter('servicechannel:_getFromBatch');
+        return this._timelineRecordQueue.getOrAdd(recordId);
     }
 
     private _getIssues(recordId: string) {
@@ -416,210 +359,205 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 
         return this._issues[recordId];
     }
-
-    private _sendTimelineRecords(records: ifm.TimelineRecord[], callback: (err: any) => void): void {
-        trace.enter('servicechannel:_sendTimelineRecords');
-        trace.state('records', records);
-
-        this.timelineApi.updateTimelineRecords(this.jobInfo.planId,
-            this.jobInfo.timelineId, records,
-            (err, status, records) => {
-                callback(err);
-            });
-    }
-
-    private _recordsFromBatch(): ifm.TimelineRecord[] {
-        trace.enter('servicechannel:_recordsFromBatch');
-        var records: ifm.TimelineRecord[] = [];
-
-        for (var id in this._batch) {
-            var record: ifm.TimelineRecord = <ifm.TimelineRecord>this._batch[id];
-            record.id = id;
-            records.push(record);
-        }
-
-        return records;
-    }
 }
 
 //------------------------------------------------------------------------------------
 // Server Feedback Queues
 //------------------------------------------------------------------------------------
-export class WebConsoleQueue extends TimedQueue {
-    constructor(feedback: cm.IFeedbackChannel) {
-        this._jobInfo = feedback.jobInfo;
-        this._timelineApi = feedback.timelineApi;
-        super(CONSOLE_DELAY);
+export class BaseQueue<T> {
+    private _queue: cq.ConcurrentArray<T>;
+    private _ctx: ctxm.Context;
+    private _msDelay: number;
+
+    constructor(context: ctxm.Context, msDelay: number) {
+        this._ctx = context;
+        this._msDelay = msDelay;
     }
 
-    public section(line: string): void {
-        super.add('[section] ' + this._jobInfo.mask(line));
+    public push(value: T) {
+        this._queue.push(value);
     }
 
-    public add(line: string): void {
-        super.add(this._jobInfo.mask(line));
+    public finishAdding() {
+        this._queue.finishAdding();
     }
 
-    private _jobInfo: cm.IJobInfo;
-    private _timelineApi: ifm.ITimelineApi;
+    public waitForEmpty(): Q.Promise<any> {
+        return this._queue.waitForEmpty();
+    }
 
-    public processQueue(queue: any[], callback: (err: any) => void): void {
-        trace.state('queue', queue);
-        trace.state('jobInfo', this._jobInfo);
-        this._timelineApi.appendTimelineRecordFeed(this._jobInfo.planId,
-            this._jobInfo.timelineId,
-            this._jobInfo.jobId,
-            queue,
-            (err, status, lines) => {
-                trace.write('done writing lines');
-                if (err) {
-                    trace.write('err: ' + err.message);
-                }
+    public startProcessing() {
+        if (!this._queue) {
+            this._queue = new cq.ConcurrentArray<T>(
+                (values: T[], callback: (err: any) => void) => {
+                    this._processQueue(values, callback);
+                },
+                (err: any) => {
+                    this._ctx.error(err);
+                },
+                this._msDelay);
+            this._queue.startProcessing();
+        }
+    }
 
-                callback(err);
-            });
+    public _processQueue(values: T[], callback: (err: any) => void) {
+        throw new Error("abstract");
     }
 }
 
-export class LogPageQueue extends TimedQueue {
-    constructor(feedback: cm.IFeedbackChannel, agentCtx: ctxm.AgentContext) {
-        ensureTrace(agentCtx);
-        trace.enter('LogPageQueue');
+export class WebConsoleQueue extends BaseQueue<string> {
+    private _jobInfo: cm.IJobInfo;
+    private _timelineApi: ifm.ITimelineApi;
 
+    constructor(feedback: cm.IFeedbackChannel, agentCtx: ctxm.AgentContext, msDelay: number) {
+        super(agentCtx, msDelay);
+        this._jobInfo = feedback.jobInfo;
+        this._timelineApi = feedback.timelineApi;
+    }
+
+    public section(line: string): void {
+        this.push('[section] ' + this._jobInfo.mask(line));
+    }
+
+    public push(line: string): void {
+        super.push(this._jobInfo.mask(line));
+    }
+
+    public _processQueue(values: string[], callback: (err: any) => void) {
+        if (values.length === 0) {
+            callback(null);
+        }
+        else {
+            this._timelineApi.appendTimelineRecordFeed(this._jobInfo.planId,
+                this._jobInfo.timelineId,
+                this._jobInfo.jobId,
+                values,
+                (err, status, lines) => {
+                    trace.write('done writing lines');
+                    if (err) {
+                        trace.write('err: ' + err.message);
+                    }
+
+                    callback(err);
+                });
+        }
+    }
+}
+
+export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
+    private _recordToLogIdMap: { [recordId: string]: number } = {};
+    private _jobInfo: cm.IJobInfo;
+    private _timelineApi: ifm.ITimelineApi;
+    private _agentCtx: ctxm.AgentContext;
+    private _feedback: cm.IFeedbackChannel;
+
+    constructor(feedback: cm.IFeedbackChannel, agentCtx: ctxm.AgentContext, msDelay: number) {
+        super(agentCtx, msDelay);
         this._feedback = feedback;
         this._jobInfo = feedback.jobInfo;
         this._timelineApi = feedback.timelineApi;
         this._agentCtx = agentCtx;
-        this._recordToLogIdMap = {};
-
-        super(LOG_DELAY);
     }
 
-    private _feedback: cm.IFeedbackChannel;
-    private _trace: tm.Tracing;
-    private _agentCtx: ctxm.AgentContext;
-    private _jobInfo: cm.IJobInfo;
-    private _timelineApi: ifm.ITimelineApi;
-
-    //
-    // TODO: delete the file after uploading.  should probably leave on disk and wait for clean up procedure
-    //
-    private _recordToLogIdMap: { [recordId: string]: number };
-
-    public processQueue(queue: any[], callback: (err: any) => void): void {
-        trace.enter('LogQueue:processQueue: ' + queue.length + ' pages to process');
-        for (var i = 0; i < queue.length; i++) {
-            trace.write('page: ' + queue[i].pagePath);
+    public _processQueue(logPages: cm.ILogPageInfo[], callback: (err: any) => void): void {
+        trace.enter('LogQueue:processQueue: ' + logPages.length + ' pages to process');
+        if (logPages.length === 0) {
+            callback(null);
         }
+        else {
+            for (var i = 0; i < logPages.length; i++) {
+                trace.write('page: ' + logPages[i].pagePath);
+            }
 
-        var planId: string = this._jobInfo.planId;
+            var planId: string = this._jobInfo.planId;
 
-        async.forEachSeries(queue,
-            (logPageInfo: cm.ILogPageInfo, done: (err: any) => void) => {
-                trace.state('process:logPageInfo', logPageInfo);
+            async.forEachSeries(logPages,
+                (logPageInfo: cm.ILogPageInfo, done: (err: any) => void) => {
+                    trace.state('process:logPageInfo', logPageInfo);
 
-                var pagePath: string = logPageInfo.pagePath;
-                trace.write('process:logPagePath: ' + pagePath);
+                    var pagePath: string = logPageInfo.pagePath;
+                    trace.write('process:logPagePath: ' + pagePath);
 
-                var recordId: string = logPageInfo.logInfo.recordId;
-                trace.write('logRecordId: ' + recordId);
+                    var recordId: string = logPageInfo.logInfo.recordId;
+                    trace.write('logRecordId: ' + recordId);
 
-                var serverLogPath: string;
-                var logId: number;
+                    var serverLogPath: string;
+                    var logId: number;
 
-                var pageUploaded = false;
+                    var pageUploaded = false;
 
-                async.series(
-                    [
-                        (doneStep) => {
-                            trace.write('creating log record');
+                    async.series(
+                        [
+                            (doneStep) => {
+                                trace.write('creating log record');
 
-                            //
-                            // we only want to create the log metadata record once per 
-                            // timeline record Id.  So, create and put it in a map
-                            //
-                            if (!this._recordToLogIdMap.hasOwnProperty(logPageInfo.logInfo.recordId)) {
-                                serverLogPath = 'logs\\' + recordId; // FCS expects \
-                                this._timelineApi.createLog(planId,
-                                    serverLogPath,
-                                    (err: any, statusCode: number, log: ifm.TaskLog) => {
-                                        if (err) {
-                                            trace.write('error creating log record: ' + err.message);
-                                            doneStep(err);
-                                            return;
-                                        }
+                                //
+                                // we only want to create the log metadata record once per 
+                                // timeline record Id.  So, create and put it in a map
+                                //
+                                if (!this._recordToLogIdMap.hasOwnProperty(logPageInfo.logInfo.recordId)) {
+                                    serverLogPath = 'logs\\' + recordId; // FCS expects \
+                                    this._timelineApi.createLog(planId,
+                                        serverLogPath,
+                                        (err: any, statusCode: number, log: ifm.TaskLog) => {
+                                            if (err) {
+                                                trace.write('error creating log record: ' + err.message);
+                                                doneStep(err);
+                                                return;
+                                            }
 
-                                        // associate log with timeline recordId
-                                        this._recordToLogIdMap[recordId] = log.id;
-                                        trace.write('added log id to map: ' + log.id);
-                                        doneStep(null);
-                                    });
-                            }
-                            else {
-                                doneStep(null);
-                            }
-                        },
-                        (doneStep) => {
-                            // check logId in map first
-                            logId = this._recordToLogIdMap[recordId];
-                            if (logId) {
-                                trace.write('uploading log page: ' + pagePath);
-                                this._timelineApi.uploadLogFile(planId,
-                                    logId,
-                                    pagePath,
-                                    (err: any, statusCode: number, obj: any) => {
-                                        if (err) {
-                                            trace.write('error uploading log file: ' + err.message);
-                                        }
-
-                                        // we're going to continue here so we can get the next logs
-                                        // TODO: we should consider requeueing?
-                                        doneStep(null);
-                                    });
-                            }
-                            else {
-                                this._agentCtx.error('Skipping log upload.  Log record does not exist.')
-                                doneStep(null);
-                            }
-                        },
-                        (doneStep) => {
-                            var logRef = <ifm.TaskLogReference>{};
-                            logRef.id = logId;
-                            this._feedback.setLogId(recordId, logRef);
-
-                            //
-                            // The timeline channel drains and shutdowns when job ends.
-                            // Logs might still be uploading after job completes.
-                            // So, if disabled, do a final drain of the timeline records (contains ptrs to log)
-                            //
-                            if (!this._feedback.enabled) {
-                                trace.write('feedback disabled: draining queue');
-                                this._feedback.drain((err: any) => {
-                                    if (err) {
-                                        trace.write('error draining queue: ' + err.message);
-                                    }
-
-                                    // we're going to continue here so we can get the next logs
-                                    // TODO: we should consider requeueing?
+                                            // associate log with timeline recordId
+                                            this._recordToLogIdMap[recordId] = log.id;
+                                            trace.write('added log id to map: ' + log.id);
+                                            doneStep(null);
+                                        });
+                                }
+                                else {
                                     doneStep(null);
-                                });
-                            }
-                            else {
+                                }
+                            },
+                            (doneStep) => {
+                                // check logId in map first
+                                logId = this._recordToLogIdMap[recordId];
+                                if (logId) {
+                                    trace.write('uploading log page: ' + pagePath);
+                                    this._timelineApi.uploadLogFile(planId,
+                                        logId,
+                                        pagePath,
+                                        (err: any, statusCode: number, obj: any) => {
+                                            if (err) {
+                                                trace.write('error uploading log file: ' + err.message);
+                                            }
+
+                                            // we're going to continue here so we can get the next logs
+                                            // TODO: we should consider requeueing?
+                                            doneStep(null);
+                                        });
+                                }
+                                else {
+                                    this._agentCtx.error('Skipping log upload.  Log record does not exist.')
+                                    doneStep(null);
+                                }
+                            },
+                            (doneStep) => {
+                                var logRef = <ifm.TaskLogReference>{};
+                                logRef.id = logId;
+                                this._feedback.setLogId(recordId, logRef);
                                 doneStep(null);
                             }
-                        }
-                    ], (err: any) => {
-                        if (err) {
-                            this._agentCtx.error(err.message);
-                            this._agentCtx.error(JSON.stringify(logPageInfo));
-                        }
+                        ], (err: any) => {
+                            if (err) {
+                                this._agentCtx.error(err.message);
+                                this._agentCtx.error(JSON.stringify(logPageInfo));
+                            }
 
-                        done(err);
-                    });
-            },
-            (err) => {
-                callback(err);
-            });
+                            done(err);
+                        });
+                },
+                (err) => {
+                    callback(err);
+                });
+        }
     }
 }
 

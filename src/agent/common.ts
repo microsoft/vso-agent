@@ -191,7 +191,8 @@ interface ReplacementFunction {
     (input: string): string;
 };
 
-function createMaskFunction(maskHints: ifm.MaskHint[]) {
+function createMaskFunction(jobEnvironment: ifm.JobEnvironment) {
+    var maskHints: ifm.MaskHint[] = jobEnvironment.mask;
     if (!maskHints || maskHints.length === 0) {
         return (input: string) => {
             return input;
@@ -202,10 +203,16 @@ function createMaskFunction(maskHints: ifm.MaskHint[]) {
         // e.g. if secrets are "tomato", "cat" and "today"
         var replacements: ReplacementFunction[] = [];
         maskHints.forEach((maskHint: ifm.MaskHint, index: number) => {
+            console.log("maskhint type is " + maskHint.type);
+            maskHint.type = ifm.TypeInfo.MaskType.enumValues[maskHint.type];
             if (maskHint.type === ifm.MaskType.Variable) {
-                replacements.push((input: string) => {
-                    return input.replace(maskHint.value, MASK_REPLACEMENT);
-                });
+                var toReplace = jobEnvironment.variables[maskHint.value];
+                console.log("toReplace = " + toReplace);
+                if (toReplace) {
+                    replacements.push((input: string) => {
+                        return input.replace(toReplace, MASK_REPLACEMENT);
+                    });
+                }
             }
             else if (maskHint.type === ifm.MaskType.Regex) {
                 var regex = new RegExp(maskHint.value);
@@ -234,7 +241,7 @@ export function jobInfoFromJob(job: ifm.JobRequestMessage): IJobInfo {
         requestId: job.requestId,
         lockToken: job.lockToken,
         variables: job.environment.variables,
-        mask: createMaskFunction(job.environment.mask)
+        mask: createMaskFunction(job.environment)
     };
 
     return info;

@@ -1,6 +1,7 @@
 --module CommonJS
 src/agent/api/messagelistener.ts
 src/agent/common.ts
+src/agent/concurrentqueue.ts
 src/agent/configure.ts
 src/agent/context.ts
 src/agent/diagnostics.ts

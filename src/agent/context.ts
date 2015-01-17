@@ -85,6 +85,7 @@ export class Context extends events.EventEmitter {
                 if (writer.level >= level) {
                     if (level == cm.DiagnosticLevel.Error) {
                         writer.writeError(logLine);
+                        console.trace();
                     }
                     else {
                         writer.write(logLine);
