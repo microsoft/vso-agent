@@ -31,7 +31,7 @@ function setVariables(job: ifm.JobRequestMessage, agentContext: ctxm.AgentContex
     var hashInput = collId + ':' + defId;
 
     if (job.environment.endpoints) {
-        job.environment.endpoints.forEach(function(endpoint) {
+        job.environment.endpoints.forEach(function (endpoint) {
             hashInput = hashInput + ':' + endpoint.url;
         });
     }
@@ -71,7 +71,7 @@ export function run(msg, consoleOutput: boolean, createFeedbackChannel: (agentUr
         // TODO: these should be set beforePrepare and cleared postPrepare after we add agent ext
         if (msg.config && msg.config.creds) {
             process.env['altusername'] = msg.config.creds.username;
-            process.env['altpassword'] = msg.config.creds.password;    
+            process.env['altpassword'] = msg.config.creds.password;
         }
 
         ag.status('Running job: ' + job.jobName);
@@ -97,7 +97,7 @@ export function run(msg, consoleOutput: boolean, createFeedbackChannel: (agentUr
                 ag.error('Error: ' + err.message);
             }
 
-            ctx.finishJob(result, (err: any)  => {
+            ctx.finishJob(result, (err: any) => {
                 trace.callback('ctx.finishJob');
 
                 ag.status('Job Finished: ' + job.jobName);
@@ -112,28 +112,28 @@ export function run(msg, consoleOutput: boolean, createFeedbackChannel: (agentUr
     }
 }
 
-process.on('message',function(msg){
-    run(msg, true, 
-        function(agentUrl, taskUrl, jobInfo, ag) {
+process.on('message', function (msg) {
+    run(msg, true,
+        function (agentUrl, taskUrl, jobInfo, ag) {
             return new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, ag);
         },
-        function() {
+        function () {
             process.exit();
-    });
+        });
 });
 
-process.on('uncaughtException', function(err) {
+process.on('uncaughtException', function (err) {
     if (ag) {
         ag.error('worker unhandled: ' + err.message);
         ag.error(err);
     }
 
-    process.exit(); 
+    process.exit();
 });
 
-process.on('SIGINT', function() {
+process.on('SIGINT', function () {
     if (ag) {
-        ag.info( "\nShutting down agent." );
+        ag.info("\nShutting down agent.");
     }
 
     process.exit();

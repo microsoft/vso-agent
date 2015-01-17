@@ -13,7 +13,7 @@ var fs = require('fs');
 export function ensurePathExists(path: string): Q.Promise<void> {
     var defer = Q.defer<void>();
 
-    if (fs.exists(path, function(exists) {
+    if (fs.exists(path, function (exists) {
         if (!exists) {
             shell.mkdir('-p', path);
 
@@ -28,7 +28,7 @@ export function ensurePathExists(path: string): Q.Promise<void> {
         }
     }));
 
-    return defer.promise;        
+    return defer.promise;
 }
 
 export function objectToFile(filePath: string, obj: any): Q.Promise<void> {
@@ -43,7 +43,7 @@ export function objectToFile(filePath: string, obj: any): Q.Promise<void> {
         }
     });
 
-    return defer.promise;        
+    return defer.promise;
 }
 
 //
@@ -63,10 +63,9 @@ export class Utilities {
     // [ '-a', '-b', '"quoted b value"', '-c', '-d', '"quoted d value"' ]
     //
     public argStringToArray(argString: string): string[] {
-        var args = argString.match(/([^" ]*("[^"]*")[^" ]*)|[^" ]+/g);  
+        var args = argString.match(/([^" ]*("[^"]*")[^" ]*)|[^" ]+/g);
         //remove double quotes from each string in args as child_process.spawn() cannot handle literla quotes as part of arguments
-        for(var i = 0; i < args.length; i ++)
-        {
+        for (var i = 0; i < args.length; i++) {
             args[i] = args[i].replace(/"/g, "");
         }
         return args;
@@ -83,7 +82,7 @@ export class Utilities {
             cwd: process.cwd(),
             env: process.env,
             failOnStdErr: true,
-            failOnNonZeroRC: true 
+            failOnNonZeroRC: true
         };
 
         // write over specified options over default options (ops)
@@ -99,7 +98,7 @@ export class Utilities {
 
         var runCP = cp(name, args, ops);
 
-        runCP.stdout.on('data', (data) => {             
+        runCP.stdout.on('data', (data) => {
             this.ctx.info(data.toString('utf8'));
         });
 
@@ -120,13 +119,13 @@ export class Utilities {
 
             if (code == 0 || !ops.failOnNonZeroRC) {
                 callback(null, code);
-            } else {                
+            } else {
                 var msg = 'Return code: ' + code;
                 this.ctx.error(msg);
 
                 callback(new Error(msg), code);
             }
-        });         
+        });
     }
 
 

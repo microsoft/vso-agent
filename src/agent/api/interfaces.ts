@@ -258,6 +258,7 @@ export interface JobEndpoint {
 export interface JobEnvironment {
     data: any;
     endpoints: JobEndpoint[];
+    mask: MaskHint[];
     options: { [key: string]: JobOption; };
     secrets: any;
     variables: { [key: string]: string; };
@@ -288,6 +289,16 @@ export interface JobRequestMessage {
 export interface JobStartedEvent {
     jobId: string;
     lockExpirationTime: Date;
+}
+
+export interface MaskHint {
+    type: MaskType;
+    value: string;
+}
+
+export enum MaskType {
+    Variable = 1,
+    Regex = 2
 }
 
 export interface RunPlanInput {
@@ -602,6 +613,15 @@ export var TypeInfo = {
     RunPlanInput: {
         fields: <any>null
     },
+    MaskHint: {
+        fields: <any>null
+    },
+    MaskType: {
+        enumValues: {
+            "variable": 1,
+            "maskHint": 2
+        }
+    },
     TaskAgent: {
         fields: <any>null
     },
@@ -743,6 +763,10 @@ TypeInfo.JobEnvironment.fields = {
     endpoints: {
         isArray: true,
         typeInfo: TypeInfo.JobEndpoint
+    },
+    mask: {
+        isArray: true,
+        typeInfo: TypeInfo.MaskHint
     }
 }
 TypeInfo.JobRequestMessage.fields = {
@@ -769,6 +793,11 @@ TypeInfo.JobRequestMessage.fields = {
 TypeInfo.JobStartedEvent.fields = {
     lockExpirationTime: {
         isDate: true
+    }
+}
+TypeInfo.MaskHint.fields = {
+    type: {
+        enumType: TypeInfo.MaskType
     }
 }
 TypeInfo.RunPlanInput.fields = {

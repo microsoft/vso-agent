@@ -41,7 +41,7 @@ export var envTrace: string = 'VSO_AGENT_TRACE';
 export var envVerbose: string = 'VSO_AGENT_VERBOSE';
 
 // comma delimited list of envvars to ignore when registering agent with server
-export var envIgnore: string  = 'VSO_AGENT_IGNORE';
+export var envIgnore: string = 'VSO_AGENT_IGNORE';
 export var envService: string = 'VSO_AGENT_SVC';
 
 //-----------------------------------------------------------
@@ -59,7 +59,7 @@ export enum DiagnosticLevel {
 // Interfaces
 //-----------------------------------------------------------
 
-export interface IStringDictionary { [name: string] : string }
+export interface IStringDictionary { [name: string]: string }
 
 export interface IDiagnosticWriter {
     level: DiagnosticLevel;
@@ -92,9 +92,9 @@ export interface IConfiguration {
 export interface IFeedbackChannel {
     agentUrl: string;
     collectionUrl: string;
-    jobInfo: IJobInfo;  
-    enabled: boolean;
     timelineApi: ifm.ITimelineApi;
+    jobInfo: IJobInfo;
+    enabled: boolean;
 
     // lifetime
     drain(callback: (err: any) => void): void;
@@ -137,6 +137,7 @@ export interface IJobInfo {
     requestId: number;
     lockToken: string;
     variables: { [key: string]: string };
+    mask: (input: string) => string;
 }
 
 export interface ILogMetadata {
@@ -164,15 +165,77 @@ export function jsonString(obj: any) {
     return JSON.stringify(obj, null, 2);
 }
 
-export function jobInfoFromJob (job: ifm.JobRequestMessage): IJobInfo {
-    var info = <IJobInfo>{};
-    info.description = job.jobName;
-    info.jobId = job.jobId;
-    info.planId = job.plan.planId;
-    info.timelineId = job.timeline.id;
-    info.requestId = job.requestId; 
-    info.lockToken = job.lockToken;
-    info.variables = job.environment.variables;
+//
+// get creds from CL args or prompt user if not in args
+//
+export function getCreds(done: (err: any, creds: any) => void): void {
+    var creds = {};
+    var credInputs = [
+        {
+            name: 'username', description: 'alternate username', arg: 'u', type: 'string', req: true
+        },
+        {
+            name: 'password', description: 'alternate password', arg: 'p', type: 'password', req: true
+        }
+    ];
+
+    inputs.get(credInputs, (err, result) => {
+        creds['username'] = result['username'];
+        creds['password'] = result['password'];
+        done(err, creds);
+    });
+}
+
+var MASK_REPLACEMENT: string = "********";
+interface ReplacementFunction {
+    (input: string): string;
+};
+
+function createMaskFunction(maskHints: ifm.MaskHint[]) {
+    if (!maskHints || maskHints.length === 0) {
+        return (input: string) => {
+            return input;
+        };
+    }
+    else {
+        // naive implementation. this will not fully replace secrets that overlap
+        // e.g. if secrets are "tomato", "cat" and "today"
+        var replacements: ReplacementFunction[] = [];
+        maskHints.forEach((maskHint: ifm.MaskHint, index: number) => {
+            if (maskHint.type === ifm.MaskType.Variable) {
+                replacements.push((input: string) => {
+                    return input.replace(maskHint.value, MASK_REPLACEMENT);
+                });
+            }
+            else if (maskHint.type === ifm.MaskType.Regex) {
+                var regex = new RegExp(maskHint.value);
+                replacements.push((input: string) => {
+                    return input.replace(regex, MASK_REPLACEMENT);
+                });
+            }
+        });
+
+        return (input: string) => {
+            var result: string = input;
+            replacements.forEach((replacement: ReplacementFunction) => {
+                result = replacement(result);
+            });
+            return result;
+        };
+    }
+}
+
+export function jobInfoFromJob(job: ifm.JobRequestMessage): IJobInfo {
+    var info: IJobInfo = {
+        description: job.jobName,
+        jobId: job.jobId,
+        planId: job.plan.planId,
+        timelineId: job.timeline.id,
+        requestId: job.requestId,
+        lockToken: job.lockToken,
+        variables: job.environment.variables,
+        mask: createMaskFunction(job.environment.mask)
+    };
 
     return info;
 }
@@ -195,7 +258,7 @@ export function extractFile(source: string, dest: string, done: (err: any) => vo
         var file = new zip(source);
         file.extractAllTo(dest, true);
         done(null);
-    } catch(err) {
+    } catch (err) {
         done(err);
     }
 }

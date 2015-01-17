@@ -51,7 +51,7 @@ export class PagingLogger extends events.EventEmitter implements cm.IDiagnosticW
             this.create();
         }
 
-        fs.writeSync(this._fd, line);
+        fs.writeSync(this._fd, this.metadata.jobInfo.mask(line));
 
         // TODO: split lines - line count not completely accurate
         if (++this.lineCount >= PAGE_SIZE) {

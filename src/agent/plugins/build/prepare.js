@@ -7,22 +7,22 @@ var fs = require('fs');
 var async = require('async');
 var gitrepo = require('./lib/gitrepo');
 
-var checkShellError = function(callback) {
+var checkShellError = function (callback) {
     if (error()) {
         callback(new Error(error()));
-    }       
+    }
 }
 
-exports.pluginName = function() {
+exports.pluginName = function () {
     return "prepareWorkspace";
 }
 
 // what shows in progress view
-exports.pluginTitle = function() {
+exports.pluginTitle = function () {
     return "Preparing Workspace"
 }
 
-exports.beforeJob = function(ctx, callback) {
+exports.beforeJob = function (ctx, callback) {
     ctx.info('preparing Workspace');
     ctx.info('cwd: ' + process.cwd());
 
@@ -33,7 +33,7 @@ exports.beforeJob = function(ctx, callback) {
     var endpoints = ctx.job.environment.endpoints;
 
     // TODO: support TfsVersionControl
-    var srcendpoints = endpoints.filter(function(endpoint) {
+    var srcendpoints = endpoints.filter(function (endpoint) {
         return endpoint.type === 'TfsGit' || endpoint.type === 'Git';
     });
 
@@ -54,7 +54,7 @@ exports.beforeJob = function(ctx, callback) {
     // TODO: we only really support one.  Consider changing to index 0 of filter result and warn | fail if length > 0
     //       what's odd is we will set sys.sourceFolder so > 1 means last one wins
     async.forEachSeries(srcendpoints, function (endpoint, done) {
-        var creds = endpoint.type === 'TfsGit' ? tfcreds: endpoint.creds;
+        var creds = endpoint.type === 'TfsGit' ? tfcreds : endpoint.creds;
         var options = {
             repoLocation: endpoint.url,
             ref: selectedRef,
@@ -64,7 +64,7 @@ exports.beforeJob = function(ctx, callback) {
             clean: endpoint.data.clean === "true"
         };
 
-        var repoPath = path.resolve(options.localPath);        
+        var repoPath = path.resolve(options.localPath);
         ctx.job.environment.variables['build.sourceDirectory'] = repoPath;
         ctx.job.environment.variables['build.stagingdirectory'] = path.resolve("staging");
 
