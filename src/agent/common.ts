@@ -203,11 +203,9 @@ function createMaskFunction(jobEnvironment: ifm.JobEnvironment) {
         // e.g. if secrets are "tomato", "cat" and "today"
         var replacements: ReplacementFunction[] = [];
         maskHints.forEach((maskHint: ifm.MaskHint, index: number) => {
-            console.log("maskhint type is " + maskHint.type);
             maskHint.type = ifm.TypeInfo.MaskType.enumValues[maskHint.type];
             if (maskHint.type === ifm.MaskType.Variable) {
                 var toReplace = jobEnvironment.variables[maskHint.value];
-                console.log("toReplace = " + toReplace);
                 if (toReplace) {
                     replacements.push((input: string) => {
                         return input.replace(toReplace, MASK_REPLACEMENT);

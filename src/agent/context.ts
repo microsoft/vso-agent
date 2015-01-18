@@ -67,6 +67,7 @@ export class Context extends events.EventEmitter {
         if (typeof (message) !== 'string') {
             console.error('non-string write: ' + level, tag);
             console.error(JSON.stringify(message, null, 2));
+            console.trace();
             return;
         }
 
@@ -85,7 +86,6 @@ export class Context extends events.EventEmitter {
                 if (writer.level >= level) {
                     if (level == cm.DiagnosticLevel.Error) {
                         writer.writeError(logLine);
-                        console.trace();
                     }
                     else {
                         writer.write(logLine);
@@ -198,7 +198,17 @@ export class ExecutionContext extends Context {
     public buildDirectory: string;
     public workingDirectory: string;
     public feedback: cm.IFeedbackChannel;
-    public util: any;
+    public util: um.Utilities;
+
+    public error(message: string): void {
+        this.feedback.addError(this.recordId, "Console", message, null);
+        super.error(message);
+    }
+
+    public warning(message: string): void {
+        this.feedback.addWarning(this.recordId, "Console", message, null);
+        super.warning(message);
+    }
 }
 
 
@@ -346,18 +356,6 @@ export class PluginContext extends ExecutionContext {
     }
 
     public job: ifm.JobRequestMessage;
-    private agentApi: ifm.IAgentApi;
-    private timelineApi: ifm.ITimelineApi;
-
-    public error(message: string): void {
-        this.feedback.addError(this.recordId, "Console", message, null);
-        super.error(message);
-    }
-
-    public warning(message: string): void {
-        this.feedback.addWarning(this.recordId, "Console", message, null);
-        super.warning(message);
-    }
 }
 
 //=================================================================================================
