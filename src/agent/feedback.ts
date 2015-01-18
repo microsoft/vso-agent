@@ -392,7 +392,6 @@ export class ServiceChannel extends TimedWorker implements cm.IFeedbackChannel {
 
     
     public shouldDoWork(): boolean {
-        trace.enter('servicechannel:shouldDoWork');
         return this._recordCount > 0;
     }
 

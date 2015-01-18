@@ -8,7 +8,6 @@ import path = require('path');
 import fs = require('fs');
 import zlib = require('zlib');
 import stream = require('stream');
-import crypto = require('crypto');
 import Q = require("q");
 import shelljs = require("shelljs");
 import ctxm = require('../../context');
@@ -16,6 +15,7 @@ import cm = require('../../common');
 import ifm = require('../../api/interfaces');
 import webapi = require("../../api/webapi");
 import tm = require('../../tracing');
+import dropm = require('./lib/dropUploader');
 
 var stagingOptionId: string = "82f9a3e8-3930-482e-ac62-ae3276f284d5";
 var dropOptionId: string = "e8b30f6f-039d-4d34-969c-449bbe9c3b9e";
@@ -252,6 +252,9 @@ function copyToFileContainer(ctx: ctxm.PluginContext, stagingFolder: string, fil
         .then((files: string[]) => {
             _trace.state('files', files);
 
+            return dropm.uploadFiles(ctx, stagingFolder, containerId, containerRoot, files);
+
+            /*
             return Q.all(files.map((fullPath: string) => {
                 return Q.nfcall(fs.stat, fullPath)
                     .then((stat: fs.Stats) => {
@@ -270,6 +273,7 @@ function copyToFileContainer(ctx: ctxm.PluginContext, stagingFolder: string, fil
                         });
                     });
             }))
+            */
         })
         .then(() => {
             ctx.info("container items uploaded");
