@@ -50,6 +50,14 @@ function setVariables(job: ifm.JobRequestMessage, agentContext: ctxm.AgentContex
     trace.state('variables', job.environment.variables);
 }
 
+function deserializeEnumValues(job: ifm.JobRequestMessage) {
+    if (job && job.environment && job.environment.mask) {
+        job.environment.mask.forEach((maskHint: ifm.MaskHint, index: number) => {
+            maskHint.type = ifm.TypeInfo.MaskType.enumValues[maskHint.type];
+        });
+    }
+}
+
 //
 // Worker process waits for a job message, processes and then exits
 //
@@ -63,6 +71,7 @@ export function run(msg, consoleOutput: boolean, createFeedbackChannel: (agentUr
     ag.info('worker::onMessage');
     if (msg.messageType === "job") {
         var job: ifm.JobRequestMessage = msg.data;
+        deserializeEnumValues(job);
         setVariables(job, ag);
 
         var jobInfo: cm.IJobInfo = cm.jobInfoFromJob(job);

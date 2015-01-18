@@ -191,41 +191,107 @@ interface ReplacementFunction {
     (input: string): string;
 };
 
-function createMaskFunction(jobEnvironment: ifm.JobEnvironment) {
-    var maskHints: ifm.MaskHint[] = jobEnvironment.mask;
-    if (!maskHints || maskHints.length === 0) {
-        return (input: string) => {
-            return input;
-        };
+interface ReplacementPosition {
+    start: number;
+    length: number;
+};
+
+interface IndexFunction {
+    (input: string): ReplacementPosition[];
+}
+
+function createMaskFunction(jobEnvironment: ifm.JobEnvironment): ReplacementFunction {
+    var noReplacement = (input: string) => {
+        return input;
+    };
+
+    // remove any masks that will have no effect
+    var maskHints: ifm.MaskHint[] = (jobEnvironment.mask || []).map((maskHint: ifm.MaskHint) => {
+        if (maskHint.type === ifm.MaskType.Variable && maskHint.value) {
+            var toReplace = jobEnvironment.variables[maskHint.value];
+            if (toReplace) {
+                return maskHint;
+            }
+        }
+    });
+
+    if (maskHints.length === 0) {
+        return noReplacement;
+    }
+    else if (maskHints.length === 1) {
+        var maskHint = maskHints[0];
+        if (maskHint.type === ifm.MaskType.Variable) {
+            var toReplace = jobEnvironment.variables[maskHint.value];
+            return (input: string) => {
+                return input.replace(toReplace, MASK_REPLACEMENT);
+            };
+        }
+        return noReplacement;
     }
     else {
-        // naive implementation. this will not fully replace secrets that overlap
-        // e.g. if secrets are "tomato", "cat" and "today"
-        var replacements: ReplacementFunction[] = [];
+        // multiple strings to replace
+        var indexFunctions: IndexFunction[] = [];
         maskHints.forEach((maskHint: ifm.MaskHint, index: number) => {
-            maskHint.type = ifm.TypeInfo.MaskType.enumValues[maskHint.type];
             if (maskHint.type === ifm.MaskType.Variable) {
                 var toReplace = jobEnvironment.variables[maskHint.value];
-                if (toReplace) {
-                    replacements.push((input: string) => {
-                        return input.replace(toReplace, MASK_REPLACEMENT);
-                    });
-                }
-            }
-            else if (maskHint.type === ifm.MaskType.Regex) {
-                var regex = new RegExp(maskHint.value);
-                replacements.push((input: string) => {
-                    return input.replace(regex, MASK_REPLACEMENT);
+                indexFunctions.push((input: string) => {
+                    var results: ReplacementPosition[] = [];
+                    var index: number = input.indexOf(toReplace);
+                    while (index > -1) {
+                        results.push({ start: index, length: toReplace.length });
+                        index = input.indexOf(toReplace, index + 1);
+                    }
+                    return results;
                 });
             }
         });
 
         return (input: string) => {
-            var result: string = input;
-            replacements.forEach((replacement: ReplacementFunction) => {
-                result = replacement(result);
+            // gather all the substrings to replace
+            var substrings: ReplacementPosition[] = [];
+            indexFunctions.forEach((find: IndexFunction) => {
+                substrings = substrings.concat(find(input));
             });
-            return result;
+
+            // order substrings by start index
+            substrings = substrings.sort((a, b) => {
+                return a.start - b.start;
+            });
+
+            // merge
+            var replacements: ReplacementPosition[] = [];
+            var currentReplacement: ReplacementPosition;
+            var currentEnd: number;
+            for (var i: number = 0; i < substrings.length; i++) {
+                if (!currentReplacement) {
+                    currentReplacement = substrings[i];
+                    currentEnd = currentReplacement.start + currentReplacement.length;
+                }
+                else {
+                    if (substrings[i].start <= currentEnd) {
+                        // overlap
+                        currentEnd = Math.max(currentEnd, substrings[i].start + substrings[i].length);
+                        currentReplacement.length = currentEnd - currentReplacement.start;
+                    }
+                    else {
+                        //no overlap
+                        replacements.push(currentReplacement);
+                        currentReplacement = substrings[i];
+                        currentEnd = currentReplacement.start + currentReplacement.length;
+                    }
+                }
+            }
+            if (currentReplacement) {
+                replacements.push(currentReplacement);
+            }
+
+            // replace in reverse order
+            var charArray = input.split("");
+            for (var i: number = replacements.length - 1; i >= 0; i--) {
+                charArray.splice(replacements[i].start, replacements[i].length, "*", "*", "*", "*", "*", "*", "*", "*");
+            }
+
+            return charArray.join("");
         };
     }
 }
@@ -273,7 +339,7 @@ export function extractFile(source: string, dest: string, done: (err: any) => vo
 // Cred Utilities
 //-----------------------------------------------------------
 export function basicHandlerFromCreds(creds: ifm.IBasicCredentials): basicm.BasicCredentialHandler {
-    return new basicm.BasicCredentialHandler(creds.username, creds.password);    
+    return new basicm.BasicCredentialHandler(creds.username, creds.password);
 }
 
 // gets basic creds from args or prompts
