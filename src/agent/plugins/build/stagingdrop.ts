@@ -82,7 +82,7 @@ class CopyToStagingFolder implements plugins.IPlugin {
     public afterJob(pluginContext: ctxm.PluginContext, callback: (err?: any) => void) {
         _ensureTracing(pluginContext, 'afterJob');
         this._copyToStagingFolder(pluginContext)
-            .then(() => callback)
+            .then(() => callback())
             .fail((err: any) => {
                 callback(err);
             });
@@ -202,7 +202,7 @@ class CreateDrop implements plugins.IPlugin {
     public afterJob(pluginContext: ctxm.PluginContext, callback: (err?: any) => void) {
         _ensureTracing(pluginContext, 'afterJob');
         this._createDrop(pluginContext)
-            .then(() => callback)
+            .then(() => callback())
             .fail((err: any) => {
                 callback(err);
             });
