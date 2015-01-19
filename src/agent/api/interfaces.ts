@@ -84,7 +84,7 @@ export interface IBuildApi {
 }
 
 export interface IQBuildApi {
-    postArtifact(buildId: number, artifact: BuildArtifact): Q.IPromise<BuildArtifact>
+    postArtifact(buildId: number, artifact: BuildArtifact): Q.Promise<BuildArtifact>
 }
 
 //-----------------------------------------------------
@@ -131,7 +131,7 @@ export interface IQFileContainerApi {
         contentIdentifier: Buffer, 
         uncompressedLength: number, 
         compressedLength: number, 
-        isGzipped: boolean): Q.IPromise<FileContainerItem>
+        isGzipped: boolean): Q.Promise<FileContainerItem>
 }
 
 export interface IRequestHandler {

@@ -16,6 +16,7 @@ import ifm = require('../../api/interfaces');
 import webapi = require("../../api/webapi");
 import tm = require('../../tracing');
 import dropm = require('./lib/dropUploader');
+import plugins = require('../../plugins');
 
 var stagingOptionId: string = "82f9a3e8-3930-482e-ac62-ae3276f284d5";
 var dropOptionId: string = "e8b30f6f-039d-4d34-969c-449bbe9c3b9e";
@@ -31,175 +32,300 @@ exports.pluginName = function () {
     return "buildDrop";
 }
 
-// what shows in progress view
 exports.pluginTitle = function () {
-	return "Build Drop"
+    return "Build Drop"
 }
 
-exports.afterJob = function (ctx: ctxm.PluginContext, callback) {
-    _ensureTracing(ctx, 'afterJob');
-
+exports.afterJobPlugins = function (ctx: ctxm.JobContext) {
     /**
      * this plugin handles both the "copy to staging folder" and "create drop" build options
      * this way we can ensure that they happen in the correct order
      */
+    var afterJobPlugins: plugins.IPlugin[] = [];
     if (ctx.job.environment.options) {
-
-        var funcs = [];
-
         var stagingOption: ifm.JobOption = ctx.job.environment.options[stagingOptionId];
         if (stagingOption) {
-            funcs.push(() => copyToStagingFolder(ctx, stagingOption));
+            afterJobPlugins.push(new CopyToStagingFolder(stagingOption));
         }
 
         var dropOption: ifm.JobOption = ctx.job.environment.options[dropOptionId];
         if (dropOption) {
-            funcs.push(() => createDrop(ctx, stagingOption, dropOption));
+            afterJobPlugins.push(new CreateDrop(stagingOption, dropOption));
         }
+    }
+    return afterJobPlugins;
+};
 
-        funcs.reduce(Q.when, Q(null))
-            .then(() => {
-                callback();
-            }, (err) => {
-                // this will be called if anything in funcs fails
+class CopyToStagingFolder implements plugins.IPlugin {
+    private _stagingOption: ifm.JobOption;
+
+    public afterId: string;
+
+    constructor(stagingOption: ifm.JobOption) {
+        this._stagingOption = stagingOption;
+    }
+
+    public pluginName(): string {
+        return "copyToStagingFolder";
+    }
+
+    public pluginTitle(): string {
+        return "Copy to staging folder";
+    }
+
+    public shouldRun(jobSuccess: boolean, ctx: ctxm.JobContext) {
+        _ensureTracing(ctx, 'shouldRun');
+        _trace.write('shouldRun: ' + jobSuccess);
+        return jobSuccess;
+    }
+
+    public afterJob(pluginContext: ctxm.PluginContext, callback: (err?: any) => void) {
+        _ensureTracing(pluginContext, 'afterJob');
+        this._copyToStagingFolder(pluginContext)
+            .then(() => callback)
+            .fail((err: any) => {
                 callback(err);
             });
     }
-    else {
-        callback();
-    }
-}
 
-exports.shouldRun = function (jobSuccess: boolean, ctx: ctxm.JobContext) {
-    _ensureTracing(ctx, 'shouldRun');
+    private _copyToStagingFolder(ctx: ctxm.PluginContext): Q.Promise<any> {
+        // determine root: $(build.sourcesdirectory)
+        _ensureTracing(ctx, 'copyToStagingFolder');
 
-    var should = false;
-    if (jobSuccess && !!ctx.job.environment.options) {
-        should = !!ctx.job.environment.options[stagingOptionId] || !!ctx.job.environment.options[dropOptionId];
-    }
+        ctx.info("looking for source in " + ctxm.WellKnownVariables.sourceFolder);
+        var sourcesRoot: string = ctx.job.environment.variables[ctxm.WellKnownVariables.sourceFolder].replaceVars(ctx.job.environment.variables);
+        _trace.state('sourcesRoot', sourcesRoot);
 
-    _trace.write('shouldRun: ' + should);
-    return should;
-}
+        var stagingFolder = getStagingFolder(ctx, this._stagingOption);
 
-function copyToStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption): Q.IPromise<any> {
-    // determine root: $(build.sourcesdirectory)
-    _ensureTracing(ctx, 'copyToStagingFolder');
+        var searchPattern = this._stagingOption.data["pattern"];
+        if (searchPattern) {
+            // root the search pattern
+            searchPattern = searchPattern.replaceVars(ctx.job.environment.variables);
+            if (!isPathRooted(searchPattern) && sourcesRoot) {
+                searchPattern = path.join(sourcesRoot, searchPattern);
+            }
 
-    ctx.info("looking for source in " + ctxm.WellKnownVariables.sourceFolder);
-    var sourcesRoot: string = ctx.job.environment.variables[ctxm.WellKnownVariables.sourceFolder].replaceVars(ctx.job.environment.variables);
-    _trace.state('sourcesRoot', sourcesRoot);
-    
-    var stagingFolder = getStagingFolder(ctx, stagingOption);
+            _trace.state('searchPattern', searchPattern);
 
-    var searchPattern = stagingOption.data["pattern"];
-    if (searchPattern) {
-        // root the search pattern
-        searchPattern = searchPattern.replaceVars(ctx.job.environment.variables);
-        if (!isPathRooted(searchPattern) && sourcesRoot) {
-            searchPattern = path.join(sourcesRoot, searchPattern);
-        }
+            // get list of files to copy
+            var filesPromise: Q.IPromise<string[]>;
+            if (searchPattern.indexOf('*') > -1 || searchPattern.indexOf('?') > -1) {
+                ctx.info("Pattern found in pattern parameter.");
+                filesPromise = findMatchingFiles(ctx, null, searchPattern, false, true);
+            }
+            else {
+                filesPromise = Q([searchPattern]);
+            }
 
-        _trace.state('searchPattern', searchPattern);
-
-        // get list of files to copy
-        var filesPromise: Q.IPromise<string[]>;
-        if (searchPattern.indexOf('*') > -1 || searchPattern.indexOf('?') > -1) {
-            ctx.info("Pattern found in pattern parameter.");
-            filesPromise = findMatchingFiles(ctx, null, searchPattern, false, true);
-        }
-        else {
-            filesPromise = Q([searchPattern]);
-        }
-
-        // create the staging folder
-        ctx.info("Creating folder " + stagingFolder);
-        var createStagingFolderPromise = Q.nfcall(fs.mkdir, stagingFolder).
-            then(() => {
-            },
-            (error) => {
-                ctx.error(error);
-            });
-
-        return Q.all([filesPromise, createStagingFolderPromise])
-            .then((results: any[]) => {
-
-                var files: string[] = results[0];
-                ctx.info("found " + files.length + " files or folders");
-                _trace.state('files', files);
-
-                var commonRoot = getCommonLocalPath(files);
-                var useCommonRoot = !!commonRoot;
-                if (useCommonRoot) {
-                    ctx.info("There is a common root (" + commonRoot + ") for the files. Using the remaining path elements in staging folder.");
-                }
-
-                files.forEach((file: string) => {
-                    var targetPath = stagingFolder;
-                    if (useCommonRoot) {
-                        var relativePath = file.substring(commonRoot.length)
-                            .replace(/^\\/g, "")
-                            .replace(/^\//g, "");
-                        targetPath = path.join(stagingFolder, relativePath);
-                    }
-                    _trace.state('targetPath', targetPath);
-                    ctx.info("Copying all files from " + file + " to " + targetPath);
-
-                    shelljs.cp("-Rf", path.join(file, "*"), targetPath);
+            // create the staging folder
+            ctx.info("Creating folder " + stagingFolder);
+            var createStagingFolderPromise = Q.nfcall(fs.mkdir, stagingFolder).
+                then(() => {
+                },
+                (error) => {
+                    ctx.error(error);
                 });
-            });
-    }
-    else {
-        ctx.warning("No pattern specified. Nothing to copy.");
-        return Q(null);
-    }
-}
 
-function createDrop(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption, dropOption: ifm.JobOption): Q.IPromise<any> {
-    _ensureTracing(ctx, 'createDrop');
+            var deferred = Q.defer();
+            Q.all([filesPromise, createStagingFolderPromise])
+                .then((results: any[]) => {
 
-    var location = dropOption.data["location"];
-    var path = dropOption.data["path"];
-    var stagingFolder = getStagingFolder(ctx, stagingOption);
+                    var files: string[] = results[0];
+                    ctx.info("found " + files.length + " files or folders");
+                    _trace.state('files', files);
 
-    if (location) {
-        location = location.replaceVars(ctx.job.environment.variables);
-    }
-    if (path) {
-        path = path.replaceVars(ctx.job.environment.variables);
-    }
+                    var commonRoot = getCommonLocalPath(files);
+                    var useCommonRoot = !!commonRoot;
+                    if (useCommonRoot) {
+                        ctx.info("There is a common root (" + commonRoot + ") for the files. Using the remaining path elements in staging folder.");
+                    }
 
-    ctx.info("drop location = " + location);
-    ctx.info("drop path = " + path);
+                    try {
+                        files.forEach((file: string) => {
+                            var targetPath = stagingFolder;
+                            if (useCommonRoot) {
+                                var relativePath = file.substring(commonRoot.length)
+                                    .replace(/^\\/g, "")
+                                    .replace(/^\//g, "");
+                                targetPath = path.join(stagingFolder, relativePath);
+                            }
+                            _trace.state('targetPath', targetPath);
+                            ctx.info("Copying all files from " + file + " to " + targetPath);
 
-    // determine drop provider
-    var dropPromise: Q.IPromise<string> = Q(null);
-    switch (location) {
-        case "filecontainer":
-            dropPromise = copyToFileContainer(ctx, stagingFolder, path);
-            break;
-        case "uncpath":
-            dropPromise = copyToUncPath(ctx, stagingFolder, path);
-            break;
-    }
+                            shelljs.cp("-Rf", path.join(file, "*"), targetPath);
+                        });
+                        deferred.resolve(null);
+                    }
+                    catch (err) {
+                        deferred.reject(err);
+                    }
+                })
+                .fail((err: any) => {
+                    deferred.reject(err);
+                });
 
-    return dropPromise.then((artifactLocation: string) => {
-        if (artifactLocation) {
-            var buildClient = webapi.QBuildApi(ctx.job.authorization.serverUrl,
-                cm.basicHandlerFromCreds(ctx.agentCtx.config.creds));
-
-            return ctx.feedback.postArtifact(parseInt(ctx.variables[ctxm.WellKnownVariables.buildId]), {
-                name: "drop",
-                resource: {
-                    data: artifactLocation
-                }
-            });
+            return deferred.promise;
         }
         else {
-            ctx.warning("Drop location/path is missing or not supported. Not creating a build drop artifact.");
+            ctx.warning("No pattern specified. Nothing to copy.");
             return Q(null);
         }
-    });
+    }
+}
+
+class CreateDrop implements plugins.IPlugin {
+    private _stagingOption: ifm.JobOption;
+    private _dropOption: ifm.JobOption;
+
+    public afterId: string;
+
+    constructor(stagingOption: ifm.JobOption, dropOption: ifm.JobOption) {
+        this._stagingOption = stagingOption;
+        this._dropOption = dropOption;
+    }
+
+    public pluginName(): string {
+        return "createDrop";
+    }
+
+    public pluginTitle(): string {
+        return "Create drop";
+    }
+
+    public shouldRun(jobSuccess: boolean, ctx: ctxm.JobContext) {
+        _ensureTracing(ctx, 'shouldRun');
+        _trace.write('shouldRun: ' + jobSuccess);
+        return jobSuccess;
+    }
+
+    public afterJob(pluginContext: ctxm.PluginContext, callback: (err?: any) => void) {
+        _ensureTracing(pluginContext, 'afterJob');
+        this._createDrop(pluginContext)
+            .then(() => callback)
+            .fail((err: any) => {
+                callback(err);
+            });
+    }
+
+    private _createDrop(ctx: ctxm.PluginContext): Q.Promise<any> {
+        _ensureTracing(ctx, 'createDrop');
+
+        var location = this._dropOption.data["location"];
+        var path = this._dropOption.data["path"];
+        var stagingFolder = getStagingFolder(ctx, this._stagingOption);
+
+        if (location) {
+            location = location.replaceVars(ctx.job.environment.variables);
+        }
+        if (path) {
+            path = path.replaceVars(ctx.job.environment.variables);
+        }
+
+        ctx.info("drop location = " + location);
+        ctx.info("drop path = " + path);
+
+        // determine drop provider
+        var dropPromise: Q.Promise<string> = Q(<string>null);
+        switch (location) {
+            case "filecontainer":
+                dropPromise = this._copyToFileContainer(ctx, stagingFolder, path);
+                break;
+            case "uncpath":
+                dropPromise = this._copyToUncPath(ctx, stagingFolder, path);
+                break;
+        }
+
+        return dropPromise.then((artifactLocation: string) => {
+            if (artifactLocation) {
+                var buildClient = webapi.QBuildApi(ctx.job.authorization.serverUrl,
+                    cm.basicHandlerFromCreds(ctx.agentCtx.config.creds));
+
+                return ctx.feedback.postArtifact(parseInt(ctx.variables[ctxm.WellKnownVariables.buildId]), {
+                    name: "drop",
+                    resource: {
+                        data: artifactLocation
+                    }
+                });
+            }
+            else {
+                ctx.warning("Drop location/path is missing or not supported. Not creating a build drop artifact.");
+                return Q(null);
+            }
+        });
+    }
+
+    private _copyToFileContainer(ctx: ctxm.PluginContext, stagingFolder: string, fileContainerPath: string): Q.Promise<string> {
+        _ensureTracing(ctx, 'copyToFileContainer');
+
+        var fileContainerRegExp = /^#\/(\d+)(\/.*)$/;
+        var containerId: number;
+        var containerPath: string = "/";
+
+        var match = fileContainerPath.match(fileContainerRegExp);
+        if (match) {
+            containerId = parseInt(match[1]);
+            if (match.length > 2) {
+                containerPath = match[2];
+            }
+        }
+        else {
+            ctx.error("invalid file container path '" + fileContainerPath + "'");
+            return Q(<string>null);
+        }
+
+        var containerRoot = containerPath;
+        if (containerRoot.charAt(containerPath.length) !== '/') {
+            containerRoot += '/';
+        }
+        if (containerRoot.charAt(0) === '/') {
+            containerRoot = containerRoot.substr(1);
+        }
+        _trace.state('containerRoot', containerRoot);
+
+        var contentMap: { [path: string]: ifm.ContainerItemInfo; } = {}
+
+        return readDirectory(ctx, stagingFolder, true, false)
+            .then((files: string[]) => {
+                _trace.state('files', files);
+
+                return dropm.uploadFiles(ctx, stagingFolder, containerId, containerRoot, files);
+
+                /*
+                return Q.all(files.map((fullPath: string) => {
+                    return Q.nfcall(fs.stat, fullPath)
+                        .then((stat: fs.Stats) => {
+                            _trace.state('fullPath', fullPath);
+                            _trace.state('size', stat.size);
+
+                            return ctx.feedback.uploadFileToContainer(containerId, {
+                                fullPath: fullPath,
+                                containerItem: {
+                                    containerId: containerId,
+                                    itemType: ifm.ContainerItemType.File,
+                                    path: containerRoot + fullPath.substring(stagingFolder.length + 1)
+                                },
+                                uncompressedLength: stat.size,
+                                isGzipped: false
+                            });
+                        });
+                }))
+                */
+            })
+            .then(() => {
+                ctx.info("container items uploaded");
+                _trace.state('fileContainerPath', fileContainerPath);
+                return fileContainerPath;
+            });
+    }
+
+    private _copyToUncPath(ctx: ctxm.PluginContext, stagingFolder: string, uncPath: string): Q.Promise<string> {
+        ctx.info("Copying all files from " + stagingFolder + " to " + uncPath);
+
+        shelljs.cp("-Rf", path.join(stagingFolder, "*"), uncPath);
+
+        return Q(uncPath);
+    }
 }
 
 function getStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption): string {
@@ -217,82 +343,9 @@ function getStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption)
     return stagingFolder;
 }
 
-
-function copyToFileContainer(ctx: ctxm.PluginContext, stagingFolder: string, fileContainerPath: string): Q.IPromise<string> {
-    _ensureTracing(ctx, 'copyToFileContainer');
-
-    var fileContainerRegExp = /^#\/(\d+)(\/.*)$/;
-    var containerId: number;
-    var containerPath: string = "/";
-
-    var match = fileContainerPath.match(fileContainerRegExp);
-    if (match) {
-        containerId = parseInt(match[1]);
-        if (match.length > 2) {
-            containerPath = match[2];
-        }
-    }
-    else {
-        ctx.error("invalid file container path '" + fileContainerPath + "'");
-        return Q(null);
-    }
-
-    var containerRoot = containerPath;
-    if (containerRoot.charAt(containerPath.length) !== '/') {
-        containerRoot += '/';
-    }
-    if (containerRoot.charAt(0) === '/') {
-        containerRoot = containerRoot.substr(1);
-    }
-    _trace.state('containerRoot', containerRoot);
-
-    var contentMap: { [path: string]: ifm.ContainerItemInfo; } = {}
-
-    return readDirectory(ctx, stagingFolder, true, false)
-        .then((files: string[]) => {
-            _trace.state('files', files);
-
-            return dropm.uploadFiles(ctx, stagingFolder, containerId, containerRoot, files);
-
-            /*
-            return Q.all(files.map((fullPath: string) => {
-                return Q.nfcall(fs.stat, fullPath)
-                    .then((stat: fs.Stats) => {
-                        _trace.state('fullPath', fullPath);
-                        _trace.state('size', stat.size);
-
-                        return ctx.feedback.uploadFileToContainer(containerId, {
-                            fullPath: fullPath,
-                            containerItem: {
-                                containerId: containerId,
-                                itemType: ifm.ContainerItemType.File,
-                                path: containerRoot + fullPath.substring(stagingFolder.length + 1)
-                            },
-                            uncompressedLength: stat.size,
-                            isGzipped: false
-                        });
-                    });
-            }))
-            */
-        })
-        .then(() => {
-            ctx.info("container items uploaded");
-            _trace.state('fileContainerPath', fileContainerPath);
-            return fileContainerPath;
-        });
-}
-
 var PagesPerBlock = 32;
 var BytesPerPage = 64 * 1024;
 var BlockSize = PagesPerBlock * BytesPerPage;
-
-function copyToUncPath(ctx: ctxm.PluginContext, stagingFolder: string, uncPath: string): Q.IPromise<string> {
-    ctx.info("Copying all files from " + stagingFolder + " to " + uncPath);
-
-    shelljs.cp("-Rf", path.join(stagingFolder, "*"), uncPath);
-
-    return Q(uncPath);
-}
 
 function getCommonLocalPath(files: string[]): string {
     if (!files || files.length === 0) {
@@ -441,7 +494,7 @@ function getMatchingItems(ctx: ctxm.PluginContext, includePatterns: string[], ex
     return funcs.reduce(Q.when, Q([]));
 }
 
-function readDirectory(ctx: ctxm.PluginContext, directory: string, includeFiles: boolean, includeFolders: boolean): Q.IPromise<string[]> {
+function readDirectory(ctx: ctxm.PluginContext, directory: string, includeFiles: boolean, includeFolders: boolean): Q.Promise<string[]> {
     var results: string[] = [];
     var deferred = Q.defer<string[]>();
 

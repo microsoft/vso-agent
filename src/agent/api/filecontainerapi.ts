@@ -21,7 +21,7 @@ export class FileContainerApi {
     }
 
 /*
-    public createItems(containerId: number, items: FileContainerItem[]): Q.IPromise<FileContainerItem[]> {
+    public createItems(containerId: number, items: FileContainerItem[]): Q.Promise<FileContainerItem[]> {
         var deferred = Q.defer<FileContainerItem[]>();
 
         this.restClient.createJsonWrappedArray("_apis/resources/containers/" + containerId, items, (err: any, statusCode: number, obj: any) => {
@@ -100,7 +100,7 @@ export class QFileContainerApi {
                       contentIdentifier: Buffer, 
                       uncompressedLength: number, 
                       compressedLength: number, 
-                      isGzipped: boolean): Q.IPromise<ifm.FileContainerItem> {
+                      isGzipped: boolean): Q.Promise<ifm.FileContainerItem> {
 
         var deferred = Q.defer<ifm.FileContainerItem>();
 

@@ -318,7 +318,7 @@ export class ServiceChannel implements cm.IFeedbackChannel {
         this._getFromBatch(recordId).order = order;
     }
 
-    public uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.IPromise<any> {
+    public uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.Promise<any> {
         trace.state('containerItemTuple', containerItemTuple);
         var contentStream: NodeJS.ReadableStream;
         if (containerItemTuple.isGzipped) {
@@ -339,7 +339,7 @@ export class ServiceChannel implements cm.IFeedbackChannel {
             containerItemTuple.isGzipped);
     }  
 
-    public postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.IPromise<ifm.BuildArtifact> {
+    public postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact> {
         trace.state('artifact', artifact);
         return this._buildApi.postArtifact(buildId, artifact);
     }  

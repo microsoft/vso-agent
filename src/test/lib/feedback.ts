@@ -118,11 +118,11 @@ export class TestFeedbackChannel implements cm.IFeedbackChannel {
 		callback(null);
 	}
 
-    public uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.IPromise<any> {
+    public uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.Promise<any> {
     	return Q(containerItemTuple);
     }  
 
-    public postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.IPromise<ifm.BuildArtifact> {
+    public postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact> {
         return Q(artifact);
     }	
 

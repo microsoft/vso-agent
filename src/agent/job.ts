@@ -92,7 +92,7 @@ export class JobRunner {
                     // TODO: replace build with sender id once confirm how sent
 
                     ag.info('loading plugins...');
-                    plgm.load('build', ag, (err: any, plugins: any) => {
+                    plgm.load('build', ag, jobCtx, (err: any, plugins: any) => {
                         if (err) {
                             trace.write('error loading plugins');
                             complete(err, ifm.TaskResult.Failed);

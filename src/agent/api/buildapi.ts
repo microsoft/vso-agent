@@ -36,7 +36,7 @@ export class QBuildApi {
         this._buildApi = new BuildApi(accountUrl, handler);
     }
 
-    public postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.IPromise<ifm.BuildArtifact> {
+    public postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact> {
         var deferred = Q.defer<ifm.BuildArtifact>();
 
         this._buildApi.postArtifact(buildId, artifact, (err: any, statusCode: number, artifact: ifm.BuildArtifact) => {

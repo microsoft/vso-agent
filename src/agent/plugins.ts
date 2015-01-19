@@ -17,7 +17,15 @@ var isFunction = function (func) {
     return typeof func === 'function';
 }
 
-export function load(pluginType, ctx: ctxm.AgentContext, callback) {
+export interface IPlugin {
+    afterId: string;
+    pluginName(): string;
+    pluginTitle(): string;
+    shouldRun(jobSuccess: boolean, ctx: ctxm.JobContext): boolean;
+    afterJob(pluginContext: ctxm.PluginContext, callback: (err?: any) => void): void;
+}
+
+export function load(pluginType, ctx: ctxm.AgentContext, jobContext: ctxm.JobContext, callback) {
     var plugins = {};
     plugins['beforeJob'] = [];
     plugins['afterJob'] = [];
@@ -47,9 +55,12 @@ export function load(pluginType, ctx: ctxm.AgentContext, callback) {
                                 plugins['beforeJob'].push(plugin);
                             }
 
-                            if (isFunction(plugin.afterJob)) {
-                                plugin.afterId = uuid.v1();
-                                plugins['afterJob'].push(plugin);
+                            // one plugin may have implementations of multiple options
+                            if (isFunction(plugin.afterJobPlugins)) {
+                                plugin.afterJobPlugins(jobContext).forEach((option: IPlugin) => {
+                                    option.afterId = uuid.v1();
+                                    plugins['afterJob'].push(option);
+                                });
                             }
                         }
                     }
