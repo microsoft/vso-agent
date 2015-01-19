@@ -8,6 +8,7 @@ import ifm = require('./interfaces');
 import httpm = require('./httpclient');
 import restm = require('./restclient');
 import stream = require("stream");
+import querystring = require('querystring');
 
 export class FileContainerApi {
     collectionUrl: string;
@@ -46,7 +47,8 @@ export class FileContainerApi {
                       isGzipped: boolean,
                       onResult: (err: any, statusCode: number, item: ifm.FileContainerItem) => void): void {
 
-        var targetUrl = "_apis/resources/containers/" + containerId + "/" + itemPath;
+        var itemPathQS: string = querystring.stringify({itemPath: itemPath});
+        var targetUrl = "_apis/resources/containers/" + containerId + "?" + itemPathQS;
 
         var addtlHeaders = {};
         var byteLengthToSend = isGzipped ? compressedLength : uncompressedLength;
