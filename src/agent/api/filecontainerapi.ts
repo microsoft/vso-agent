@@ -49,16 +49,15 @@ export class FileContainerApi {
         var targetUrl = "_apis/resources/containers/" + containerId + "/" + itemPath;
 
         var addtlHeaders = {};
-        addtlHeaders["Content-Range"] = "bytes 0-" + (uncompressedLength - 1) + "/" + uncompressedLength;
+        var byteLengthToSend = isGzipped ? compressedLength : uncompressedLength;
+
+        addtlHeaders["Content-Range"] = "bytes 0-" + (byteLengthToSend - 1) + "/" + byteLengthToSend;
+        addtlHeaders["Content-Length"] = byteLengthToSend;
 
         if (isGzipped) {
             addtlHeaders["Accept-Encoding"] = "gzip";
             addtlHeaders["Content-Encoding"] = "gzip";
-            addtlHeaders["x-tfs-filelength"] = compressedLength;
-            addtlHeaders["Content-Length"] = compressedLength;
-        }
-        else {
-            addtlHeaders["Content-Length"] = uncompressedLength;
+            addtlHeaders["x-tfs-filelength"] = uncompressedLength;
         }
 
         if (contentIdentifier) {

@@ -106,9 +106,13 @@ function _zipToTemp(filePath): Q.Promise<string> {
 		var ws = fs.createWriteStream(zipDest);
 		_trace.write('ws for: ' + zipDest);
 
-		inputStream.on('end', () => {			
-			defer.resolve(zipDest);
-		});
+        gzip.on('end', function () {
+            defer.resolve(zipDest);
+        });
+
+        gzip.on('error', function (err) {
+            defer.reject(err);
+        });
 
 		inputStream.on('error', (err) => {
 			defer.reject(err);
@@ -127,46 +131,65 @@ function _zipToTemp(filePath): Q.Promise<string> {
 	return defer.promise;
 }
 
-function _uploadFile(filePath) {
-	_ensureTracing(_ctx, '_uploadFile');
-
+function _uploadZip(filePath: string, fileSize: number, containerPath: string) {
+	_ensureTracing(_ctx, '_uploadZip');
 	var info = <any>{};
 
 	return _zipToTemp(filePath)
 	.then((zipPath) => {
-		_trace.state('zipPath', zipPath);
-
 		info.zipPath = zipPath;
 		return _getFileSize(zipPath);
 	})
-	.then((size) => {
-		_trace.state('zipSize', size);
+	.then((zipSize) => {
+		_trace.write(info.zipPath + ':' + zipSize);
 
-		info.zipSize = size;
-		console.log(info.zipPath + ':' + info.zipSize);
-		return _getFileSize(filePath);
-	})
-	.then((size) => {
-		_trace.state('size', size);
-
-		info.size = size;
-		console.log(filePath + ':' + size);
-
-		var containerPath = path.join(_containerRoot, filePath.substring(_stagingFolder.length + 1));
-		_trace.state('containerPath', containerPath);
-		_ctx.info(containerPath);
-
-	    return _ctx.feedback.uploadFileToContainer(_containerId, {
+		var item: ifm.ContainerItemInfo =  <ifm.ContainerItemInfo>{
 	        fullPath: info.zipPath,
 	        containerItem: {
 	            containerId: _containerId,
 	            itemType: ifm.ContainerItemType.File,
 	            path: containerPath
 	        },
-	        compressedLength: info.zipSize,
-	        uncompressedLength: info.size,
+	        compressedLength: zipSize,
+	        uncompressedLength: fileSize,
 	        isGzipped: true
-	    });
+	    };
+	    _trace.state('item', item);
+
+		return _ctx.feedback.uploadFileToContainer(_containerId, item);
+	})
+}
+
+function _uploadFile(filePath) {
+	_ensureTracing(_ctx, '_uploadFile');
+
+	var info = <any>{};
+	var containerPath = path.join(_containerRoot, filePath.substring(_stagingFolder.length + 1));
+	_ctx.info(containerPath);
+	_trace.state('containerPath', containerPath);
+
+	return _getFileSize(filePath)
+	.then ((size) => {
+		info.originalSize = size;
+
+		if (size > (65 * 1024)) {
+			return _uploadZip(filePath, size, containerPath);
+		}
+		else {
+			var item: ifm.ContainerItemInfo = <ifm.ContainerItemInfo>{
+		        fullPath: filePath,
+		        containerItem: {
+		            containerId: _containerId,
+		            itemType: ifm.ContainerItemType.File,
+		            path: containerPath
+		        },
+		        uncompressedLength: size,
+		        isGzipped: false
+		    };
+
+		    _trace.state('item', item);
+			return _ctx.feedback.uploadFileToContainer(_containerId, item);			
+		}
 	})
 }
 
@@ -177,7 +200,7 @@ var _uploadFiles = function(files) {
 	files.forEach(function(f) {
 		result = result.then(function() { 
 			return _uploadFile(f);
-		});	
+		})	
 	})
 
 	return result;	
