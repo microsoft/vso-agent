@@ -320,15 +320,7 @@ export class ServiceChannel implements cm.IFeedbackChannel {
 
     public uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.Promise<any> {
         trace.state('containerItemTuple', containerItemTuple);
-        var contentStream: NodeJS.ReadableStream;
-        if (containerItemTuple.isGzipped) {
-            var gzip = zlib.createGzip();
-            var inputStream = fs.createReadStream(containerItemTuple.fullPath);            
-            contentStream = inputStream.pipe(gzip);
-        }
-        else {
-            contentStream = fs.createReadStream(containerItemTuple.fullPath);
-        }
+        var contentStream: NodeJS.ReadableStream = fs.createReadStream(containerItemTuple.fullPath);
 
         return this._fileContainerApi.uploadFile(containerId,
             containerItemTuple.containerItem.path,
