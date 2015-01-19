@@ -248,7 +248,7 @@ export class JobContext extends ExecutionContext {
         this.config = agentCtx.config;
         trace.state('this.config', this.config);
 
-        super(info, job.timeline.id, feedback, agentCtx);
+        super(info, job.jobId, feedback, agentCtx);
     }
 
     public job: ifm.JobRequestMessage;
