@@ -51,14 +51,30 @@ export class JobRunner {
                 }
             });
         }
+
         trace.state('tasks', this.job.tasks);
     }
+
+    private _setEnvVars() {
+        trace.enter('setEnvVars');
+
+        // replace variables in inputs
+        if (this.job.environment.variables) {
+            for (var variable in this.job.environment.variables) {
+                var envVarName = variable.replace(".", "_").toUpperCase();
+                process.env[envVarName] = this.job.environment.variables[variable];
+            }
+        }
+
+        trace.state('variables', process.env);
+    }  
 
     public run(complete: (err: any, result: ifm.TaskResult) => void) {
         trace.enter('run');
 
         var ag = this.agentContext;
         this._replaceTaskInputVars();
+        this._setEnvVars();
 
         var _this: JobRunner = this;
         var jobCtx: ctxm.JobContext = this.jobContext;
@@ -118,7 +134,7 @@ export class JobRunner {
                             ag.info(task.name + ":" + task.id);
 
                             jobCtx.registerPendingTask(task.instanceId, 
-                                                       task.name, 
+                                                       task.displayName, 
                                                        order++);
                         });
 
