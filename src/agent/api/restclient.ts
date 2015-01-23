@@ -19,11 +19,6 @@ import ifm = require('./interfaces');
 
 var getJsonResponse = function (contents) {
     var json = JSON.parse(contents);
-    if (process.env.XPLAT_TRACE_HTTP) {
-        console.log('********* RESPONSE ***********');
-        console.log(JSON.stringify(json, null, 2));
-        console.log('******************************');
-    }
     return json;
 }
 
@@ -55,14 +50,6 @@ var httpCodes = {
 }
 
 export function processResponse(url, res, contents, onResult) {
-    if (process.env.XPLAT_TRACE_HTTP) {
-        console.log('********* RESPONSE ***********');
-        console.log('statusCode: ' + res.statusCode);
-        console.log('url: ' + url);
-        console.log('time: ' + new Date());
-        console.log('******************************');
-    }
-
     if (res.statusCode > 299) {
         // not success
         var msg = httpCodes[res.statusCode] ? "Failed Request: " + httpCodes[res.statusCode] : "Failed Request";
@@ -165,13 +152,6 @@ export class RestClient implements ifm.IRestClient {
     }
 
     uploadFile(relativeUrl: string, filePath: string, customHeaders: any, onResult: (err: any, statusCode: number, obj: any) => void): void {
-        if (process.env.XPLAT_TRACE_HTTP) {
-            console.log('======= uploadFile =========');
-            console.log(filePath);
-            console.log(relativeUrl);
-            console.log('=========================');
-        }
-
         fs.stat(filePath, (err, stats) => {
             if (err) {
                 onResult(err, 400, null);
@@ -207,13 +187,6 @@ export class RestClient implements ifm.IRestClient {
     }    
 
     downloadFile(relativeUrl: string, filePath: string, fileType: string, onResult: (err: any, statusCode: number) => void): void {
-        if (process.env.XPLAT_TRACE_HTTP) {
-            console.log('======= downloadFile =========');
-            console.log(filePath);
-            console.log(relativeUrl);
-            console.log('=========================');
-        }
-
         if (fs.existsSync(filePath)) {
             onResult(new Error('File ' + filePath + ' already exists.'), null);
             return;

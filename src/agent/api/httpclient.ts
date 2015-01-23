@@ -41,13 +41,6 @@ export class HttpClient implements ifm.IHttpClient {
     sendFile(verb: string, requestUrl: string, content: NodeJS.ReadableStream, headers: any, onResult: (err: any, res: http.ClientResponse, contents: string) => void): void {
         var options = this._getOptions(verb, requestUrl, headers);
 
-        if (process.env.XPLAT_TRACE_HTTP) {
-            console.log('======= REQUEST =========');
-            console.log('-- sendFile --');
-            console.log(JSON.stringify(options.options, null, 2));
-            console.log('=========================');
-        }
-
         var req = options.protocol.request(options.options, function (res) {
             var output = '';
 
@@ -77,13 +70,6 @@ export class HttpClient implements ifm.IHttpClient {
     getFile(requestUrl: string, destination: NodeJS.WritableStream, headers: any, onResult: (err: any, res: http.ClientResponse) => void): void {
         var options = this._getOptions('GET', requestUrl, headers);
 
-        if (process.env.XPLAT_TRACE_HTTP) {
-            console.log('======= REQUEST =========');
-            console.log('-- getFile --');
-            console.log(JSON.stringify(options.options, null, 2));
-            console.log('=========================');
-        }
-
         var req = options.protocol.request(options.options, function(res) {
             // Wait on the pipe command closing the destination stream
             // res could 'end' before it made it through the pipe
@@ -112,15 +98,41 @@ export class HttpClient implements ifm.IHttpClient {
         var prot: any = usingSsl ? https : http;
         var defaultPort = usingSsl ? 443 : 80;
 
-        var options = {
-            host: parsedUrl.hostname,
-            port: parsedUrl.port || defaultPort,
-            path: (parsedUrl.pathname || '') + (parsedUrl.search || ''),
-            method: method,
-            headers: {}
+        var proxyUrl: url.Url;
+        if (process.env.HTTP_PROXY) {
+            proxyUrl = url.parse(process.env.HTTP_PROXY);
+            prot = proxyUrl.protocol === 'https:' ? https: http;
         }
 
+        var options = { headers: {}};
+
+        var useProxy = proxyUrl && proxyUrl.hostname;
+        if (useProxy) {
+            // TODO: support proxy-authorization
+            options = {
+                host: proxyUrl.hostname,
+                port: proxyUrl.port || 8888,
+                path: requestUrl,
+                method: method,
+                headers: {}
+            }
+        }
+        else {
+            options = {
+                host: parsedUrl.hostname,
+                port: parsedUrl.port || defaultPort,
+                path: (parsedUrl.pathname || '') + (parsedUrl.search || ''),
+                method: method,
+                headers: {}
+            }            
+        }
+
+
         options.headers = headers;
+
+        if (useProxy) {
+            options.headers['Host'] = parsedUrl.hostname;
+        }
 
         //options.headers["Accept"] = contentType;
         options.headers["User-Agent"] = this.userAgent;
@@ -142,15 +154,6 @@ export class HttpClient implements ifm.IHttpClient {
         if (objs) {
             reqData = JSON.stringify(objs, null, 2);
             options.headers["Content-Length"] = Buffer.byteLength(reqData, 'utf8');
-        }
-
-        if (process.env.XPLAT_TRACE_HTTP) {
-            console.log('======= REQUEST =========');
-            console.log(JSON.stringify(options, null, 2));
-
-            if (reqData)
-                console.log(reqData);
-            console.log('=========================');
         }
 
         var req = protocol.request(options, function (res) {
