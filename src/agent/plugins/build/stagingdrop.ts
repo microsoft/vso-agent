@@ -12,6 +12,7 @@ import Q = require("q");
 import shelljs = require("shelljs");
 import ctxm = require('../../context');
 import cm = require('../../common');
+import util = require('../../utilities');
 import ifm = require('../../api/interfaces');
 import webapi = require("../../api/webapi");
 import tm = require('../../tracing');
@@ -118,14 +119,10 @@ class CopyToStagingFolder implements plugins.IPlugin {
                 filesPromise = Q([searchPattern]);
             }
 
-            // create the staging folder
-            ctx.info("Creating folder " + stagingFolder);
-            var createStagingFolderPromise = Q.nfcall(fs.mkdir, stagingFolder).
-                then(() => {
-                },
-                (error) => {
-                    ctx.error(error);
-                });
+            // TODO: staging folder should be created and defined outside of this plugin
+            //       so if user opts out of copy pattern, they can still run a script.
+            ctx.info("Staging folder: " + stagingFolder);
+            var createStagingFolderPromise = util.ensurePathExists(stagingFolder);
 
             var deferred = Q.defer();
             Q.all([filesPromise, createStagingFolderPromise])
