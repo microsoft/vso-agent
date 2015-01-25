@@ -79,7 +79,7 @@ export class JobRunner {
         var _this: JobRunner = this;
         var jobCtx: ctxm.JobContext = this.jobContext;
 
-        ag.info('Setting job to in progress');
+        trace.write('Setting job to in progress');
         jobCtx.setJobInProgress();
         jobCtx.writeConsoleSection('Preparing tasks');
 
@@ -91,7 +91,7 @@ export class JobRunner {
                 return;
             }
             // prepare (might download) up to 5 tasks in parallel and then run tasks seuentially
-            ag.status('Preparing Tasks');
+            ag.info('Preparing Tasks');
             async.forEach(_this.job.tasks,
                 function (pTask, callback) {
                     _this.prepareTask(pTask, callback);
@@ -397,7 +397,7 @@ export class JobRunner {
         trace.enter('runTask');
         var ag = this.agentContext;
 
-        ag.status('Task: ' + task.name);
+        ag.info('Task: ' + task.name);
 
         this._processInputs(task);
         for (var key in task.inputs) {

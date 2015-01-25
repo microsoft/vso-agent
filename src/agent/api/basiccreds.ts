@@ -17,7 +17,6 @@ export class BasicCredentialHandler implements ifm.IRequestHandler {
     // currently implements pre-authorization
     // TODO: support preAuth = false where it hooks on 401
     prepareRequest(options:any): void {
-        // console.log(this.username + ':' + this.password);
         options.headers['Authorization'] = 'Basic ' + new Buffer(this.username + ':' + this.password).toString('base64');
         options.headers['X-TFS-FedAuthRedirect'] = 'Suppress';
     }

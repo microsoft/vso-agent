@@ -15,6 +15,7 @@ src/agent/host.ts
 src/agent/inputs.ts
 src/agent/job.ts
 src/agent/logging.ts
+src/agent/plugins/build/prepare.ts
 src/agent/plugins/build/stagingdrop.ts
 src/agent/plugins.ts
 src/agent/service.ts

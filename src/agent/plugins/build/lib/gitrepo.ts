@@ -1,14 +1,14 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-var shell = require('shelljs/global');
-var path = require('path');
-var fs = require('fs');
-var async = require('async');
-var gitutil = require('./gitutil');
+import shell = require('shelljs');
+import path = require('path');
+import fs = require('fs');
+import async = require('async');
+var iniparser = require('iniparser');
 
 var shellError = function(ctx, callback) {
-    var errMsg = error();
+    var errMsg = shell.error();
     if (errMsg) {
         ctx.error(errMsg);
         callback(new Error(errMsg));
@@ -18,10 +18,37 @@ var shellError = function(ctx, callback) {
     return false;
 }
 
-exports.getcode = function(ctx, options, callback) {
+function _translateRef(ref) {
+    var brPre = 'refs/heads/';
+    if (ref.startsWith(brPre)) {
+        ref = 'refs/remotes/origin/' + ref.substr(brPre.length, ref.length - brPre.length);
+    }
+
+    return ref;
+}
+
+function _repoExists(repoPath) {
+    var repoGitPath = path.join(repoPath, '.git');
+    return fs.existsSync(repoGitPath);  
+}
+
+function _isRepoOriginUrl(repoPath, url) {
+    var isMatch = false;
+    var configPath = path.join(repoPath, '.git', 'config');
+
+    if (fs.existsSync(configPath)) {
+        var config = iniparser.parseSync(configPath);
+        isMatch = config.hasOwnProperty('remote "origin"') && 
+                    url.isEqual(true, config['remote "origin"'].url);
+    }
+
+    return isMatch;
+}
+
+export function getcode(ctx, options, callback) {
     ctx.verbose('cwd: ' + process.cwd());
 
-    var git = which('git');
+    var git = shell.which('git');
     if (!git) {
         var msg = 'git is not installed';
         ctx.error(msg);
@@ -41,7 +68,7 @@ exports.getcode = function(ctx, options, callback) {
     ctx.info('Repo path: ' + repoPath);
 
     // if branch, we want to clone remote branch name to avoid tracking etc.. ('/refs/remotes/...')
-    var ref = gitutil.translateRef(inputref);
+    var ref = _translateRef(inputref);
     ctx.info('Using ref: ' + ref);
 
     var askpass = null;
@@ -50,9 +77,7 @@ exports.getcode = function(ctx, options, callback) {
         process.env['GIT_ASKPASS']=askPath;
 
         // TODO: should be some sort of config as part of pulling down task.
-        chmod('u+x', askPath);
-
-        //options.repoLocation = gitutil.urlWithUserName(options.creds.username, options.repoLocation);
+        shell.chmod('u+x', askPath);
         ctx.info('repo location:' + options.repoLocation);
     }
     
@@ -60,22 +85,22 @@ exports.getcode = function(ctx, options, callback) {
 
     if (options.clean && fs.existsSync(repoDirName)) {
         ctx.info('Cleaning/Deleting repo dir: ' + repoDirName);
-        rm('-rf', repoDirName);
+        shell.rm('-rf', repoDirName);
     }
 
     if (!fs.existsSync (repoDirName)) {
         ctx.info('Creating repo dir: ' + repoDirName)
-        mkdir('-p', repoDirName);
+        shell.mkdir('-p', repoDirName);
         if (shellError(ctx, callback)) return;
     }
-    cd(repoDirName);
+    shell.cd(repoDirName);
     ctx.info('cwd: ' + process.cwd());
 
     var repoFolder = path.basename(repoPath);
 
-    var repoExists = gitutil.repoExists(repoPath);
+    var repoExists = _repoExists(repoPath);
     if (repoExists) {
-        if (!gitutil.isRepoOriginUrl(repoPath, options.repoLocation)) {
+        if (!_isRepoOriginUrl(repoPath, options.repoLocation)) {
             callback(new Error('Repo @ ' + repoPath + ' is not ' + options.repoLocation));
             return;
         }
@@ -93,7 +118,7 @@ exports.getcode = function(ctx, options, callback) {
         function(complete) {
             if (repoExists) {
                 ctx.section('Git fetch');
-                cd(repoPath);
+                shell.cd(repoPath);
                 ctx.verbose('cwd: ' + process.cwd());
                 if (shellError(ctx, callback)) return;
                 ctx.util.spawn('git', ['fetch'], { failOnStdErr: false }, function(err){ handle(err, complete); });
@@ -106,7 +131,7 @@ exports.getcode = function(ctx, options, callback) {
                         complete(err);
                     }
                     else {
-                        cd(repoPath);
+                        shell.cd(repoPath);
                         if (shellError(ctx, callback)) return;
                         handle(err, complete);
                     }

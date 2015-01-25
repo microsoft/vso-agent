@@ -55,25 +55,16 @@ export function processResponse(url, res, contents, onResult) {
         var msg = httpCodes[res.statusCode] ? "Failed Request: " + httpCodes[res.statusCode] : "Failed Request";
         msg += '(' + res.statusCode + ') - ' + url;
 
-        if (contents) {
-            console.log(contents);
-        }
         onResult(new Error(msg), res.statusCode, null);
     } else {
         try {
             var jsonObj = null;
             if (contents && contents.length > 0) {
                 jsonObj = JSON.parse(contents);
-                if (process.env.XPLAT_TRACE_HTTP) {
-                    console.log(JSON.stringify(jsonObj, null, 2));
-                }
             }
         } catch (e) {
 
             onResult(new Error('Invalid Resource'), res.statusCode, null);
-            if (process.env.XPLAT_TRACE_HTTP) {
-                console.log(contents);
-            }
             return;
         }
 
@@ -175,9 +166,6 @@ export class RestClient implements ifm.IRestClient {
 
         this.httpClient.sendFile(verb, postUrl, contentStream, headers, (err: any, res: ifm.IHttpResponse, contents: string) => {
             if (err) {
-                if (process.env.XPLAT_TRACE_HTTP) {
-                    console.log('ERR: ' + err.message + ':' + err.statusCode);
-                }
                 onResult(err, err.statusCode, contents);
                 return;
             }
@@ -238,9 +226,6 @@ export class RestClient implements ifm.IRestClient {
         headers["Accept"] = 'application/json; api-version=' + this.apiVersion;
         this.httpClient.get(verb, getUrl, headers, (err: any, res: ifm.IHttpResponse, contents: string) => {
             if (err) {
-                if (process.env.XPLAT_TRACE_HTTP) {
-                    console.log('ERR: ' + err.message + ':' + err.statusCode);
-                }
                 onResult(err, err.statusCode, null);
                 return;
             }
@@ -258,9 +243,6 @@ export class RestClient implements ifm.IRestClient {
 
         this.httpClient.send(verb, postUrl, data, headers, (err: any, res: ifm.IHttpResponse, contents: string) => {
             if (err) {
-                if (process.env.XPLAT_TRACE_HTTP) {
-                    console.log('ERR: ' + err.message + ':' + err.statusCode);
-                }
                 onResult(err, err.statusCode, null);
                 return;
             }

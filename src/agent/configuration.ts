@@ -202,16 +202,7 @@ export class Configurator {
                 return agentApi.createAgent(agentPoolId, newAgent);
             }
             else {
-                console.log('updating agent...');
-                var agentUpdate: ifm.TaskAgent = agents[0];
-
-                // update just the properties user entered
-                agentUpdate['maxParallelism'] = 1;
-                agentUpdate['name'] = settings.agentName;
-                agentUpdate['systemCapabilities'] = caps;               
-
-                // TODO: we should implement force so overwrite is explicit
-                return agentApi.updateAgent(agentPoolId, agentUpdate);
+                throw new Error('An agent already exists by the name ' + settings.agentName);
             }
         })
         .then((agent: ifm.TaskAgent) => {

@@ -36,4 +36,8 @@ export class Tracing {
 
         this.writer.trace('[' + new Date().toISOString()  + '] ' + this.scope + ':' + '> ' + message + os.EOL);
     }
+
+    public error(message: string) {
+        this.write('[Error] ' + message);
+    }
 }

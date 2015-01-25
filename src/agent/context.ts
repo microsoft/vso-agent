@@ -48,6 +48,13 @@ export class Context extends events.EventEmitter {
 
     public error(message: string) {
         this.hasErrors = true;
+
+        // in case some js task/plugins end up passing through an Error object.
+        var obj = <any>message;
+        if (typeof (message) === 'object' && obj.hasOwnProperty('message')) { 
+            message = obj.message;
+        }
+
         this._write(cm.DiagnosticLevel.Error, 'Error', message);
     }
 
@@ -65,9 +72,7 @@ export class Context extends events.EventEmitter {
 
     private _write(level: cm.DiagnosticLevel, tag: string, message: string) {
         if (typeof (message) !== 'string') {
-            console.error('non-string write: ' + level, tag);
-            console.error(JSON.stringify(message, null, 2));
-            console.trace();
+            trace.error('invalid message type: ' + typeof (message));
             return;
         }
 
@@ -126,6 +131,7 @@ export class Context extends events.EventEmitter {
 
 export class AgentContext extends Context implements cm.ITraceWriter {
     constructor(hostProcess: string, config: cm.IConfiguration, consoleOutput: boolean) {
+        ensureTrace(this);
         this.config = config;
 
         // Set full path for work folder, as it is used by others

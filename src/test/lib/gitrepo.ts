@@ -44,6 +44,7 @@ export class GitRepo {
 		var cp = require('child_process').spawn;
 		var runCP = cp(this.git, parameters, ops);
 
+		// progress comes out on stderr so we write to stdout
 		runCP.stderr.on('data', (data) => {
 			console.log(data);
 		});

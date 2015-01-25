@@ -35,7 +35,9 @@ task('build', {async: true}, function () {
 		console.log('Copying other files');
 		jake.cpR('package.json', buildPath);
 		jake.cpR('src/agent/handlers/vso.py', path.join(buildPath, 'agent', 'handlers'));
+		jake.cpR('src/agent/plugins/build/lib/askpass.js', path.join(buildPath, 'agent', 'plugins', 'build', 'lib'));
 		jake.cpR('src/bin/install.js', path.join(buildPath, 'bin'));
+		
 		complete();
 	});
 });
@@ -114,8 +116,6 @@ task('package', [], function() {
 	jake.rmRf(packageRoot);
 	jake.mkdirP(packagePath);
 	jake.cpR(buildPath, packageRoot);
-
-	jake.cpR('src/agent/plugins/build', path.join(packagePath, 'agent', 'plugins'));
 	jake.cpR('README.md', path.join(packagePath));	
 	console.log('Package created.');
 });

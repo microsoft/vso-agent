@@ -90,9 +90,6 @@ export class HttpClient implements ifm.IHttpClient {
 
     _getOptions(method: string, requestUrl: string, headers: any): any {
 
-        // TODO: implement http tracing
-        // console.log(requestUrl);
-
         var parsedUrl: url.Url = url.parse(requestUrl);
         var usingSsl = parsedUrl.protocol === 'https:';
         var prot: any = usingSsl ? https : http;

@@ -126,18 +126,6 @@ export class TestFeedbackChannel implements cm.IFeedbackChannel {
         return Q(artifact);
     }	
 
-	public printConsole(): void {
-		console.log(this._webConsole);
-	}
-
-	public printRecords(): void {
-		console.log(JSON.stringify(this._records));
-	}
-
-	public printLogPages(): void {
-		console.log(JSON.stringify(this._logPages));
-	}
-
 	public getRecordsString(): string {
 		return JSON.stringify(this._records);
 	}
