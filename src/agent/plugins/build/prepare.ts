@@ -40,7 +40,9 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     });
 
     if (invalidType) {
-        callback(new Error('Unsupported repository type:' + invalidType));
+        var msg = 'Unsupported repository type:' + invalidType;
+        ctx.error(msg)
+        callback(new Error(msg));
         return;
     }
 
@@ -55,9 +57,13 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     var selectedRef = srcVersion ? srcVersion : srcBranch;
     ctx.info('selectedRef: ' + selectedRef);
 
+    var srcendpoints = endpoints.filter(function (endpoint) {
+        return (supported.indexOf(endpoint.type) >= 0);
+    });
+
     // TODO: we only really support one.  Consider changing to index 0 of filter result and warn | fail if length > 0
     //       what's odd is we will set sys.sourceFolder so > 1 means last one wins
-    async.forEachSeries(endpoints, function (endpoint, done) {
+    async.forEachSeries(srcendpoints, function (endpoint, done) {
         
         //TODO: confirm how external git and github creds flow down
         var creds = tfcreds; //endpoint.type === 'TfsGit' ? tfcreds : endpoint.creds;

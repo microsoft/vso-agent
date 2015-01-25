@@ -172,10 +172,6 @@ export class JobRunner {
                                         jobSuccess = !err && success;
                                         trace.write('jobSuccess: ' + jobSuccess);
 
-                                        if (err) {
-                                            ag.error(err.message);
-                                        }
-
                                         // we always run afterJob plugins
                                         done(null);
                                     })
@@ -193,10 +189,6 @@ export class JobRunner {
                                             jobSuccess = jobSuccess && !err && success;
                                             trace.write('jobSuccess: ' + jobSuccess);
 
-                                            if (err) {
-                                                ag.error(err.message);
-                                            }
-
                                             done(null);
                                         });
                                     }
@@ -208,10 +200,6 @@ export class JobRunner {
                                         ag.info('Finished running afterJob plugins');
                                         jobSuccess = jobSuccess && !err && success;
                                         trace.write('jobSuccess: ' + jobSuccess);
-
-                                        if (err) {
-                                            ag.error(err.message);
-                                        }
 
                                         done(err);
                                     });
