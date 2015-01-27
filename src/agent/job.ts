@@ -17,6 +17,10 @@ import cm = require('./common');
 
 var shell = require('shelljs');
 
+// TODO: remove this hack in a couple of sprints.  Some tasks were not loading shelljs
+//       and the issue was masked.  Fixing tasks now and then we will remove.
+require('shelljs/global')
+
 var trace: tm.Tracing;
 
 //
