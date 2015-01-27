@@ -8,6 +8,7 @@ import ctxm = require('./context');
 
 var shell = require('shelljs');
 var fs = require('fs');
+var path = require('path');
 
 // TODO: offer these module level context-less helper functions in utilities below
 export function ensurePathExists(path: string): Q.Promise<void> {
@@ -123,9 +124,7 @@ export class Utilities {
             if (code == 0 || !ops.failOnNonZeroRC) {
                 callback(null, code);
             } else {
-                var msg = 'Return code: ' + code;
-                this.ctx.error(msg);
-
+                var msg = path.basename(name) + ' returned code: ' + code;
                 callback(new Error(msg), code);
             }
         });
