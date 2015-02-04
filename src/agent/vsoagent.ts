@@ -162,18 +162,25 @@ process.on('uncaughtException', function (err) {
     }
 });
 
-process.on('SIGINT', function() {
-  console.log( "\nShutting down host." );
-  if (messageListener) {
-    messageListener.stop( function (err) {
-        if (err) {
-            ag.error('Error deleting agent session:');
-            ag.error(err.message);
-        }
+var gracefulShutdown = function() {
+    console.log("\nShutting down host.");
+    if (messageListener) {
+        messageListener.stop(function (err) {
+            if (err) {
+                ag.error('Error deleting agent session:');
+                ag.error(err.message);
+            }
+            process.exit();
+        });
+    } else {
         process.exit();
-    })
-  }
-  else {
-    process.exit();
-  }
-})
+    }    
+}
+
+process.on('SIGINT', function () {
+    gracefulShutdown();
+});
+
+process.on('SIGTERM', function () {
+    gracefulShutdown();
+});

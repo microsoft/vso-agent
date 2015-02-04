@@ -70,34 +70,49 @@ $ node configure
 
 ##Run as a Service
 
+Run in the agent directory
 note: only works on OSX right now
 
 ###Install Service
 
+Run as a daemon (OSX | Linux)
 ```bash
-$ sudo node service install
-...
-Started Successfully
+$ ./svc.sh install
 ```
+
+Run as launch agent (only OSX)
+```bash
+$ ./svc.sh install agent
+```
+*potentially run UI tests*
+[Auto Logon and Lock](http://www.tuaw.com/2011/03/07/terminally-geeky-use-automatic-login-more-securely/)
 
 ###Check Status
 ```bash
-$ sudo node service status
-8367	-	com.microsoft.vsoagent
+$ ./svc.sh status
+8367	-	vsoagent.myaccount.agent1
 ```
 
-note: output is (pid)  (rc)  (name)
+*note: 
+    output is (pid)  (rc)  (name)
+    if it is running pid will have a positive number
+    rc is last exit code.  if negative, term signal number.  if postive, err return code from last run.
+*
 
 ###Stop
 ```bash
-$ sudo node service stop
-stop: Success.
+$ ./svc.sh stop
 ```
 
 ###Start
 ```bash
-$ sudo node service start
-start: Success.
+$ ./svc.sh start
+```
+
+###Uninstall Service
+Stop first and then:
+```bash
+$ ./svc.sh uninstall
 ```
 
 ###Contents

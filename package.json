@@ -1,6 +1,6 @@
 {
   "name": "vsoagent-installer",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Visual Studio Xplat Build Agent Installer",
   "main": "bin/install.js",
   "preferGlobal": true,
@@ -36,7 +36,7 @@
     "read": "^1.0.5",
     "shelljs": "0.2.x",
     "svchost": "0.1.x",
-    "svcinstall": "0.1.x",
+    "svcinstall": "^0.2.0",
     "validator": "~3.11.0"
   },
   "devDependencies": {

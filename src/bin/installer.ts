@@ -13,8 +13,11 @@ console.log('Copying: ', agentDir, targetDir);
 shell.cp('-R', agentDir, targetDir);
 
 var modsDir = path.join(__dirname, '..', 'node_modules');
-var targetMods = path.join(targetDir, 'agent');
-console.log('Copying: ', modsDir, targetMods);
-shell.cp('-R', modsDir, targetMods);
+var targetAgent = path.join(targetDir, 'agent');
+console.log('Copying: ', modsDir, targetAgent);
+shell.cp('-R', modsDir, targetAgent);
+
+console.log('making scripts executable')
+shell.chmod('u+x', path.join(targetAgent, 'svc.sh'));
 
 console.log('Done.');

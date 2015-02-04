@@ -34,6 +34,7 @@ task('build', {async: true}, function () {
 		console.log('Compiling done');
 		console.log('Copying other files');
 		jake.cpR('package.json', buildPath);
+		jake.cpR('src/agent/svc.sh', path.join(buildPath, 'agent'));
 		jake.cpR('src/agent/handlers/vso.py', path.join(buildPath, 'agent', 'handlers'));
 		jake.cpR('src/agent/plugins/build/lib/askpass.js', path.join(buildPath, 'agent', 'plugins', 'build', 'lib'));
 		jake.cpR('src/bin/install.js', path.join(buildPath, 'bin'));
