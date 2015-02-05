@@ -19,5 +19,6 @@ shell.cp('-R', modsDir, targetAgent);
 
 console.log('making scripts executable')
 shell.chmod('u+x', path.join(targetAgent, 'svc.sh'));
+shell.chmod('u+x', path.join(targetAgent, 'plugins/build/lib/askpass.js'));
 
 console.log('Done.');

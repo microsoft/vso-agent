@@ -75,9 +75,6 @@ export function getcode(ctx, options, callback) {
     if (options.creds) {
         var askPath = path.join(__dirname, 'askpass.js');
         process.env['GIT_ASKPASS']=askPath;
-
-        // TODO: should be some sort of config as part of pulling down task.
-        shell.chmod('u+x', askPath);
         ctx.info('repo location:' + options.repoLocation);
     }
     

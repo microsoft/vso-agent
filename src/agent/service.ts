@@ -102,6 +102,7 @@ switch (action) {
             var options = { 
                     args: [nodePath, scriptPath, '-u', username, '-p', password]
                     , env: env
+                    , workingDirectory: path.dirname(scriptPath)
                     , launchAgent: agent
                 };
 

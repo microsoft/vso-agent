@@ -26,6 +26,14 @@ Installs the agent installer once globally.
 $ sudo npm install vsoagent-installer -g
 ```
 
+Update the installer with a new version.  It has been more reliable to uninstall and install
+```bash
+$ sudo npm uninstall vsoagent-installer -g
+$ sudo npm install vsoagent-installer -g
+```
+
+This does not update your agents.  It simply pulls down the latest version of the agent installer.
+
 ###Create Agents
 
 From a directory you created for the agent, run the installer.  Repeat from different folders for multiple agents.
