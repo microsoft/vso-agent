@@ -26,6 +26,11 @@ export class MessageListener {
                 return;
             }
 
+            if (statusCode == 400) {
+                console.error('Invalid Configuration.  Check pools and agent configuration and restart');
+                return;
+            }
+
             // resetting the long poll - reconnect immediately
             if (statusCode == 202 || (err && err.code === 'ECONNRESET')) {
                 this.getMessages(callback, onError);
@@ -67,7 +72,7 @@ export class MessageListener {
                 console.error('Unauthorized.  Confirm credentials are correct and restart.  Exiting.');
                 return;
             }
-                        
+
             if (err) {
                 onError(new Error('Could not create an agent session.  Retrying in ' + QUEUE_RETRY_DELAY/1000 + ' sec'));
                 onError(err);
