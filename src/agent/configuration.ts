@@ -129,7 +129,8 @@ export class Configurator {
         })
         .then((agentPools: ifm.TaskAgentPool[]) => {
             if (agentPools.length == 0) {
-                throw new Error(settings.poolName + ' pool does not exist.');
+                cm.throwAgentError(cm.AgentError.PoolNotExist, settings.poolName + ' pool does not exist.');
+                return;
             }
 
             // we queried by name so should only get 1
@@ -140,7 +141,8 @@ export class Configurator {
         }) 
         .then((agents: ifm.TaskAgent[]) => {
             if (agents.length == 0) {
-                throw new Error(settings.agentName + ' does not exist in pool ' + settings.poolName);
+                cm.throwAgentError(cm.AgentError.AgentNotExist, settings.agentName + ' does not exist in pool ' + settings.poolName);
+                return;
             }
 
             // should be exactly one agent by name in a given pool by id

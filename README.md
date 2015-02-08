@@ -83,6 +83,8 @@ note: only works on OSX right now
 
 ###Install Service
 
+[OSX Types](https://developer.apple.com/library/mac/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/DesigningDaemons.html#//apple_ref/doc/uid/10000172i-SW4-SW9)
+
 Run as a daemon (OSX | Linux)
 ```bash
 $ ./svc.sh install

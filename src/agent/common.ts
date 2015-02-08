@@ -56,6 +56,21 @@ export enum DiagnosticLevel {
 }
 
 //-----------------------------------------------------------
+// Agent Errors
+//-----------------------------------------------------------
+export enum AgentError {
+    // config errors 100 - 199
+    PoolNotExist = 100,
+    AgentNotExist = 101
+}
+
+export function throwAgentError(errorCode: AgentError, message: string) {
+    var err = new Error(message);
+    err['errorCode'] = errorCode;
+    throw err;
+}
+
+//-----------------------------------------------------------
 // Interfaces
 //-----------------------------------------------------------
 

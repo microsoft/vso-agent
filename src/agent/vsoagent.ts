@@ -60,8 +60,23 @@ var ensureInitialized = function(settings: cm.ISettings, creds: any, complete: (
         complete(null, config);
     })
     .fail((err) => {
-        console.error('Could not initialize.  Retrying in ' + INIT_RETRY_DELAY/1000 + ' sec');
         console.error(err.message);
+
+        // exit if the pool or agent does not exist anymore
+        if (err.errorCode === cm.AgentError.PoolNotExist ||
+            err.errorCode === cm.AgentError.AgentNotExist) {
+            console.error('Exiting.');
+            return;
+        }
+
+        // also exit if the creds are now invalid
+        if (err.statusCode && err.statusCode == 401) {
+            console.error('Invalid credentials.  Exiting.');
+            return;
+        }
+
+        console.error('Could not initialize.  Retrying in ' + INIT_RETRY_DELAY/1000 + ' sec');
+
         setTimeout(() => {
                 ensureInitialized(settings, creds, complete);
             }, INIT_RETRY_DELAY);        

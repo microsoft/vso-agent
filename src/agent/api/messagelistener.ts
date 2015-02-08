@@ -20,7 +20,12 @@ export class MessageListener {
     getMessages(callback: (message: ifm.TaskAgentMessage) => void, onError: (err: any) => void): void {
 
         this.agentapi.getMessage(this.poolId, this.sessionId, (err:any, statusCode: number, obj: any) => {
-            
+            // exit on some conditions such as bad credentials
+            if (statusCode == 401) {
+                console.error('Unauthorized.  Confirm credentials are correct and restart.  Exiting.');
+                return;
+            }
+
             // resetting the long poll - reconnect immediately
             if (statusCode == 202 || (err && err.code === 'ECONNRESET')) {
                 this.getMessages(callback, onError);
@@ -57,6 +62,12 @@ export class MessageListener {
         session.ownerName = uuid.v1();
 
         this.agentapi.createSession(this.poolId, session, (err, statusCode, session) => {
+            // exit on some conditions such as bad credentials
+            if (statusCode == 401) {
+                console.error('Unauthorized.  Confirm credentials are correct and restart.  Exiting.');
+                return;
+            }
+                        
             if (err) {
                 onError(new Error('Could not create an agent session.  Retrying in ' + QUEUE_RETRY_DELAY/1000 + ' sec'));
                 onError(err);
