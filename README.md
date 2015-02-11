@@ -44,6 +44,8 @@ $ vsoagent-installer
 
 ##Provide Permissions to Account
 
+[>> VIDEO:  Configure Permissions <<](http://youtu.be/VgRpl67nOKU)
+
 Determine which account the agent will run as.
 
    1. Enable alternate credentials for account agent will run builds as.
@@ -56,6 +58,8 @@ Determine which account the agent will run as.
       * Add user to Agent Pool Service Accounts (allows agent to listen to the build queue)
 
 ##Configure Agent
+
+[>> VIDEO:  OSX Configure - Interactive or Service <<](http://youtu.be/ILJlYGYbXtA)
 
 Run the agent from the agent folder.
 Configuration will ask for the username and password of the account the agent will run as.
