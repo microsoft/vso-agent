@@ -207,6 +207,10 @@ export class ServiceChannel implements cm.IFeedbackChannel {
     }
 
     public queueConsoleLine(line: string): void {
+        if (line.length > 512) {
+            line = line.substring(0, 509) + '...';
+        }
+                
         trace.write('qline: ' + line);
         this._consoleQueue.push(line);
     }

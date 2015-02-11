@@ -14,7 +14,7 @@ var async = require('async');
 var uuid = require('node-uuid');
 
 // TODO: support elapsed time as well
-var PAGE_SIZE = 25;
+var PAGE_SIZE = 256;
 
 //
 // Synchronous logger with paging for upload to server.  Worker and tasks are synchronous via a child process so no need for async
