@@ -144,4 +144,20 @@ describe('Test Projects', function() {
 			});
 		});
 	} : function() { it ('current system does not support java to run gradle wrapper script');});
+
+    describe('ANT', util.hasCapability('ant') ? function() {
+		it('runs', function(done) {
+			this.timeout(10000);
+			var workerMsg = util.createTestMessage('ant', repo.repo);
+			var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
+			wk.run(workerMsg, false,
+				function(agentUrl, taskUrl, jobInfo, ag) {
+					return feedbackChannel;
+				},
+				function() {
+					assert(feedbackChannel.jobsCompletedSuccessfully(), feedbackChannel.getRecordsString());
+					done();
+			});
+		});
+	} : function() { it ('current system does not support java to run gradle wrapper script');});
 });
