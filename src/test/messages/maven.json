@@ -1,0 +1,72 @@
+{
+	"requestId": 21,
+	"lockToken": "afc5b673-be1f-4628-9e92-2d46de0355fa",
+	"lockedUntil": "2014-10-14T21:41:52.573Z",
+	"plan": {
+		"planId": "e2800057-c0c3-4a64-b74c-ab27bb2a75fc",
+		"artifactUri": "vstfs:///Build/Build/45",
+		"artifactLocation": null
+	},
+	"timeline": {
+	 	"id": "22aed390-195e-45d2-841c-77053be49102",
+		"changeId": 1,
+		"location": null
+	},
+	"jobId": "82cu2f8ad0-ece7-4606-ad95-fd8202cea7",
+	"jobName": "Build",
+	"environment": {
+		"endpoints": [
+			{
+				"data": {
+					"localPath": "$(sys.sourceFolder)/test",
+					"rootFolder": null,
+					"clean": "false",
+					"checkoutSubmodules":"False"
+				},
+				"name": "test",
+				"type": "Git",
+				"authorization": "Job",
+				"url": "https://cjtest.tfsbuildhost3.tfsallin.net/DefaultCollection/_git/test"
+			}
+		],
+		"variables": {
+			"system": "build",
+			"system.collectionId": "ab9ba444-8b75-49ed-ad0e-f0cd45fb1ed9",
+			"system.teamProject": "test",
+			"system.definitionId": "1",
+			"build.definitionName": "Test",
+			"build.definitionVersion": "12",
+			"build.queuedBy": "Yang Cao",
+			"build.requestedFor": "Yang Cao",
+			"build.sourceBranch": "refs/heads/master",
+			"forceClean": "false",
+			"config": "debug, release",
+			"platform": "any cpu",
+			"system.debug": "true",
+			"build.buildId": "45",
+			"build.buildUri": "vstfs:///Build/Build/45",
+			"build.buildNumber": null,
+			"build.dropLocation": "#/10346/drop"
+		}
+	},
+	"authorization": {
+		"servicePrincipalId": "Elastic Build (cjtest)",
+		"servicePrincipalToken": "http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fname=Elastic+Build+(cjtest)&http%3a%2f%2fschemas.xmlsoap.org%2fws%2f2005%2f05%2fidentity%2fclaims%2fnameidentifier=5dd0458c-badd-44b2-8320-50f2505597ac&http%3a%2f%2fschemas.microsoft.com%2faccesscontrolservice%2f2010%2f07%2fclaims%2fidentityprovider=https%3a%2f%2ftfstest.accesscontrol.windows.net%2f&Audience=https%3a%2f%2fapp.tfsbuildhost3.tfsallin.net%2f&ExpiresOn=1413351594&Issuer=https%3a%2f%2ftfstest.accesscontrol.windows.net%2f&HMACSHA256=qyeiIJxKPzUBUux21nsKqKzSzGGW6qnEWDi24390KTc%3d",
+		"serverId": "00000000-0000-0000-0000-000000000000",
+		"serverUrl": "https://cjtest.tfsbuildhost3.tfsallin.net/DefaultCollection"
+	},
+	"tasks": [
+		{
+			"instanceId": "7d478ddb-3e63-485e-893f-76383ed153e9",
+			"displayName": "Maven",
+			"id": "AC4EE482-65DA-4485-A532-7B085873E532",
+			"name": "Maven",
+			"version": "1.0.1",
+			"inputs": {
+			    "mavenPOMFile": "maven/pom.xml",
+			    "cwd": "maven",
+                "goals": "clean test"
+			}
+		}
+	]
+}

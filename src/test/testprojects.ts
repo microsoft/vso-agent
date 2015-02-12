@@ -127,4 +127,21 @@ describe('Test Projects', function() {
 			});
 		});
 	} : function() { it ('current system does not support java to run gradle wrapper script');});
+
+    describe('Maven', util.hasCapability('maven') ? function() {
+		it('runs', function(done) {
+			// Maven is slow, and it may need to download dependencies, set timeout to 30 secs
+			this.timeout(30 * 1000);
+			var workerMsg = util.createTestMessage('maven', repo.repo);
+			var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
+			wk.run(workerMsg, false,
+				function(agentUrl, taskUrl, jobInfo, ag) {
+					return feedbackChannel;
+				},
+				function() {
+					assert(feedbackChannel.jobsCompletedSuccessfully(), feedbackChannel.getRecordsString());
+					done();
+			});
+		});
+	} : function() { it ('current system does not support java to run gradle wrapper script');});
 });

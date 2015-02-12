@@ -1,0 +1,69 @@
+{
+    "id": "AC4EE482-65DA-4485-A532-7B085873E532",
+    "name": "Maven",
+    "friendlyName": "Maven",
+    "description": "Build with Apache Maven",
+    "category": "Build",
+    "author": "Microsoft Corporation",
+    "demands" : [
+        "maven"
+    ],
+    "version": {
+        "Major": 1,
+        "Minor": 0,
+        "Patch": 1,
+        "IsTest": false
+    },
+    "instanceNameFormat": "Maven $(args)",
+    "groups": [
+        {
+            "name":"advanced",
+            "displayName":"Advanced",
+            "isExpanded":false
+        }
+    ],
+    "inputs": [
+        { 
+            "name": "mavenPOMFile", 
+            "type": "filePath", 
+            "label": "Maven POM file", 
+            "defaultValue": "", 
+            "required": true,
+            "helpMarkDown": "Relative path from the repo root to the `Maven POM file`."
+        },
+        { 
+            "name": "options", 
+            "type": "string", 
+            "label": "Options", 
+             "defaultValue": "", 
+             "required": false
+        },
+        { 
+            "name": "goals",
+            "type": "string", 
+            "label": "Goal(s)", 
+            "defaultValue": "compile", 
+            "required": false 
+        },
+        { 
+            "name": "cwd", 
+            "type": "filePath", 
+            "label": "Working directory", 
+            "defaultValue": "", 
+            "required": false,
+            "helpMarkDown":"Working directory to run the Maven build in. Defaults to the repo root.",
+            "groupName":"advanced"
+        }
+    ],
+    "execution": {
+        "JavaScript": {
+            "target": "maven.js",
+            "argumentFormat": ""
+        },
+        "PowerShell": {
+            "target": "$(currentDirectory)\\maven.ps1",
+            "argumentFormat": "",
+            "workingDirectory": "$(currentDirectory)"
+        }
+    }
+}
