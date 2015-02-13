@@ -143,7 +143,7 @@ describe('Test Projects', function() {
 					done();
 			});
 		});
-	} : function() { it ('current system does not support java to run gradle wrapper script');});
+	} : function() { it ('current system does not support Maven');});
 
     describe('ANT', util.hasCapability('ant') ? function() {
 		it('runs', function(done) {
@@ -159,5 +159,5 @@ describe('Test Projects', function() {
 					done();
 			});
 		});
-	} : function() { it ('current system does not support java to run gradle wrapper script');});
+	} : function() { it ('current system does not support Ant');});
 });
