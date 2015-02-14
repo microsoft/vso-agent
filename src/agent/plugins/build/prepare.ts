@@ -9,7 +9,7 @@ import ctxm = require('../../context');
 import ifm = require('../../api/interfaces');
 import gitrepo = require('./lib/gitrepo');
 
-var supported: string[] = ['TfsGit', 'Git'];
+var supported: string[] = ['TfsGit', 'Git', 'GitHub'];
 
 export function pluginName() {
     return "prepareWorkspace";
