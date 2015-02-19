@@ -19,5 +19,5 @@ export function runTask(scriptPath: string, ctx: ctxm.TaskContext, callback): vo
     }
 
     console.log('running: ' + scriptPath);
-    ctx.util.spawn('sh', [scriptPath], {}, callback);
+    ctx.util.spawn('bash', [scriptPath], {}, callback);
 }

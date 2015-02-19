@@ -65,7 +65,7 @@ export class JobRunner {
         // replace variables in inputs
         if (this.job.environment.variables) {
             for (var variable in this.job.environment.variables) {
-                var envVarName = variable.replace(".", "_").toUpperCase();
+                var envVarName = 'VAR_' + variable.replace(".", "_").toUpperCase();
                 process.env[envVarName] = this.job.environment.variables[variable];
             }
         }
@@ -172,6 +172,7 @@ export class JobRunner {
 
                                         // plugins can contribute to vars so replace again
                                         _this._replaceTaskInputVars();
+                                        _this._setEnvVars();
 
                                         jobSuccess = !err && success;
                                         trace.write('jobSuccess: ' + jobSuccess);
@@ -313,7 +314,8 @@ export class JobRunner {
 
                 var execution = taskMetadata.execution;
 
-                var handlers = ['JavaScript', 'Python', 'ShellScript'];
+                // in preference order
+                var handlers = ['Node', 'JavaScript', 'Python', 'ShellScript'];
                 var instructions;
                 handlers.some(function (handler) {
                     if (execution.hasOwnProperty(handler)) {

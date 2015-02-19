@@ -1,6 +1,8 @@
 --module CommonJS
 src/agent/api/messagelistener.ts
 src/agent/common.ts
+src/agent/commands/command.ts
+src/agent/commands/task.issue.ts
 src/agent/concurrentqueue.ts
 src/agent/configure.ts
 src/agent/context.ts
@@ -8,7 +10,9 @@ src/agent/diagnostics.ts
 src/agent/environment.ts
 src/agent/extensions.ts
 src/agent/feedback.ts
+src/agent/handlers/handler.ts
 src/agent/handlers/JavaScript.ts
+src/agent/handlers/Node.ts
 src/agent/handlers/Python.ts
 src/agent/handlers/ShellScript.ts
 src/agent/host.ts
