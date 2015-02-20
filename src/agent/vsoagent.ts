@@ -21,6 +21,13 @@ var Q = require('q');
 
 var inDebugger = (typeof global.v8debug === 'object');
 
+var supported = ['darwin', 'linux'];
+if (supported.indexOf(process.platform) == -1) {
+    console.error('Unsupported platform: ' + process.platform);
+    console.error('Supported platforms are: ' + supported.toString());
+    process.exit(1);
+}
+
 var ag: ctxm.AgentContext;
 var trace: tm.Tracing;
 var cfgr: cfgm.Configurator = new cfgm.Configurator();

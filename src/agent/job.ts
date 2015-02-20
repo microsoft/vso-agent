@@ -65,7 +65,7 @@ export class JobRunner {
         // replace variables in inputs
         if (this.job.environment.variables) {
             for (var variable in this.job.environment.variables) {
-                var envVarName = 'VAR_' + variable.replace(".", "_").toUpperCase();
+                var envVarName = variable.replace(".", "_").toUpperCase();
                 process.env[envVarName] = this.job.environment.variables[variable];
             }
         }

@@ -1,6 +1,6 @@
 {
   "name": "vsoagent-installer",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Visual Studio Xplat Build Agent Installer",
   "main": "bin/install.js",
   "preferGlobal": true,
@@ -38,7 +38,7 @@
     "svchost": "0.1.x",
     "svcinstall": "^0.2.1",
     "validator": "~3.11.0",
-    "vso-task-lib": "^0.1.0"
+    "vso-task-lib": "^0.1.1"
   },
   "devDependencies": {
     "mocha": "1.x"

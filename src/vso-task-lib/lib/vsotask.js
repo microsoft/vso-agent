@@ -15,7 +15,7 @@ exports.exit = _exit;
 // Input Helpers
 //-----------------------------------------------------
 _getVariable = function(name) {
-    return process.env['VAR_' + name.replace('.', '_').toUpperCase()];
+    return process.env[name.replace('.', '_').toUpperCase()];
 }
 exports.getVariable = _getVariable;
 
