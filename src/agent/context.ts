@@ -84,11 +84,12 @@ export class Context extends events.EventEmitter {
             var prefix = tag ? '[' + tag + '] ' : '';
             var dateTime = new Date().toISOString() + ': ';
 
-            this.emit('message', prefix + line);
             var logLine = prefix + dateTime + line + os.EOL;
 
+            var hasWritten = false;
             this.writers.forEach((writer) => {
                 if (writer.level >= level) {
+                    hasWritten = true;
                     if (level == cm.DiagnosticLevel.Error) {
                         writer.writeError(logLine);
                     }
@@ -97,6 +98,10 @@ export class Context extends events.EventEmitter {
                     }
                 }
             });
+
+            if (hasWritten) {
+                this.emit('message', prefix + line);    
+            }
         }
     }
 

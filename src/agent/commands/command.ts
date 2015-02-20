@@ -29,22 +29,21 @@ export function parseCommand(commandLine: string): ITaskCommand {
 
     var cmdInfo = commandLine.substring(lbPos + 1, rbPos);
     var cmdParts = cmdInfo.trim().split(' ');
-    if (cmdParts.length != 2) {
-    	throw new Error('Invalid command cmd or properties')
-    }
-
     var command = cmdParts[0];
 
-    var propLines = cmdParts[1].split(';');
-    var properties: cm.IStringDictionary = <cm.IStringDictionary>{};
-    propLines.forEach(function(propLine) {
-    	var propParts = propLine.trim().split('=');
-    	if (propParts.length != 2) {
-    		throw new Error('Invalid property: ' + propLine);
-    	}
+    var properties = <{ [name: string]: string }>{};
+    if (cmdParts.length == 2) {
+        var propLines = cmdParts[1].split(';');
+        
+        propLines.forEach(function (propLine) {
+            var propParts = propLine.trim().split('=');
+            if (propParts.length != 2) {
+                throw new Error('Invalid property: ' + propLine);
+            }
 
-    	properties[propParts[0]] = propParts[1];
-    });
+            properties[propParts[0]] = propParts[1];
+        });
+    }
 
     var msg = commandLine.substring(rbPos + 1);
     

@@ -9,7 +9,8 @@ import ctxm = require('../../context');
 import ifm = require('../../api/interfaces');
 import gitrepo = require('./lib/gitrepo');
 
-var supported: string[] = ['TfsGit', 'Git', 'GitHub'];
+// keep lower case, we do a lower case compare
+var supported: string[] = ['tfsgit', 'git', 'github'];
 
 export function pluginName() {
     return "prepareWorkspace";
@@ -33,7 +34,7 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     // TODO: support TfsVersionControl
     var invalidType: string;
     endpoints.every((endpoint) => {
-        if (supported.indexOf(endpoint.type) < 0) {
+        if (supported.indexOf(endpoint.type.toLowerCase()) < 0) {
             invalidType = endpoint.type;
             return false;
         }
@@ -58,7 +59,7 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     ctx.info('selectedRef: ' + selectedRef);
 
     var srcendpoints = endpoints.filter(function (endpoint) {
-        return (supported.indexOf(endpoint.type) >= 0);
+        return (supported.indexOf(endpoint.type.toLowerCase()) >= 0);
     });
 
     // TODO: we only really support one.  Consider changing to index 0 of filter result and warn | fail if length > 0

@@ -3,6 +3,7 @@ src/agent/api/messagelistener.ts
 src/agent/common.ts
 src/agent/commands/command.ts
 src/agent/commands/task.issue.ts
+src/agent/commands/task.debug.ts
 src/agent/concurrentqueue.ts
 src/agent/configure.ts
 src/agent/context.ts
