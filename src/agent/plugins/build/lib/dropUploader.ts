@@ -11,7 +11,6 @@ import ifm = require('../../../api/interfaces');
 import webapi = require("../../../api/webapi");
 import tm = require('../../../tracing');
 var uuid = require('node-uuid');
-var util = require('util');
 
 var _temp: string;
 var _ctx: ctxm.ExecutionContext;
@@ -57,37 +56,33 @@ function _ensureTemp(workingFolder: string) {
 	shell.mkdir('-p', _temp);
 }
 
-var NullStream = function() {
-	stream.Writable.call(this, { objectMode: true });
-	this._write = function(data, encoding, callback) {}	
-}
-util.inherits(NullStream, stream.Writable);
-
 function _getFileSize(filePath): Q.Promise<number> {
 	_ensureTracing(_ctx, '_getFileSize');
-	_trace.write(filePath);
+	_trace.write('fileSize for: ' + filePath);
 
-	var defer = Q.defer<number>();
+    var defer = Q.defer<number>();
 
-	var length = 0;
+    var l = 0;
+    var rs = fs.createReadStream(filePath);
+    rs.on('readable', function() {
+      var chunk;
+      
+      while (null !== (chunk = rs.read())) {
+        l += chunk.length;
+      }
+    });
 
+    rs.on('end', function() {
+    	_trace.write('end size: ' + l);
+        defer.resolve(l);       
+    });
 
-	var inputStream = fs.createReadStream(filePath);
-	// fs.stat is reading 0 on some smaller gz files - let's count bytes for now
-	var countStream = new NullStream();
+    rs.on('error', function(err) {
+    	_trace.error('_getFileSize error! - ' + filePath);
+        defer.reject(err);        
+    });
 
-	inputStream.on('end', () => {	
-		_trace.write('end size: ' + length);
-		defer.resolve(length);
-	});
-
-	inputStream.on('data', (chunk) => {
-		length += chunk.length;
-	});
-
-	inputStream.pipe(countStream);
-
-	return defer.promise;
+    return defer.promise;
 }
 
 //
