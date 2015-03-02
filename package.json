@@ -41,6 +41,11 @@
     "vso-task-lib": "^0.1.1"
   },
   "devDependencies": {
-    "mocha": "1.x"
+    "del": "^1.1.1",
+    "gulp": "^3.8.11",
+    "gulp-mocha": "^2.0.0",
+    "gulp-typescript": "^2.4.2",
+    "merge2": "^0.3.1",
+    "mocha": "^2.1.0"
   }
 }

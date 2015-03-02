@@ -5,10 +5,10 @@ node_modules/
 # build output
 # =========================
 
-_build/
-_package/
-_tar/
-_test/
+_build*/
+_package*/
+_tar*/
+_test*/
 
 # =========================
 # Windows detritus
