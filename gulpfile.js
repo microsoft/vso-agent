@@ -5,6 +5,8 @@ var del = require('del');
 var mocha = require('gulp-mocha');
 var runSequence = require('run-sequence');
 var ts = require('gulp-typescript');
+var tar = require('gulp-tar');
+var gzip = require('gulp-gzip');
 var merge = require('merge2');
 var minimist = require('minimist');
 
@@ -84,9 +86,9 @@ gulp.task('mocha', function () {
 });
 
 gulp.task('test', function (done) {
-    runSequence('testprep', 
-    		    'mocha', 
-				done);
+    runSequence('testprep' 
+    		   ,'mocha'
+			   , done);
 });
 
 gulp.task('package', function () {
@@ -95,14 +97,23 @@ gulp.task('package', function () {
 		.pipe(gulp.dest(packagePath));
 });
 
+gulp.task('tar', function () {
+	writeHeader('tar')
+	return gulp.src(path.join(packagePath, '**'))
+        .pipe(tar('vsoxplat.tar'))
+        .pipe(gzip())
+        .pipe(gulp.dest(tarRoot));
+});
+
 gulp.task('clean', function (cb) {
 	writeHeader("cleaning outputs");
 	del([buildRoot, tarRoot, packageRoot, testRoot],cb);
 });
 
 gulp.task('default', function(done) {
-    runSequence('clean', 
-    		    'build', 
-    		    'package',
-				done);
+    runSequence('clean' 
+    		   ,'build'
+    		   ,'package'
+    		   ,'tar'
+			   ,done);
 });

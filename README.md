@@ -149,43 +149,34 @@ git clone https://github.com/Microsoft/vso-agent.git
 
 Typescript is compiled using Jake tasks
 ```bash
-sudo npm install -g typescript
-sudo npm install -g jake
+sudo npm install -g gulp
 ```
 Install remaining pre-reqs (run from root of repo)
 ```bash
 sudo npm install
 ```
 
-### Build and Create Tar Gzip
-run jake in the root of the repo
+### Build
+run gulp in the root of the repo
 ```bash
-$ jake
+$ gulp
 ...
-Package done.
+[22:58:35] Finished 'default' after 2.39 s
 ```
 
-This creates a _tar folder with a tar.gzip.  Follow next instructions for tar.
+This creates a _package which is what is pushed to npm. 
 
-## Agent From Tar Zip
-Create a directory for the agent.  Copy the tar zip into it.
+## Install from _package
+
+This installs from a local package instead of pulling from npm.
 ```bash
-tar xvzf ./vsoxplat.tar.gz
-cd agent
-sudo npm install
+cd _package
+$ sudo npm install ./vsoxplat -g
 ```
-
-Now you can configure the agent as in instructions above.
-
-Note:  You can alternatively build and package independantly
-
-```bash
-$ jake build
-$ jake package
-```
+Go to Create Agent above.
 
 ### Run Tests
 run jake test in the root of the repo
 ```bash
-jake test
+gulp test
 ```
