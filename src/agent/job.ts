@@ -315,7 +315,7 @@ export class JobRunner {
                 var execution = taskMetadata.execution;
 
                 // in preference order
-                var handlers = ['Node', 'JavaScript', 'Python', 'ShellScript'];
+                var handlers = ['Node', 'Bash', 'JavaScript'];
                 var instructions;
                 handlers.some(function (handler) {
                     if (execution.hasOwnProperty(handler)) {

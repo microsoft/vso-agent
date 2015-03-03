@@ -173,7 +173,6 @@ cm.readBasicCreds()
     process.exit(1);
 })
 
-
 process.on('uncaughtException', function (err) {
     if (ag) {
         ag.error('agent handled:')

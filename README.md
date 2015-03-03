@@ -1,12 +1,12 @@
-#Microsoft Cross Platform Build Agent
+# Microsoft Cross Platform Build Agent
 
 A cross platform build agent for Microsoft Visual Studio Online (VSO) and Team Foundation Server (TFS).  Supported on Mac OSX and Linux.
 
 *NOTE: This is for the unreleased build.vnext service which is in preview for a subset of accounts*
 
-##Pre-Reqs
+## Pre-Reqs
 
-###Node and Npm:
+### Node and Npm:
 **Mac OSX**: Download and install node from [nodejs.org](http://nodejs.org/)
 
 **Linux**: Install [using package manager](https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager)
@@ -14,11 +14,11 @@ A cross platform build agent for Microsoft Visual Studio Online (VSO) and Team F
 From a terminal ensure at least node 0.10 and npm 1.4:
 ```bash
 $ node -v && npm -v
-v0.10.29
-1.4.14
+v0.12.0
+2.5.1
 ```
 
-##Agent From Package
+## Agent From Package
 
 Installs the agent installer once globally.
 
@@ -33,8 +33,10 @@ $ sudo npm install vsoagent-installer -g
 ```
 
 This does not update your agents.  It simply pulls down the latest version of the agent installer.
+Stop old agents and configure new/updated agents in a new directory.
+Updating an agent in place is coming soon.
 
-###Create Agents
+### Create Agents
 
 From a directory you created for the agent, run the installer.  Repeat from different folders for multiple agents.
 
@@ -42,7 +44,7 @@ From a directory you created for the agent, run the installer.  Repeat from diff
 $ vsoagent-installer
 ```
 
-##Provide Permissions to Account
+## Provide Permissions to Account
 
 [>> VIDEO:  Configure Permissions <<](http://youtu.be/VgRpl67nOKU)
 
@@ -57,7 +59,7 @@ Determine which account the agent will run as.
       * Add user to Agent Pool Administrators (allows adding agent to pool)
       * Add user to Agent Pool Service Accounts (allows agent to listen to the build queue)
 
-##Configure Agent
+## Configure Agent
 
 [>> VIDEO:  OSX Configure - Interactive or Service <<](http://youtu.be/ILJlYGYbXtA)
 
@@ -80,12 +82,12 @@ Change Configuration Later:
 $ node configure
 ```
 
-##Run as a Service
+## Run as a Service
 
 Run in the agent directory
 note: only works on OSX right now
 
-###Install Service
+### Install Service
 
 [OSX Types](https://developer.apple.com/library/mac/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/DesigningDaemons.html#//apple_ref/doc/uid/10000172i-SW4-SW9)
 
@@ -101,7 +103,7 @@ $ ./svc.sh install agent
 *potentially run UI tests*
 [Auto Logon and Lock](http://www.tuaw.com/2011/03/07/terminally-geeky-use-automatic-login-more-securely/)
 
-###Check Status
+### Check Status
 ```bash
 $ ./svc.sh status
 8367	-	vsoagent.myaccount.agent1
@@ -113,37 +115,37 @@ $ ./svc.sh status
     rc is last exit code.  if negative, term signal number.  if postive, err return code from last run.
 *
 
-###Stop
+### Stop
 ```bash
 $ ./svc.sh stop
 ```
 
-###Start
+### Start
 ```bash
 $ ./svc.sh start
 ```
 
-###Uninstall Service
+### Uninstall Service
 Stop first and then:
 ```bash
 $ ./svc.sh uninstall
 ```
 
-###Contents
+### Contents
 ```bash
 
 OSX:
 /Library/LaunchDaemons/vsoagent.{accountName}.{agentName}.plist 
 ```
 
-##Building From Source
+## Building From Source
 
-###Clone the repo
+### Clone the repo
 ```bash
-git clone <this repo url>
+git clone https://github.com/Microsoft/vso-agent.git
 ```
 
-###Build Pre-reqs
+### Build Pre-reqs
 
 Typescript is compiled using Jake tasks
 ```bash
@@ -155,7 +157,7 @@ Install remaining pre-reqs (run from root of repo)
 sudo npm install
 ```
 
-###Build and Create Tar Gzip
+### Build and Create Tar Gzip
 run jake in the root of the repo
 ```bash
 $ jake
@@ -165,7 +167,7 @@ Package done.
 
 This creates a _tar folder with a tar.gzip.  Follow next instructions for tar.
 
-##Agent From Tar Zip
+## Agent From Tar Zip
 Create a directory for the agent.  Copy the tar zip into it.
 ```bash
 tar xvzf ./vsoxplat.tar.gz
@@ -182,7 +184,7 @@ $ jake build
 $ jake package
 ```
 
-###Run Tests
+### Run Tests
 run jake test in the root of the repo
 ```bash
 jake test
