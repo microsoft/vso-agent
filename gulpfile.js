@@ -56,7 +56,7 @@ gulp.task('build', function () {
 	
 	return merge([
 		tsResult.js.pipe(gulp.dest(buildPath)),
-		packageJson.pipe(gulp.dest(path.join(buildPath, 'agent'))),
+		packageJson.pipe(gulp.dest(buildPath)),
 		svcSh.pipe(gulp.dest(agentPath)),
 		pyHandler.pipe(gulp.dest(handlerPath)),
 		askPass.pipe(gulp.dest(buildPluginLibPath)),
