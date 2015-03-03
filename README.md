@@ -147,11 +147,11 @@ git clone https://github.com/Microsoft/vso-agent.git
 
 ### Build Pre-reqs
 
-Typescript is compiled using Jake tasks
+Gulp is the build engine.  The cli needs to be installed globally
 ```bash
 sudo npm install -g gulp
 ```
-Install remaining pre-reqs (run from root of repo)
+Install remaining pre-reqs and gulp tasks (run from root of repo)
 ```bash
 sudo npm install
 ```
@@ -176,7 +176,7 @@ $ sudo npm install ./vsoxplat -g
 Go to Create Agent above.
 
 ### Run Tests
-run jake test in the root of the repo
+run gulp test in the root of the repo
 ```bash
 gulp test
 ```
