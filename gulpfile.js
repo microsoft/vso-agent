@@ -3,14 +3,14 @@ var path = require('path');
 var gulp = require('gulp');
 var del = require('del');
 var mocha = require('gulp-mocha');
-
+var runSequence = require('run-sequence');
 var ts = require('gulp-typescript');
 var merge = require('merge2');
 
-var buildRoot = path.join(__dirname, '_build2');
-var tarRoot = path.join(__dirname, '_tar2');
-var packageRoot = path.join(__dirname, '_package2');
-var testRoot = path.join(__dirname, '_test2');
+var buildRoot = path.join(__dirname, '_build');
+var tarRoot = path.join(__dirname, '_tar');
+var packageRoot = path.join(__dirname, '_package');
+var testRoot = path.join(__dirname, '_test');
 var testPath = path.join(testRoot, 'test');
 var buildPath = path.join(buildRoot, 'vsoxplat');
 var packagePath = path.join(packageRoot, 'vsoxplat');
@@ -70,22 +70,25 @@ gulp.task('testprep', function () {
 	]);
 });
 
-gulp.task('test', ['default', 'testprep'], function () {
+gulp.task('test', function () {
 	return gulp.src([path.join(testPath, '*.js')])
 		.pipe(mocha({ reporter: 'spec', ui: 'bdd' }));
 });
 
-gulp.task('package',['clean'], function () {
+gulp.task('package', function () {
 	writeHeader('package')
 	return gulp.src([path.join(buildPath, '**'), 'README.md'])
 		.pipe(gulp.dest(packagePath));
 });
 
-gulp.task('cleanoutputs', function (cb) {
-	writeHeader("deleting outputs");
+gulp.task('clean', function (cb) {
+	writeHeader("cleaning outputs");
 	del([buildRoot, tarRoot, packageRoot, testRoot],cb);
 });
 
-gulp.task('clean', ['cleanoutputs', 'build']);
-
-gulp.task('default', ['package']);
+gulp.task('default', function(done) {
+    runSequence('clean', 
+    		    'build', 
+    		    'package',
+				done);
+});
