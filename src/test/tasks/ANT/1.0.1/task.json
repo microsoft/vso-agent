@@ -1,0 +1,68 @@
+{
+    "id": "3A6A2D63-F2B2-4E93-BCF9-0CBE22F5DC26",
+    "name": "Ant",
+    "friendlyName": "Ant",
+    "description": "Build with Apache Ant",
+    "category": "Build",
+    "author": "Microsoft Corporation",
+    "version": {
+        "Major": 1,
+        "Minor": 0,
+        "Patch": 1,
+        "IsTest": false
+    },
+    "demands" : [
+        "ant"
+    ],
+    "groups": [
+        {
+            "name":"advanced",
+            "displayName":"Advanced",
+            "isExpanded":false
+        }
+    ],
+    "instanceNameFormat": "Ant $(options)",
+    "inputs": [
+        { 
+            "name": "antBuildFile", 
+            "type": "filePath", 
+            "label": "Ant build file", 
+            "defaultValue": "", 
+            "required": true,
+            "helpMarkDown": "Relative path from the repository root to the `Ant build file`."
+        },
+        { 
+            "name": "options", 
+            "type": "string", 
+            "label": "Options", 
+            "defaultValue":"", 
+            "required":false 
+        },
+        { 
+            "name": "targets", 
+            "type": "string", 
+            "label": "Target(s)", 
+            "defaultValue":"", "required":false
+        },
+         { 
+            "name": "cwd", 
+            "type": "filePath", 
+            "label": "Working directory", 
+            "defaultValue":"", 
+            "required":false,
+            "helpMarkDown":"Working directory to run the Ant build in. Defaults to repository root.",
+            "groupName":"advanced"
+        }
+    ],
+    "execution": {
+        "JavaScript": {
+            "target": "ant.js",
+            "argumentFormat": ""
+        },
+        "PowerShell": {
+            "target": "$(currentDirectory)\\ant.ps1",
+            "argumentFormat": "",
+            "workingDirectory": "$(currentDirectory)"
+        }
+    }
+}
