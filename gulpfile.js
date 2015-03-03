@@ -70,9 +70,15 @@ gulp.task('testprep', function () {
 	]);
 });
 
-gulp.task('test', function () {
+gulp.task('mocha', function () {
 	return gulp.src([path.join(testPath, '*.js')])
 		.pipe(mocha({ reporter: 'spec', ui: 'bdd' }));
+});
+
+gulp.task('test', function (done) {
+    runSequence('testprep', 
+    		    'mocha', 
+				done);
 });
 
 gulp.task('package', function () {
