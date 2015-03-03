@@ -35,7 +35,7 @@ describe('Test Projects', function() {
 
 	describe('XCode', util.hasCapability('xcode') ? function() {
 		it('runs', function(done) {
-			this.timeout(30000);
+			this.timeout(60000);
 			var workerMsg = util.createTestMessage('xcode', repo.repo);
 			var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
 			wk.run(workerMsg, false,
@@ -43,41 +43,11 @@ describe('Test Projects', function() {
 					return feedbackChannel;
 				},
 				function() {
-					assert(feedbackChannel.jobsCompletedSuccessfully(), feedbackChannel.getRecordsString());
+					assert(feedbackChannel.jobsCompletedSuccessfully(), 'XCode Build Failed! Details:' + feedbackChannel.getRecordsString());
 					done();
 			});
 		});
 	} : function() { it ('current system does not support xcode');});
-
-	describe('Jake', util.hasCapability('jake') ? function() {
-		it('runs', function(done) {
-			this.timeout(10000);
-			var workerMsg = util.createTestMessage('jake', repo.repo);
-			var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
-			wk.run(workerMsg, false,
-				function(agentUrl, taskUrl, jobInfo, ag) {
-					return feedbackChannel;
-				},
-				function() {
-					assert(feedbackChannel.jobsCompletedSuccessfully(), feedbackChannel.getRecordsString());
-					done();
-			});
-		});
-
-		it('fails on Exception', function(done) {
-			var workerMsg = util.createTestMessage('jakefailure', repo.repo);
-			var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
-			wk.run(workerMsg, false,
-				function(agentUrl, taskUrl, jobInfo, ag) {
-					return feedbackChannel;
-				},
-				function() {
-					assert(!feedbackChannel.jobsCompletedSuccessfully(), feedbackChannel.getRecordsString());
-					assert(workerMsg['data'].tasks[0].instanceId, feedbackChannel.getRecordsString());
-					done();
-			});
-		});
-	} : function() { it ('current system does not support jake');});
 
 	describe('Cmake', util.hasCapability('cmake') ? function() {
 		it('runs', function(done) {
@@ -89,7 +59,7 @@ describe('Test Projects', function() {
 					return feedbackChannel;
 				},
 				function() {
-					assert(feedbackChannel.jobsCompletedSuccessfully(), feedbackChannel.getRecordsString());
+					assert(feedbackChannel.jobsCompletedSuccessfully(), 'CMake Build Failed! Details:' + feedbackChannel.getRecordsString());
 					done();
 			});
 		});
@@ -105,7 +75,7 @@ describe('Test Projects', function() {
 					return feedbackChannel;
 				},
 				function() {
-					assert(feedbackChannel.jobsCompletedSuccessfully(), feedbackChannel.getRecordsString());
+					assert(feedbackChannel.jobsCompletedSuccessfully(), 'Shellscript Build Failed! Details:' + feedbackChannel.getRecordsString());
 					done();
 			});
 		});
@@ -114,7 +84,7 @@ describe('Test Projects', function() {
 	describe('Gradle', util.hasCapability('java') ? function() {
 		it('runs', function(done) {
 			// Gradle is slow, and it may need to bootstrap the runtime, set timeout to 30 secs
-			this.timeout(30 * 1000);
+			this.timeout(120 * 1000);
 			var workerMsg = util.createTestMessage('gradle', repo.repo);
 			var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
 			wk.run(workerMsg, false,
@@ -122,7 +92,7 @@ describe('Test Projects', function() {
 					return feedbackChannel;
 				},
 				function() {
-					assert(feedbackChannel.jobsCompletedSuccessfully(), feedbackChannel.getRecordsString());
+					assert(feedbackChannel.jobsCompletedSuccessfully(), 'Gradle Build Failed! Details:' + feedbackChannel.getRecordsString());
 					done();
 			});
 		});
@@ -139,7 +109,7 @@ describe('Test Projects', function() {
 					return feedbackChannel;
 				},
 				function() {
-					assert(feedbackChannel.jobsCompletedSuccessfully(), feedbackChannel.getRecordsString());
+					assert(feedbackChannel.jobsCompletedSuccessfully(), 'Maven Build Failed! Details:' + feedbackChannel.getRecordsString());
 					done();
 			});
 		});
@@ -155,7 +125,7 @@ describe('Test Projects', function() {
 					return feedbackChannel;
 				},
 				function() {
-					assert(feedbackChannel.jobsCompletedSuccessfully(), feedbackChannel.getRecordsString());
+					assert(feedbackChannel.jobsCompletedSuccessfully(), 'ANT Build Failed! Details:' + feedbackChannel.getRecordsString());
 					done();
 			});
 		});
