@@ -6,6 +6,7 @@ var mocha = require('gulp-mocha');
 var runSequence = require('run-sequence');
 var ts = require('gulp-typescript');
 var merge = require('merge2');
+var minimist = require('minimist');
 
 var buildRoot = path.join(__dirname, '_build');
 var tarRoot = path.join(__dirname, '_tar');
@@ -21,6 +22,13 @@ var pluginPath = path.join(agentPath, 'plugins');
 var buildPluginPath = path.join(pluginPath, 'build');
 var buildPluginLibPath = path.join(buildPluginPath, 'lib');
 
+// grunt is 0, task is 1
+var mopts = {
+  boolean: 'ci',
+  default: { ci: false }
+};
+
+var options = minimist(process.argv.slice(2), mopts);
 
 var writeHeader = function(title) {
 	console.log();
@@ -72,7 +80,7 @@ gulp.task('testprep', function () {
 
 gulp.task('mocha', function () {
 	return gulp.src([path.join(testPath, '*.js')])
-		.pipe(mocha({ reporter: 'spec', ui: 'bdd' }));
+		.pipe(mocha({ reporter: 'spec', ui: 'bdd', useColors: !options.ci }));
 });
 
 gulp.task('test', function (done) {
