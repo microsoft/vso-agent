@@ -176,7 +176,17 @@ $ sudo npm install ./vsoxplat -g
 Go to Create Agent above.
 
 ### Run Tests
-run gulp test in the root of the repo
+Run all suites:
 ```bash
 gulp test
+```
+
+Test agent and tasks:
+```bash
+gulp test --suite builds
+```
+
+Test vso-task-lib:
+```bash
+gulp test --suite tasklib
 ```

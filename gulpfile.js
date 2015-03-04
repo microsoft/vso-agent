@@ -27,7 +27,8 @@ var buildPluginLibPath = path.join(buildPluginPath, 'lib');
 // grunt is 0, task is 1
 var mopts = {
   boolean: 'ci',
-  default: { ci: false }
+  string: 'suite',
+  default: { ci: false, suite: '*' }
 };
 
 var options = minimist(process.argv.slice(2), mopts);
@@ -70,7 +71,8 @@ gulp.task('testprep', function () {
 	var buildSrc = gulp.src([path.join(buildPath, '**')]);
 	var testSrcPaths = ['src/test/messages/**',
 						'src/test/projects/**',
-						'src/test/tasks/**', 
+						'src/test/tasks/**',
+						'src/vso-task-lib/**', 
 						'!src/test/definitions'];
 	
 	return merge([
@@ -81,7 +83,12 @@ gulp.task('testprep', function () {
 });
 
 gulp.task('mocha', function () {
-	return gulp.src([path.join(testPath, '*.js')])
+	var suitePath = path.join(testPath, '*.js');
+	if (options.suite !== '*') {
+		suitePath = path.join(testPath, options.suite + '.js');
+	}
+
+	return gulp.src([suitePath])
 		.pipe(mocha({ reporter: 'spec', ui: 'bdd', useColors: !options.ci }));
 });
 

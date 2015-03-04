@@ -32,4 +32,5 @@ src/bin/installer.ts
 src/test/lib/diagnostic.ts
 src/test/lib/feedback.ts
 src/test/lib/gitrepo.ts
-src/test/testprojects.ts
+src/test/builds.ts
+src/test/tasklib.ts

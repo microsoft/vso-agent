@@ -5,7 +5,7 @@ var path = require('path');
 
 var CMD_PREFIX = '##vso[';
 
-_exit = function(code) {
+var _exit = function(code) {
     _debug('task exit: ' + code);
     shell.exit(code);
 }
@@ -14,12 +14,12 @@ exports.exit = _exit;
 //-----------------------------------------------------
 // Input Helpers
 //-----------------------------------------------------
-_getVariable = function(name) {
+var _getVariable = function(name) {
     return process.env[name.replace('.', '_').toUpperCase()];
 }
 exports.getVariable = _getVariable;
 
-_getInput = function(name, required) {
+var _getInput = function(name, required) {
 	var inval = process.env['INPUT_' + name.replace(' ', '_').toUpperCase()];
 
     if (required && !inval) {
@@ -31,13 +31,13 @@ _getInput = function(name, required) {
 }
 exports.getInput = _getInput;
 
-_getDelimitedInput = function(name, delim, required) {
+var _getDelimitedInput = function(name, delim, required) {
     var inval = _getInput(name, required);
     return inval.split(delim);
 }
 exports.getDelimitedInput = _getDelimitedInput;
 
-_getPathInput = function(name, required, check) {
+var _getPathInput = function(name, required, check) {
     var inval = process.env['INPUT_' + name.replace(' ', '_').toUpperCase()];
 
     if (required && !inval) {
@@ -70,7 +70,7 @@ var _debug = function(message) {
 }
 exports.debug = _debug;
 
-_argStringToArray = function (argString) {
+var _argStringToArray = function (argString) {
     var args = argString.match(/([^" ]*("[^"]*")[^" ]*)|[^" ]+/g);
 
     for (var i = 0; i < args.length; i++) {
@@ -79,10 +79,25 @@ _argStringToArray = function (argString) {
     return args;
 }
 
+var _cd = function(path) {
+    shell.cd(path);
+}
+exports.cd = _cd;
+
+var _pushd = function(path) {
+    shell.pushd(path);
+}
+exports.pushd = _pushd;
+
+var _popd = function() {
+    shell.popd();
+}
+exports.popd = _popd;
+
 //------------------------------------------------
 // Validation Helpers
 //------------------------------------------------
-_checkPath = function(p, name) {
+var _checkPath = function(p, name) {
     _debug('check path : ' + p);
     if (!p || !fs.existsSync(p)) {
         console.error('invalid ' + name + ': ' + p);
@@ -98,7 +113,7 @@ exports.checkPath = _checkPath;
 // - inject system.debug info
 // - have option to switch internal impl (shelljs now)
 //-----------------------------------------------------
-_mkdirP = function(p) {
+var _mkdirP = function(p) {
     if (!shell.test('-d', p)) {
         _debug('creating path: ' + p);
         shell.mkdir('-p', p);
@@ -113,7 +128,7 @@ _mkdirP = function(p) {
 }
 exports.mkdirP = _mkdirP;
 
-_which = function(tool, check) {
+var _which = function(tool, check) {
     var toolPath = shell.which(tool);
     if (check) {
         _checkPath(toolPath, tool);

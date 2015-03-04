@@ -10,7 +10,7 @@ import fm = require('./lib/feedback');
 import wk = require('../agent/vsoworker');
 import cm = require('../agent/common');
 
-describe('Test Projects', function() {
+describe('Test Agent + Tasks', function() {
 	var repo: gm.GitRepo;
 
 	before(function(done) {

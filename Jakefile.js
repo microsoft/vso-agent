@@ -60,6 +60,7 @@ task('test', ['default'], function(mode) {
 	jake.cpR('src/test/messages', path.join(testRoot, 'test'));
 	jake.cpR('src/test/projects', path.join(testRoot, 'test'));
 	jake.cpR('src/test/tasks', path.join(testRoot, 'test'));
+	jake.cpR('src/vso-task-lib', path.join(testRoot));
 	jake.cpR(path.join(packagePath, 'agent'), testRoot);
 
 	jake.mkdirP(path.join(testRoot, 'agent', 'work'));
