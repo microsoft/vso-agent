@@ -74,6 +74,7 @@ export function throwAgentError(errorCode: AgentError, message: string) {
 // Constants
 //-----------------------------------------------------------
 export var CMD_PREFIX: string = '##vso[';
+export var DEFAULT_LOG_SECONDS = 2 * 24 * 3600;  // 2 days
 
 //-----------------------------------------------------------
 // Interfaces
@@ -98,6 +99,7 @@ export interface ISettings {
     serverUrl: string;
     agentName: string;
     workFolder: string;
+    keepLogsSeconds: number;
 }
 
 // contains configuration data from server, runtime creds + settings

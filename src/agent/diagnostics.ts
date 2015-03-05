@@ -7,7 +7,10 @@ var fs = require('fs');
 import path = require('path');
 import os = require("os");
 import cm = require('./common');
+import fm = require('./feedback');
+import events = require('events');
 var shell = require('shelljs');
+var async = require('async');
 
 //
 // Synchronouse FileLogWriter
@@ -64,5 +67,67 @@ export class DiagnosticConsoleWriter implements cm.IDiagnosticWriter {
     public end(): void {
         
     }       
+}
+
+export class DiagnosticEmitter extends events.EventEmitter {
+    constructor() {
+        super();
+    }
+}
+
+export class DiagnosticSweeper extends fm.TimedWorker  {
+    constructor(path: string, ext:string, ageSeconds: number, intervalSeconds: number) {
+        this.path = path;
+        this.ageSeconds = ageSeconds;
+        this.ext = ext;
+        this.emitter = new DiagnosticEmitter();
+        super(intervalSeconds * 1000);
+    }
+
+    public emitter: DiagnosticEmitter;
+    public path: string;
+    public ageSeconds: number;
+    public ext: string;
+
+    public doWork(callback: (err: any) => void): void {
+        this._cleanFiles(callback);
+    }
+
+    private _cleanFiles(callback: (err: any) => void): void {
+        if (!shell.test('-d', this.path)) {
+            callback(null);
+            return;
+        }
+
+        var candidates = shell.find(this.path).filter((file) => { return this.ext === '*' || file.endsWith('.' + this.ext); });
+
+        var _that = this;
+        async.forEachSeries(candidates,
+            function (candidate, done: (err: any) => void) {
+                fs.stat(candidate, (err, stats) => {
+                    if (err) {
+                        done(null);
+                        return;
+                    }
+
+                    if (stats.isDirectory()) {
+                        done(null);
+                        return;
+                    }
+
+                    var fileAgeSeconds = (new Date().getTime() - stats.mtime.getTime()) / 1000;
+                    if (fileAgeSeconds > _that.ageSeconds) {
+                        _that.emitter.emit('deleted', candidate);
+                        shell.rm(candidate);
+                    }                    
+
+                    // ignoring errors - log and keep going
+                    done(null);
+                })
+            }, function (err) {
+                // ignoring errors. log and go
+                callback(null);
+            });        
+    }
 }
 

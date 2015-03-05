@@ -39,10 +39,11 @@ export function read(): cm.ISettings {
            .file({ file: configPath }); 
 
     var settings: cm.ISettings  = {
-        poolName : nconf.get("poolName"),
-        serverUrl : nconf.get("serverUrl"),
-        agentName : nconf.get("agentName"),
-        workFolder: nconf.get("workFolder")
+        poolName : nconf.get("poolName")
+      , serverUrl : nconf.get("serverUrl")
+      , agentName : nconf.get("agentName")
+      , workFolder: nconf.get("workFolder")
+      , keepLogsSeconds: nconf.get("keepLogsSeconds")
     }
 
     return settings;
@@ -95,6 +96,7 @@ export class Configurator {
             settings.serverUrl = result['serverUrl'];
             settings.agentName = result['agentName'];
             settings.workFolder = result['workFolder'];
+            settings.keepLogsSeconds = cm.DEFAULT_LOG_SECONDS;
 
             this.validate(settings);
             
