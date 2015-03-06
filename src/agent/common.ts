@@ -74,7 +74,7 @@ export function throwAgentError(errorCode: AgentError, message: string) {
 // Constants
 //-----------------------------------------------------------
 export var CMD_PREFIX: string = '##vso[';
-export var DEFAULT_LOG_SECONDS = 2 * 24 * 3600;  // 2 days
+export var DEFAULT_LOG_SECONDS = 4 * 24 * 3600;  // 4 day default so logs survive the weekend
 
 //-----------------------------------------------------------
 // Interfaces

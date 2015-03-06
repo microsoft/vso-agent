@@ -165,14 +165,20 @@ export class AgentContext extends Context implements cm.ITraceWriter {
 
         var workerDiagFolder = path.join(diagFolder, 'worker');
         var sweeper:dm.DiagnosticSweeper = new dm.DiagnosticSweeper(workerDiagFolder, 'log', ageSeconds, SWEEP_DIAG_SECONDS);
-        sweeper.emitter.on('deleted', (path) => {
+        sweeper.on('deleted', (path) => {
             trace.write('log deleted: ' + path);
+        });
+        sweeper.on('info', (msg) => {
+            this.info(msg);
         });
 
         var logsFolder = path.join(path.resolve(this.config.settings.workFolder), '_logs');
         var logSweeper:dm.DiagnosticSweeper = new dm.DiagnosticSweeper(logsFolder, '*', ageSeconds, SWEEP_LOGS_SECONDS);
-        logSweeper.emitter.on('deleted', (path) => {
+        logSweeper.on('deleted', (path) => {
             trace.write('log deleted: ' + path);
+        });
+        logSweeper.on('info', (msg) => {
+            this.info(msg);
         });
 
         super(writers);

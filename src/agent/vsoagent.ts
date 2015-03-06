@@ -111,14 +111,6 @@ cm.readBasicCreds()
 
         ag.status('Agent Started.');
 
-        ag.info('Downloading latest tasks');
-        var taskManager = new taskm.TaskManager(ag);
-        taskManager.ensureLatestExist(function(err) {
-            if (err) {
-                ag.error('Issue downloading tasks');
-                ag.error(JSON.stringify(err));
-            }
-        });
         var queueName = agent.name;
         ag.info('Listening for agent: ' + queueName);
 

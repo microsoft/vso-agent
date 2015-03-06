@@ -89,11 +89,17 @@ export class DiagnosticSweeper extends fm.TimedWorker  {
     public ageSeconds: number;
     public ext: string;
 
+    public on(event: string, listener: Function): events.EventEmitter {
+        this.emitter.on(event, listener);
+        return this.emitter;
+    }
+
     public doWork(callback: (err: any) => void): void {
         this._cleanFiles(callback);
     }
 
     private _cleanFiles(callback: (err: any) => void): void {
+        this.emitter.emit('info', 'Cleaning Files: ' + this.path);
         if (!shell.test('-d', this.path)) {
             callback(null);
             return;
@@ -102,6 +108,7 @@ export class DiagnosticSweeper extends fm.TimedWorker  {
         var candidates = shell.find(this.path).filter((file) => { return this.ext === '*' || file.endsWith('.' + this.ext); });
 
         var _that = this;
+        var delCount = 0;
         async.forEachSeries(candidates,
             function (candidate, done: (err: any) => void) {
                 fs.stat(candidate, (err, stats) => {
@@ -117,6 +124,7 @@ export class DiagnosticSweeper extends fm.TimedWorker  {
 
                     var fileAgeSeconds = (new Date().getTime() - stats.mtime.getTime()) / 1000;
                     if (fileAgeSeconds > _that.ageSeconds) {
+                        ++delCount;
                         _that.emitter.emit('deleted', candidate);
                         shell.rm(candidate);
                     }                    
@@ -125,6 +133,7 @@ export class DiagnosticSweeper extends fm.TimedWorker  {
                     done(null);
                 })
             }, function (err) {
+                _that.emitter.emit('info', 'deleted file count: ' + delCount);
                 // ignoring errors. log and go
                 callback(null);
             });        

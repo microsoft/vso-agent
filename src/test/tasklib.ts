@@ -45,4 +45,28 @@ describe('Test vso-task-lib', function() {
 			done();
 		});
 	});
+
+	describe('ToolRunner', function() {
+		it('Runs', function(done) {
+			this.timeout(1000);
+
+			tl.pushd(__dirname);
+
+			var ls = new tl.ToolRunner(tl.which('ls', true));
+			ls.arg('-l');
+			ls.arg('-a');
+
+			ls.exec()
+				.then(function(code) {
+					assert(code === 0, 'return code of ls should be 0');
+				})
+				.fail(function(err) {
+					assert.fail('ls failed to run: ' + err.message);
+				})
+				.fin(function() {
+					tl.popd();
+					done();
+				})
+		});
+	});	
 });

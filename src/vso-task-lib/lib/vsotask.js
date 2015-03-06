@@ -169,11 +169,6 @@ var _toolRunner = (function(){
         var defer = Q.defer();
 
         _debug('exec tool: ' + this.toolPath);
-
-        if (typeof args === 'string') {
-            args = _argStringToArray(args);
-        }
-
         _debug('Arguments:');
         this.args.forEach(function(arg) {
             _debug('   ' + arg);
@@ -189,6 +184,9 @@ var _toolRunner = (function(){
             failOnStdErr: options.failOnStdError || true,
             failOnNonZeroRC: options.failOnNonZeroRC || true
         };
+
+        var argString = this.args.join(' ') || '';
+        console.log('[command]' + this.toolPath + ' ' + argString);
 
         var cp = require('child_process').spawn;
         var runCP = cp(this.toolPath, this.args, ops);
