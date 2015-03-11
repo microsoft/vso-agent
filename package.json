@@ -18,6 +18,7 @@
   "author": "Microsoft Corporation",
   "contributors": [
     "Bryan MacFarlane <bryanmac@microsoft.com>",
+    "Scott Dallamura <scdallam@microsoft.com>",
     "Christopher Johnson (CJ) <chjohn@microsoft.com>",
     "Patrick Carnahan <patcarna@microsoft.com>",
     "Chris Patterson <chrispat@microsoft.com>"
@@ -27,7 +28,6 @@
     "adm-zip": "0.4.x",
     "async": "0.x",
     "iniparser": "~1.0.5",
-    "jake": "~0.7.7",
     "minimist": "^0.2.0",
     "nconf": "0.6.x",
     "node-uuid": "1.x",

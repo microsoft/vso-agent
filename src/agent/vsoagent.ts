@@ -19,6 +19,9 @@ import webapi = require('./api/webapi');
 
 var Q = require('q');
 
+var SWEEP_DIAG_SECONDS = 57;
+var SWEEP_LOGS_SECONDS = 43;
+
 var inDebugger = (typeof global.v8debug === 'object');
 
 var supported = ['darwin', 'linux'];
@@ -111,6 +114,28 @@ cm.readBasicCreds()
 
         ag.status('Agent Started.');
 
+        // clean up logs
+        trace.state('keepLogsSeconds', config.settings.keepLogsSeconds);
+        var ageSeconds = config.settings.keepLogsSeconds || cm.DEFAULT_LOG_SECONDS;
+        trace.state('ageSeconds', ageSeconds);
+        
+        var sweeper:dm.DiagnosticSweeper = new dm.DiagnosticSweeper(ag.workerDiagFolder, 'log', ageSeconds, SWEEP_DIAG_SECONDS);
+        sweeper.on('deleted', (path) => {
+            trace.write('log deleted: ' + path);
+        });
+        sweeper.on('info', (msg) => {
+            this.info(msg);
+        });
+
+        var logsFolder = path.join(path.resolve(ag.workFolder), '_logs');
+        var logSweeper:dm.DiagnosticSweeper = new dm.DiagnosticSweeper(logsFolder, '*', ageSeconds, SWEEP_LOGS_SECONDS);
+        logSweeper.on('deleted', (path) => {
+            trace.write('log deleted: ' + path);
+        });
+        logSweeper.on('info', (msg) => {
+            this.info(msg);
+        }); 
+            
         var queueName = agent.name;
         ag.info('Listening for agent: ' + queueName);
 

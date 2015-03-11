@@ -33,10 +33,6 @@ var mopts = {
 
 var options = minimist(process.argv.slice(2), mopts);
 
-var writeHeader = function(title) {
-	console.log();
-	console.log('********** ' + title + ' **********');
-}
 
 var tsProject = ts.createProject({
 	declartionFiles:false,
@@ -44,30 +40,22 @@ var tsProject = ts.createProject({
 	module: 'commonjs'
 });
 
-gulp.task('build', function () { 
-	writeHeader('build');
+
+gulp.task('build', ['clean'], function () { 
 	var tsResult = gulp.src(['src/**/*.ts'])
-		.pipe(ts(tsProject), null, ts.reporter.fullReporter(true));
-		
-	var packageJson = gulp.src(['package.json']);
-	var svcSh = gulp.src(['src/agent/svc.sh']);
-	var pyHandler = gulp.src(['src/agent/handlers/vso.py']);
-	var askPass = gulp.src(['src/agent/plugins/build/lib/askpass.js']);
-	var installJs = gulp.src(['src/bin/install.js']);
+		.pipe(ts(tsProject))
+		.on('error', function (err) { process.exit(1) });
 	
 	return merge([
-		tsResult.js.pipe(gulp.dest(buildPath)),
-		packageJson.pipe(gulp.dest(buildPath)),
-		svcSh.pipe(gulp.dest(agentPath)),
-		pyHandler.pipe(gulp.dest(handlerPath)),
-		askPass.pipe(gulp.dest(buildPluginLibPath)),
-		installJs.pipe(gulp.dest(binPath))
-	]);
+		tsResult.js.pipe(gulp.dest(buildPath), null, ts.reporter.fullReporter(true)),
+		gulp.src(['package.json']).pipe(gulp.dest(buildPath)),
+		gulp.src(['src/agent/svc.sh']).pipe(gulp.dest(agentPath)),
+	    gulp.src(['src/agent/plugins/build/lib/askpass.js']).pipe(gulp.dest(buildPluginLibPath)),
+		gulp.src(['src/bin/install.js']).pipe(gulp.dest(binPath))
+	]);	
 });
 
-gulp.task('testprep', function () {
-	writeHeader('test');
-	
+gulp.task('testPrep', function () {
 	var buildSrc = gulp.src([path.join(buildPath, '**')]);
 	var testSrcPaths = ['src/test/messages/**',
 						'src/test/projects/**',
@@ -82,7 +70,7 @@ gulp.task('testprep', function () {
 	]);
 });
 
-gulp.task('mocha', function () {
+gulp.task('test', ['testPrep'], function () {
 	var suitePath = path.join(testPath, '*.js');
 	if (options.suite !== '*') {
 		suitePath = path.join(testPath, options.suite + '.js');
@@ -92,35 +80,20 @@ gulp.task('mocha', function () {
 		.pipe(mocha({ reporter: 'spec', ui: 'bdd', useColors: !options.ci }));
 });
 
-gulp.task('test', function (done) {
-    runSequence('testprep' 
-    		   ,'mocha'
-			   , done);
-});
-
-gulp.task('package', function () {
-	writeHeader('package')
+gulp.task('package', ['build'], function () {
 	return gulp.src([path.join(buildPath, '**'), 'README.md'])
 		.pipe(gulp.dest(packagePath));
 });
 
-gulp.task('tar', function () {
-	writeHeader('tar')
+gulp.task('tar', ['package'], function () {
 	return gulp.src(path.join(packagePath, '**'))
         .pipe(tar('vsoxplat.tar'))
         .pipe(gzip())
         .pipe(gulp.dest(tarRoot));
 });
 
-gulp.task('clean', function (cb) {
-	writeHeader("cleaning outputs");
-	del([buildRoot, tarRoot, packageRoot, testRoot],cb);
+gulp.task('clean', function (done) {
+	del([buildRoot, tarRoot, packageRoot, testRoot], done);
 });
 
-gulp.task('default', function(done) {
-    runSequence('clean' 
-    		   ,'build'
-    		   ,'package'
-    		   ,'tar'
-			   ,done);
-});
+gulp.task('default', ['tar']);

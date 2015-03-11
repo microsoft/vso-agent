@@ -227,12 +227,12 @@ function createMaskFunction(jobEnvironment: ifm.JobEnvironment): ReplacementFunc
         return input;
     };
 
-    // remove any masks that will have no effect
-    var maskHints: ifm.MaskHint[] = (jobEnvironment.mask || []).map((maskHint: ifm.MaskHint) => {
+    var envMasks = jobEnvironment.mask || [];
+    var maskHints = [];
+    envMasks.forEach((maskHint: ifm.MaskHint) => { 
         if (maskHint.type === ifm.MaskType.Variable && maskHint.value) {
-            var toReplace = jobEnvironment.variables[maskHint.value];
-            if (toReplace) {
-                return maskHint;
+            if (jobEnvironment.variables[maskHint.value]) {
+                maskHints.push(maskHint);
             }
         }
     });

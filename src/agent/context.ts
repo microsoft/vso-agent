@@ -14,9 +14,6 @@ import path = require('path');
 import tm = require('./tracing');
 import um = require('./utilities');
 
-var SWEEP_DIAG_SECONDS = 57;
-var SWEEP_LOGS_SECONDS = 43;
-
 var trace: tm.Tracing;
 
 function ensureTrace(writer: cm.ITraceWriter) {
@@ -144,12 +141,16 @@ export class AgentContext extends Context implements cm.ITraceWriter {
 
         // Set full path for work folder, as it is used by others
         if (path.resolve(this.config.settings.workFolder) !== this.config.settings.workFolder) {
-            this.config.settings.workFolder = path.join(__dirname, this.config.settings.workFolder);
+            this.workFolder = path.join(__dirname, this.config.settings.workFolder);
+            this.config.settings.workFolder = this.workFolder;
         }
 
-        var diagFolder = path.join(path.resolve(this.config.settings.workFolder), '_diag');
+        this.diagFolder = path.join(path.resolve(this.config.settings.workFolder), '_diag');
+        this.workerDiagFolder = path.join(this.diagFolder, 'worker');
+        this.agentDiagFolder = path.join(this.diagFolder, 'agent');
+        
         this.fileWriter = new dm.DiagnosticFileWriter(process.env[cm.envVerbose] ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info,
-            path.join(diagFolder, hostProcess),
+            path.join(this.diagFolder, hostProcess),
             new Date().toISOString().replace(/:/gi, '_') + '_' + process.pid + '.log');
 
         var writers: cm.IDiagnosticWriter[] = [this.fileWriter];
@@ -157,35 +158,14 @@ export class AgentContext extends Context implements cm.ITraceWriter {
         if (consoleOutput) {
             writers.push(new dm.DiagnosticConsoleWriter(cm.DiagnosticLevel.Status));
         }
-
-        // clean up logs
-        trace.state('keepLogsSeconds', config.settings.keepLogsSeconds);
-        var ageSeconds = config.settings.keepLogsSeconds || cm.DEFAULT_LOG_SECONDS;
-        trace.state('ageSeconds', ageSeconds);
-
-        if (hostProcess === 'agent') {
-            var workerDiagFolder = path.join(diagFolder, 'worker');
-            var sweeper:dm.DiagnosticSweeper = new dm.DiagnosticSweeper(workerDiagFolder, 'log', ageSeconds, SWEEP_DIAG_SECONDS);
-            sweeper.on('deleted', (path) => {
-                trace.write('log deleted: ' + path);
-            });
-            sweeper.on('info', (msg) => {
-                this.info(msg);
-            });
-
-            var logsFolder = path.join(path.resolve(this.config.settings.workFolder), '_logs');
-            var logSweeper:dm.DiagnosticSweeper = new dm.DiagnosticSweeper(logsFolder, '*', ageSeconds, SWEEP_LOGS_SECONDS);
-            logSweeper.on('deleted', (path) => {
-                trace.write('log deleted: ' + path);
-            });
-            logSweeper.on('info', (msg) => {
-                this.info(msg);
-            });            
-        }
-
+        
         super(writers);
     }
 
+    public workFolder: string;
+    public diagFolder: string;
+    public workerDiagFolder: string;
+    public agentDiagFolder: string;
     private fileWriter: cm.IDiagnosticWriter;
 
     // ITraceWriter
