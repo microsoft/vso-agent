@@ -33,6 +33,9 @@ exports.getInput = _getInput;
 
 var _getDelimitedInput = function(name, delim, required) {
     var inval = _getInput(name, required);
+    if (!inval) {
+        return [];
+    }    
     return inval.split(delim);
 }
 exports.getDelimitedInput = _getDelimitedInput;
@@ -157,7 +160,7 @@ var _toolRunner = (function(){
     ToolRunner.prototype.arg = function(arguments) {
         if (arguments instanceof Array) {
             _debug(this.toolPath + ' arg: ' + JSON.stringify(arguments));
-            this.args.concat(arguments);
+            this.args = this.args.concat(arguments);
         }
         else if (typeof(arguments) === 'string') {
             _debug(this.toolPath + ' arg: ' + arguments);
