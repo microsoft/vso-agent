@@ -47,7 +47,7 @@ describe('Test vso-task-lib', function() {
 	});
 
 	describe('ToolRunner', function() {
-		it('Runs', function(done) {
+		it('Execs', function(done) {
 			this.timeout(1000);
 
 			tl.pushd(__dirname);
@@ -67,6 +67,78 @@ describe('Test vso-task-lib', function() {
 					tl.popd();
 					done();
 				})
-		});
+		})
+		it ('Fails on return code 1', function(done) {
+			this.timeout(1000);
+
+			var failed = false;
+
+			var ls = new tl.ToolRunner(tl.which('ls', true));
+			ls.arg('-j');
+
+			ls.exec()
+				.then(function(code) {
+					assert(code === 1, 'return code of ls -j should be 1');
+				})
+				.fail(function(err) {
+					failed = true;
+				})
+				.fin(function() {
+					if (!failed) {
+						done(new Error('ls should have failed'));
+						return;
+					}
+
+					done();
+				})
+		})
+		it ('Succeeds on stderr by default', function(done) {
+			this.timeout(1000);
+
+			var scriptPath = path.join(__dirname, 'scripts', 'stderrOutput.js');
+			var ls = new tl.ToolRunner(tl.which('node', true));
+			ls.arg(scriptPath);
+
+			ls.exec()
+				.then(function(code) {
+					console.log(code);
+					assert(code === 0, 'should have succeeded on stderr');
+				})
+				.fail(function(err) {
+					console.log('in fail');
+				})
+				.fin(function() {
+
+					done();
+				})
+		})
+		it ('Fails on stderr if specified', function(done) {
+			this.timeout(1000);
+
+			var failed = false;
+
+			var scriptPath = path.join(__dirname, 'scripts', 'stderrOutput.js');
+			var ls = new tl.ToolRunner(tl.which('node', true));
+			ls.arg(scriptPath);
+
+			ls.exec({failOnStdErr: true})
+				.then(function(code) {
+					console.log(code);
+					assert(code === 0, 'should have succeeded on stderr');
+				})
+				.fail(function(err) {
+					console.log('in fail');
+					failed = true;
+				})
+				.fin(function() {
+					if (!failed) {
+						done(new Error('should have failed on stderr'));
+						return;
+					}
+
+					done();
+				})
+		})
 	});	
+
 });

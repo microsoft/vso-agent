@@ -60,6 +60,7 @@ gulp.task('testPrep', function () {
 	var testSrcPaths = ['src/test/messages/**',
 						'src/test/projects/**',
 						'src/test/tasks/**',
+						'src/test/scripts/**',
 						'src/vso-task-lib/**', 
 						'!src/test/definitions'];
 	

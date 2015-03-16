@@ -142,12 +142,13 @@ exports.which = _which;
 
 //
 // options (default):
-//		failOnStdError: bool (true)
-//		failOnNonZeroRC: bool (true)
-//      echoOutput: bool (true)
-//      outputHandler: function
+//      silent: bool (false) - if true, will not echo stdout
+//      failOnStdErr: bool (false)
+//      ignoreReturnCode: bool (false) - if true, will not fail on non-zero return code.
+//      outStream: stream (process.stdout) - stream to write stdout to. 
+//      errStream: stream (process.stderr) - stream to write stderr to.
 //
-// resolves bool success
+// resolves return code
 //
 
 var _toolRunner = (function(){
@@ -183,9 +184,11 @@ var _toolRunner = (function(){
         var ops = {
             cwd: process.cwd(),
             env: process.env,
-            echoOutput: options.echoOutput || true,
-            failOnStdErr: options.failOnStdError || true,
-            failOnNonZeroRC: options.failOnNonZeroRC || true
+            silent: options.silent || false,
+            failOnStdErr: options.failOnStdErr || false,
+            ignoreReturnCode: options.ignoreReturnCode || false,
+            outStream: options.outStream || process.stdout,
+            errStream: options.errStream || process.stderr
         };
 
         var argString = this.args.join(' ') || '';
@@ -195,22 +198,22 @@ var _toolRunner = (function(){
         var runCP = cp(this.toolPath, this.args, ops);
 
         runCP.stdout.on('data', function(data) {
-            if (ops.echoOutput) {
-                process.stdout.write(data);
+            if (!ops.silent) {
+                ops.outStream.write(data);
             }
         });
 
-        var _errStream = ops.failOnStdErr ? process.stderr : process.stdout;
+        var _errStream = ops.failOnStdErr ? ops.errStream : ops.outStream;
         runCP.stderr.on('data', function(data) {
             success = !ops.failOnStdErr;
-            if (ops.echoOutput) {
+            if (!ops.silent) {
                 _errStream.write(data);
             }
         });
 
         runCP.on('exit', function(code) {
             _debug('rc:' + code);
-            if (code != 0 && ops.failOnNonZeroRC) {
+            if (code != 0 && !ops.ignoreReturnCode) {
                 success = false;
             }
             

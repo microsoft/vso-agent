@@ -38,7 +38,7 @@
     "svchost": "0.1.x",
     "svcinstall": "^0.2.1",
     "validator": "~3.11.0",
-    "vso-task-lib": "^0.1.3"
+    "vso-task-lib": "^0.1.4"
   },
   "devDependencies": {
     "del": "^1.1.1",
