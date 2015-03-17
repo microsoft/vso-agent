@@ -1,6 +1,6 @@
 {
   "name": "vsoagent-installer",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Visual Studio Xplat Build Agent Installer",
   "main": "bin/install.js",
   "preferGlobal": true,
@@ -48,7 +48,6 @@
     "gulp-tar": "^1.4.0",
     "gulp-typescript": "^2.4.2",
     "merge2": "^0.3.1",
-    "mocha": "^2.1.0",
-    "run-sequence": "^1.0.2"
+    "mocha": "^2.1.0"
   }
 }

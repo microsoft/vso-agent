@@ -3,7 +3,6 @@ var path = require('path');
 var gulp = require('gulp');
 var del = require('del');
 var mocha = require('gulp-mocha');
-var runSequence = require('run-sequence');
 var ts = require('gulp-typescript');
 var tar = require('gulp-tar');
 var gzip = require('gulp-gzip');

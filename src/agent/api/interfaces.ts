@@ -424,6 +424,7 @@ export enum TaskInputType {
 export interface TaskInstance {
     displayName: string;
     id: string;
+    continueOnError: boolean;
     inputs: { [key: string]: string; };
     instanceId: string;
     name: string;
