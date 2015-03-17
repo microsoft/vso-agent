@@ -2,8 +2,33 @@ var Q = require('q');
 var shell = require('shelljs');
 var fs = require('fs');
 var path = require('path');
+var os = require('os');
 
 var CMD_PREFIX = '##vso[';
+
+//-----------------------------------------------------
+// General Helpers
+//-----------------------------------------------------
+var _outStream = process.stdout;
+var _errStream = process.stderr;
+
+var _writeError = function(str) {
+    _errStream.write(str + os.EOL);
+}
+
+var _writeLine = function(str) {
+    _outStream.write(str + os.EOL);
+}
+
+var _setStdStream = function(stdStream) {
+    _outStream = stdStream;
+}
+exports.setStdStream = _setStdStream;
+
+var _setErrStream = function(errStream) {
+    _errStream = errStream;
+}
+exports.setErrStream = _setErrStream;
 
 var _exit = function(code) {
     _debug('task exit: ' + code);
@@ -23,7 +48,7 @@ var _getInput = function(name, required) {
 	var inval = process.env['INPUT_' + name.replace(' ', '_').toUpperCase()];
 
     if (required && !inval) {
-        console.error('Input required: ' + name);
+        _writeError('Input required: ' + name);
         _exit(1);
     }
 
@@ -44,7 +69,7 @@ var _getPathInput = function(name, required, check) {
     var inval = process.env['INPUT_' + name.replace(' ', '_').toUpperCase()];
 
     if (required && !inval) {
-        console.error('Input required: ' + name);
+        _writeError('Input required: ' + name);
         _exit(1);
     }
 
@@ -59,17 +84,17 @@ exports.getPathInput = _getPathInput;
 // Cmd Helpers
 //-----------------------------------------------------
 var _warning = function(message) {
-    console.log(CMD_PREFIX + 'task.issue type=warning]' + message);
+    _writeLine(CMD_PREFIX + 'task.issue type=warning]' + message);
 }
 exports.warning = _warning;
 
 var _error = function(message) {
-    console.log(CMD_PREFIX + 'task.issue type=error]' + message);
+    _writeLine(CMD_PREFIX + 'task.issue type=error]' + message);
 }
 exports.error = _error;
 
 var _debug = function(message) {
-	console.log(CMD_PREFIX + 'task.debug]' + message);
+	_writeLine(CMD_PREFIX + 'task.debug]' + message);
 }
 exports.debug = _debug;
 
@@ -192,7 +217,7 @@ var _toolRunner = (function(){
         };
 
         var argString = this.args.join(' ') || '';
-        console.log('[command]' + this.toolPath + ' ' + argString);
+        ops.outStream.write('[command]' + this.toolPath + ' ' + argString + os.EOL);
 
         var cp = require('child_process').spawn;
         var runCP = cp(this.toolPath, this.args, ops);

@@ -124,7 +124,7 @@ cm.readBasicCreds()
             trace.write('log deleted: ' + path);
         });
         sweeper.on('info', (msg) => {
-            this.info(msg);
+            ag.info(msg);
         });
 
         var logsFolder = path.join(path.resolve(ag.workFolder), '_logs');
@@ -133,7 +133,7 @@ cm.readBasicCreds()
             trace.write('log deleted: ' + path);
         });
         logSweeper.on('info', (msg) => {
-            this.info(msg);
+            ag.info(msg);
         }); 
             
         var queueName = agent.name;

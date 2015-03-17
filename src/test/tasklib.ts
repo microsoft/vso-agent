@@ -7,7 +7,19 @@ import assert = require('assert');
 import shell = require('shelljs');
 import path = require('path');
 import fs = require('fs');
+import util = require('util');
+import stream = require('stream');
 var tl;
+
+var NullStream = function() {
+	stream.Writable.call(this);
+	this._write = function(data, encoding, next) {
+		next();
+	}
+}
+util.inherits(NullStream, stream.Writable);
+
+var _nullTestStream = new NullStream();
 
 describe('Test vso-task-lib', function() {
 
@@ -15,6 +27,8 @@ describe('Test vso-task-lib', function() {
 		try
 		{
 			tl = require('../vso-task-lib');
+			tl.setStdStream(_nullTestStream);
+			tl.setErrStream(_nullTestStream);
 		}
 		catch (err) {
 			assert.fail('Failed to load task lib: ' + err.message);
@@ -25,7 +39,6 @@ describe('Test vso-task-lib', function() {
 	after(function() {
 
 	});
-
 
 	describe('Dir Operations', function() {
 		it('mkdirs', function(done) {
@@ -56,7 +69,7 @@ describe('Test vso-task-lib', function() {
 			ls.arg('-l');
 			ls.arg('-a');
 
-			ls.exec()
+			ls.exec({outStream:_nullTestStream, errStream:_nullTestStream})
 				.then(function(code) {
 					assert(code === 0, 'return code of ls should be 0');
 				})
@@ -76,7 +89,7 @@ describe('Test vso-task-lib', function() {
 			var ls = new tl.ToolRunner(tl.which('ls', true));
 			ls.arg('-j');
 
-			ls.exec()
+			ls.exec({outStream:_nullTestStream, errStream:_nullTestStream})
 				.then(function(code) {
 					assert(code === 1, 'return code of ls -j should be 1');
 				})
@@ -99,16 +112,14 @@ describe('Test vso-task-lib', function() {
 			var ls = new tl.ToolRunner(tl.which('node', true));
 			ls.arg(scriptPath);
 
-			ls.exec()
+			ls.exec({outStream:_nullTestStream, errStream:_nullTestStream})
 				.then(function(code) {
-					console.log(code);
 					assert(code === 0, 'should have succeeded on stderr');
 				})
 				.fail(function(err) {
-					console.log('in fail');
+					done(new Error('did not succeed on stderr'))
 				})
 				.fin(function() {
-
 					done();
 				})
 		})
@@ -121,13 +132,11 @@ describe('Test vso-task-lib', function() {
 			var ls = new tl.ToolRunner(tl.which('node', true));
 			ls.arg(scriptPath);
 
-			ls.exec({failOnStdErr: true})
+			ls.exec({failOnStdErr: true, outStream:_nullTestStream, errStream:_nullTestStream})
 				.then(function(code) {
-					console.log(code);
 					assert(code === 0, 'should have succeeded on stderr');
 				})
 				.fail(function(err) {
-					console.log('in fail');
 					failed = true;
 				})
 				.fin(function() {
