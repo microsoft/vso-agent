@@ -151,5 +151,8 @@ export function getCapabilities(): cm.IStringDictionary {
     checkWhich(cap, 'mvn', 'maven');
     checkTool(cap, 'xcode-select', '-p', 'xcode');
 
+    checkWhich(cap, 'make');
+    checkWhich(cap, 'clang');
+
     return cap;
 }
