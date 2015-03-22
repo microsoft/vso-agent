@@ -141,9 +141,8 @@ class CopyToStagingFolder implements plugins.IPlugin {
             var deferred = Q.defer();
             Q.all([Q.all(filesPromises), createStagingFolderPromise])
                 .then((results: any[]) => {
-                    var filesArrays: string[][] = results[0];
-                    var files: string[] = Array.prototype.concat.apply(filesArrays);
-                    
+                var filesArrays: string[][] = results[0];
+                    var files: string[] = Array.prototype.concat.apply([], filesArrays);
                     ctx.info("found " + files.length + " files or folders");
                     _trace.state('files', files);
 
