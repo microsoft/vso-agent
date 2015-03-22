@@ -33,7 +33,7 @@ var getFilteredEnv = function(): { [key: string]: string } {
     var filtered: { [key: string]: string } = {};
     for (var envvar in process.env) {
         if (filter.indexOf(envvar) < 0 && process.env[envvar].length < 1024) {
-            filtered[envvar] = process.env[envvar];
+            setCapability(filtered, envvar, process.env[envvar]);
         }
     }
 
@@ -108,7 +108,7 @@ export function getEnv(envPath: string, complete: (err: any, env: {[key: string]
 var checkWhich = function(cap: any, tool: string, capability?:string) {
     var toolpath = shell.which(tool);
     if (toolpath) {
-        cap[capability || tool] = toolpath;
+        setCapability(cap, capability || tool, toolpath);
     }   
 }
 
@@ -120,14 +120,18 @@ var checkTool = function(cap: any, command: string, args: string, capability: st
 
     var val = shell.exec(command + ' ' + args, {silent:true}).output;
     if (val) {
-        cap[capability] = val;
+        setCapability(cap, capability, val);
     }
 }
 
 var setIfNot = function(cap, name, val) {
-    if (!cap.hasOwnProperty(name)) {
-        cap[name] = val;
+    if (!cap.hasOwnProperty(name.trim())) {
+        cap[name.trim()] = val;
     }   
+}
+
+var setCapability = function (cap: cm.IStringDictionary, name: string, val: string) {
+    cap[name.trim()] = val;
 }
 
 export function getCapabilities(): cm.IStringDictionary {
