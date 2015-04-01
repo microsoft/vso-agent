@@ -103,32 +103,46 @@ class CopyToStagingFolder implements plugins.IPlugin {
         if (searchPattern) {
             // root the search pattern
             searchPattern = searchPattern.replaceVars(ctx.job.environment.variables);
-            if (!isPathRooted(searchPattern) && sourcesRoot) {
-                searchPattern = path.join(sourcesRoot, searchPattern);
-            }
-
-            _trace.state('searchPattern', searchPattern);
-
-            // get list of files to copy
-            var filesPromise: Q.IPromise<string[]>;
-            if (searchPattern.indexOf('*') > -1 || searchPattern.indexOf('?') > -1) {
-                ctx.info("Pattern found in pattern parameter.");
-                filesPromise = findMatchingFiles(ctx, null, searchPattern, false, true);
-            }
-            else {
-                filesPromise = Q([searchPattern]);
-            }
-
+            
+            // fix semicolons
+            searchPattern = searchPattern.replace(";;", "\0");
+            
+            // promises containing lists of files to copy
+            var filesPromises: Q.IPromise<string[]>[] = [];
+            
+            var searchPatterns = searchPattern.split(";");
+            searchPatterns.forEach((pattern: string, index: number) => {
+                pattern = pattern.replace('\0', ';');
+                
+                if (!isPathRooted(pattern) && sourcesRoot) {
+                    pattern = path.join(sourcesRoot, pattern);
+                }
+    
+                _trace.state('pattern', pattern);
+    
+                // get list of files to copy
+                var filesPromise: Q.IPromise<string[]>;
+                if (pattern.indexOf('*') > -1 || pattern.indexOf('?') > -1) {
+                    ctx.info("Wildcard found in pattern parameter.");
+                    filesPromise = findMatchingFiles(ctx, null, pattern, false, true);
+                }
+                else {
+                    filesPromise = Q([pattern]);
+                }
+                
+                filesPromises.push(filesPromise);
+            });
+            
             // TODO: staging folder should be created and defined outside of this plugin
             //       so if user opts out of copy pattern, they can still run a script.
             ctx.info("Staging folder: " + stagingFolder);
             var createStagingFolderPromise = util.ensurePathExists(stagingFolder);
 
             var deferred = Q.defer();
-            Q.all([filesPromise, createStagingFolderPromise])
+            Q.all([Q.all(filesPromises), createStagingFolderPromise])
                 .then((results: any[]) => {
-
-                    var files: string[] = results[0];
+                var filesArrays: string[][] = results[0];
+                    var files: string[] = Array.prototype.concat.apply([], filesArrays);
                     ctx.info("found " + files.length + " files or folders");
                     _trace.state('files', files);
 
