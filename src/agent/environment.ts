@@ -155,5 +155,17 @@ export function getCapabilities(): cm.IStringDictionary {
     checkWhich(cap, 'mvn', 'maven');
     checkTool(cap, 'xcode-select', '-p', 'xcode');
 
+    // For Xamarin.iOS, check for mdtool in the path.
+    // Since the Xamarin installer does not add it to the path,
+    // if it is not found in the path, check its default install location.
+    var xamariniOSCapability = 'Xamarin.iOS';
+    checkWhich(cap, 'mdtool', xamariniOSCapability);
+    if (!cap.hasOwnProperty(xamariniOSCapability)) {
+        var mdtoolInstallPath = '/Applications/Xamarin Studio.app/Contents/MacOS/mdtool';
+        if (fs.existsSync(mdtoolInstallPath)) {
+            cap[xamariniOSCapability] = mdtoolInstallPath;
+        }
+    }
+
     return cap;
 }
