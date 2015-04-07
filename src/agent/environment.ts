@@ -11,10 +11,9 @@ import cm = require('./common');
 
 var shell = require('shelljs');
 
-/*
-set env var for additional envvars to ignore sending as capabilities
-export VSO_XPLAT_IGNORE=env1,env2
-*/
+// Declare environment variables to ignore sending as capabilities
+// in addition to those declared through the VSO_AGENT_IGNORE environment variable:
+// export VSO_AGENT_IGNORE=envvar1,envvar2
 var ignore = [
     'TERM_PROGRAM', 
     'TERM', 
@@ -24,12 +23,17 @@ var ignore = [
     'comp_wordbreaks'
 ];
 
+// Gets environment variables, filtering out those that are declared to ignore.
 var getFilteredEnv = function(): { [key: string]: string } {
+    // Begin with ignoring env vars declared herein
     var filter = ignore;
+
+    // Also ignore env vars specified in the 'VSO_AGENT_IGNORE' env var
     if (process.env[cm.envIgnore]) {
         filter = filter.concat(process.env[cm.envIgnore].split(','));
     }
     
+    // Get filtered env vars
     var filtered: { [key: string]: string } = {};
     for (var envvar in process.env) {
         if (filter.indexOf(envvar) < 0 && process.env[envvar].length < 1024) {
@@ -40,6 +44,7 @@ var getFilteredEnv = function(): { [key: string]: string } {
     return filtered;
 }
 
+// Ensures existence of the environment file at the specified path, creating it if missing.
 export function ensureEnvFile(envPath): Q.Promise<void> {
     var defer = Q.defer<void>();
 
@@ -69,11 +74,9 @@ export function ensureEnvFile(envPath): Q.Promise<void> {
     return defer.promise; 
 }
 
-//
-// Get the env the agent and worker will use when run as a service (interactive is what it is)
-// Defaults to this processes env but we'll overlay from file
-//
-
+// Gets the environment that the agent and worker will use when running as a service.
+// The current process' environment is overlayed with contents of the environment file.
+// When not running as a service, the interactive/shell process' environment is used.
 export function getEnv(envPath: string, complete: (err: any, env: {[key: string]: string}) => void): void {
     var env: {[key: string]: string} = process.env;
 
@@ -104,15 +107,54 @@ export function getEnv(envPath: string, complete: (err: any, env: {[key: string]
     });
 }
 
-// capability name is optional - defaults to tool name
-var checkWhich = function(cap: any, tool: string, capability?:string) {
-    var toolpath = shell.which(tool);
-    if (toolpath) {
-        setCapability(cap, capability || tool, toolpath);
-    }   
+// Adds an environmental capability based on existence of the specified tool.
+// filteredEnv:    The current environment in which to add a new capability if the specified tool exists.
+// tool:           The tool whose existence indicates capability.
+//                 This can be a tool name or an object encapsulating the tool name and its well-known paths:
+//                 { name: 'mytool', paths: ['/Applications/MyApp1/mytool', '/Applications/MyApp2/mytool'] }
+// capability:     The name of the capability to add to the environment if the specified tool exists.
+//                 If no capability is specified, the tool name will be used.
+// valueIfMissing: The name of the capability to add to the environment if the specified tool does not exist (optional).
+// Returns true if a capability was added to the specified environment; otherwise false.
+var resolveCapability = function (filteredEnv: any, tool: any, capability?: string, valueIfMissing?: string): boolean {
+    // Initialize
+    var result = false;
+
+    // Is tool an object or a string?
+    if (typeof tool === 'object') {
+        // First, attempt to find the tool using 'which'
+        result = resolveCapability(filteredEnv, tool.name, capability);
+        if (result == false && tool.paths != null) {
+            // Next, look for the tool in each specified well-known path
+            for (var i = 0; i < tool.paths.length; i++) {
+                if (fs.existsSync(tool.paths[i])) {
+                    setCapability(filteredEnv, capability || tool.name, tool.paths[i]);
+                    result = true;
+                    break;
+                }
+            }
+        }
+    }
+    else {
+        // Attempt to find the tool using 'which'
+        var toolpath = shell.which(tool);
+        if (toolpath) {
+            setCapability(filteredEnv, capability || tool, toolpath);
+            result = true;
+        }
+    }
+
+    // If the tool was not found but a default value was specified, set the capability with that default value.
+    if (result == false && valueIfMissing != null) {
+        setCapability(filteredEnv, capability || (typeof tool === 'object') ? tool.name : tool, valueIfMissing);
+        result = true;
+    }
+
+    return result;
 }
 
-var checkTool = function(cap: any, command: string, args: string, capability: string) {
+// Executes the specified command for resolution of a capability and retrieval of its value.
+var resolveCapabilityViaShell = function(filteredEnv: any, command: string, args: string, capability: string) {
     var tool = shell.which(command);
     if (!tool) {
         return;
@@ -120,43 +162,35 @@ var checkTool = function(cap: any, command: string, args: string, capability: st
 
     var val = shell.exec(command + ' ' + args, {silent:true}).output;
     if (val) {
-        setCapability(cap, capability, val);
+        setCapability(filteredEnv, capability, val);
     }
 }
 
-var setIfNot = function(cap, name, val) {
-    if (!cap.hasOwnProperty(name.trim())) {
-        cap[name.trim()] = val;
-    }   
+// Adds the specified capability name and value to the specified environment.
+var setCapability = function (filteredEnv: cm.IStringDictionary, name: string, val: string) {
+    filteredEnv[name.trim()] = val;
 }
 
-var setCapability = function (cap: cm.IStringDictionary, name: string, val: string) {
-    cap[name.trim()] = val;
-}
-
+// Gets the filtered, environmental capabilities of the current process.
 export function getCapabilities(): cm.IStringDictionary {
-    var cap: cm.IStringDictionary = getFilteredEnv();
+    var filteredEnv: cm.IStringDictionary = getFilteredEnv();
 
-    checkWhich(cap, 'sh');
-    checkWhich(cap, 'git');
-    checkWhich(cap, 'npm');
-    checkWhich(cap, 'node', 'node.js');
-    checkWhich(cap, 'nodejs', 'node.js');
-    checkWhich(cap, 'python');
-    checkWhich(cap, 'python3');
-    
-    // we check for jake globally installed for path but if not, we package jake as part of this agent
-    checkWhich(cap, 'jake');
-    setIfNot(cap, 'jake', '.');
+    resolveCapability(filteredEnv, 'ant');
+    resolveCapability(filteredEnv, 'clang');
+    resolveCapability(filteredEnv, 'cmake');
+    resolveCapability(filteredEnv, 'git');
+    resolveCapability(filteredEnv, 'jake', null, '.'); // If not in global path, use jake packaged in this agent
+    resolveCapability(filteredEnv, 'java');
+    resolveCapability(filteredEnv, 'make');
+    resolveCapability(filteredEnv, { name: 'mdtool', paths: ['/Applications/Xamarin Studio.app/Contents/MacOS/mdtool'] }, 'Xamarin.iOS');
+    resolveCapability(filteredEnv, 'mvn', 'maven');
+    resolveCapability(filteredEnv, 'node', 'node.js');
+    resolveCapability(filteredEnv, 'nodejs', 'node.js');
+    resolveCapability(filteredEnv, 'npm');
+    resolveCapability(filteredEnv, 'python');
+    resolveCapability(filteredEnv, 'python3');
+    resolveCapability(filteredEnv, 'sh');
+    resolveCapabilityViaShell(filteredEnv, 'xcode-select', '-p', 'xcode');
 
-    checkWhich(cap, 'ant');
-    checkWhich(cap, 'cmake');
-    checkWhich(cap, 'java');
-    checkWhich(cap, 'mvn', 'maven');
-    checkTool(cap, 'xcode-select', '-p', 'xcode');
-
-    checkWhich(cap, 'make');
-    checkWhich(cap, 'clang');
-
-    return cap;
+    return filteredEnv;
 }
