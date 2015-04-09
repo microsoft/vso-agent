@@ -34,6 +34,10 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     // TODO: support TfsVersionControl
     var invalidType: string;
     endpoints.every((endpoint) => {
+        if (!endpoint.type) {
+            return false;
+        }
+
         if (supported.indexOf(endpoint.type.toLowerCase()) < 0) {
             invalidType = endpoint.type;
             return false;
@@ -59,6 +63,9 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     ctx.info('selectedRef: ' + selectedRef);
 
     var srcendpoints = endpoints.filter(function (endpoint) {
+        if (!endpoint.type) {
+            return false;
+        }
         return (supported.indexOf(endpoint.type.toLowerCase()) >= 0);
     });
 
