@@ -3,6 +3,7 @@ var shell = require('shelljs');
 var fs = require('fs');
 var path = require('path');
 var os = require('os');
+var glob = require('glob')
 
 var CMD_PREFIX = '##vso[';
 
@@ -130,7 +131,7 @@ var _checkPath = function(p, name) {
     if (!p || !fs.existsSync(p)) {
         console.error('invalid ' + name + ': ' + p);
         _exit(1);
-    }    
+    }
 }
 exports.checkPath = _checkPath;
 
@@ -165,6 +166,28 @@ var _which = function(tool, check) {
 }
 exports.which = _which;
 
+var _fileExists = function(f, check) {
+    if (check) {
+        _checkPath(f, 'file');
+    }
+    return shell.test('-f', f);
+}
+exports.fileExists = _fileExists;
+
+var _findFiles = function(pattern, check) {
+    _debug('search pattern : ' + pattern);
+    if (!pattern) {
+        if (check) {
+            console.error('invalid search pattern');
+            _exit(1);
+        }
+
+        return [];
+    }
+    return glob.sync(pattern);
+}
+exports.findFiles = _findFiles;
+
 //
 // options (default):
 //      silent: bool (false) - if true, will not echo stdout
@@ -175,7 +198,6 @@ exports.which = _which;
 //
 // resolves return code
 //
-
 var _toolRunner = (function(){
     function ToolRunner(toolPath) {
         _debug('toolRunner toolPath: ' + toolPath);
