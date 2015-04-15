@@ -3,8 +3,8 @@ var shell = require('shelljs');
 var fs = require('fs');
 var path = require('path');
 var os = require('os');
-
-var CMD_PREFIX = '##vso[';
+var tcm = require('./taskcommand');
+var trm = require('./toolrunner');
 
 //-----------------------------------------------------
 // General Helpers
@@ -83,18 +83,23 @@ exports.getPathInput = _getPathInput;
 //-----------------------------------------------------
 // Cmd Helpers
 //-----------------------------------------------------
+var _writeCommand = function(command, properties, message) {
+    var taskCmd = new tcm.TaskCommand(command, properties, message);
+    _writeLine(taskCmd.toString());
+}
+
 var _warning = function(message) {
-    _writeLine(CMD_PREFIX + 'task.issue type=warning]' + message);
+    _writeCommand('task.issue', {'type': 'warning'}, message);
 }
 exports.warning = _warning;
 
 var _error = function(message) {
-    _writeLine(CMD_PREFIX + 'task.issue type=error]' + message);
+    _writeCommand('task.issue', {'type': 'error'}, message);
 }
 exports.error = _error;
 
 var _debug = function(message) {
-	_writeLine(CMD_PREFIX + 'task.debug]' + message);
+    _writeCommand('task.debug', null, message);
 }
 exports.debug = _debug;
 
@@ -165,95 +170,12 @@ var _which = function(tool, check) {
 }
 exports.which = _which;
 
-//
-// options (default):
-//      silent: bool (false) - if true, will not echo stdout
-//      failOnStdErr: bool (false)
-//      ignoreReturnCode: bool (false) - if true, will not fail on non-zero return code.
-//      outStream: stream (process.stdout) - stream to write stdout to. 
-//      errStream: stream (process.stderr) - stream to write stderr to.
-//
-// resolves return code
-//
+//-----------------------------------------------------
+// Tools
+//-----------------------------------------------------
+exports.TaskCommand = tcm.TaskCommand;
+exports.commandFromString = tcm.commandFromString;
+exports.ToolRunner = trm.ToolRunner;
+trm.debug = _debug;
 
-var _toolRunner = (function(){
-    function ToolRunner(toolPath) {
-        _debug('toolRunner toolPath: ' + toolPath);
-        this.toolPath = toolPath;
-        this.args = [];
-    }
 
-    ToolRunner.prototype.arg = function(arguments) {
-        if (arguments instanceof Array) {
-            _debug(this.toolPath + ' arg: ' + JSON.stringify(arguments));
-            this.args = this.args.concat(arguments);
-        }
-        else if (typeof(arguments) === 'string') {
-            _debug(this.toolPath + ' arg: ' + arguments);
-            this.args.push(arguments);
-        }
-    }
-
-    ToolRunner.prototype.exec = function(options) {
-        var defer = Q.defer();
-
-        _debug('exec tool: ' + this.toolPath);
-        _debug('Arguments:');
-        this.args.forEach(function(arg) {
-            _debug('   ' + arg);
-        });
-
-        var success = true;
-        options = options || {};
-
-        var ops = {
-            cwd: process.cwd(),
-            env: process.env,
-            silent: options.silent || false,
-            failOnStdErr: options.failOnStdErr || false,
-            ignoreReturnCode: options.ignoreReturnCode || false,
-            outStream: options.outStream || process.stdout,
-            errStream: options.errStream || process.stderr
-        };
-
-        var argString = this.args.join(' ') || '';
-        ops.outStream.write('[command]' + this.toolPath + ' ' + argString + os.EOL);
-
-        var cp = require('child_process').spawn;
-        var runCP = cp(this.toolPath, this.args, ops);
-
-        runCP.stdout.on('data', function(data) {
-            if (!ops.silent) {
-                ops.outStream.write(data);
-            }
-        });
-
-        var _errStream = ops.failOnStdErr ? ops.errStream : ops.outStream;
-        runCP.stderr.on('data', function(data) {
-            success = !ops.failOnStdErr;
-            if (!ops.silent) {
-                _errStream.write(data);
-            }
-        });
-
-        runCP.on('exit', function(code) {
-            _debug('rc:' + code);
-            if (code != 0 && !ops.ignoreReturnCode) {
-                success = false;
-            }
-            
-            _debug('success:' + success);
-            if (success) {
-                defer.resolve(code);
-            }
-            else {
-                defer.reject(new Error(this.toolPath + ' failed with return code: ' + code));
-            }
-        });
-
-        return defer.promise;
-    }
-
-    return ToolRunner;
-})();
-exports.ToolRunner = _toolRunner;
