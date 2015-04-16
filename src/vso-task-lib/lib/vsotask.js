@@ -3,6 +3,7 @@ var shell = require('shelljs');
 var fs = require('fs');
 var path = require('path');
 var os = require('os');
+var minimatch = require('minimatch');
 
 var CMD_PREFIX = '##vso[';
 
@@ -257,3 +258,21 @@ var _toolRunner = (function(){
     return ToolRunner;
 })();
 exports.ToolRunner = _toolRunner;
+
+//-----------------------------------------------------
+// Matching helpers
+//-----------------------------------------------------
+var _match = function (list, pattern, options) {
+    return minimatch.match(list, pattern, options);
+}
+exports.match = _match;
+
+var _matchFile = function (list, pattern, options) {
+    return minimatch(list, pattern, options);
+}
+exports.matchFile = _matchFile;
+
+var _filter = function (pattern, options) {
+    return minimatch.filter(pattern, options);
+}
+exports.filter = _filter;

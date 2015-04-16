@@ -29,6 +29,7 @@
     "async": "0.x",
     "glob": "^5.0.3",
     "iniparser": "~1.0.5",
+    "minimatch": "^2.0.4",
     "minimist": "^0.2.0",
     "nconf": "0.6.x",
     "node-uuid": "1.x",
