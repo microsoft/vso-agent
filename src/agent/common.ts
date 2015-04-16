@@ -125,6 +125,7 @@ export interface IFeedbackChannel {
     queueLogPage(page: ILogPageInfo): void;
     queueConsoleLine(line: string): void;
     queueConsoleSection(line: string): void;
+    queueAsyncCommand(cmd: IAsyncCommand): void;
 
     // timelines
     addError(recordId: string, category: string, message: string, data: any): void;
@@ -149,6 +150,25 @@ export interface IFeedbackChannel {
     updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void;
 }
 
+export interface ITaskCommand {
+    command: string;
+    properties: { [name: string]: string };
+    message: string;
+}
+
+//TODO: get rid of ctx any
+export interface ISyncCommand {
+    command: ITaskCommand;
+    runCommand(ctx: any);
+}
+
+export interface IAsyncCommand {
+    command: ITaskCommand;
+    description: string;
+    runCommandAsync(ctx: any, 
+                    output:(line) => void, 
+                    done: (err: any) => void): void;
+}
 
 // high level ids for job to avoid passing full job to lower priviledged code
 export interface IJobInfo {

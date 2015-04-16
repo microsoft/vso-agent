@@ -4,18 +4,12 @@ import path = require('path');
 import shell = require('shelljs');
 var vsotask = require('vso-task-lib');
 
-export interface ITaskCommand {
-    command: string;
-    properties: { [name: string]: string };
-    message: string;
-}
-
 //
 // TODO (bryanmac): will we need async cmds with callbacks?  
 //                  Right now, all go to context, queue and return immediately
 
 export function handleCommand(commandLine: string, taskCtx: ctxm.TaskContext) {
-	var cmd: ITaskCommand;
+	var cmd: cm.ITaskCommand;
 
 	try {
 		cmd = vsotask.commandFromString(commandLine);	
@@ -33,10 +27,16 @@ export function handleCommand(commandLine: string, taskCtx: ctxm.TaskContext) {
 
 	var cmdm = require('./' + cmd.command);
 
-	if (!cmdm.runCommand) {
-		taskCtx.verbose('Command does not implement runCommand: ' + cmd.command);
-		return;
-	}
-
-	cmdm.runCommand(cmd, taskCtx);
+    if (cmdm.createSyncCommand) {
+        var syncCmd = cmdm.createSyncCommand(cmd);
+        syncCmd.runCommand(taskCtx);    
+    }
+    else if (cmdm.createAsyncCommand) {
+        var asyncCmd = cmdm.createAsyncCommand(cmd);
+        taskCtx.feedback.queueAsyncCommand(asyncCmd);
+    }
+    else {
+        taskCtx.verbose('Command does not implement runCommand or runCommandAsync: ' + cmd.command);
+    }
+	
 }
