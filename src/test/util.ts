@@ -87,8 +87,6 @@ export function createTestMessage(project: string, repoPath: string): {} {
 export function createTasksDirectory(agentFolder: string): void {
 	var config: cm.IConfiguration = createTestConfig();
 	var wkDir = path.resolve(__dirname, agentFolder, '..', config.settings.workFolder);
-	console.log('*******************************************');
-	console.log(wkDir);
 	shell.mkdir('-p', wkDir);
 	shell.cp('-rf', path.join(__dirname, 'tasks'), wkDir);
 }

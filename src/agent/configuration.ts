@@ -21,7 +21,7 @@ var fs = require('fs');
 var check = require('validator');
 var shell = require('shelljs');
 
-var configPath = path.join(__dirname, '.agent');
+var configPath = path.join(__dirname, '..', '.agent');
 var envPath = path.join(__dirname, 'env.agent');
 
 
