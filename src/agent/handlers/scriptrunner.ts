@@ -3,24 +3,59 @@ import cm = require('../common');
 import ctxm = require('../context');
 import path = require('path');
 import shell = require('shelljs');
-import cmdm = require('../commands/command');
 import tm = require('../tracing');
+var vsotask = require('vso-task-lib');
 
 var _commandPath = path.resolve(__dirname, '../commands');
 
 var _trace: tm.Tracing;
 
+var _cmdQueue: cm.IBaseQueue<cm.IAsyncCommand>;
+
 function _processLine(line: string, taskCtx:ctxm.TaskContext): void {
 	if (line.startsWith(cm.CMD_PREFIX)) {
-        cmdm.handleCommand(line, taskCtx);
+        _handleCommand(line, taskCtx);
 	}
     else {
         taskCtx.info(line);
     }
 }
 
+function _handleCommand(commandLine: string, taskCtx: ctxm.TaskContext) {
+    var cmd: cm.ITaskCommand;
+
+    try {
+        cmd = vsotask.commandFromString(commandLine);   
+    }
+    catch(err) {
+        taskCtx.warning(err.message + ': ' + commandLine);
+        return;
+    }
+
+    var cmdModulePath = path.join(__dirname, '..', cmd.command + '.js');
+    if (!shell.test('-f', cmdModulePath)) {
+        taskCtx.warning('command module does not exist: ' + cmd.command);
+        return;
+    }
+
+    var cmdm = require(cmdModulePath);
+
+    if (cmdm.createSyncCommand) {
+        var syncCmd = cmdm.createSyncCommand(cmd);
+        syncCmd.runCommand(taskCtx);    
+    }
+    else if (cmdm.createAsyncCommand) {
+        var asyncCmd = cmdm.createAsyncCommand(cmd, taskCtx);
+        _cmdQueue.push(asyncCmd);
+    }
+    else {
+        taskCtx.warning('Command does not implement runCommand or runCommandAsync: ' + cmd.command);
+    }   
+}
+
 export function run(scriptEngine: string, scriptPath: string, taskCtx:ctxm.TaskContext, callback) {
-    _trace = new tm.Tracing(__filename, taskCtx.agentCtx);
+    _trace = new tm.Tracing(__filename, taskCtx.workerCtx);
+    _cmdQueue = taskCtx.service.createAsyncCommandQueue(taskCtx);
 
     // TODO: only send all vars for trusted tasks
     var env = process.env;

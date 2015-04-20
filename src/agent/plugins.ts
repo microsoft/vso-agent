@@ -25,7 +25,7 @@ export interface IPlugin {
     afterJob(pluginContext: ctxm.PluginContext, callback: (err?: any) => void): void;
 }
 
-export function load(pluginType, ctx: ctxm.AgentContext, jobContext: ctxm.JobContext, callback) {
+export function load(pluginType, ctx: ctxm.WorkerContext, jobContext: ctxm.JobContext, callback) {
     var plugins = {};
     plugins['beforeJob'] = [];
     plugins['afterJob'] = [];
@@ -77,8 +77,8 @@ export function load(pluginType, ctx: ctxm.AgentContext, jobContext: ctxm.JobCon
     })
 }
 
-export function beforeJob(plugins, ctx: ctxm.JobContext, agentCtx: ctxm.AgentContext, callback: (err: any, success: boolean) => void): void {
-    trace = new tm.Tracing(__filename, agentCtx);
+export function beforeJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerContext, callback: (err: any, success: boolean) => void): void {
+    trace = new tm.Tracing(__filename, wkCtx);
     trace.enter('beforeJob plugins');
 
     async.forEachSeries(plugins['beforeJob'],
@@ -90,11 +90,11 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, agentCtx: ctxm.AgentCon
             var logDescr = 'Plugin beforeJob:' + plugin.pluginName();
             var pluginCtx: ctxm.PluginContext = new ctxm.PluginContext(ctx.job,
                 plugin.beforeId,
-                ctx.feedback,
-                agentCtx);
+                ctx.service,
+                wkCtx);
 
             pluginCtx.on('message', function (message) {
-                ctx.feedback.queueConsoleLine(message);
+                ctx.service.queueConsoleLine(message);
             });
 
             shell.cd(pluginCtx.buildDirectory);
@@ -120,8 +120,8 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, agentCtx: ctxm.AgentCon
         });
 }
 
-export function afterJob(plugins, ctx: ctxm.JobContext, agentCtx: ctxm.AgentContext, jobSuccess: Boolean, callback: (err: any, success: boolean) => void): void {
-    trace = new tm.Tracing(__filename, agentCtx);
+export function afterJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerContext, jobSuccess: Boolean, callback: (err: any, success: boolean) => void): void {
+    trace = new tm.Tracing(__filename, wkCtx);
     trace.enter('afterJob plugins');
 
     async.forEachSeries(plugins['afterJob'],
@@ -140,10 +140,10 @@ export function afterJob(plugins, ctx: ctxm.JobContext, agentCtx: ctxm.AgentCont
             var logDescr = 'Plugin afterJob:' + plugin.pluginName();
             var pluginCtx: ctxm.PluginContext = new ctxm.PluginContext(ctx.job,
                 plugin.afterId,
-                ctx.feedback,
-                agentCtx);
+                ctx.service,
+                wkCtx);
             pluginCtx.on('message', function (message) {
-                ctx.feedback.queueConsoleLine(message);
+                ctx.service.queueConsoleLine(message);
             });
 
             shell.cd(pluginCtx.buildDirectory);

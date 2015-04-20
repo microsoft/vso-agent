@@ -15,14 +15,14 @@ import tm = require('./tracing');
 import path = require('path');
 import crypto = require('crypto');
 
-var ag: ctxm.AgentContext;
+var wk: ctxm.WorkerContext;
 var trace: tm.Tracing;
 
-function setVariables(job: ifm.JobRequestMessage, agentContext: ctxm.AgentContext) {
+function setVariables(job: ifm.JobRequestMessage, workerContext: ctxm.WorkerContext) {
     trace.enter('setVariables');
     trace.state('variables', job.environment.variables);
 
-    var workingFolder = agentContext.config.settings.workFolder;
+    var workingFolder = workerContext.workFolder;
     var variables = job.environment.variables;
 
     var sys = variables[cm.sysVars.system];
@@ -61,18 +61,20 @@ function deserializeEnumValues(job: ifm.JobRequestMessage) {
 //
 // Worker process waits for a job message, processes and then exits
 //
+export function run(msg, consoleOutput: boolean, 
+                    createFeedbackChannel: (agentUrl, taskUrl, jobInfo, ag) => cm.IFeedbackChannel, 
+                    finished: () => void) {
 
-export function run(msg, consoleOutput: boolean, createFeedbackChannel: (agentUrl, taskUrl, jobInfo, ag) => cm.IFeedbackChannel, finished: () => void) {
-    ag = new ctxm.AgentContext('worker', msg.config, consoleOutput);
-    trace = new tm.Tracing(__filename, ag);
+    wk = new ctxm.WorkerContext(msg.config, true);
+    trace = new tm.Tracing(__filename, wk);
     trace.enter('.onMessage');
     trace.state('message', msg);
 
-    ag.info('worker::onMessage');
+    wk.info('worker::onMessage');
     if (msg.messageType === "job") {
         var job: ifm.JobRequestMessage = msg.data;
         deserializeEnumValues(job);
-        setVariables(job, ag);
+        setVariables(job, wk);
 
         var jobInfo: cm.IJobInfo = cm.jobInfoFromJob(job);
 
@@ -83,40 +85,42 @@ export function run(msg, consoleOutput: boolean, createFeedbackChannel: (agentUr
             process.env['altpassword'] = msg.config.creds.password;
         }
 
-        ag.status('Running job: ' + job.jobName);
-        ag.info('message:');
+        wk.status('Running job: ' + job.jobName);
+        wk.info('message:');
         trace.state('msg:', msg);
 
-        var agentUrl = ag.config.settings.serverUrl;
-        var taskUrl = job.authorization.serverUrl;
-        var feedback: cm.IFeedbackChannel = createFeedbackChannel(agentUrl, taskUrl, jobInfo, ag);
-        trace.write('created feedback');
+        var agentUrl = wk.config.settings.serverUrl;
 
-        var ctx: ctxm.JobContext = new ctxm.JobContext(job, feedback, ag);
+        // backcompat with old server
+        var taskUrl = job.environment.systemConnection ? job.environment.systemConnection.url : job.authorization.serverUrl;        
+
+        var serviceChannel: cm.IFeedbackChannel = createFeedbackChannel(agentUrl, taskUrl, jobInfo, wk);
+        wk.service = serviceChannel;
+
+        var ctx: ctxm.JobContext = new ctxm.JobContext(job, wk.service, wk);
         trace.write('created JobContext');
 
-        var jobRunner: jrm.JobRunner = new jrm.JobRunner(ag, ctx);
+        var jobRunner: jrm.JobRunner = new jrm.JobRunner(wk, ctx);
         trace.write('created jobRunner');
 
         jobRunner.run((err: any, result: ifm.TaskResult) => {
             trace.callback('job.run');
 
-            ag.status('Job Completed: ' + job.jobName);
+            wk.status('Job Completed: ' + job.jobName);
             if (err) {
-                ag.error('Error: ' + err.message);
+                wk.error('Error: ' + err.message);
             }
 
             ctx.finishJob(result, (err: any) => {
                 trace.callback('ctx.finishJob');
-
-                ag.status('Job Finished: ' + job.jobName);
+ 
+                wk.status('Job Finished: ' + job.jobName);
                 if (err) {
-                    ag.error('Error: ' + err.message);
+                    wk.error('Error: ' + err.message);
                 }
 
                 finished();
             });
-
         });
     }
 }
@@ -132,17 +136,19 @@ process.on('message', function (msg) {
 });
 
 process.on('uncaughtException', function (err) {
-    if (ag) {
-        ag.error('worker unhandled: ' + err.message);
-        ag.error(err);
+    console.error('unhandled:' + err.message);
+
+    if (wk) {
+        wk.error('worker unhandled: ' + err.message);
+        wk.error(err);
     }
 
     process.exit();
 });
 
 process.on('SIGINT', function () {
-    if (ag) {
-        ag.info("\nShutting down agent.");
+    if (wk) {
+        wk.info("\nShutting down agent.");
     }
 
     process.exit();

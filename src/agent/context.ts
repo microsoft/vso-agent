@@ -135,22 +135,17 @@ export class Context extends events.EventEmitter {
 }
 
 export class AgentContext extends Context implements cm.ITraceWriter {
-    constructor(hostProcess: string, config: cm.IConfiguration, consoleOutput: boolean) {
+    constructor(config: cm.IConfiguration, consoleOutput: boolean) {
         ensureTrace(this);
         this.config = config;
 
-        // Set full path for work folder, as it is used by others
-        if (path.resolve(this.config.settings.workFolder) !== this.config.settings.workFolder) {
-            this.workFolder = path.join(__dirname, this.config.settings.workFolder);
-            this.config.settings.workFolder = this.workFolder;
-        }
+        var rootAgentDir = path.join(__dirname, '..');
 
-        this.diagFolder = path.join(path.resolve(this.config.settings.workFolder), '_diag');
-        this.workerDiagFolder = path.join(this.diagFolder, 'worker');
-        this.agentDiagFolder = path.join(this.diagFolder, 'agent');
+        // Set full path for work folder, as it is used by others - config can have a relative path (./work)
+        this.diagFolder = path.join(rootAgentDir, '_diag');
         
         this.fileWriter = new dm.DiagnosticFileWriter(process.env[cm.envVerbose] ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info,
-            path.join(this.diagFolder, hostProcess),
+            this.diagFolder,
             new Date().toISOString().replace(/:/gi, '_') + '_' + process.pid + '.log');
 
         var writers: cm.IDiagnosticWriter[] = [this.fileWriter];
@@ -162,10 +157,45 @@ export class AgentContext extends Context implements cm.ITraceWriter {
         super(writers);
     }
 
+    public diagFolder: string;
+    private fileWriter: cm.IDiagnosticWriter;
+
+    // ITraceWriter
+    public trace(message: string) {
+        this.fileWriter.write(message);
+    }
+}
+
+export class WorkerContext extends Context implements cm.ITraceWriter {
+    constructor(config: cm.IConfiguration, consoleOutput: boolean) {
+        
+        this.config = config;
+
+        var rootAgentDir = path.join(__dirname, '..');
+
+        ensureTrace(this);
+
+        // Set full path for work folder, as it is used by others - config can have a relative path (./work)
+        this.workFolder = cm.getWorkPath(config); 
+        this.config.settings.workFolder = this.workFolder;
+        this.diagFolder = cm.getWorkerDiagPath(config);
+        
+        this.fileWriter = new dm.DiagnosticFileWriter(process.env[cm.envVerbose] ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info,
+            this.diagFolder,
+            new Date().toISOString().replace(/:/gi, '_') + '_' + process.pid + '.log');
+
+        var writers: cm.IDiagnosticWriter[] = [this.fileWriter];
+
+        if (consoleOutput) {
+            writers.push(new dm.DiagnosticConsoleWriter(cm.DiagnosticLevel.Status));
+        }
+        
+        super(writers);
+    }
+
+    public service: cm.IFeedbackChannel;
     public workFolder: string;
     public diagFolder: string;
-    public workerDiagFolder: string;
-    public agentDiagFolder: string;
     private fileWriter: cm.IDiagnosticWriter;
 
     // ITraceWriter
@@ -177,18 +207,18 @@ export class AgentContext extends Context implements cm.ITraceWriter {
 export class ExecutionContext extends Context {
     constructor(jobInfo: cm.IJobInfo,
         recordId: string,
-        feedback: cm.IFeedbackChannel,
-        agentCtx: AgentContext) {
+        service: cm.IFeedbackChannel,
+        workerCtx: WorkerContext) {
 
-        ensureTrace(agentCtx);
+        ensureTrace(workerCtx);
         trace.enter('ExecutionContext');
 
         this.jobInfo = jobInfo;
         this.variables = jobInfo.variables;
         this.recordId = recordId;
-        this.agentCtx = agentCtx;
-        this.feedback = feedback;
-        this.config = agentCtx.config;
+        this.workerCtx = workerCtx;
+        this.service = service;
+        this.config = workerCtx.config;
 
         this.buildDirectory = this.variables[cm.agentVars.buildDirectory];
         this.workingDirectory = this.variables[cm.agentVars.workingDirectory];
@@ -203,7 +233,7 @@ export class ExecutionContext extends Context {
 
         logger.on('pageComplete', (info: cm.ILogPageInfo) => {
             trace.state('pageComplete', info);
-            feedback.queueLogPage(info);
+            service.queueLogPage(info);
         });
 
         this.util = new um.Utilities(this);
@@ -211,22 +241,22 @@ export class ExecutionContext extends Context {
         super([logger]);
     }
 
-    public agentCtx: AgentContext;
+    public workerCtx: WorkerContext;
     public jobInfo: cm.IJobInfo;
     public variables: { [key: string]: string };
     public recordId: string;
     public buildDirectory: string;
     public workingDirectory: string;
-    public feedback: cm.IFeedbackChannel;
+    public service: cm.IFeedbackChannel;
     public util: um.Utilities;
 
     public error(message: string): void {
-        this.feedback.addError(this.recordId, "Console", message, null);
+        this.service.addError(this.recordId, "Console", message, null);
         super.error(message);
     }
 
     public warning(message: string): void {
-        this.feedback.addWarning(this.recordId, "Console", message, null);
+        this.service.addWarning(this.recordId, "Console", message, null);
         super.warning(message);
     }
 }
@@ -252,10 +282,10 @@ var LOCK_RENEWAL_MS = 60 * 1000;
 
 export class JobContext extends ExecutionContext {
     constructor(job: ifm.JobRequestMessage,
-        feedback: cm.IFeedbackChannel,
-        agentCtx: AgentContext) {
+        service: cm.IFeedbackChannel,
+        workerCtx: WorkerContext) {
 
-        ensureTrace(agentCtx);
+        ensureTrace(workerCtx);
         trace.enter('JobContext');
 
         this.job = job;
@@ -264,16 +294,16 @@ export class JobContext extends ExecutionContext {
 
         this.jobInfo = info;
         trace.state('this.jobInfo', this.jobInfo);
-        this.feedback = feedback;
-        this.config = agentCtx.config;
+        this.service = service;
+        this.config = workerCtx.config;
         trace.state('this.config', this.config);
 
-        super(info, job.jobId, feedback, agentCtx);
+        super(info, job.jobId, service, workerCtx);
     }
 
     public job: ifm.JobRequestMessage;
     public jobInfo: cm.IJobInfo;
-    public feedback: cm.IFeedbackChannel;
+    public service: cm.IFeedbackChannel;
 
     //------------------------------------------------------------------------------------
     // Job/Task Status
@@ -293,17 +323,17 @@ export class JobContext extends ExecutionContext {
         trace.state('this.config', this.config);
 
         // marking the job complete and then drain so the next worker can start
-        this.feedback.updateJobRequest(this.config.poolId,
+        this.service.updateJobRequest(this.config.poolId,
             this.job.lockToken,
             jobRequest,
             (err: any) => {
                 trace.write('draining feedback');
-                this.feedback.drain(callback);
+                this.service.drain(callback);
             });
     }
 
     public writeConsoleSection(message: string) {
-        this.feedback.queueConsoleSection(message);
+        this.service.queueConsoleSection(message);
     }
 
     public setJobInProgress(): void {
@@ -311,46 +341,46 @@ export class JobContext extends ExecutionContext {
         var jobId = this.job.jobId;
 
         // job
-        this.feedback.setCurrentOperation(jobId, "Starting");
-        this.feedback.setName(jobId, this.job.jobName);
-        this.feedback.setStartTime(jobId, new Date());
-        this.feedback.setState(jobId, ifm.TimelineRecordState.InProgress);
-        this.feedback.setType(jobId, "Job");
-        this.feedback.setWorkerName(jobId, this.config.settings.agentName);
+        this.service.setCurrentOperation(jobId, "Starting");
+        this.service.setName(jobId, this.job.jobName);
+        this.service.setStartTime(jobId, new Date());
+        this.service.setState(jobId, ifm.TimelineRecordState.InProgress);
+        this.service.setType(jobId, "Job");
+        this.service.setWorkerName(jobId, this.config.settings.agentName);
     }
 
     public registerPendingTask(id: string, name: string, order: number): void {
         trace.enter('registerPendingTask');
-        this.feedback.setCurrentOperation(id, "Initializing");
-        this.feedback.setParentId(id, this.job.jobId);
-        this.feedback.setName(id, name);
-        this.feedback.setState(id, ifm.TimelineRecordState.Pending);
-        this.feedback.setType(id, "Task");
-        this.feedback.setWorkerName(id, this.config.settings.agentName);
-        this.feedback.setOrder(id, order);
+        this.service.setCurrentOperation(id, "Initializing");
+        this.service.setParentId(id, this.job.jobId);
+        this.service.setName(id, name);
+        this.service.setState(id, ifm.TimelineRecordState.Pending);
+        this.service.setType(id, "Task");
+        this.service.setWorkerName(id, this.config.settings.agentName);
+        this.service.setOrder(id, order);
     }
 
     public setTaskStarted(id: string, name: string): void {
         trace.enter('setTaskStarted');
         // set the job operation
-        this.feedback.setCurrentOperation(this.job.jobId, 'Starting ' + name);
+        this.service.setCurrentOperation(this.job.jobId, 'Starting ' + name);
 
         // update the task
-        this.feedback.setCurrentOperation(id, "Starting " + name);
-        this.feedback.setStartTime(id, new Date());
-        this.feedback.setState(id, ifm.TimelineRecordState.InProgress);
-        this.feedback.setType(id, "Task");
-        this.feedback.setName(id, name);
+        this.service.setCurrentOperation(id, "Starting " + name);
+        this.service.setStartTime(id, new Date());
+        this.service.setState(id, ifm.TimelineRecordState.InProgress);
+        this.service.setType(id, "Task");
+        this.service.setName(id, name);
     }
 
     public setTaskResult(id: string, name: string, result: ifm.TaskResult): void {
         trace.enter('setTaskResult');
-        this.feedback.setCurrentOperation(id, "Completed " + name);
-        this.feedback.setState(id, ifm.TimelineRecordState.Completed);
-        this.feedback.setFinishTime(id, new Date());
-        this.feedback.setResult(id, result);
-        this.feedback.setType(id, "Task");
-        this.feedback.setName(id, name);
+        this.service.setCurrentOperation(id, "Completed " + name);
+        this.service.setState(id, ifm.TimelineRecordState.Completed);
+        this.service.setFinishTime(id, new Date());
+        this.service.setResult(id, result);
+        this.service.setType(id, "Task");
+        this.service.setName(id, name);
     }
 }
 
@@ -367,12 +397,12 @@ export class PluginContext extends ExecutionContext {
     constructor(job: ifm.JobRequestMessage,
         recordId: string,
         feedback: cm.IFeedbackChannel,
-        agentCtx: AgentContext) {
+        workerCtx: WorkerContext) {
 
         this.job = job;
         var jobInfo: cm.IJobInfo = cm.jobInfoFromJob(job);
 
-        super(jobInfo, recordId, feedback, agentCtx);
+        super(jobInfo, recordId, feedback, workerCtx);
     }
 
     public job: ifm.JobRequestMessage;
@@ -392,9 +422,9 @@ export class TaskContext extends ExecutionContext {
     constructor(jobInfo: cm.IJobInfo,
         recordId: string,
         feedback: cm.IFeedbackChannel,
-        agentCtx: AgentContext) {
+        workerCtx: WorkerContext) {
 
-        super(jobInfo, recordId, feedback, agentCtx);
+        super(jobInfo, recordId, feedback, workerCtx);
     }
 
     public inputs: ifm.TaskInputs;

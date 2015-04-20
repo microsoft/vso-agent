@@ -1,4 +1,3 @@
-import cmdm = require('./command');
 import ctxm = require('../context');
 import cm = require('../common');
 
@@ -13,21 +12,24 @@ import cm = require('../common');
 // Output from this should call the output(line) callback.  Outback is buffered and written to the task log
 // as one chunk so this output is not interleaved with other tool output.
 //
-export function createAsyncCommand(command: cm.ITaskCommand) {
-	return new SampleAsyncCommand(command);
+export function createAsyncCommand(taskCtx: ctxm.TaskContext, command: cm.ITaskCommand) {
+	return new SampleAsyncCommand(taskCtx, command);
 }
 
 export class SampleAsyncCommand implements cm.IAsyncCommand {
-	constructor(command: cm.ITaskCommand) {
+	constructor(taskCtx: ctxm.TaskContext, command: cm.ITaskCommand) {
 		this.command = command;
+		this.taskCtx = taskCtx;
 		this.description = "Sample Async Command";
 	}
 
 	public command: cm.ITaskCommand;
 	public description: string;
-	public runCommandAsync(taskCtx: ctxm.TaskContext, 
-		                            output:(line) => void, 
-		                            done: (err: any) => void): void {
+	public taskCtx: ctxm.TaskContext;
+
+	public runCommandAsync(output:(line) => void, 
+                           done: (err: any) => void): void {
+
 		output('running sample async command ...');
 		setTimeout(function(){
 			output('done running async command');

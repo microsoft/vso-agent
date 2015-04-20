@@ -108,7 +108,7 @@ cm.readBasicCreds()
         }
 
         var agent: ifm.TaskAgent = config.agent;
-        ag = new ctxm.AgentContext('agent', config, true);
+        ag = new ctxm.AgentContext(config, true);
         trace = new tm.Tracing(__filename, ag);
         trace.callback('initAgent');
 
@@ -119,7 +119,7 @@ cm.readBasicCreds()
         var ageSeconds = config.settings.keepLogsSeconds || cm.DEFAULT_LOG_SECONDS;
         trace.state('ageSeconds', ageSeconds);
         
-        var sweeper:dm.DiagnosticSweeper = new dm.DiagnosticSweeper(ag.workerDiagFolder, 'log', ageSeconds, SWEEP_DIAG_SECONDS);
+        var sweeper:dm.DiagnosticSweeper = new dm.DiagnosticSweeper(cm.getWorkerDiagPath(config), 'log', ageSeconds, SWEEP_DIAG_SECONDS);
         sweeper.on('deleted', (path) => {
             trace.write('log deleted: ' + path);
         });
@@ -127,7 +127,7 @@ cm.readBasicCreds()
             ag.info(msg);
         });
 
-        var logsFolder = path.join(path.resolve(ag.workFolder), '_logs');
+        var logsFolder = cm.getWorkerLogsPath(config);
         var logSweeper:dm.DiagnosticSweeper = new dm.DiagnosticSweeper(logsFolder, '*', ageSeconds, SWEEP_LOGS_SECONDS);
         logSweeper.on('deleted', (path) => {
             trace.write('log deleted: ' + path);

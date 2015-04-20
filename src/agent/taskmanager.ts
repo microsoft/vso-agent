@@ -14,11 +14,11 @@ import basicm = require('./api/basiccreds');
 
 export class TaskManager {
 
-    constructor(agentContext: ctxm.AgentContext) {
-        this.context = agentContext;
-        this.taskApi = webapi.TaskApi(agentContext.config.settings.serverUrl, 
-                                      cm.basicHandlerFromCreds(agentContext.config.creds));
-        this.taskFolder = path.resolve(agentContext.config.settings.workFolder, 'tasks');
+    constructor(workerContext: ctxm.WorkerContext) {
+        this.context = workerContext;
+        this.taskApi = webapi.TaskApi(workerContext.config.settings.serverUrl, 
+                                      cm.basicHandlerFromCreds(workerContext.config.creds));
+        this.taskFolder = path.resolve(workerContext.config.settings.workFolder, 'tasks');
     }
 
     public ensureTaskExists(task: ifm.TaskInstance, callback) : void {
@@ -113,7 +113,7 @@ export class TaskManager {
         return <ifm.TaskInstance>{'id':task.id, 'name': task.name, 'version': cm.versionStringFromTaskDef(task)}
     }
 
-    private context: ctxm.AgentContext;
+    private context: ctxm.WorkerContext;
     private taskApi: ifm.ITaskApi;
     private taskFolder: string;
 }

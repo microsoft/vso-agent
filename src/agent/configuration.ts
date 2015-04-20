@@ -85,8 +85,11 @@ export class Configurator {
         var cfgInputs = [
             { name: 'serverUrl', description: 'server url', arg: 's', type: 'string', req: true },
             { name: 'agentName', description: 'agent name', arg: 'a', def: os.hostname(), type: 'string', req: true },
-            { name: 'poolName', description: 'agent pool name', arg: 'l', def: 'default', type: 'string', req: true },
-            { name: 'workFolder', description: 'agent work folder', arg: 'f', def: './work', type: 'string', req: true }        
+            { name: 'poolName', description: 'agent pool name', arg: 'l', def: 'default', type: 'string', req: true }
+            
+            //TODO: consider supporting work folder outside of root - long path not an issue right now for OSX/Linux
+            //{ name: 'workFolder', description: 'agent work folder', arg: 'f', def: './work', type: 'string', req: true }        
+            
         ];
 
         return inputs.Qget(cfgInputs)
@@ -95,7 +98,7 @@ export class Configurator {
             settings.poolName = result['poolName'];
             settings.serverUrl = result['serverUrl'];
             settings.agentName = result['agentName'];
-            settings.workFolder = result['workFolder'];
+            settings.workFolder = './_work';
             settings.keepLogsSeconds = cm.DEFAULT_LOG_SECONDS;
 
             this.validate(settings);

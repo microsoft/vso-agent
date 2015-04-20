@@ -21,7 +21,7 @@ var _containerRoot: string;
 var _trace: tm.Tracing;
 
 function _ensureTracing(ctx: ctxm.ExecutionContext, area: string) {
-    _trace = new tm.Tracing(__filename, ctx.agentCtx);
+    _trace = new tm.Tracing(__filename, ctx.workerCtx);
     _trace.enter(area);
 }
 
@@ -151,7 +151,7 @@ function _uploadZip(filePath: string, fileSize: number, containerPath: string) {
 	    };
 	    _trace.state('item', item);
 
-		return _ctx.feedback.uploadFileToContainer(_containerId, item);
+		return _ctx.service.uploadFileToContainer(_containerId, item);
 	})
 }
 
@@ -183,7 +183,7 @@ function _uploadFile(filePath) {
 		    };
 
 		    _trace.state('item', item);
-			return _ctx.feedback.uploadFileToContainer(_containerId, item);			
+			return _ctx.service.uploadFileToContainer(_containerId, item);			
 		}
 	})
 }
