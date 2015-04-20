@@ -59,7 +59,7 @@ export function createTestConfig(): cm.IConfiguration {
 	config.settings.poolName = 'testPool';
 	config.settings.serverUrl = 'https://yosoylocoporcornballs.com';
 	config.settings.agentName = 'testAgent';
-	config.settings.workFolder = './work'
+	config.settings.workFolder = './_work'
 	config.creds = {};
 	config.creds.username = 'username';
 	config.creds.password = 'password';
@@ -85,13 +85,17 @@ export function createTestMessage(project: string, repoPath: string): {} {
 }
 
 export function createTasksDirectory(agentFolder: string): void {
-	var tasksDir = path.resolve(__dirname, agentFolder, 'work');
-	shell.mkdir('-p', tasksDir);
-	shell.cp('-rf', path.join(__dirname, 'tasks'), tasksDir);
+	var config: cm.IConfiguration = createTestConfig();
+	var wkDir = path.resolve(__dirname, agentFolder, '..', config.settings.workFolder);
+	console.log('*******************************************');
+	console.log(wkDir);
+	shell.mkdir('-p', wkDir);
+	shell.cp('-rf', path.join(__dirname, 'tasks'), wkDir);
 }
 
 export function deleteTasksDirectory(agentFolder: string): void {
-	shell.rm('-rf', path.resolve(__dirname, agentFolder, 'work', 'tasks'));
+	var config: cm.IConfiguration = createTestConfig();
+	shell.rm('-rf', path.resolve(__dirname, agentFolder, '..', config.settings.workFolder, 'tasks'));
 }
 
 
