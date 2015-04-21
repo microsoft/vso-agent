@@ -15,9 +15,9 @@ shell.cp('-R', agentDir, targetDir);
 
 var modsDir = path.join(installDir, 'node_modules');
 var targetAgent = path.join(targetDir, 'agent');
-console.log('Copying: ', modsDir, targetAgent);
-shell.cp('-R', modsDir, targetAgent);
-shell.cp(path.join(installDir, 'package.json'), targetAgent);
+console.log('Copying: ', modsDir, targetDir);
+shell.cp('-R', modsDir, targetDir);
+shell.cp(path.join(installDir, 'package.json'), targetDir);
 
 console.log('making scripts executable')
 shell.chmod('u+x', path.join(targetAgent, 'svc.sh'));

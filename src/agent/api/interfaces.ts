@@ -255,9 +255,23 @@ export interface JobEndpoint {
     url: string;
 }
 
+export interface JobConnectionAuthorization {
+    parameters: { [key: string]: string; };
+    scheme: string;
+}
+
+export interface JobConnection {
+    data: { [key: string]: string; };
+    name: string;
+    url: string;
+    authorization: JobConnectionAuthorization;
+}
+
 export interface JobEnvironment {
     data: any;
     endpoints: JobEndpoint[];
+    systemConnection: JobConnection;
+    userConnection: JobConnection;
     mask: MaskHint[];
     options: { [key: string]: JobOption; };
     secrets: any;

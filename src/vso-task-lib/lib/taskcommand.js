@@ -6,6 +6,8 @@
 //    ##vso[task.progress value=58]
 //    ##vso[task.issue type=warning;]This is the user warning message
 //
+var CMD_PREFIX = '##vso[';
+
 var TaskCommand = (function () {
     function TaskCommand(command, properties, message) {
         if (!command) {
@@ -16,7 +18,7 @@ var TaskCommand = (function () {
         this.message = message;
     }
     TaskCommand.prototype.toString = function () {
-        var cmdStr = '##vso[' + this.command;
+        var cmdStr = CMD_PREFIX + this.command;
         if (this.properties && Object.keys(this.properties).length > 0) {
             cmdStr += ' ';
             for (var key in this.properties) {
@@ -36,7 +38,7 @@ var TaskCommand = (function () {
 exports.TaskCommand = TaskCommand;
 
 function commandFromString(commandLine) {
-    var preLen = cm.CMD_PREFIX.length;
+    var preLen = CMD_PREFIX.length;
     var lbPos = commandLine.indexOf('[');
     var rbPos = commandLine.indexOf(']');
     if (lbPos == -1 || rbPos == -1 || rbPos - lbPos < 3) {

@@ -30,15 +30,15 @@ var trace: tm.Tracing;
 //       discuss ordering on log creation, associating timeline with logid
 //
 export class JobRunner {
-    constructor(agCtx: ctxm.AgentContext, jobCtx: ctxm.JobContext) {
-        this.agentContext = agCtx;
-        trace = new tm.Tracing(__filename, agCtx);
+    constructor(wkCtx: ctxm.WorkerContext, jobCtx: ctxm.JobContext) {
+        this.workerContext = wkCtx;
+        trace = new tm.Tracing(__filename, wkCtx);
         trace.enter('JobRunner');
         this.jobContext = jobCtx;
         this.job = jobCtx.job;
     }
 
-    private agentContext: ctxm.AgentContext;
+    private workerContext: ctxm.WorkerContext;
     private jobContext: ctxm.JobContext;
 
     private job: ifm.JobRequestMessage;
@@ -76,7 +76,7 @@ export class JobRunner {
     public run(complete: (err: any, result: ifm.TaskResult) => void) {
         trace.enter('run');
 
-        var ag = this.agentContext;
+        var wk = this.workerContext;
         this._replaceTaskInputVars();
         this._setEnvVars();
 
@@ -88,14 +88,14 @@ export class JobRunner {
         jobCtx.writeConsoleSection('Preparing tasks');
 
         jobCtx.status('Donloading required tasks');
-        var taskManager = new taskm.TaskManager(ag);
+        var taskManager = new taskm.TaskManager(wk);
         taskManager.ensureTasksExist(this.job.tasks, function (err) {
             if (err) {
                 complete(err, ifm.TaskResult.Failed);
                 return;
             }
             // prepare (might download) up to 5 tasks in parallel and then run tasks seuentially
-            ag.info('Preparing Tasks');
+            wk.info('Preparing Tasks');
             async.forEach(_this.job.tasks,
                 function (pTask, callback) {
                     _this.prepareTask(pTask, callback);
@@ -107,12 +107,12 @@ export class JobRunner {
                         return;
                     }
 
-                    ag.info('Task preparations complete.');
+                    wk.info('Task preparations complete.');
 
                     // TODO: replace build with sender id once confirm how sent
 
-                    ag.info('loading plugins...');
-                    plgm.load('build', ag, jobCtx, (err: any, plugins: any) => {
+                    wk.info('loading plugins...');
+                    plgm.load('build', wk, jobCtx, (err: any, plugins: any) => {
                         if (err) {
                             trace.write('error loading plugins');
                             complete(err, ifm.TaskResult.Failed);
@@ -124,30 +124,30 @@ export class JobRunner {
                         // Create timeline entries for each in Pending state
                         //
                         var order = 1;
-                        ag.info('beforeJob Plugins:')
+                        wk.info('beforeJob Plugins:')
                         plugins['beforeJob'].forEach(function (plugin) {
-                            ag.info(plugin.pluginName() + ":" + plugin.beforeId);
+                            wk.info(plugin.pluginName() + ":" + plugin.beforeId);
 
                             jobCtx.registerPendingTask(plugin.beforeId, 
                                                        plugin.pluginTitle(), 
                                                        order++);
                         });
 
-                        ag.info('tasks:')
+                        wk.info('tasks:')
                         jobCtx.job.tasks.forEach(function (task) {
-                            ag.info(task.name + ":" + task.id);
+                            wk.info(task.name + ":" + task.id);
 
                             jobCtx.registerPendingTask(task.instanceId, 
                                                        task.displayName, 
                                                        order++);
                         });
 
-                        ag.info('afterJob Plugins:')
+                        wk.info('afterJob Plugins:')
                         plugins['afterJob'].forEach(function(plugin) {
-                            ag.info(plugin.pluginName() + ":" + plugin.afterId);
+                            wk.info(plugin.pluginName() + ":" + plugin.afterId);
 
                             if (plugin.shouldRun(true, jobCtx)) {
-                                ag.info('shouldRun');
+                                wk.info('shouldRun');
 
                                 jobCtx.registerPendingTask(plugin.afterId, 
                                                            plugin.pluginTitle(), 
@@ -155,7 +155,7 @@ export class JobRunner {
                             }
                         });
 
-                        ag.info('buildDirectory: ' + jobCtx.buildDirectory);
+                        wk.info('buildDirectory: ' + jobCtx.buildDirectory);
                         shell.mkdir('-p', jobCtx.buildDirectory);
                         shell.cd(jobCtx.buildDirectory);
                         trace.write(process.cwd());
@@ -164,10 +164,10 @@ export class JobRunner {
                         async.series(
                             [
                                 function (done) {
-                                    ag.info('Running beforeJob Plugins ...');
+                                    wk.info('Running beforeJob Plugins ...');
 
-                                    plgm.beforeJob(plugins, jobCtx, ag, function (err, success) {
-                                        ag.info('Finished running beforeJob plugins');
+                                    plgm.beforeJob(plugins, jobCtx, wk, function (err, success) {
+                                        wk.info('Finished running beforeJob plugins');
                                         trace.state('variables after plugins:', _this.job.environment.variables);
 
                                         // plugins can contribute to vars so replace again
@@ -188,9 +188,9 @@ export class JobRunner {
                                         done(null);
                                     }
                                     else {
-                                        ag.info('Running Tasks ...');
+                                        wk.info('Running Tasks ...');
                                         _this.runTasks((err: any, result: ifm.TaskResult) => {
-                                            ag.info('Finished running tasks');
+                                            wk.info('Finished running tasks');
                                             jobResult = result;
                                             trace.write('jobResult: ' + result);
 
@@ -199,10 +199,10 @@ export class JobRunner {
                                     }
                                 },
                                 function (done) {
-                                    ag.info('Running afterJob Plugins ...');
+                                    wk.info('Running afterJob Plugins ...');
 
-                                    plgm.afterJob(plugins, jobCtx, ag, jobResult != ifm.TaskResult.Failed, function (err, success) {
-                                        ag.info('Finished running afterJob plugins');
+                                    plgm.afterJob(plugins, jobCtx, wk, jobResult != ifm.TaskResult.Failed, function (err, success) {
+                                        wk.info('Finished running afterJob plugins');
                                         trace.write('afterJob Success: ' + success);
                                         jobResult = !err && success ? jobResult : ifm.TaskResult.Failed;
                                         trace.write('jobResult: ' + jobResult);
@@ -230,7 +230,7 @@ export class JobRunner {
         trace.enter('runTasks');
 
         var job: ifm.JobRequestMessage = this.job;
-        var ag = this.agentContext;
+        var wk = this.workerContext;
         var jobCtx: ctxm.JobContext = this.jobContext;
 
         var jobResult: ifm.TaskResult = ifm.TaskResult.Succeeded;
@@ -243,11 +243,11 @@ export class JobRunner {
                 jobCtx.writeConsoleSection('Running ' + item.name);
                 var taskCtx: ctxm.TaskContext = new ctxm.TaskContext(jobCtx.jobInfo,
                     item.instanceId,
-                    jobCtx.feedback,
-                    ag);
+                    jobCtx.service,
+                    wk);
 
                 taskCtx.on('message', function (message) {
-                    jobCtx.feedback.queueConsoleLine(message);
+                    jobCtx.service.queueConsoleLine(message);
                 });
 
                 shell.cd(taskCtx.buildDirectory);
@@ -274,11 +274,11 @@ export class JobRunner {
                     done(err);
                 });
             }, function (err) {
-                ag.info('Done running tasks.');
+                wk.info('Done running tasks.');
                 trace.write('jobResult: ' + jobResult);
 
                 if (err) {
-                    ag.error(err.message);
+                    wk.error(err.message);
                     callback(err, jobResult);
                     return;
                 }
@@ -293,12 +293,12 @@ export class JobRunner {
     private prepareTask(task: ifm.TaskInstance, callback) {
         trace.enter('prepareTask');
 
-        var ag = this.agentContext;
+        var wk = this.workerContext;
 
         var taskPath = path.join(this.jobContext.workingDirectory, 'tasks', task.name, task.version);
         trace.write('taskPath: ' + taskPath);
 
-        ag.info('preparing task ' + task.name);
+        wk.info('preparing task ' + task.name);
 
         var taskJsonPath = path.join(taskPath, 'task.json');
         trace.write('taskJsonPath: ' + taskJsonPath);
@@ -396,9 +396,9 @@ export class JobRunner {
 
     private runTask(task: ifm.TaskInstance, ctx: ctxm.TaskContext, callback) {
         trace.enter('runTask');
-        var ag = this.agentContext;
+        var wk = this.workerContext;
 
-        ag.info('Task: ' + task.name);
+        wk.info('Task: ' + task.name);
 
         this._processInputs(task);
         for (var key in task.inputs) {
@@ -411,7 +411,7 @@ export class JobRunner {
         trace.state('execution', execution);
 
         var handler = require('./handlers/' + execution.handler);
-        ag.info('running ' + execution.target + ' with ' + execution.handler);
+        wk.info('running ' + execution.target + ' with ' + execution.handler);
 
         trace.write('calling handler.runTask');
         handler.runTask(execution.target, ctx, callback);

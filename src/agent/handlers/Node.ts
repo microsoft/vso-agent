@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-var handler = require('./handler');
+var runner = require('./scriptrunner');
 var path = require('path');
 
 import ctxm = require('../context');
@@ -13,5 +13,5 @@ import ctxm = require('../context');
 ///-------------------------------------------------------------------------------
 
 export function runTask(scriptPath: string, ctx: ctxm.TaskContext, callback): void {
-    handler.run('node', scriptPath, ctx, callback);
+    runner.run('node', scriptPath, ctx, callback);
 }

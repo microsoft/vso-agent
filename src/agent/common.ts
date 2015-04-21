@@ -125,7 +125,7 @@ export interface IFeedbackChannel {
     queueLogPage(page: ILogPageInfo): void;
     queueConsoleLine(line: string): void;
     queueConsoleSection(line: string): void;
-    queueAsyncCommand(cmd: IAsyncCommand): void;
+    createAsyncCommandQueue(workerCtx: any): IAsyncCommandQueue;
 
     // timelines
     addError(recordId: string, category: string, message: string, data: any): void;
@@ -150,6 +150,16 @@ export interface IFeedbackChannel {
     updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void;
 }
 
+export interface IAsyncCommandQueue {
+    push(command: IAsyncCommand): void;
+    finishAdding(): void;
+    waitForEmpty(): Q.Promise<any>;
+    startProcessing(): void;
+    _processQueue(commands: IAsyncCommand[], callback: (err: any) => void): void;
+    failed: boolean;
+    errorMessage: string;
+}
+
 export interface ITaskCommand {
     command: string;
     properties: { [name: string]: string };
@@ -165,9 +175,9 @@ export interface ISyncCommand {
 export interface IAsyncCommand {
     command: ITaskCommand;
     description: string;
-    runCommandAsync(ctx: any, 
-                    output:(line) => void, 
-                    done: (err: any) => void): void;
+    taskCtx: any;
+
+    runCommandAsync(): Q.Promise<any>;
 }
 
 // high level ids for job to avoid passing full job to lower priviledged code
@@ -376,6 +386,18 @@ export function extractFile(source: string, dest: string, done: (err: any) => vo
     }
 }
 
+export function getWorkPath(config: IConfiguration) {
+    var rootAgentDir = path.join(__dirname, '..');
+    return path.resolve(rootAgentDir, config.settings.workFolder);
+}
+
+export function getWorkerDiagPath(config: IConfiguration) {
+    return path.join(getWorkPath(config), '_diag');
+}
+
+export function getWorkerLogsPath(config: IConfiguration) {
+    return path.join(getWorkPath(config), '_logs');    
+}
 
 //-----------------------------------------------------------
 // Cred Utilities

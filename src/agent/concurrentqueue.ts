@@ -18,8 +18,8 @@ export class ConcurrentArray<TValue> {
 
     public push(value: TValue) {
         if (this._finishedAdding) {
-            var error = new Error("can't add to finished array");
-            throw error;
+            // be passive - if we shut the queue off, then just don't queue the item
+            return;
         }
 
         this._currentArray.push(value);

@@ -89,28 +89,28 @@ export class ServiceChannel implements cm.IFeedbackChannel {
     constructor(agentUrl: string,
                 collectionUrl: string,
                 jobInfo: cm.IJobInfo,
-                agentCtx: ctxm.AgentContext) {
+                workerCtx: ctxm.WorkerContext) {
 
-        ensureTrace(agentCtx);
+        ensureTrace(workerCtx);
         trace.enter('ServiceChannel');
 
         this.agentUrl = agentUrl;
         this.collectionUrl = collectionUrl;
 
         this.jobInfo = jobInfo;
-        this.agentCtx = agentCtx;
+        this.workerCtx = workerCtx;
 
         this._recordCount = 0;
         this._issues = {};
 
         // service apis
-        this._agentApi = webapi.AgentApi(agentUrl, cm.basicHandlerFromCreds(agentCtx.config.creds));
-        this.timelineApi = webapi.TimelineApi(collectionUrl, cm.basicHandlerFromCreds(agentCtx.config.creds));
-        this._fileContainerApi = webapi.QFileContainerApi(collectionUrl, cm.basicHandlerFromCreds(agentCtx.config.creds));
-        this._buildApi = webapi.QBuildApi(collectionUrl, cm.basicHandlerFromCreds(agentCtx.config.creds));
+        this._agentApi = webapi.AgentApi(agentUrl, cm.basicHandlerFromCreds(workerCtx.config.creds));
+        this.timelineApi = webapi.TimelineApi(collectionUrl, cm.basicHandlerFromCreds(workerCtx.config.creds));
+        this._fileContainerApi = webapi.QFileContainerApi(collectionUrl, cm.basicHandlerFromCreds(workerCtx.config.creds));
+        this._buildApi = webapi.QBuildApi(collectionUrl, cm.basicHandlerFromCreds(workerCtx.config.creds));
 
         this._totalWaitTime = 0;
-        this._lockRenewer = new LockRenewer(jobInfo, agentCtx.config.poolId, this._agentApi);
+        this._lockRenewer = new LockRenewer(jobInfo, workerCtx.config.poolId, this._agentApi);
 
         // timelines
         this._timelineRecordQueue = new cq.ConcurrentBatch<ifm.TimelineRecord>(
@@ -137,10 +137,10 @@ export class ServiceChannel implements cm.IFeedbackChannel {
             TIMELINE_DELAY);
 
         // console lines
-        this._consoleQueue = new WebConsoleQueue(this, this.agentCtx, CONSOLE_DELAY);
+        this._consoleQueue = new WebConsoleQueue(this, this.workerCtx, CONSOLE_DELAY);
 
         // log pages
-        this._logPageQueue = new LogPageQueue(this, this.agentCtx, LOG_DELAY);
+        this._logPageQueue = new LogPageQueue(this, this.workerCtx, LOG_DELAY);
 
         this._timelineRecordQueue.startProcessing();
         this._consoleQueue.startProcessing();
@@ -151,7 +151,7 @@ export class ServiceChannel implements cm.IFeedbackChannel {
     public agentUrl: string;
     public collectionUrl: string;
     
-    public agentCtx: ctxm.AgentContext;
+    public workerCtx: ctxm.WorkerContext;
     public jobInfo: cm.IJobInfo;
 
     private _totalWaitTime: number;
@@ -231,8 +231,10 @@ export class ServiceChannel implements cm.IFeedbackChannel {
         });
     }
 
-    public queueAsyncCommand(cmd: cm.IAsyncCommand): void {
-        trace.write('queueAsyncCommand: ' + cmd.description);
+    // Factory for scriptrunner to create a queue per task script execution
+    // This also allows agent tests to create a queue that doesn't process to a real server (just print out work it would do)
+    public createAsyncCommandQueue(taskCtx: ctxm.TaskContext): cm.IAsyncCommandQueue {
+        return new AsyncCommandQueue(taskCtx, 1000);
     }
 
     //------------------------------------------------------------------
@@ -409,8 +411,8 @@ export class WebConsoleQueue extends BaseQueue<string> {
     private _jobInfo: cm.IJobInfo;
     private _timelineApi: ifm.ITimelineApi;
 
-    constructor(feedback: cm.IFeedbackChannel, agentCtx: ctxm.AgentContext, msDelay: number) {
-        super(agentCtx, msDelay);
+    constructor(feedback: cm.IFeedbackChannel, workerCtx: ctxm.WorkerContext, msDelay: number) {
+        super(workerCtx, msDelay);
         this._jobInfo = feedback.jobInfo;
         this._timelineApi = feedback.timelineApi;
     }
@@ -444,19 +446,75 @@ export class WebConsoleQueue extends BaseQueue<string> {
     }
 }
 
+export class AsyncCommandQueue extends BaseQueue<cm.IAsyncCommand> implements cm.IAsyncCommandQueue {
+
+    constructor(taskCtx: ctxm.TaskContext, msDelay: number) {
+        super(taskCtx, msDelay);
+        this.failed = false;
+    }
+
+    public failed: boolean;
+    public errorMessage: string;
+    private _service: cm.IFeedbackChannel;
+
+    public _processQueue(commands: cm.IAsyncCommand[], callback: (err: any) => void) {
+        if (commands.length === 0) {
+            callback(null);
+        }
+        else {
+            async.forEachSeries(commands, 
+                (command: cm.IAsyncCommand, done: (err: any) => void) => {
+
+                if (this.failed) {
+                    done(null);
+                    return;
+                }
+
+                var outputLines = function(command, lines) {
+                        command.taskCtx.info(' ');
+                        command.taskCtx.info('Start: ' + command.description);
+                        lines.forEach(function (line) {
+                            command.taskCtx.info(line);
+                        });
+                        command.taskCtx.info('End: ' + command.description);
+                        command.taskCtx.info(' ');
+                }
+
+                command.runCommandAsync()
+                .then((lines) => {
+                    outputLines(command, lines);
+                })
+                .fail((err) => {  
+                    this.failed = true;
+                    this.errorMessage = err.message;
+                    command.taskCtx.error(this.errorMessage);
+                    command.taskCtx.info('Failing task since command failed.')                    
+                })
+                .fin(function() {
+                    done(null);
+                })
+
+            }, (err: any) => {
+                // queue never fails - we simply don't process items once one has failed.
+                callback(null);
+            });
+        }
+    }
+}
+
 export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
     private _recordToLogIdMap: { [recordId: string]: number } = {};
     private _jobInfo: cm.IJobInfo;
     private _timelineApi: ifm.ITimelineApi;
-    private _agentCtx: ctxm.AgentContext;
-    private _feedback: cm.IFeedbackChannel;
+    private _workerCtx: ctxm.WorkerContext;
+    private _service: cm.IFeedbackChannel;
 
-    constructor(feedback: cm.IFeedbackChannel, agentCtx: ctxm.AgentContext, msDelay: number) {
-        super(agentCtx, msDelay);
-        this._feedback = feedback;
-        this._jobInfo = feedback.jobInfo;
-        this._timelineApi = feedback.timelineApi;
-        this._agentCtx = agentCtx;
+    constructor(service: cm.IFeedbackChannel, workerCtx: ctxm.WorkerContext, msDelay: number) {
+        super(workerCtx, msDelay);
+        this._service = service;
+        this._jobInfo = service.jobInfo;
+        this._timelineApi = service.timelineApi;
+        this._workerCtx = workerCtx;
     }
 
     public _processQueue(logPages: cm.ILogPageInfo[], callback: (err: any) => void): void {
@@ -535,20 +593,20 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                                         });
                                 }
                                 else {
-                                    this._agentCtx.error('Skipping log upload.  Log record does not exist.')
+                                    this._workerCtx.error('Skipping log upload.  Log record does not exist.')
                                     doneStep(null);
                                 }
                             },
                             (doneStep) => {
                                 var logRef = <ifm.TaskLogReference>{};
                                 logRef.id = logId;
-                                this._feedback.setLogId(recordId, logRef);
+                                this._service.setLogId(recordId, logRef);
                                 doneStep(null);
                             }
                         ], (err: any) => {
                             if (err) {
-                                this._agentCtx.error(err.message);
-                                this._agentCtx.error(JSON.stringify(logPageInfo));
+                                this._workerCtx.error(err.message);
+                                this._workerCtx.error(JSON.stringify(logPageInfo));
                             }
 
                             done(err);

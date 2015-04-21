@@ -1,4 +1,3 @@
-import cmdm = require('./command');
 import ctxm = require('../context');
 import cm = require('../common');
 

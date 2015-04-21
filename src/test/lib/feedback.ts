@@ -2,7 +2,36 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import cm = require('../../agent/common');
+import ctxm = require('../../agent/context');
 import ifm = require('../../agent/api/interfaces');
+
+export class TestCmdQueue implements cm.IAsyncCommandQueue {
+	constructor() {
+		this.descriptions = [];
+		this.failed = false;
+		this.errorMessage = '';
+	}
+
+	public descriptions: string[];
+    public push(cmd: cm.IAsyncCommand) {
+    	this.descriptions.push(cmd.description);
+    }
+
+    public finishAdding() {}
+    public waitForEmpty(): Q.Promise<any> {
+    	var defer = Q.defer();
+    	defer.resolve(null);
+    	return defer.promise;
+    }
+
+    public startProcessing() {}
+    public _processQueue(values: cm.IAsyncCommand[], callback: (err: any) => void) {
+    	callback(null);
+    }
+
+    public failed: boolean;
+    public errorMessage: string;
+}
 
 export class TestFeedbackChannel implements cm.IFeedbackChannel {
 	public agentUrl: string;
@@ -42,8 +71,8 @@ export class TestFeedbackChannel implements cm.IFeedbackChannel {
 		this._webConsole.push('[section] ' + line);
 	}
 
-    public queueAsyncCommand(cmd: cm.IAsyncCommand): void {
-        // TODO: do something with this
+    public createAsyncCommandQueue(taskCtx: ctxm.TaskContext): cm.IAsyncCommandQueue {
+        return new TestCmdQueue();
     }	
 
 	public addError(recordId: string, category: string, message: string, data: any): void {
