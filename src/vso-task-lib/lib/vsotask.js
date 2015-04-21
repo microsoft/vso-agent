@@ -6,6 +6,8 @@ var os = require('os');
 var minimatch = require('minimatch');
 var tcm = require('./taskcommand');
 var trm = require('./toolrunner');
+var cm = require('../../agent/common');
+var webapi = require('../../agent/api/webapi');
 
 //-----------------------------------------------------
 // General Helpers
@@ -88,6 +90,7 @@ var _writeCommand = function(command, properties, message) {
     var taskCmd = new tcm.TaskCommand(command, properties, message);
     _writeLine(taskCmd.toString());
 }
+exports.command = _writeCommand;
 
 var _warning = function(message) {
     _writeCommand('task.issue', {'type': 'warning'}, message);
