@@ -233,7 +233,7 @@ export class ServiceChannel implements cm.IFeedbackChannel {
 
     // Factory for scriptrunner to create a queue per task script execution
     // This also allows agent tests to create a queue that doesn't process to a real server (just print out work it would do)
-    public createAsyncCommandQueue(taskCtx: ctxm.TaskContext): BaseQueue<cm.IAsyncCommand> {
+    public createAsyncCommandQueue(taskCtx: ctxm.TaskContext): cm.IAsyncCommandQueue {
         return new AsyncCommandQueue(taskCtx, 1000);
     }
 
@@ -366,7 +366,7 @@ export class ServiceChannel implements cm.IFeedbackChannel {
 //------------------------------------------------------------------------------------
 // Server Feedback Queues
 //------------------------------------------------------------------------------------
-export class BaseQueue<T> implements cm.IBaseQueue<T> {
+export class BaseQueue<T> {
     private _queue: cq.ConcurrentArray<T>;
     private _ctx: ctxm.Context;
     private _msDelay: number;
@@ -446,7 +446,7 @@ export class WebConsoleQueue extends BaseQueue<string> {
     }
 }
 
-export class AsyncCommandQueue extends BaseQueue<cm.IAsyncCommand> {
+export class AsyncCommandQueue extends BaseQueue<cm.IAsyncCommand> implements cm.IAsyncCommandQueue {
 
     constructor(taskCtx: ctxm.TaskContext, msDelay: number) {
         super(taskCtx, msDelay);
@@ -464,26 +464,36 @@ export class AsyncCommandQueue extends BaseQueue<cm.IAsyncCommand> {
         else {
             async.forEachSeries(commands, 
                 (command: cm.IAsyncCommand, done: (err: any) => void) => {
-                var outputLines: string[] = [];
 
                 if (this.failed) {
                     done(null);
                     return;
                 }
 
-                command.runCommandAsync( 
-                    (line) => {
-                        outputLines.push(line);
-                    }, 
-                    (err) => {
-                        if (err) {
-                            this.failed = true;
-                            this.errorMessage = err.message;
-                            command.taskCtx.feedback.error(this.errorMessage);
-                        }
+                var outputLines = function(command, lines) {
+                        command.taskCtx.info(' ');
+                        command.taskCtx.info('Start: ' + command.description);
+                        lines.forEach(function (line) {
+                            command.taskCtx.info(line);
+                        });
+                        command.taskCtx.info('End: ' + command.description);
+                        command.taskCtx.info(' ');
+                }
 
-                        done(null);
-                    });
+                command.runCommandAsync()
+                .then((lines) => {
+                    outputLines(command, lines);
+                })
+                .fail((err) => {  
+                    this.failed = true;
+                    this.errorMessage = err.message;
+                    command.taskCtx.error(this.errorMessage);
+                    command.taskCtx.info('Failing task since command failed.')                    
+                })
+                .fin(function() {
+                    done(null);
+                })
+
             }, (err: any) => {
                 // queue never fails - we simply don't process items once one has failed.
                 callback(null);

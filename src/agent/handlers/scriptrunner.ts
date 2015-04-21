@@ -10,7 +10,7 @@ var _commandPath = path.resolve(__dirname, '../commands');
 
 var _trace: tm.Tracing;
 
-var _cmdQueue: cm.IBaseQueue<cm.IAsyncCommand>;
+var _cmdQueue: cm.IAsyncCommandQueue;
 
 function _processLine(line: string, taskCtx:ctxm.TaskContext): void {
 	if (line.startsWith(cm.CMD_PREFIX)) {
@@ -32,7 +32,7 @@ function _handleCommand(commandLine: string, taskCtx: ctxm.TaskContext) {
         return;
     }
 
-    var cmdModulePath = path.join(__dirname, '..', cmd.command + '.js');
+    var cmdModulePath = path.join(__dirname, '..', 'commands', cmd.command + '.js');
     if (!shell.test('-f', cmdModulePath)) {
         taskCtx.warning('command module does not exist: ' + cmd.command);
         return;
@@ -45,7 +45,7 @@ function _handleCommand(commandLine: string, taskCtx: ctxm.TaskContext) {
         syncCmd.runCommand(taskCtx);    
     }
     else if (cmdm.createAsyncCommand) {
-        var asyncCmd = cmdm.createAsyncCommand(cmd, taskCtx);
+        var asyncCmd = cmdm.createAsyncCommand(taskCtx, cmd);
         _cmdQueue.push(asyncCmd);
     }
     else {
@@ -56,6 +56,7 @@ function _handleCommand(commandLine: string, taskCtx: ctxm.TaskContext) {
 export function run(scriptEngine: string, scriptPath: string, taskCtx:ctxm.TaskContext, callback) {
     _trace = new tm.Tracing(__filename, taskCtx.workerCtx);
     _cmdQueue = taskCtx.service.createAsyncCommandQueue(taskCtx);
+    _cmdQueue.startProcessing();
 
     // TODO: only send all vars for trusted tasks
     var env = process.env;
@@ -138,13 +139,23 @@ export function run(scriptEngine: string, scriptPath: string, taskCtx:ctxm.TaskC
 
         _flushErrorBuffer();
 
-        if (code == 0) {
-            callback(null, code);
-        } else {
-            var msg = 'Return code: ' + code;
-            taskCtx.error(msg);
+        // drain async commands
+        _cmdQueue.finishAdding();
+        _cmdQueue.waitForEmpty()
+        .then(function() {
+            if (code == 0) {
+                if (_cmdQueue.failed) {
+                    callback(_cmdQueue.errorMessage, code);
+                }
+                else {
+                    callback(null, code);    
+                }
+            } else {
+                var msg = 'Return code: ' + code;
+                taskCtx.error(msg);
 
-            callback(new Error(msg), code);
-        }
+                callback(new Error(msg), code);
+            }
+        })
     });
 }

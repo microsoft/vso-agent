@@ -125,7 +125,7 @@ export interface IFeedbackChannel {
     queueLogPage(page: ILogPageInfo): void;
     queueConsoleLine(line: string): void;
     queueConsoleSection(line: string): void;
-    createAsyncCommandQueue(workerCtx: any): IBaseQueue<IAsyncCommand>
+    createAsyncCommandQueue(workerCtx: any): IAsyncCommandQueue;
 
     // timelines
     addError(recordId: string, category: string, message: string, data: any): void;
@@ -150,12 +150,14 @@ export interface IFeedbackChannel {
     updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void;
 }
 
-export interface IBaseQueue<T> {
-    push(value: T): void;
+export interface IAsyncCommandQueue {
+    push(command: IAsyncCommand): void;
     finishAdding(): void;
     waitForEmpty(): Q.Promise<any>;
     startProcessing(): void;
-    _processQueue(values: T[], callback: (err: any) => void): void;
+    _processQueue(commands: IAsyncCommand[], callback: (err: any) => void): void;
+    failed: boolean;
+    errorMessage: string;
 }
 
 export interface ITaskCommand {
@@ -175,8 +177,7 @@ export interface IAsyncCommand {
     description: string;
     taskCtx: any;
 
-    runCommandAsync(output:(line) => void, 
-                    done: (err: any) => void): void;
+    runCommandAsync(): Q.Promise<any>;
 }
 
 // high level ids for job to avoid passing full job to lower priviledged code

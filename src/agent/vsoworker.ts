@@ -137,10 +137,11 @@ process.on('message', function (msg) {
 
 process.on('uncaughtException', function (err) {
     console.error('unhandled:' + err.message);
+    console.error(err.stack);
 
     if (wk) {
         wk.error('worker unhandled: ' + err.message);
-        wk.error(err);
+        wk.error(err.stack);
     }
 
     process.exit();

@@ -5,9 +5,11 @@ import cm = require('../../agent/common');
 import ctxm = require('../../agent/context');
 import ifm = require('../../agent/api/interfaces');
 
-export class TestCmdQueue implements cm.IBaseQueue<cm.IAsyncCommand> {
+export class TestCmdQueue implements cm.IAsyncCommandQueue {
 	constructor() {
 		this.descriptions = [];
+		this.failed = false;
+		this.errorMessage = '';
 	}
 
 	public descriptions: string[];
@@ -26,6 +28,9 @@ export class TestCmdQueue implements cm.IBaseQueue<cm.IAsyncCommand> {
     public _processQueue(values: cm.IAsyncCommand[], callback: (err: any) => void) {
     	callback(null);
     }
+
+    public failed: boolean;
+    public errorMessage: string;
 }
 
 export class TestFeedbackChannel implements cm.IFeedbackChannel {
@@ -66,7 +71,7 @@ export class TestFeedbackChannel implements cm.IFeedbackChannel {
 		this._webConsole.push('[section] ' + line);
 	}
 
-    public createAsyncCommandQueue(taskCtx: ctxm.TaskContext): cm.IBaseQueue<cm.IAsyncCommand> {
+    public createAsyncCommandQueue(taskCtx: ctxm.TaskContext): cm.IAsyncCommandQueue {
         return new TestCmdQueue();
     }	
 

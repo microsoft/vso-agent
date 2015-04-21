@@ -1,5 +1,6 @@
 import ctxm = require('../context');
 import cm = require('../common');
+import Q = require('q');
 
 //
 // Sample command async handler
@@ -27,20 +28,25 @@ export class SampleAsyncCommand implements cm.IAsyncCommand {
 	public description: string;
 	public taskCtx: ctxm.TaskContext;
 
-	public runCommandAsync(output:(line) => void, 
-                           done: (err: any) => void): void {
+	public runCommandAsync() {
+        var defer = Q.defer();
+        var output = [];
 
-		output('running sample async command ...');
-		setTimeout(function(){
-			output('done running async command');
+		output.push('running sample async command ...');
+
+		setTimeout(() => {
+			output.push('done running async command');
 
 			// Done must get called!  In this sample, if you set result=fail, then it forces a failure
 			if (this.command.properties && this.command.properties['result'] === 'fail') {
-				done(new Error('forcing async command failure'));
+				defer.reject(new Error('forcing async command failure'));
 				return;
 			}
+			else {
+				defer.resolve(output);
+			}
+		}, 2000);
 
-			done(null);
-		}, 2000);	
+		return defer.promise;
 	}	
 }
