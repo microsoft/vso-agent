@@ -4,6 +4,8 @@ import ctxm = require('../context');
 import path = require('path');
 import shell = require('shelljs');
 import tm = require('../tracing');
+import cmdm = require('../commands/command');
+
 var vsotask = require('vso-task-lib');
 
 var _commandPath = path.resolve(__dirname, '../commands');
@@ -25,7 +27,8 @@ function _handleCommand(commandLine: string, taskCtx: ctxm.TaskContext) {
     var cmd: cm.ITaskCommand;
 
     try {
-        cmd = vsotask.commandFromString(commandLine);   
+        var temp = vsotask.commandFromString(commandLine);
+        cmd = new cmdm.TaskCommand(temp.command, temp.properties, temp.message);
     }
     catch(err) {
         taskCtx.warning(err.message + ': ' + commandLine);
@@ -38,14 +41,14 @@ function _handleCommand(commandLine: string, taskCtx: ctxm.TaskContext) {
         return;
     }
 
-    var cmdm = require(cmdModulePath);
+    var cmdPlugin = require(cmdModulePath);
 
-    if (cmdm.createSyncCommand) {
-        var syncCmd = cmdm.createSyncCommand(cmd);
+    if (cmdPlugin.createSyncCommand) {
+        var syncCmd = cmdPlugin.createSyncCommand(cmd);
         syncCmd.runCommand(taskCtx);    
     }
-    else if (cmdm.createAsyncCommand) {
-        var asyncCmd = cmdm.createAsyncCommand(taskCtx, cmd);
+    else if (cmdPlugin.createAsyncCommand) {
+        var asyncCmd = cmdPlugin.createAsyncCommand(taskCtx, cmd);
         _cmdQueue.push(asyncCmd);
     }
     else {

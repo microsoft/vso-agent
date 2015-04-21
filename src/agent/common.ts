@@ -164,6 +164,12 @@ export interface ITaskCommand {
     command: string;
     properties: { [name: string]: string };
     message: string;
+
+    // output is buffered per command so it's not interlaced with other task tool output
+    lines: string[];
+    info(message: string);
+    warning(message: string);
+    error(message: string);    
 }
 
 //TODO: get rid of ctx any
