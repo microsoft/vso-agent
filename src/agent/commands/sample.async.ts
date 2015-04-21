@@ -1,6 +1,7 @@
 import ctxm = require('../context');
 import cm = require('../common');
 import Q = require('q');
+import cmdm = require('./command');
 
 //
 // Sample command async handler
@@ -30,20 +31,26 @@ export class SampleAsyncCommand implements cm.IAsyncCommand {
 
 	public runCommandAsync() {
         var defer = Q.defer();
-        var output = [];
 
-		output.push('running sample async command ...');
+		this.command.info('running sample async command ...');
+		this.command.warning('sample warning message');
+
+		// an error does not fail the task - simply error highlighted in console and on build summary.  See below to fail task
+		this.command.error('sample error message');
 
 		setTimeout(() => {
-			output.push('done running async command');
+			this.command.info('done running async command');
 
-			// Done must get called!  In this sample, if you set result=fail, then it forces a failure
+			// resolve or reject must get called!  In this sample, if you set result=fail, then it forces a failure
 			if (this.command.properties && this.command.properties['result'] === 'fail') {
-				defer.reject(new Error('forcing async command failure'));
+
+				// reject with an error will fail the task (and the build if not continue on error in definition)
+				// if you don't want an error condition to fail the build, do command.error (above) and call resolve.
+				defer.reject(new Error(this.command.message));
 				return;
 			}
 			else {
-				defer.resolve(output);
+				defer.resolve(null);
 			}
 		}, 2000);
 

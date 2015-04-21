@@ -463,32 +463,33 @@ export class AsyncCommandQueue extends BaseQueue<cm.IAsyncCommand> implements cm
         }
         else {
             async.forEachSeries(commands, 
-                (command: cm.IAsyncCommand, done: (err: any) => void) => {
+                (asyncCmd: cm.IAsyncCommand, done: (err: any) => void) => {
 
                 if (this.failed) {
                     done(null);
                     return;
                 }
 
-                var outputLines = function(command, lines) {
-                        command.taskCtx.info(' ');
-                        command.taskCtx.info('Start: ' + command.description);
-                        lines.forEach(function (line) {
-                            command.taskCtx.info(line);
+                var outputLines = function(asyncCmd) {
+                        asyncCmd.taskCtx.info(' ');
+                        asyncCmd.taskCtx.info('Start: ' + asyncCmd.description);
+                        asyncCmd.command.lines.forEach(function (line) {
+                            asyncCmd.taskCtx.info(line);
                         });
-                        command.taskCtx.info('End: ' + command.description);
-                        command.taskCtx.info(' ');
+                        asyncCmd.taskCtx.info('End: ' + asyncCmd.description);
+                        asyncCmd.taskCtx.info(' ');
                 }
 
-                command.runCommandAsync()
-                .then((lines) => {
-                    outputLines(command, lines);
+                asyncCmd.runCommandAsync()
+                .then(() => {
+                    outputLines(asyncCmd);
                 })
                 .fail((err) => {  
                     this.failed = true;
                     this.errorMessage = err.message;
-                    command.taskCtx.error(this.errorMessage);
-                    command.taskCtx.info('Failing task since command failed.')                    
+                    outputLines(asyncCmd);
+                    asyncCmd.taskCtx.error(this.errorMessage);
+                    asyncCmd.taskCtx.info('Failing task since command failed.')                    
                 })
                 .fin(function() {
                     done(null);
