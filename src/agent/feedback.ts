@@ -231,6 +231,10 @@ export class ServiceChannel implements cm.IFeedbackChannel {
         });
     }
 
+    public queueAsyncCommand(cmd: cm.IAsyncCommand): void {
+        trace.write('queueAsyncCommand: ' + cmd.description);
+    }
+
     //------------------------------------------------------------------
     // Timeline APIs
     //------------------------------------------------------------------  

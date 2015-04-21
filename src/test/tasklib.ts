@@ -59,6 +59,42 @@ describe('Test vso-task-lib', function() {
 		});
 	});
 
+	describe('TaskCommands', function() {
+		it('constructs', function(done) {
+			this.timeout(1000);
+
+			assert(tl.TaskCommand, 'TaskCommand should be available');
+			var tc = new tl.TaskCommand('some.cmd', {foo: 'bar'}, 'a message');
+			assert(tc, 'TaskCommand constructor works');
+
+			done();
+		})
+		it('toStrings', function(done) {
+			this.timeout(1000);
+
+			var tc = new tl.TaskCommand('some.cmd', {foo: 'bar'}, 'a message');
+			assert(tc, 'TaskCommand constructor works');
+			var cmdStr = tc.toString();
+			assert(cmdStr === '##vso[some.cmd foo=bar;]a message');
+			done();
+		})
+		it('handles null properties', function(done) {
+			this.timeout(1000);
+
+			var tc = new tl.TaskCommand('some.cmd', null, 'a message');
+			assert(tc.toString() === '##vso[some.cmd]a message');
+			done();
+		})
+		it('handles empty properties', function(done) {
+			this.timeout(1000);
+
+			var tc = new tl.TaskCommand('some.cmd', {}, 'a message');
+			console.log(tc.toString());
+			assert(tc.toString() === '##vso[some.cmd]a message');
+			done();
+		})				
+	});	
+
 	describe('ToolRunner', function() {
 		it('Execs', function(done) {
 			this.timeout(1000);

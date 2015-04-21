@@ -42,6 +42,10 @@ export class TestFeedbackChannel implements cm.IFeedbackChannel {
 		this._webConsole.push('[section] ' + line);
 	}
 
+    public queueAsyncCommand(cmd: cm.IAsyncCommand): void {
+        // TODO: do something with this
+    }	
+
 	public addError(recordId: string, category: string, message: string, data: any): void {
 		var record = this._getFromBatch(recordId);
 		if (record.errorCount < 10) {
