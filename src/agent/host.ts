@@ -8,7 +8,7 @@ var sh = require('svchost')
 import env = require('./environment');
 
 // agent must be configured before run as a service
-if (!shell.test('-f', path.join(__dirname, '.agent'))) {
+if (!shell.test('-f', path.join(__dirname, '..', '.agent'))) {
     console.error('Agent must be configured.  Run vsoagent configure');
     process.exit(1);
 }

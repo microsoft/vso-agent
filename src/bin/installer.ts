@@ -10,6 +10,26 @@ var targetDir = process.cwd();
 
 console.log('Installing agent to ' + targetDir);
 
+// ensure clean in case update
+var agentTarget = path.join(targetDir, 'agent');
+if (shell.test('-d', agentTarget)) {
+	console.log('updating agent.  removing old code.')
+	shell.rm('-rf', agentTarget);
+}
+
+var modsTarget = path.join(targetDir, 'node_modules');
+if (shell.test('-d', modsTarget)) {
+	console.log('updating node modules.  removing old modules.')
+	shell.rm('-rf', modsTarget);
+}
+
+var pkgTarget = path.join(targetDir, 'package.json');
+if (shell.test('-f', pkgTarget)) {
+	console.log('updating agent.  removing old package.json')
+	shell.rm('-f', pkgTarget);
+}
+
+// copy new bits
 console.log('Copying: ', agentDir, targetDir);
 shell.cp('-R', agentDir, targetDir);
 
