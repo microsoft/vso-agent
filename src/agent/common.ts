@@ -169,7 +169,7 @@ export interface ITaskCommand {
     lines: string[];
     info(message: string);
     warning(message: string);
-    error(message: string);    
+    error(message: string);
 }
 
 //TODO: get rid of ctx any

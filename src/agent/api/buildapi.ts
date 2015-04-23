@@ -9,14 +9,14 @@ import restm = require('./restclient');
 import Q = require("q");
 
 export class BuildApi implements ifm.IBuildApi {
-    collectionUrl: string;
+    projectUrl: string;
     httpClient: httpm.HttpClient;
     restClient: restm.RestClient;
 
-    constructor(collectionUrl: string, handler: ifm.IRequestHandler) {
-        this.collectionUrl = collectionUrl;
+    constructor(projectUrl: string, handler: ifm.IRequestHandler) {
+        this.projectUrl = projectUrl;
         this.httpClient = new httpm.HttpClient('vso-build-api', handler);
-        this.restClient = new restm.RestClient(collectionUrl, '2.0-preview', this.httpClient);
+        this.restClient = new restm.RestClient(projectUrl, '2.0-preview', this.httpClient);
     }
 
     //
@@ -32,8 +32,8 @@ export class BuildApi implements ifm.IBuildApi {
 export class QBuildApi {
     _buildApi: ifm.IBuildApi;
 
-    constructor(accountUrl:string, handler: ifm.IRequestHandler) {
-        this._buildApi = new BuildApi(accountUrl, handler);
+    constructor(projectUrl:string, handler: ifm.IRequestHandler) {
+        this._buildApi = new BuildApi(projectUrl, handler);
     }
 
     public postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact> {

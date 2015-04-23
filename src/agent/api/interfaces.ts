@@ -62,15 +62,8 @@ export interface ITaskApi {
 export interface ArtifactResource {
     data: string;
     downloadUrl?: string;
-    type?: ArtifactResourceType;
+    type?: string;
     url?: string;
-}
-
-export enum ArtifactResourceType {
-    Unknown = 0,
-    LocalPath = 1,
-    VersionControl = 2,
-    Container = 3,
 }
 
 export interface BuildArtifact {

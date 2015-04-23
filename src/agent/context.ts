@@ -26,6 +26,7 @@ export class WellKnownVariables {
     public static sourceFolder = "build.sourceDirectory";
     public static stagingFolder = "build.stagingdirectory";
     public static buildId = "build.buildId";
+    public static projectId = "system.teamProjectId";
 }
 
 export class Context extends events.EventEmitter {
