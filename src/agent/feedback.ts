@@ -5,7 +5,6 @@ import cm = require('./common');
 import ctxm = require('./context');
 import ifm = require('./api/interfaces');
 import webapi = require('./api/webapi');
-import basicm = require('./api/basiccreds');
 import zlib = require('zlib');
 import fs = require('fs');
 import tm = require('./tracing');
@@ -104,10 +103,10 @@ export class ServiceChannel implements cm.IFeedbackChannel {
         this._issues = {};
 
         // service apis
-        this._agentApi = webapi.AgentApi(agentUrl, cm.basicHandlerFromCreds(workerCtx.config.creds));
-        this.timelineApi = webapi.TimelineApi(collectionUrl, cm.basicHandlerFromCreds(workerCtx.config.creds));
-        this._fileContainerApi = webapi.QFileContainerApi(collectionUrl, cm.basicHandlerFromCreds(workerCtx.config.creds));
-        this._buildApi = webapi.QBuildApi(collectionUrl, cm.basicHandlerFromCreds(workerCtx.config.creds));
+        this._agentApi = webapi.AgentApi(agentUrl, jobInfo.systemAuthHandler);
+        this.timelineApi = webapi.TimelineApi(collectionUrl, jobInfo.systemAuthHandler);
+        this._fileContainerApi = webapi.QFileContainerApi(collectionUrl, jobInfo.systemAuthHandler);
+        this._buildApi = webapi.QBuildApi(collectionUrl, jobInfo.systemAuthHandler);
 
         this._totalWaitTime = 0;
         this._lockRenewer = new LockRenewer(jobInfo, workerCtx.config.poolId, this._agentApi);

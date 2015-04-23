@@ -13,10 +13,10 @@ export class BuildApi implements ifm.IBuildApi {
     httpClient: httpm.HttpClient;
     restClient: restm.RestClient;
 
-    constructor(collectionUrl: string, handler: ifm.IRequestHandler) {
+    constructor(collectionUrl: string, handlers: ifm.IRequestHandler[]) {
         this.collectionUrl = collectionUrl;
-        this.httpClient = new httpm.HttpClient('vso-build-api', handler);
-        this.restClient = new restm.RestClient(collectionUrl, '2.0-preview', this.httpClient);
+        this.httpClient = new httpm.HttpClient('vso-build-api', handlers);
+        this.restClient = new restm.RestClient(collectionUrl, this.httpClient);
     }
 
     //
@@ -32,8 +32,8 @@ export class BuildApi implements ifm.IBuildApi {
 export class QBuildApi {
     _buildApi: ifm.IBuildApi;
 
-    constructor(accountUrl:string, handler: ifm.IRequestHandler) {
-        this._buildApi = new BuildApi(accountUrl, handler);
+    constructor(accountUrl:string, handlers: ifm.IRequestHandler[]) {
+        this._buildApi = new BuildApi(accountUrl, handlers);
     }
 
     public postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact> {

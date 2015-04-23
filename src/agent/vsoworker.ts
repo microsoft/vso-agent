@@ -14,6 +14,7 @@ import os = require('os');
 import tm = require('./tracing');
 import path = require('path');
 import crypto = require('crypto');
+import wapim = require('./api/webapi');
 
 var wk: ctxm.WorkerContext;
 var trace: tm.Tracing;
@@ -76,7 +77,22 @@ export function run(msg, consoleOutput: boolean,
         deserializeEnumValues(job);
         setVariables(job, wk);
 
-        var jobInfo: cm.IJobInfo = cm.jobInfoFromJob(job);
+
+        trace.write('Creating AuthHandler');
+        var systemAuthHandler: ifm.IRequestHandler;
+        if (job.environment.systemConnection) {
+            trace.write('using session token');
+            var accessToken = job.environment.systemConnection.authorization.parameters['AccessToken'];
+            trace.state('AccessToken:', accessToken);
+            systemAuthHandler = wapim.bearerHandler(accessToken);
+        }
+        else {
+            trace.write('using altcreds');
+            systemAuthHandler = wapim.basicHandler(msg.config.creds.username, msg.config.creds.password);
+        }
+
+        // TODO: jobInfo should go away and we should just have JobContext
+        var jobInfo: cm.IJobInfo = cm.jobInfoFromJob(job, systemAuthHandler);
 
         // TODO: on output from context --> diag
         // TODO: these should be set beforePrepare and cleared postPrepare after we add agent ext
@@ -97,7 +113,7 @@ export function run(msg, consoleOutput: boolean,
         var serviceChannel: cm.IFeedbackChannel = createFeedbackChannel(agentUrl, taskUrl, jobInfo, wk);
         wk.service = serviceChannel;
 
-        var ctx: ctxm.JobContext = new ctxm.JobContext(job, wk.service, wk);
+        var ctx: ctxm.JobContext = new ctxm.JobContext(job, systemAuthHandler, wk.service, wk);
         trace.write('created JobContext');
 
         var jobRunner: jrm.JobRunner = new jrm.JobRunner(wk, ctx);

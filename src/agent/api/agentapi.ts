@@ -14,10 +14,10 @@ export class AgentApi implements ifm.IAgentApi {
     httpClient: httpm.HttpClient;
     restClient: restm.RestClient;
 
-    constructor(accountUrl:string, handler: ifm.IRequestHandler) {
+    constructor(accountUrl:string, handlers: ifm.IRequestHandler[]) {
         this.accountUrl = accountUrl;
-        this.httpClient = new httpm.HttpClient('vso-build-api', handler, 60000);
-        this.restClient = new restm.RestClient(accountUrl, '1.0', this.httpClient);     
+        this.httpClient = new httpm.HttpClient('vso-build-api', handlers, 60000);
+        this.restClient = new restm.RestClient(accountUrl, this.httpClient);     
     }
 
     //
@@ -88,8 +88,8 @@ export class AgentApi implements ifm.IAgentApi {
 export class QAgentApi {
     agentApi: ifm.IAgentApi;
 
-    constructor(accountUrl:string, handler: ifm.IRequestHandler) {
-        this.agentApi = new AgentApi(accountUrl, handler);
+    constructor(accountUrl:string, handlers: ifm.IRequestHandler[]) {
+        this.agentApi = new AgentApi(accountUrl, handlers);
     }
 
     public connect(): Q.Promise<any> {

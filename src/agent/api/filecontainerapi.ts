@@ -15,10 +15,10 @@ export class FileContainerApi {
     httpClient: httpm.HttpClient;
     restClient: restm.RestClient;
 
-    constructor(collectionUrl: string, handler: ifm.IRequestHandler) {
+    constructor(collectionUrl: string, handlers: ifm.IRequestHandler[]) {
         this.collectionUrl = collectionUrl;
-        this.httpClient = new httpm.HttpClient('vso-build-api', handler);
-        this.restClient = new restm.RestClient(collectionUrl, '1.0; res-version=3', this.httpClient);
+        this.httpClient = new httpm.HttpClient('vso-build-api', handlers);
+        this.restClient = new restm.RestClient(collectionUrl, this.httpClient);
     }
 
 /*
@@ -91,8 +91,8 @@ var TypeInfo = {
 export class QFileContainerApi {
     _containerApi: ifm.IFileContainerApi;
 
-    constructor(accountUrl:string, handler: ifm.IRequestHandler) {
-        this._containerApi = new FileContainerApi(accountUrl, handler);
+    constructor(accountUrl:string, handlers: ifm.IRequestHandler[]) {
+        this._containerApi = new FileContainerApi(accountUrl, handlers);
     }
 
     public uploadFile(containerId: number, 

@@ -8,7 +8,7 @@ import dm = require('./diagnostics');
 import path = require('path');
 import inputs = require('./inputs');
 import ifm = require('./api/interfaces');
-import basicm = require('./api/basiccreds');
+import basicm = require('./api/handlers/basiccreds');
 import webapi = require('./api/webapi');
 import cfgm = require('./configuration');
 
@@ -194,6 +194,7 @@ export interface IJobInfo {
     timelineId: string;
     requestId: number;
     lockToken: string;
+    systemAuthHandler: ifm.IRequestHandler;
     variables: { [key: string]: string };
     mask: (input: string) => string;
 }
@@ -354,7 +355,7 @@ function createMaskFunction(jobEnvironment: ifm.JobEnvironment): ReplacementFunc
     }
 }
 
-export function jobInfoFromJob(job: ifm.JobRequestMessage): IJobInfo {
+export function jobInfoFromJob(job: ifm.JobRequestMessage, systemAuthHandler: ifm.IRequestHandler): IJobInfo {
     var info: IJobInfo = {
         description: job.jobName,
         jobId: job.jobId,
@@ -362,6 +363,7 @@ export function jobInfoFromJob(job: ifm.JobRequestMessage): IJobInfo {
         timelineId: job.timeline.id,
         requestId: job.requestId,
         lockToken: job.lockToken,
+        systemAuthHandler: systemAuthHandler,
         variables: job.environment.variables,
         mask: createMaskFunction(job.environment)
     };
@@ -388,7 +390,7 @@ export function extractFile(source: string, dest: string, done: (err: any) => vo
         file.extractAllTo(dest, true);
         done(null);
     } catch (err) {
-        done(err);
+        done(new Error('Failed to extract zip: ' + source));
     }
 }
 

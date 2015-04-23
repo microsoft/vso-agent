@@ -13,12 +13,12 @@ http.globalAgent.maxSockets = 100;
 
 export class HttpClient implements ifm.IHttpClient {
     userAgent: string;
-    handler: ifm.IRequestHandler;
+    handlers: ifm.IRequestHandler[];
     socketTimeout: number;
 
-    constructor(userAgent: string, handler?: ifm.IRequestHandler, socketTimeout?: number) {
+    constructor(userAgent: string, handlers?: ifm.IRequestHandler[], socketTimeout?: number) {
         this.userAgent = userAgent;
-        this.handler = handler;
+        this.handlers = handlers;
         if (socketTimeout) {
             this.socketTimeout = socketTimeout;
         } else {
@@ -134,8 +134,10 @@ export class HttpClient implements ifm.IHttpClient {
         //options.headers["Accept"] = contentType;
         options.headers["User-Agent"] = this.userAgent;
 
-        if (this.handler) {
-            this.handler.prepareRequest(options);
+        if (this.handlers) {
+            this.handlers.forEach((handler) => {
+                handler.prepareRequest(options);
+            });
         }
 
         return {

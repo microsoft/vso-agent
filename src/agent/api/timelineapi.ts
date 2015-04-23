@@ -10,10 +10,10 @@ export class TimelineApi implements ifm.ITimelineApi {
     httpClient: httpm.HttpClient;
     restClient: restm.RestClient;
 
-    constructor(collectionUrl: string, handler: ifm.IRequestHandler) {
+    constructor(collectionUrl: string, handlers: ifm.IRequestHandler[]) {
         this.collectionUrl = collectionUrl;
-        this.httpClient = new httpm.HttpClient('vso-task-api', handler);
-        this.restClient = new restm.RestClient(collectionUrl, '1.0', this.httpClient);
+        this.httpClient = new httpm.HttpClient('vso-task-api', handlers);
+        this.restClient = new restm.RestClient(collectionUrl, this.httpClient);
     }
 
     createLog(planId: string, logPath: string, onResult: (err: any, statusCode: number, log: ifm.TaskLog) => void): void {

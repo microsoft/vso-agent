@@ -10,14 +10,13 @@ import fs = require('fs');
 import path = require('path');
 import shell = require('shelljs');
 import webapi = require('./api/webapi');
-import basicm = require('./api/basiccreds');
 
 export class TaskManager {
 
-    constructor(workerContext: ctxm.WorkerContext) {
+    constructor(workerContext: ctxm.WorkerContext, authHandler: ifm.IRequestHandler) {
         this.context = workerContext;
         this.taskApi = webapi.TaskApi(workerContext.config.settings.serverUrl, 
-                                      cm.basicHandlerFromCreds(workerContext.config.creds));
+                                      authHandler);
         this.taskFolder = path.resolve(workerContext.config.settings.workFolder, 'tasks');
     }
 

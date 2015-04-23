@@ -13,6 +13,7 @@ import os = require("os");
 import path = require('path');
 import tm = require('./tracing');
 import um = require('./utilities');
+import wapim = require('./api/webapi');
 
 var trace: tm.Tracing;
 
@@ -206,6 +207,7 @@ export class WorkerContext extends Context implements cm.ITraceWriter {
 
 export class ExecutionContext extends Context {
     constructor(jobInfo: cm.IJobInfo,
+        authHandler: ifm.IRequestHandler,
         recordId: string,
         service: cm.IFeedbackChannel,
         workerCtx: WorkerContext) {
@@ -214,6 +216,7 @@ export class ExecutionContext extends Context {
         trace.enter('ExecutionContext');
 
         this.jobInfo = jobInfo;
+        this.authHandler = authHandler;
         this.variables = jobInfo.variables;
         this.recordId = recordId;
         this.workerCtx = workerCtx;
@@ -243,6 +246,7 @@ export class ExecutionContext extends Context {
 
     public workerCtx: WorkerContext;
     public jobInfo: cm.IJobInfo;
+    public authHandler: ifm.IRequestHandler;
     public variables: { [key: string]: string };
     public recordId: string;
     public buildDirectory: string;
@@ -282,6 +286,7 @@ var LOCK_RENEWAL_MS = 60 * 1000;
 
 export class JobContext extends ExecutionContext {
     constructor(job: ifm.JobRequestMessage,
+        authHandler: ifm.IRequestHandler,
         service: cm.IFeedbackChannel,
         workerCtx: WorkerContext) {
 
@@ -290,20 +295,22 @@ export class JobContext extends ExecutionContext {
 
         this.job = job;
 
-        var info: cm.IJobInfo = cm.jobInfoFromJob(job);
+        var info: cm.IJobInfo = cm.jobInfoFromJob(job, authHandler);
 
         this.jobInfo = info;
         trace.state('this.jobInfo', this.jobInfo);
+        this.authHandler = authHandler;
         this.service = service;
         this.config = workerCtx.config;
         trace.state('this.config', this.config);
 
-        super(info, job.jobId, service, workerCtx);
+        super(info, authHandler, job.jobId, service, workerCtx);
     }
 
     public job: ifm.JobRequestMessage;
     public jobInfo: cm.IJobInfo;
     public service: cm.IFeedbackChannel;
+    public authHandler: ifm.IRequestHandler;
 
     //------------------------------------------------------------------------------------
     // Job/Task Status
@@ -395,14 +402,15 @@ export class JobContext extends ExecutionContext {
 
 export class PluginContext extends ExecutionContext {
     constructor(job: ifm.JobRequestMessage,
+        authHandler: ifm.IRequestHandler,
         recordId: string,
         feedback: cm.IFeedbackChannel,
         workerCtx: WorkerContext) {
 
         this.job = job;
-        var jobInfo: cm.IJobInfo = cm.jobInfoFromJob(job);
+        var jobInfo: cm.IJobInfo = cm.jobInfoFromJob(job, authHandler);
 
-        super(jobInfo, recordId, feedback, workerCtx);
+        super(jobInfo, authHandler, recordId, feedback, workerCtx);
     }
 
     public job: ifm.JobRequestMessage;
@@ -420,12 +428,15 @@ export class PluginContext extends ExecutionContext {
 
 export class TaskContext extends ExecutionContext {
     constructor(jobInfo: cm.IJobInfo,
+        authHandler: ifm.IRequestHandler,
         recordId: string,
         feedback: cm.IFeedbackChannel,
         workerCtx: WorkerContext) {
 
-        super(jobInfo, recordId, feedback, workerCtx);
+        this.webapi = wapim;
+        super(jobInfo, authHandler, recordId, feedback, workerCtx);
     }
 
     public inputs: ifm.TaskInputs;
+    public webapi: any;
 }
