@@ -3,7 +3,6 @@
 
 var shell = require('shelljs');
 var path = require('path');
-var pyshell = require('python-shell');
 
 import ctxm = require('../context');
 

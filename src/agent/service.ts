@@ -16,7 +16,7 @@ import cfgm = require('./configuration');
 import ifm = require('./api/interfaces');
 
 var SVC_FILE_NAME = '.service';
-var _cfgPath = path.join(__dirname, SVC_FILE_NAME);
+var _cfgPath = path.join(__dirname, '..', SVC_FILE_NAME);
 
 // on OSX (Darwin), a launchd daemon will get installed as: com.sample.myserver
 // on Linux, a start-stop-daemon will get installed as: myserver

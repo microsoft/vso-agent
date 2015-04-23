@@ -89,6 +89,7 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerConte
 
             var logDescr = 'Plugin beforeJob:' + plugin.pluginName();
             var pluginCtx: ctxm.PluginContext = new ctxm.PluginContext(ctx.job,
+                ctx.authHandler,
                 plugin.beforeId,
                 ctx.service,
                 wkCtx);
@@ -139,6 +140,7 @@ export function afterJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerContex
             ctx.writeConsoleSection('Running ' + plugin.pluginName());
             var logDescr = 'Plugin afterJob:' + plugin.pluginName();
             var pluginCtx: ctxm.PluginContext = new ctxm.PluginContext(ctx.job,
+                ctx.authHandler,
                 plugin.afterId,
                 ctx.service,
                 wkCtx);

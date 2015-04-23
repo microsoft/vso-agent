@@ -33,7 +33,6 @@
     "minimist": "^0.2.0",
     "nconf": "0.6.x",
     "node-uuid": "1.x",
-    "python-shell": "0.0.3",
     "q": "^1.0.1",
     "read": "^1.0.5",
     "shelljs": "0.2.x",

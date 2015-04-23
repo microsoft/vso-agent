@@ -10,10 +10,10 @@ export class TaskApi implements ifm.ITaskApi{
     httpClient: httpm.HttpClient;
     restClient: restm.RestClient;
 
-    constructor(accountUrl: string, handler: ifm.IRequestHandler) {
+    constructor(accountUrl: string, handlers: ifm.IRequestHandler[]) {
         this.accountUrl = accountUrl;
-        this.httpClient = new httpm.HttpClient('vso-task-api', handler);
-        this.restClient = new restm.RestClient(accountUrl, '1.0', this.httpClient);
+        this.httpClient = new httpm.HttpClient('vso-task-api', handlers);
+        this.restClient = new restm.RestClient(accountUrl, this.httpClient);
     }
 
     getTasks(taskId: string, onResult: (err: any, statusCode: number, tasks: ifm.TaskDefinition[]) => void): void {

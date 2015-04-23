@@ -90,14 +90,12 @@ export function enumToString(enumType: any, enumValue: number, camelCase: boolea
 export class RestClient implements ifm.IRestClient {
     baseUrl: string;
     basePath: string;
-    apiVersion: string;
     httpClient: ifm.IHttpClient;
 
-    constructor(baseUrl: string, apiVersion: string, httpClient: ifm.IHttpClient) {
+    constructor(baseUrl: string, httpClient: ifm.IHttpClient) {
         this.baseUrl = baseUrl;
         this.basePath = url.parse(baseUrl).pathname;
         this.httpClient = httpClient;
-        this.apiVersion = apiVersion;
     }
 
     resolveUrl(relativeUrl: string): string {
@@ -162,7 +160,7 @@ export class RestClient implements ifm.IRestClient {
         var postUrl = this.resolveUrl(relativeUrl);
 
         var headers = customHeaders || {};
-        headers["Accept"] = 'application/json; api-version=' + this.apiVersion;
+        headers["Accept"] = 'application/json';
 
         this.httpClient.sendFile(verb, postUrl, contentStream, headers, (err: any, res: ifm.IHttpResponse, contents: string) => {
             if (err) {
@@ -184,7 +182,7 @@ export class RestClient implements ifm.IRestClient {
         var fileStream: NodeJS.WritableStream = fs.createWriteStream(filePath);
 
         var headers = {};
-        headers["Accept"] = fileType + '; api-version=' + this.apiVersion;
+        headers["Accept"] = fileType;
 
         this.httpClient.getFile(getUrl, fileStream, headers, (err: any, res: ifm.IHttpResponse) => {
             if (err) {
@@ -223,7 +221,7 @@ export class RestClient implements ifm.IRestClient {
         var getUrl = this.resolveUrl(relativeUrl);
 
         var headers = {};
-        headers["Accept"] = 'application/json; api-version=' + this.apiVersion;
+        headers["Accept"] = 'application/json';
         this.httpClient.get(verb, getUrl, headers, (err: any, res: ifm.IHttpResponse, contents: string) => {
             if (err) {
                 onResult(err, err.statusCode, null);
@@ -238,7 +236,7 @@ export class RestClient implements ifm.IRestClient {
         var postUrl = this.resolveUrl(relativeUrl);
 
         var headers = {};
-        headers["Accept"] = 'application/json; api-version=' + this.apiVersion;
+        headers["Accept"] = 'application/json';
         headers["Content-Type"] = 'application/json; charset=utf-8';
 
         this.httpClient.send(verb, postUrl, data, headers, (err: any, res: ifm.IHttpResponse, contents: string) => {

@@ -187,6 +187,7 @@ export function getCapabilities(): cm.IStringDictionary {
     resolveCapability(filteredEnv, 'node', 'node.js');
     resolveCapability(filteredEnv, 'nodejs', 'node.js');
     resolveCapability(filteredEnv, 'npm');
+    resolveCapability(filteredEnv, 'gulp');
     resolveCapability(filteredEnv, 'python');
     resolveCapability(filteredEnv, 'python3');
     resolveCapability(filteredEnv, 'sh');

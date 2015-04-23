@@ -88,7 +88,7 @@ export class JobRunner {
         jobCtx.writeConsoleSection('Preparing tasks');
 
         jobCtx.status('Donloading required tasks');
-        var taskManager = new taskm.TaskManager(wk);
+        var taskManager = new taskm.TaskManager(wk, jobCtx.authHandler);
         taskManager.ensureTasksExist(this.job.tasks, function (err) {
             if (err) {
                 complete(err, ifm.TaskResult.Failed);
@@ -242,6 +242,7 @@ export class JobRunner {
 
                 jobCtx.writeConsoleSection('Running ' + item.name);
                 var taskCtx: ctxm.TaskContext = new ctxm.TaskContext(jobCtx.jobInfo,
+                    jobCtx.authHandler,
                     item.instanceId,
                     jobCtx.service,
                     wk);

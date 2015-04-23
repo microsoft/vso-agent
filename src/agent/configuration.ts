@@ -10,7 +10,7 @@ import cm = require('./common');
 import env = require('./environment');
 import inputs = require('./inputs');
 import webapi = require('./api/webapi');
-import basicm = require('./api/basiccreds');
+import basicm = require('./api/handlers/basiccreds');
 import utilm = require('./utilities');
 
 var os = require('os');
