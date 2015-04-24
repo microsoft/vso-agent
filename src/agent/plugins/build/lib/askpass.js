@@ -21,14 +21,14 @@ var prompt = process.argv[2];
 
 if (prompt) {
     if (prompt.startsWith('Username')) {
-        var uname = process.env['altusername'];
+        var uname = process.env['GIT_USERNAME'];
         if (uname) {
             process.stdout.write(uname);
         }
     }
 
     if (prompt.startsWith('Password')) {
-        var pwd = process.env['altpassword'];
+        var pwd = process.env['GIT_PASSWORD'];
         if (pwd) {
             process.stdout.write(pwd);
         }

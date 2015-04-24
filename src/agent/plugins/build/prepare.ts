@@ -58,7 +58,7 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     ctx.info('srcVersion: ' + srcVersion);
     ctx.info('srcBranch: ' + srcBranch);
 
-    var tfcreds = { username: process.env.altusername, password: process.env.altpassword };
+    
     var selectedRef = srcVersion ? srcVersion : srcBranch;
     ctx.info('selectedRef: ' + selectedRef);
 
@@ -73,8 +73,24 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     //       what's odd is we will set sys.sourceFolder so > 1 means last one wins
     async.forEachSeries(srcendpoints, function (endpoint, done) {
         
-        //TODO: confirm how external git and github creds flow down
-        var creds = tfcreds; //endpoint.type === 'TfsGit' ? tfcreds : endpoint.creds;
+        // fallback is basic creds
+        var creds = { username: process.env.altusername, password: process.env.altpassword };
+
+        if (endpoint.authorization && endpoint.authorization['scheme']) {
+            var scheme = endpoint.authorization['scheme'];
+            ctx.info('Using auth scheme: ' + scheme);
+
+            switch (scheme) {
+                case 'OAuth':
+                    creds.username = 'OAuth';
+                    creds.password = endpoint.authorization['parameters']['AccessToken'];
+                    break;
+
+                default:
+                    ctx.warning('invalid auth scheme: ' + scheme);
+            }
+        }
+
         var options = {
             repoLocation: endpoint.url,
             ref: selectedRef,
@@ -92,6 +108,8 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
         ctx.job.environment.variables['sys.sourcesFolder'] = repoPath;
         gitrepo.getcode(ctx, options, done);
     }, function (err) {
+        process.env['altusername'] = '';
+        process.env['altpassword'] = '';
         callback(err);
     });
 }

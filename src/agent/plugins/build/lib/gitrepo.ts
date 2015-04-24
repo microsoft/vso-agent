@@ -74,7 +74,9 @@ export function getcode(ctx, options, callback) {
     var askpass = null;
     if (options.creds) {
         var askPath = path.join(__dirname, 'askpass.js');
-        process.env['GIT_ASKPASS']=askPath;
+        process.env['GIT_ASKPASS'] = askPath;
+        process.env['GIT_USERNAME'] = options.creds.username;
+        process.env['GIT_PASSWORD'] = options.creds.password;
         ctx.info('repo location:' + options.repoLocation);
     }
     
@@ -160,6 +162,10 @@ export function getcode(ctx, options, callback) {
     ], 
     // on complete 
     function(err) {
+
+        process.env['GIT_USERNAME'] = '';
+        process.env['GIT_PASSWORD'] = '';
+
         if (err) { callback(err); }
         callback();
     });
