@@ -44,7 +44,7 @@ export class TestRunPublisher {
             if(err) return console.log(err);
          
             var testRun: ifm.TestRun = <ifm.TestRun>    {
-                name: res.testsuites.at(0).testsuite.at(0).attributes().name,
+                name: res.testsuite.at(0).attributes().name,
                 iteration: "",
                 state: "InProgress",
                 automated: true,
@@ -56,16 +56,16 @@ export class TestRunPublisher {
                 buildFlavor: "",
                 comment: "",
                 testEnvironmentId: "",
-                startDate: res.testsuites.at(0).testsuite.at(0).attributes().timestamp,
+                startDate: res.testsuite.at(0).attributes().timestamp,
                 releaseUri: "",
                 build: { id: buildId}
             };
             
             var testResults = [];
 
-            for (var j = 0; j < res.testsuites.at(0).testsuite.at(0).testcase.count(); j++)
+            for (var j = 0; j < res.testsuite.at(0).testcase.count(); j++)
             {
-                var currentTestcase = res.testsuites.at(0).testsuite.at(0).testcase.at(j);
+                var currentTestcase = res.testsuite.at(0).testcase.at(j);
                 var failureMessage: string;
                 var outcome: string = "Passed";
                 if (currentTestcase.failure)
