@@ -10,6 +10,7 @@ import taskm = require('./taskapi');
 import apivm = require('./handlers/apiversion');
 import basicm = require('./handlers/basiccreds');
 import bearm = require('./handlers/bearertoken');
+import testm = require('./testmanagementapi');
 
 export function versionHandler(apiVersion: string) {
 	return new apivm.ApiVersionHandler(apiVersion);
@@ -48,4 +49,12 @@ export function TimelineApi(collectionUrl: string, authHandler: ifm.IRequestHand
 
 export function TaskApi(serverUrl: string, authHandler: ifm.IRequestHandler): ifm.ITaskApi {
     return new taskm.TaskApi(serverUrl, [authHandler, versionHandler('1.0')]);
+}
+
+export function TestManagementApi(serverUrl: string, authHandler: ifm.IRequestHandler): ifm.ITestManagementApi {
+    return new testm.TestManagementApi(serverUrl, [authHandler, versionHandler('2.0-preview.2')]); 
+}
+
+export function QTestManagementApi(serverUrl: string, authHandler: ifm.IRequestHandler): ifm.IQTestManagementApi {
+    return new testm.QTestManagementApi(serverUrl, [authHandler, versionHandler('2.0-preview.2')]);
 }
