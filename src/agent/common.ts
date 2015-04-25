@@ -22,6 +22,8 @@ export var sysVars = <any>{};
 sysVars.system = 'system';
 sysVars.collectionId = 'system.collectionId';
 sysVars.definitionId = 'system.definitionId';
+sysVars.tfsUri = 'system.teamFoundationServerUri';
+sysVars.collectionUri = 'system.teamFoundationCollectionUri'
 sysVars.debug = 'system.debug';
 
 export var agentVars = <any>{};
