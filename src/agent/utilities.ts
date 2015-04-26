@@ -5,9 +5,9 @@
 
 import Q = require('q');
 import ctxm = require('./context');
+import fs = require('fs');
 
 var shell = require('shelljs');
-var fs = require('fs');
 var path = require('path');
 
 // TODO: offer these module level context-less helper functions in utilities below
@@ -48,6 +48,56 @@ export function objectToFile(filePath: string, obj: any): Q.Promise<void> {
     });
 
     return defer.promise;
+}
+
+export function readDirectory(directory: string, includeFiles: boolean, includeFolders: boolean): Q.Promise<string[]> {
+    var results: string[] = [];
+    var deferred = Q.defer<string[]>();
+
+    if (includeFolders) {
+        results.push(directory);
+    }
+
+    Q.nfcall(fs.readdir, directory)
+        .then((files: string[]) => {
+            var count = files.length;
+            if (count > 0) {
+                files.forEach((file: string, index: number) => {
+                    var fullPath = path.join(directory, file);
+                    Q.nfcall(fs.stat, fullPath)
+                        .then((stat: fs.Stats) => {
+                            if (stat && stat.isDirectory()) {
+                                readDirectory(fullPath, includeFiles, includeFolders)
+                                    .then((moreFiles: string[]) => {
+                                        results = results.concat(moreFiles);
+                                        if (--count === 0) {
+                                            deferred.resolve(results);
+                                        }
+                                    },
+                                    (error) => {
+                                        deferred.reject(new Error(error.toString()));
+                                    });
+                            }
+                            else {
+                                if (includeFiles) {
+                                    results.push(fullPath);
+                                }
+                                if (--count === 0) {
+                                    deferred.resolve(results);
+                                }
+                            }
+                        });
+                });
+            }
+            else {
+                deferred.resolve(results);
+            }
+        },
+        (error) => {
+            deferred.reject(error);
+        });
+
+    return deferred.promise;
 }
 
 //

@@ -73,11 +73,11 @@ export interface BuildArtifact {
 }
 
 export interface IBuildApi {
-    postArtifact(buildId: number, artifact: BuildArtifact, onResult: (err: any, statusCode: number, artifact: BuildArtifact) => void): void;
+    postArtifact(projectId: string, buildId: number, artifact: BuildArtifact, onResult: (err: any, statusCode: number, artifact: BuildArtifact) => void): void;
 }
 
 export interface IQBuildApi {
-    postArtifact(buildId: number, artifact: BuildArtifact): Q.Promise<BuildArtifact>
+    postArtifact(projectId: string, buildId: number, artifact: BuildArtifact): Q.Promise<BuildArtifact>
 }
 
 //-----------------------------------------------------

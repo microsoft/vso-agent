@@ -9,14 +9,14 @@ import restm = require('./restclient');
 import Q = require("q");
 
 export class BuildApi implements ifm.IBuildApi {
-    projectUrl: string;
+    collectionUrl: string;
     httpClient: httpm.HttpClient;
     restClient: restm.RestClient;
 
-    constructor(projectUrl: string, handlers: ifm.IRequestHandler[]) {
-        this.projectUrl = projectUrl;
+    constructor(collectionUrl: string, handlers: ifm.IRequestHandler[]) {
+        this.collectionUrl = collectionUrl;
         this.httpClient = new httpm.HttpClient('vso-build-api', handlers);
-        this.restClient = new restm.RestClient(projectUrl, this.httpClient);
+        this.restClient = new restm.RestClient(collectionUrl, this.httpClient);
     }
 
     //
@@ -24,22 +24,22 @@ export class BuildApi implements ifm.IBuildApi {
     //       or replace this with the auto-generated typescript client
     //
 
-    public postArtifact(buildId: number, artifact: ifm.BuildArtifact, onResult: (err: any, statusCode: number, artifact: ifm.BuildArtifact) => void): void {
-        this.restClient.create("_apis/build/builds/" + buildId + "/artifacts", artifact, onResult);
+    public postArtifact(projectId: string, buildId: number, artifact: ifm.BuildArtifact, onResult: (err: any, statusCode: number, artifact: ifm.BuildArtifact) => void): void {
+        this.restClient.create(projectId + "/_apis/build/builds/" + buildId + "/artifacts", artifact, onResult);
     }
 }
 
 export class QBuildApi {
     _buildApi: ifm.IBuildApi;
 
-    constructor(projectUrl:string, handlers: ifm.IRequestHandler[]) {
-        this._buildApi = new BuildApi(projectUrl, handlers);
+    constructor(collectionUrl:string, handlers: ifm.IRequestHandler[]) {
+        this._buildApi = new BuildApi(collectionUrl, handlers);
     }
 
-    public postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact> {
+    public postArtifact(projectId: string, buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact> {
         var deferred = Q.defer<ifm.BuildArtifact>();
 
-        this._buildApi.postArtifact(buildId, artifact, (err: any, statusCode: number, artifact: ifm.BuildArtifact) => {
+        this._buildApi.postArtifact(projectId, buildId, artifact, (err: any, statusCode: number, artifact: ifm.BuildArtifact) => {
             if (err) {
                 err.statusCode = statusCode;
                 deferred.reject(err);

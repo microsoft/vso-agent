@@ -5,17 +5,6 @@ import cmdm = require('./command');
 import webapi = require('../api/webapi');
 import ifm = require('../api/interfaces');
 
-//
-// Sample command async handler
-// These will run in the background and get queued when cmd is called via stdout.
-// The async commands queue will get drained before the task exits
-// The done callback must get written.
-// If the done callback passes an err, then it will fail the job
-// If you want the command to be best effort, then eat any errors and don't callback with an err
-//
-// Output from this should call the output(line) callback.  Outback is buffered and written to the task log
-// as one chunk so this output is not interleaved with other tool output.
-//
 export function createAsyncCommand(taskCtx: ctxm.TaskContext, command: cm.ITaskCommand) {
 	return new ArtifactAssociateCommand(taskCtx, command);
 }
@@ -51,12 +40,7 @@ export class ArtifactAssociateCommand implements cm.IAsyncCommand {
 			}
 		};
 		
-		// backcompat with old server
-		var job = (<any>this.taskCtx).job;
-        var projectUrl: string = job.environment.systemConnection ? job.environment.systemConnection.url : job.authorization.serverUrl;
-		projectUrl = projectUrl + '/' + this.taskCtx.variables[ctxm.WellKnownVariables.projectId]; 
-		
-		var buildClient = webapi.QBuildApi(projectUrl, cm.basicHandlerFromCreds(this.taskCtx.workerCtx.config.creds));
-		return buildClient.postArtifact(buildId, artifact);
+		var buildClient = webapi.QBuildApi(this.taskCtx.service.collectionUrl, this.taskCtx.authHandler);
+		return buildClient.postArtifact(this.taskCtx.variables[ctxm.WellKnownVariables.projectId], buildId, artifact);
 	}	
 }

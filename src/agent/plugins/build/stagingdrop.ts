@@ -237,25 +237,31 @@ class CreateDrop implements plugins.IPlugin {
         ctx.info("drop path = " + path);
 
         // determine drop provider
+        var artifactType: string;
         var dropPromise: Q.Promise<string> = Q(<string>null);
         switch (location) {
             case "filecontainer":
+                artifactType = "container";
                 dropPromise = this._copyToFileContainer(ctx, stagingFolder, path);
                 break;
             case "uncpath":
+                artifactType = "filepath";
                 dropPromise = this._copyToUncPath(ctx, stagingFolder, path);
                 break;
         }
 
         return dropPromise.then((artifactLocation: string) => {
             if (artifactLocation) {
-                var buildClient = webapi.QBuildApi(ctx.job.authorization.serverUrl,
+                var serverUrl = ctx.job.environment.systemConnection ? ctx.job.environment.systemConnection.url : ctx.job.authorization.serverUrl;
+                var buildClient = webapi.QBuildApi(serverUrl,
                     cm.basicHandlerFromCreds(ctx.workerCtx.config.creds));
 
-                return ctx.service.postArtifact(parseInt(ctx.variables[ctxm.WellKnownVariables.buildId]), {
+                return ctx.service.postArtifact(ctx.variables[ctxm.WellKnownVariables.projectId],
+                    parseInt(ctx.variables[ctxm.WellKnownVariables.buildId]), {
                     name: "drop",
                     resource: {
-                        data: artifactLocation
+                        data: artifactLocation,
+                        type: artifactType
                     }
                 });
             }

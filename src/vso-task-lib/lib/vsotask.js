@@ -8,6 +8,7 @@ var tcm = require('./taskcommand');
 var trm = require('./toolrunner');
 var cm = require('../../agent/common');
 var webapi = require('../../agent/api/webapi');
+var utils = require('../../agent/utilities');
 
 //-----------------------------------------------------
 // General Helpers
@@ -204,3 +205,5 @@ var _filter = function (pattern, options) {
     return minimatch.filter(pattern, options);
 }
 exports.filter = _filter;
+
+exports.readDirectory = utils.readDirectory;
