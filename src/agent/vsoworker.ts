@@ -28,6 +28,11 @@ function setVariables(job: ifm.JobRequestMessage, workerContext: ctxm.WorkerCont
 
     var sys = variables[cm.sysVars.system];
     var collId = variables[cm.sysVars.collectionId];
+
+    if (!variables[cm.sysVars.collectionUri]) {
+        variables[cm.sysVars.collectionUri] =  job.environment.systemConnection ? job.environment.systemConnection.url : job.authorization.serverUrl;     
+    }
+
     var defId = variables[cm.sysVars.definitionId];
     var hashInput = collId + ':' + defId;
 
@@ -108,7 +113,8 @@ export function run(msg, consoleOutput: boolean,
         var agentUrl = wk.config.settings.serverUrl;
 
         // backcompat with old server
-        var taskUrl = job.environment.systemConnection ? job.environment.systemConnection.url : job.authorization.serverUrl;        
+        var taskUrl = job.environment.variables[cm.sysVars.collectionUri]
+        //var taskUrl = job.environment.systemConnection ? job.environment.systemConnection.url : job.authorization.serverUrl;  
 
         var serviceChannel: cm.IFeedbackChannel = createFeedbackChannel(agentUrl, taskUrl, jobInfo, wk);
         wk.service = serviceChannel;

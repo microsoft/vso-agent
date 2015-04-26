@@ -4,6 +4,7 @@
 //import shell = require('shelljs');
 import path = require('path');
 import fs = require('fs');
+var url = require('url');
 import async = require('async');
 import ctxm = require('../../context');
 import ifm = require('../../api/interfaces');
@@ -58,7 +59,7 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     ctx.info('srcVersion: ' + srcVersion);
     ctx.info('srcBranch: ' + srcBranch);
 
-    var tfcreds = { username: process.env.altusername, password: process.env.altpassword };
+    
     var selectedRef = srcVersion ? srcVersion : srcBranch;
     ctx.info('selectedRef: ' + selectedRef);
 
@@ -73,10 +74,30 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     //       what's odd is we will set sys.sourceFolder so > 1 means last one wins
     async.forEachSeries(srcendpoints, function (endpoint, done) {
         
-        //TODO: confirm how external git and github creds flow down
-        var creds = tfcreds; //endpoint.type === 'TfsGit' ? tfcreds : endpoint.creds;
+        // fallback is basic creds
+        var creds = { username: process.env.altusername, password: process.env.altpassword };
+
+        if (endpoint.authorization && endpoint.authorization['scheme']) {
+            var scheme = endpoint.authorization['scheme'];
+            ctx.info('Using auth scheme: ' + scheme);
+
+            switch (scheme) {
+                case 'OAuth':
+                    creds.username = 'OAuth';
+                    creds.password = endpoint.authorization['parameters']['AccessToken'];
+                    break;
+
+                default:
+                    ctx.warning('invalid auth scheme: ' + scheme);
+            }
+        }
+
+        // encodes projects and repo names with spaces
+        var gu = url.parse(endpoint.url);
+        var giturl = gu.format(gu);
+
         var options = {
-            repoLocation: endpoint.url,
+            repoLocation: giturl,
             ref: selectedRef,
             creds: creds,
             localPath: 'repo', // not allowing custom local paths - we always put in repo
@@ -92,6 +113,8 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
         ctx.job.environment.variables['sys.sourcesFolder'] = repoPath;
         gitrepo.getcode(ctx, options, done);
     }, function (err) {
+        process.env['altusername'] = '';
+        process.env['altpassword'] = '';
         callback(err);
     });
 }
