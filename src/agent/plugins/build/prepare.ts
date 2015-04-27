@@ -4,6 +4,7 @@
 //import shell = require('shelljs');
 import path = require('path');
 import fs = require('fs');
+var url = require('url');
 import async = require('async');
 import ctxm = require('../../context');
 import ifm = require('../../api/interfaces');
@@ -91,8 +92,12 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
             }
         }
 
+        // encodes projects and repo names with spaces
+        var gu = url.parse(endpoint.url);
+        var giturl = gu.format(gu);
+
         var options = {
-            repoLocation: endpoint.url,
+            repoLocation: giturl,
             ref: selectedRef,
             creds: creds,
             localPath: 'repo', // not allowing custom local paths - we always put in repo
