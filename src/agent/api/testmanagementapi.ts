@@ -34,6 +34,17 @@ export class TestManagementApi implements ifm.ITestManagementApi {
     public createTestRunResult(testRunId: number, testRunResults: ifm.TestRunResult[], onResult: (err: any, statusCode: number, createdTestRunResults: ifm.TestRunResult[]) => void): void {
     	this.restClient.create('/_apis/test/runs/' + testRunId + '/results', testRunResults, onResult);
 	}
+
+    public createTestRunAttachment(testRunId: number, fileName: string, contents: string, onResult: (err: any, statusCode: number, obj: any) => void): void {
+        var attachmentData = {
+            AttachmentType: "GeneralAttachment",
+            Comment: "",
+            FileName: fileName,
+            Stream: contents
+        };
+        this.restClient.create('/_apis/test/runs/' + testRunId + '/Attachments', attachmentData, onResult);
+    }
+
 }
 
 export class QTestManagementApi {
@@ -89,6 +100,22 @@ export class QTestManagementApi {
         });
 
         return <Q.Promise<ifm.TestRunResult[]>>defer.promise;       
+    }
+
+    public createTestRunAttachment(testRunId: number, fileName: string, contents: string) {
+        var defer = Q.defer();
+
+        this.testApi.createTestRunAttachment(testRunId, fileName, contents, (err: any, statusCode: number, obj: any) => {
+            if (err) {
+                err.statusCode = statusCode;
+                defer.reject(err);
+            }
+            else {
+                defer.resolve(obj);
+            }
+        });
+
+        return <Q.Promise<any>>defer.promise;
     }
 
 }

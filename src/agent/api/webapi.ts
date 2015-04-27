@@ -52,9 +52,9 @@ export function TaskApi(serverUrl: string, authHandler: ifm.IRequestHandler): if
 }
 
 export function TestManagementApi(serverUrl: string, authHandler: ifm.IRequestHandler): ifm.ITestManagementApi {
-    return new testm.TestManagementApi(serverUrl, [authHandler, versionHandler('2.0-preview.2')]); 
+    return new testm.TestManagementApi(serverUrl, [authHandler, versionHandler('2.0-preview')]); 
 }
 
 export function QTestManagementApi(serverUrl: string, authHandler: ifm.IRequestHandler): ifm.IQTestManagementApi {
-    return new testm.QTestManagementApi(serverUrl, [authHandler, versionHandler('2.0-preview.2')]);
+    return new testm.QTestManagementApi(serverUrl, [authHandler, versionHandler('2.0-preview')]);
 }

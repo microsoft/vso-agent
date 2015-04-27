@@ -32,7 +32,7 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
             //
             // TODO : How to identify team Project and collection uri 
             //
-            var collectionUrl: string = "";
+            var collectionUrl: string = ""; 
             var teamProject: string = ""; 
 
             var resultFilePath: string = this.command.message;
@@ -43,7 +43,7 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
             var testRun = testRunPublisher.ReadResultsFromFile(resultFilePath, resultType);
             var results = testRun.testResults;
 
-            testRunPublisher.StartTestRun(testRun.testRun).then(function (createdTestRun) {
+            testRunPublisher.StartTestRun(testRun.testRun, resultFilePath).then(function (createdTestRun) {
                 
                 var testRunId: number = createdTestRun.id;
 

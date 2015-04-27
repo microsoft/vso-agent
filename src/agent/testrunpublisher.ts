@@ -2,8 +2,11 @@ import ifm = require('./api/interfaces');
 import webapi = require('./api/webapi');
 import ctxm = require('./context');
 
+var async = require('async');
 var fs = require('fs');
+var path = require("path");
 var xmlreader = require('xmlreader');
+var Q = require('q');
 
 export class TestRunPublisher {
     constructor(tfsCollectionUrl: string, projectName: string, taskCtx: ctxm.TaskContext) {
@@ -44,7 +47,7 @@ export class TestRunPublisher {
             if(err) return console.log(err);
          
             var testRun: ifm.TestRun = <ifm.TestRun>    {
-                name: res.testsuites.at(0).testsuite.at(0).attributes().name,
+                name: res.testsuite.at(0).attributes().name,
                 iteration: "",
                 state: "InProgress",
                 automated: true,
@@ -56,16 +59,16 @@ export class TestRunPublisher {
                 buildFlavor: "",
                 comment: "",
                 testEnvironmentId: "",
-                startDate: res.testsuites.at(0).testsuite.at(0).attributes().timestamp,
+                startDate: res.testsuite.at(0).attributes().timestamp,
                 releaseUri: "",
                 build: { id: buildId}
             };
             
             var testResults = [];
 
-            for (var j = 0; j < res.testsuites.at(0).testsuite.at(0).testcase.count(); j++)
+            for (var j = 0; j < res.testsuite.at(0).testcase.count(); j++)
             {
-                var currentTestcase = res.testsuites.at(0).testsuite.at(0).testcase.at(j);
+                var currentTestcase = res.testsuite.at(0).testcase.at(j);
                 var failureMessage: string;
                 var outcome: string = "Passed";
                 if (currentTestcase.failure)
@@ -105,14 +108,21 @@ export class TestRunPublisher {
         return testRun2;
     }
 
-
     //-----------------------------------------------------
     // Start a test run - create a test run entity on the server, and mark it in progress
     // - testRun: TestRun - test run to be published  
     //-----------------------------------------------------
-    public StartTestRun(testRun: ifm.TestRun) {
-        return this.testApi.createTestRun(testRun).then(function (createdTestRun){        
-            return createdTestRun;
+    public StartTestRun(testRun: ifm.TestRun, resultFilePath: string) {
+        var api = this.testApi;
+        
+        return this.testApi.createTestRun(testRun).then(function (createdTestRun) {
+            var contents = fs.readFileSync(resultFilePath, "ascii");
+            contents = new Buffer(contents).toString('base64');
+
+            api.createTestRunAttachment(createdTestRun.id, path.basename(resultFilePath), contents).then(function (attachment) {
+                // TODO
+            });
+            return createdTestRun; 
         });
     }
 
@@ -131,9 +141,37 @@ export class TestRunPublisher {
     // - testRunResults: TestRunResult[] - testresults to be published  
     //-----------------------------------------------------
     public AddResults(testRunId: number, testResults: ifm.TestRunResult[]) {
-        return this.testApi.createTestRunResult(testRunId, testResults).then(function (createdTestResults) {
-            return createdTestResults;
+        var defer = Q.defer();
+        var _this = this;
+
+        var i = 0;
+        var batchSize = 100; 
+        var returnedResults;
+        async.whilst(
+            function () {
+                return i < testResults.length; 
+            },
+            function (callback) {
+                var noOfResultsToBePublished = batchSize; 
+                if (i + batchSize >= testResults.length)
+                {
+                    noOfResultsToBePublished = testResults.length - i;
+                }
+                var currentBatch = testResults.slice(i, i + noOfResultsToBePublished);
+                i = i+ batchSize;
+
+                var _callback = callback;
+                _this.testApi.createTestRunResult(testRunId, currentBatch).then(function (createdTestResults)
+                {
+                    returnedResults = createdTestResults;
+                    setTimeout(_callback, 1000);
+                }); 
+            },
+            function (err) {
+                defer.resolve(returnedResults); 
         });
+
+        return defer.promise;
     } 
 }
 

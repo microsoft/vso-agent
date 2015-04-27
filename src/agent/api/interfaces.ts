@@ -243,6 +243,7 @@ export interface ITestManagementApi {
     createTestRun(testRun: TestRun, onResult: (err: any, statusCode: number, publishedTestRun: TestRun) => void): void;
     endTestRun(testRunId: number, onResult: (err: any, statusCode: number, publishedTestRun: TestRun) => void): void;
     createTestRunResult(testRunId: number, testRunResults: TestRunResult[], onResult: (err: any, statusCode: number, createdTestRunResults: TestRunResult[]) => void): void;
+    createTestRunAttachment(testRunId: number, fileName: string, contents: string, onResult: (err: any, statusCode: number, obj: any) => void): void;
 }
 
 // Q Promise Interface
@@ -250,6 +251,7 @@ export interface IQTestManagementApi {
     createTestRun(testRun: TestRun): Q.Promise<TestRun>;
     endTestRun(testRunId: number): Q.Promise<TestRun>;
     createTestRunResult(testRunId: number, testRunResults: TestRunResult[]): Q.Promise<TestRunResult[]>;
+    createTestRunAttachment(testRunId: number, fileName: string, contents: string): Q.Promise<any>;
 }
 
 //*******************************************************************************************************
