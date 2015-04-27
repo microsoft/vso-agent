@@ -146,7 +146,7 @@ export interface IFeedbackChannel {
 
     // drops
     uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.Promise<any>;
-    postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact>;
+    postArtifact(projectId: string, buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact>;
 
     // job
     updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void;
@@ -171,7 +171,7 @@ export interface ITaskCommand {
     lines: string[];
     info(message: string);
     warning(message: string);
-    error(message: string);    
+    error(message: string);
 }
 
 //TODO: get rid of ctx any

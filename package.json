@@ -29,6 +29,7 @@
     "async": "0.x",
     "glob": "^5.0.3",
     "iniparser": "~1.0.5",
+    "minimatch": "^2.0.4",
     "minimist": "^0.2.0",
     "nconf": "0.6.x",
     "node-uuid": "1.x",
@@ -38,7 +39,7 @@
     "svchost": "0.1.x",
     "svcinstall": "^0.2.1",
     "validator": "~3.11.0",
-    "vso-task-lib": "^0.1.6"
+    "vso-task-lib": "^0.1.7"
   },
   "devDependencies": {
     "del": "^1.1.1",

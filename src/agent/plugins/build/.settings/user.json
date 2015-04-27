@@ -1,0 +1,202 @@
+{
+    "type": "user",
+    "editor": {
+        "lineNumbers": true,
+        "glyphMargin": true,
+        "tabSize": "auto",
+        "insertSpaces": "auto",
+        "roundedSelection": true,
+        "scrollBeyondLastLine": true,
+        "wrappingColumn": 300,
+        "quickSuggestions": true,
+        "quickSuggestionsDelay": 10,
+        "autoClosingBrackets": true,
+        "formatOnType": true,
+        "suggestOnTriggerCharacters": true,
+        "selectionHighlight": true,
+        "overviewRulerLanes": 3,
+        "hideCursorInOverviewRuler": false,
+        "renderWhitespace": false
+    },
+    "languages": {
+        "vs.languages.css": {
+            "validationSettings": {
+                "lint": {
+                    "compatibleVendorPrefixes": "ignore",
+                    "vendorPrefix": "warning",
+                    "duplicateProperties": "ignore",
+                    "emptyRules": "warning",
+                    "importStatement": "ignore",
+                    "boxModel": "ignore",
+                    "universalSelector": "warning",
+                    "zeroUnits": "ignore",
+                    "fontFaceProperties": "warning",
+                    "hexColorLength": "error",
+                    "argumentsInColorFunction": "error",
+                    "unknownProperties": "warning",
+                    "unknownVendorSpecificProperties": "ignore",
+                    "propertyIgnoredDueToDisplay": "warning",
+                    "important": "ignore",
+                    "float": "ignore",
+                    "idSelector": "ignore"
+                }
+            }
+        },
+        "vs.languages.javascript": {
+            "suggestSettings": {
+                "alwaysAllWords": false,
+                "useCodeSnippetsOnMethodSuggest": false
+            },
+            "validationSettings": {
+                "target": "ES5",
+                "module": "",
+                "baseUrl": "",
+                "lint": {
+                    "curlyBracketsMustNotBeOmitted": "ignore",
+                    "emptyBlocksWithoutComment": "ignore",
+                    "comparisonOperatorsNotStrict": "ignore",
+                    "missingSemicolon": "ignore",
+                    "reservedKeywords": "warning",
+                    "typeScriptSpecifics": "warning",
+                    "unknownTypeOfResults": "warning",
+                    "semicolonsInsteadOfBlocks": "ignore",
+                    "functionsInsideLoops": "ignore",
+                    "tripleSlashReferenceAlike": "warning",
+                    "unusedVariables": "ignore",
+                    "unusedFunctions": "ignore",
+                    "newOnLowercaseFunctions": "warning",
+                    "newOnReturningFunctions": "warning",
+                    "redeclaredVariables": "warning",
+                    "undeclaredVariables": "warning",
+                    "unknownProperty": "ignore",
+                    "primitivesInInstanceOf": "error",
+                    "mixedTypesArithmetics": "warning",
+                    "forcedTypeConversion": "warning"
+                }
+            }
+        },
+        "vs.languages.json": {
+            "schemas": [
+                {
+                    "fileMatch": [
+                        "/bower.json",
+                        "/.bower.json"
+                    ],
+                    "url": "http://json.schemastore.org/bower"
+                },
+                {
+                    "fileMatch": [
+                        "/package.json"
+                    ],
+                    "url": "http://json.schemastore.org/package"
+                },
+                {
+                    "fileMatch": [
+                        "/project.json"
+                    ],
+                    "url": "http://json.schemastore.org/project"
+                },
+                {
+                    "fileMatch": [
+                        "*.schema.json"
+                    ],
+                    "url": "http://json-schema.org/draft-04/schema#"
+                },
+                {
+                    "fileMatch": [
+                        "/global.json"
+                    ],
+                    "url": "http://json.schemastore.org/global"
+                }
+            ]
+        },
+        "markdown": {
+            "styles": []
+        },
+        "vs.languages.typescript": {
+            "suggestSettings": {
+                "alwaysAllWords": false,
+                "useCodeSnippetsOnMethodSuggest": false
+            },
+            "validationSettings": {
+                "target": "ES5",
+                "baseUrl": "",
+                "module": "",
+                "lint": {
+                    "emptyBlocksWithoutComment": "ignore",
+                    "curlyBracketsMustNotBeOmitted": "ignore",
+                    "comparisonOperatorsNotStrict": "ignore",
+                    "missingSemicolon": "ignore",
+                    "unknownTypeOfResults": "ignore",
+                    "semicolonsInsteadOfBlocks": "ignore",
+                    "functionsInsideLoops": "ignore",
+                    "functionsWithoutReturnType": "ignore",
+                    "tripleSlashReferenceAlike": "ignore",
+                    "unusedImports": "ignore",
+                    "unusedVariables": "ignore",
+                    "unusedFunctions": "ignore",
+                    "unusedMembers": "ignore"
+                }
+            }
+        },
+        "less": {
+            "validationSettings": {
+                "lint": {
+                    "compatibleVendorPrefixes": "ignore",
+                    "vendorPrefix": "warning",
+                    "duplicateProperties": "ignore",
+                    "emptyRules": "warning",
+                    "importStatement": "ignore",
+                    "boxModel": "ignore",
+                    "universalSelector": "warning",
+                    "zeroUnits": "ignore",
+                    "fontFaceProperties": "warning",
+                    "hexColorLength": "error",
+                    "argumentsInColorFunction": "error",
+                    "unknownProperties": "warning",
+                    "unknownVendorSpecificProperties": "ignore",
+                    "propertyIgnoredDueToDisplay": "warning",
+                    "important": "ignore",
+                    "float": "ignore",
+                    "idSelector": "ignore"
+                }
+            }
+        },
+        "sass": {
+            "validationSettings": {
+                "lint": {
+                    "compatibleVendorPrefixes": "ignore",
+                    "vendorPrefix": "warning",
+                    "duplicateProperties": "ignore",
+                    "emptyRules": "warning",
+                    "importStatement": "ignore",
+                    "boxModel": "ignore",
+                    "universalSelector": "warning",
+                    "zeroUnits": "ignore",
+                    "fontFaceProperties": "warning",
+                    "hexColorLength": "error",
+                    "argumentsInColorFunction": "error",
+                    "unknownProperties": "warning",
+                    "unknownVendorSpecificProperties": "ignore",
+                    "propertyIgnoredDueToDisplay": "warning",
+                    "important": "ignore",
+                    "float": "ignore",
+                    "idSelector": "ignore"
+                }
+            }
+        }
+    },
+    "search": {
+        "excludeFolders": [
+            ".git",
+            "node_modules"
+        ]
+    },
+    "terminal": {
+        "shell": {
+            "win32": "cmd.exe",
+            "darwin": "bash",
+            "linux": "bash"
+        }
+    }
+}

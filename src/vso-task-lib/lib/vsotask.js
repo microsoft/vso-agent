@@ -3,8 +3,12 @@ var shell = require('shelljs');
 var fs = require('fs');
 var path = require('path');
 var os = require('os');
+var minimatch = require('minimatch');
 var tcm = require('./taskcommand');
 var trm = require('./toolrunner');
+var cm = require('../../agent/common');
+var webapi = require('../../agent/api/webapi');
+var utils = require('../../agent/utilities');
 
 //-----------------------------------------------------
 // General Helpers
@@ -87,6 +91,7 @@ var _writeCommand = function(command, properties, message) {
     var taskCmd = new tcm.TaskCommand(command, properties, message);
     _writeLine(taskCmd.toString());
 }
+exports.command = _writeCommand;
 
 var _warning = function(message) {
     _writeCommand('task.issue', {'type': 'warning'}, message);
@@ -170,6 +175,11 @@ var _which = function(tool, check) {
 }
 exports.which = _which;
 
+var _cp = function (options, source, dest) {
+    shell.cp(options, source, dest);
+}
+exports.cp = _cp;
+
 //-----------------------------------------------------
 // Tools
 //-----------------------------------------------------
@@ -178,4 +188,22 @@ exports.commandFromString = tcm.commandFromString;
 exports.ToolRunner = trm.ToolRunner;
 trm.debug = _debug;
 
+//-----------------------------------------------------
+// Matching helpers
+//-----------------------------------------------------
+var _match = function (list, pattern, options) {
+    return minimatch.match(list, pattern, options);
+}
+exports.match = _match;
 
+var _matchFile = function (list, pattern, options) {
+    return minimatch(list, pattern, options);
+}
+exports.matchFile = _matchFile;
+
+var _filter = function (pattern, options) {
+    return minimatch.filter(pattern, options);
+}
+exports.filter = _filter;
+
+exports.readDirectory = utils.readDirectory;
