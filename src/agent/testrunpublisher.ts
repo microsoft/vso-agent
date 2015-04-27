@@ -9,16 +9,16 @@ var xmlreader = require('xmlreader');
 var Q = require('q');
 
 export class TestRunPublisher {
-    constructor(tfsCollectionUrl: string, projectName: string, taskCtx: ctxm.TaskContext) {
-        this.tfsCollectionUrl = tfsCollectionUrl;
-        this.teamProject = projectName;
+    constructor(taskCtx: ctxm.TaskContext) {
         this.taskCtx = taskCtx;
-        this.testApi = webapi.QTestManagementApi(this.tfsCollectionUrl + "/" + this.teamProject, this.taskCtx.authHandler);
+
+        var tfsCollectionUrl = this.taskCtx.variables["system.teamFoundationCollectionUri"];
+        var teamProject = this.taskCtx.variables["system.teamProject"];
+
+        this.testApi = webapi.QTestManagementApi(tfsCollectionUrl + "/" + teamProject, this.taskCtx.authHandler);
     }
 
     private testApi: ifm.IQTestManagementApi;
-    private tfsCollectionUrl: string;
-    private teamProject: string;
     private taskCtx: ctxm.TaskContext;
 
     public ReadResultsFromFile(file: string, type: string) {

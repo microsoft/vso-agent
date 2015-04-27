@@ -29,17 +29,11 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
         var defer = Q.defer();
 
         setTimeout(() => {
-            //
-            // TODO : How to identify team Project and collection uri 
-            //
-            var collectionUrl: string = ""; 
-            var teamProject: string = ""; 
-
             var resultFilePath: string = this.command.message;
             var resultType: string = this.command.properties['type'].toLowerCase();
             var command: cm.ITaskCommand = this.command;
 
-            var testRunPublisher = new trp.TestRunPublisher(collectionUrl, teamProject, this.taskCtx);
+            var testRunPublisher = new trp.TestRunPublisher(this.taskCtx);
             var testRun = testRunPublisher.ReadResultsFromFile(resultFilePath, resultType);
             var results = testRun.testResults;
 
