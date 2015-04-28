@@ -188,6 +188,7 @@ var _find = function(findPath) {
     var matches = shell.find(findPath);
     _debug('find ' + findPath);
     _debug(matches.length + ' matches.');
+    return matches;
 }
 exports.find = _find;
 
