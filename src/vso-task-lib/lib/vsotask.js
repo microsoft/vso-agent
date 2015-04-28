@@ -6,9 +6,6 @@ var os = require('os');
 var minimatch = require('minimatch');
 var tcm = require('./taskcommand');
 var trm = require('./toolrunner');
-var cm = require('../../agent/common');
-var webapi = require('../../agent/api/webapi');
-var utils = require('../../agent/utilities');
 
 //-----------------------------------------------------
 // General Helpers
@@ -44,7 +41,9 @@ exports.exit = _exit;
 // Input Helpers
 //-----------------------------------------------------
 var _getVariable = function(name) {
-    return process.env[name.replace('.', '_').toUpperCase()];
+    var varval = process.env[name.replace('.', '_').toUpperCase()];
+    _debug(name + '=' + varval);
+    return varval;
 }
 exports.getVariable = _getVariable;
 
@@ -56,6 +55,7 @@ var _getInput = function(name, required) {
         _exit(1);
     }
 
+    _debug(name + '=' + inval);
     return inval;    
 }
 exports.getInput = _getInput;
@@ -80,6 +80,8 @@ var _getPathInput = function(name, required, check) {
     if (check) {
         _checkPath(inval, name);
     }
+
+    _debug(name + '=' + inval);
     return inval;
 }
 exports.getPathInput = _getPathInput;
@@ -171,6 +173,8 @@ var _which = function(tool, check) {
     if (check) {
         _checkPath(toolPath, tool);
     }
+
+    _debug(tool + '=' + toolPath);
     return toolPath;
 }
 exports.which = _which;
@@ -179,6 +183,19 @@ var _cp = function (options, source, dest) {
     shell.cp(options, source, dest);
 }
 exports.cp = _cp;
+
+var _find = function(findPath) {
+    var matches = shell.find(findPath);
+    _debug('find ' + findPath);
+    _debug(matches.length + ' matches.');
+}
+exports.find = _find;
+
+var _rmRF = function (path) {
+    _debug('rm -rf ' + path);
+    shell.rm('-rf', path);
+}
+exports.rmRF = _rmRF;
 
 //-----------------------------------------------------
 // Tools
@@ -205,5 +222,3 @@ var _filter = function (pattern, options) {
     return minimatch.filter(pattern, options);
 }
 exports.filter = _filter;
-
-exports.readDirectory = utils.readDirectory;
