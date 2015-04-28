@@ -27,9 +27,9 @@ export class TestRunPublisher {
         if (type == "junit") {
             allTestRuns = this.ReadJUnitResults(file);
         }
-        //else if (type == "nunit") {
-        //    allTestRuns = this.ReadNUnitResults(file);
-        //}
+        else if (type == "nunit") {
+            allTestRuns = this.ReadNUnitResults(file);
+        }
         else {
             console.log("Test results of format '" + type + "'' are not supported by the VSO/TFS OSX and Linux build agent");
         }
@@ -47,11 +47,11 @@ export class TestRunPublisher {
         var contents = fs.readFileSync(file, "ascii");
       
         var buildId = this.taskCtx.variables["build.buildId"];
-        var buildRequestedFor = this.taskCtx.variables["Build.RequestedFor"];
+        var buildRequestedFor = this.taskCtx.variables["build.requestedFor"];
         var platform = "";
         var config = "";
 
-        xmlreader.read(contents, function (err, results){
+        xmlreader.read(contents, function (err, res){
 
             if(err) return console.log(err);
 
@@ -62,26 +62,26 @@ export class TestRunPublisher {
             var totalRunDuration = 0;
             var totalTestCaseDuration = 0;
 
-            var rootNode = results.testsuite.at(0);
+            var rootNode = res.testsuite.at(0);
             if(rootNode) {
-                if(rootNode.attributes("name")) {
-                    runName = rootNode.attributes("name");
+                if(rootNode.attributes().name) {
+                    runName = rootNode.attributes().name;
                 }
 
-                if(rootNode.attributes("hostname")) {
-                    hostName = rootNode.attributes("hostname");
+                if(rootNode.attributes().hostname) {
+                    hostName = rootNode.attributes().hostname;
                 }
 
                 //assume runtimes from xl are current local time since timezone information is not in the xml. If xml date > current local date, fall back to local
-                if(rootNode.attributes("timestamp")) {
-                    var timestampFromXml = rootNode.attributes("timestamp");
+                if(rootNode.attributes().timestamp) {
+                    var timestampFromXml = rootNode.attributes().timestamp;
                     if(timestampFromXml < new Date()) {
                         timeStamp = timestampFromXml;
                     }                    
                 }
 
-                if(rootNode.attributes("time")) {
-                    totalRunDuration = rootNode.attributes("time");
+                if(rootNode.attributes().time) {
+                    totalRunDuration = rootNode.attributes().time;
                 }
 
                 //find test case nodes in JUnit result xml
@@ -92,19 +92,19 @@ export class TestRunPublisher {
 
                     //testcase name and type
                     var testName = "";
-                    if(testCaseNode.attributes("name")) {
-                        testName = testCaseNode.attributes("name");                    
+                    if(testCaseNode.attributes().name) {
+                        testName = testCaseNode.attributes().name;                    
                     } 
 
                     var testStorage = "";
-                    if(testCaseNode.attributes("classname")) {
-                        testStorage = testCaseNode.attributes("classname");
+                    if(testCaseNode.attributes().classname) {
+                        testStorage = testCaseNode.attributes().classname;
                     }
 
                     //testcase duration
                     var testCaseDuration = 0; //in seconds
-                    if(testCaseNode.attributes("time")) {
-                        testCaseDuration = testCaseNode.attributes("time");
+                    if(testCaseNode.attributes().time) {
+                        testCaseDuration = testCaseNode.attributes().time;
                         totalTestCaseDuration = totalTestCaseDuration + testCaseDuration;
                     }
                     
@@ -122,7 +122,7 @@ export class TestRunPublisher {
 
                     var testResult : ifm.TestRunResult = <ifm.TestRunResult> {
                         state: "Completed",
-                        computerName:hostName,
+                        computerName: hostName,
                         resolutionState: null,
                         testCasePriority: 1,
                         failureType: null,
@@ -132,14 +132,15 @@ export class TestRunPublisher {
                         automatedTestTypeId: null,
                         automatedTestId: null,
                         area: null,
-                        owner: buildRequestedFor,
+                        owner: buildRequestedFor, 
                         runBy: buildRequestedFor,
                         testCaseTitle: testName,
                         revision: 0,
                         dataRowCount: 0,
                         testCaseRevision: 0,
                         outcome: outcome,
-                        errorMessage: errorMessage
+                        errorMessage: errorMessage,
+                        durationInMs: totalTestCaseDuration * 1000, //convert to milliseconds
                     };
                     
                     testResults.push(testResult);
@@ -148,9 +149,11 @@ export class TestRunPublisher {
                 if(totalRunDuration < totalTestCaseDuration) {
                     totalRunDuration = totalTestCaseDuration; //run duration may not be set in the xml, so use the testcase duration
                 }
+            }    
 
-            }            
-
+            var completedDate = timeStamp;
+            completedDate.setSeconds(timeStamp.getSeconds() + totalRunDuration);
+            
             //create test run data
             var testRun: ifm.TestRun = <ifm.TestRun>    {
                 name: runName,
@@ -166,7 +169,7 @@ export class TestRunPublisher {
                 comment: "",
                 testEnvironmentId: "",
                 startDate: timeStamp,
-                //completeDate: timeStamp.AddSeconds(totalRunDuration),
+                //completeDate: completedDate,
                 releaseUri: "",
                 build: { id: buildId}
             };
@@ -184,14 +187,14 @@ export class TestRunPublisher {
     // Read NUnit results from a file
     // - file: string () - location of the NUnit results file 
     //-----------------------------------------------------
-    /*private ReadNUnitResults(file: string) {
+    private ReadNUnitResults(file: string) {
         var testRun2: ifm.TestRun2;
 
         var contents = fs.readFileSync(file, "ascii");
         var buildId = this.taskCtx.variables["build.buildId"];
-        var buildRequestedFor = this.taskCtx.variables["Build.RequestedFor"];
+        var buildRequestedFor = this.taskCtx.variables["build.requestedFor"];
 
-        xmlreader.read(contents, function (err, results){
+        xmlreader.read(contents, function (err, res){
 
             if(err) return console.log(err);
 
@@ -201,31 +204,30 @@ export class TestRunPublisher {
             var totalRunDuration = 0;
             var totalTestCaseDuration = 0;
 
-            var rootNode = results.test-results.at(0);
+            var rootNode = res["test-results"].at(0);
             if(rootNode) {
-                if(rootNode.attributes("name")) {
-                    runName = rootNode.attributes("name");
+                if(rootNode.attributes().name) {
+                    runName = rootNode.attributes().name;
                 }
 
                 //runtimes
                 var dateFromXml = new Date();
-                if(rootNode.attributes("date")) {
-                    dateFromXml = rootNode.attributes("date");                                        
+                if(rootNode.attributes().date) {
+                    dateFromXml = rootNode.attributes().date;                                        
                 }
 
                 var timeFromXml = new Date();
-                if(rootNode.attributes("time")) {
-                    timeFromXml = rootNode.attributes("time");
+                if(rootNode.attributes().time) {
+                    timeFromXml = rootNode.attributes().time;
                 }
 
                 //assume runtimes from xml are current local time since timezone information is not in the xml, if xml datetime > local time, fallback to local time
-                var runStartDateTimeFromXml = new Date(dateFromXml.toString());
-                runStartDateTimeFromXml.setHours(timeFromXml.getHours());
-                runStartDateTimeFromXml.setMinutes(timeFromXml.getMinutes());
-                runStartDateTimeFromXml.setSeconds(timeFromXml.getSeconds());
-
-                if(runStartDateTimeFromXml < new Date()) {
-                    runStartTime = runStartDateTimeFromXml;
+                //dateFromXml.setHours(timeFromXml.getHours());
+                //dateFromXml.setMinutes(timeFromXml.getMinutes());
+                //dateFromXml.setSeconds(timeFromXml.getSeconds());
+                
+                if (dateFromXml < new Date()) {
+                    runStartTime = dateFromXml;
                 }
             }
 
@@ -235,95 +237,108 @@ export class TestRunPublisher {
             var runUser = "";
             var hostName = "";
             
-            var envNode = rootNode.environment.at(0);
+            if(rootNode.environment) { var envNode = rootNode.environment.at(0); }
+
             if(envNode) {
                 
-                if(envNode.attributes("machine-name")) {
-                    hostName = envNode.attributes("machine-name");
+                if(envNode.attributes()["machine-name"]) {
+                    hostName = envNode.attributes()["machine-name"];
                 }
 
-                if(envNode.attributes("platform")) {
-                    platform = envNode.attributes("platform");
+                if(envNode.attributes().platform) {
+                    platform = envNode.attributes().platform;
                 }
             }            
 
             //get all test assemblies
             var testResults = [];
 
-            for(var t = 0; t < results.test-suite.count(); t ++) {
-                var testAssemblyNode = results.test-suite.at(t);
-                if(testAssemblyNode.attributes("type") == "Assembly") {
+            /*for(var t = 0; t < rootNode["test-suite"].count(); t ++) {
+                var testAssemblyNode = rootNode["test-suite"].at(t);
+                if(testAssemblyNode.attributes().type == "Assembly") {
 
                     var assemblyName = "";
-                    if(testAssemblyNode.attributes("name")) {
-                        assemblyName = testAssemblyNode.attributes("name");
+                    if(testAssemblyNode.attributes().name) {
+                        assemblyName = testAssemblyNode.attributes().name;
                     }
 
                     //get each testcase result information
-                    for(var i = 0; i < testAssemblyNode.nodes.count; i ++) {
-                        if(testAssemblyNode.nodes[i].type == "test-case") {
-                            var testCaseNode = testAssemblyNode.nodes[i];
-                            
-                            //testcase name and type
-                            var testName = "";
-                            if(testCaseNode.attributes("name")) {
-                                testName = testCaseNode.attributes("name");
-                            } 
+                    for(var n = 0; n < testAssemblyNode["test-suite"].count(); n++) {
 
-                            var testStorage = "";
-                            if(assemblyName) {
-                                testStorage = assemblyName;
-                            }                                                 
+                        var testNamespaceNode = testAssemblyNode["test-suite"].at(n);
+                        for(var f = 0; f < testNamespaceNode["test-suite"].count(); f++) {
 
-                            //testcase duration
-                            var testCaseDuration = 0; //in seconds
-                            if(testCaseNode.attributes("time")) {
-                                testCaseDuration = testCaseNode.attributes("time");
-                                totalTestCaseDuration = totalTestCaseDuration + testCaseDuration;
-                            }                            
+                            var testFixtureNode = testNamespaceNode["test-suite"].at(f);
+                            for(var i = 0; i < testFixtureNode["test-case"].count(); i ++) {
 
-                            //testcase outcome
-                            var outcome = "Passed";
-                            var errorMessage = "";
-                            if(testCaseNode.failure.at(0)) {
-                                outcome = "Failed";
-                                if(testcaseNode.failure.at(0).message.at(0)) {
-                                    errorMessage = testCaseNode.failure.at(0).message.at(0).text();
-                                }
-                            }       
-                            
-                            var testResult : ifm.TestRunResult = <ifm.TestRunResult> {
-                                state: "Completed",
-                                computerName:hostName,
-                                resolutionState: null,
-                                testCasePriority: 1,
-                                failureType: null,
-                                automatedTestName: testName,
-                                automatedTestStorage: testStorage,
-                                automatedTestType: "NUnit",
-                                automatedTestTypeId: null,
-                                automatedTestId: null,
-                                area: null,
-                                owner: buildRequestedFor,
-                                runBy: buildRequestedFor,
-                                testCaseTitle: testName,
-                                revision: 0,
-                                dataRowCount: 0,
-                                testCaseRevision: 0,
-                                outcome: outcome,
-                                errorMessage: errorMessage
-                            };
+                                var testCaseNode = testFixtureNode["test-case"].at(i);
+                                
+                                //testcase name and type
+                                var testName = "";
+                                if(testCaseNode.attributes().name) {
+                                    testName = testCaseNode.attributes().name;
+                                } 
 
-                            testResults.push(testResult);
-                        }
+                                var testStorage = "";
+                                if(assemblyName) {
+                                    testStorage = assemblyName;
+                                }                                                 
+
+                                //testcase duration
+                                var testCaseDuration = 0; //in seconds
+                                if(testCaseNode.attributes().time) {
+                                    testCaseDuration = testCaseNode.attributes().time;
+                                    totalTestCaseDuration = totalTestCaseDuration + testCaseDuration;
+                                }                            
+
+                                //testcase outcome
+                                var outcome = "Passed";
+                                var errorMessage = "";
+                                if(testCaseNode.failure) {
+                                    outcome = "Failed";
+                                    if(testCaseNode.failure.message) {
+                                        errorMessage = testCaseNode.failure.message.text();
+                                    }
+                                }       
+                                
+                                var testResult : ifm.TestRunResult = <ifm.TestRunResult> {
+                                    state: "Completed",
+                                    computerName: hostName,
+                                    resolutionState: null,
+                                    testCasePriority: 1,
+                                    failureType: null,
+                                    automatedTestName: testName,
+                                    automatedTestStorage: testStorage,
+                                    automatedTestType: "NUnit",
+                                    automatedTestTypeId: null,
+                                    automatedTestId: null,
+                                    area: null,
+                                    owner: buildRequestedFor,
+                                    runBy: buildRequestedFor,
+                                    testCaseTitle: testName,
+                                    revision: 0,
+                                    dataRowCount: 0,
+                                    testCaseRevision: 0,
+                                    outcome: outcome,
+                                    errorMessage: errorMessage,
+                                    durationInMs: totalTestCaseDuration * 1000, //convert to milliseconds
+                                };
+
+                                testResults.push(testResult);
+                            }
+                        }                  
+                    
                     }
                 }
-            }
+            }*/
 
             if(totalRunDuration < totalTestCaseDuration) {
                 totalRunDuration = totalTestCaseDuration; //run duration may not be set in the xml, so use the testcase duration
             }
 
+            var completedDate = runStartTime;
+            completedDate.setSeconds(runStartTime.getSeconds() + totalRunDuration);
+            
             //create test run data
             var testRun: ifm.TestRun = <ifm.TestRun>    {
                 name: runName,
@@ -339,11 +354,10 @@ export class TestRunPublisher {
                 comment: "",
                 testEnvironmentId: "",
                 startDate: runStartTime,
+                //completeDate: completedDate,
                 releaseUri: "",
-                build: { id: buildId}
+                build: { id: buildId }
             };
-
-            testRun.createTestRunAttachment(file);
 
             testRun2 = <ifm.TestRun2>{
                 testRun: testRun,
@@ -352,7 +366,7 @@ export class TestRunPublisher {
         });
         
         return testRun2;
-    }*/
+    }
 
     //-----------------------------------------------------
     // Start a test run - create a test run entity on the server, and mark it in progress
