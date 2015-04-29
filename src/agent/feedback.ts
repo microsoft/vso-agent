@@ -161,6 +161,7 @@ export class ServiceChannel implements cm.IFeedbackChannel {
     private _agentApi: ifm.IAgentApi;
     private _fileContainerApi: ifm.IQFileContainerApi;
     public timelineApi: ifm.ITimelineApi;
+    public _testApi: ifm.IQTestManagementApi;
 
     private _issues: any;
 
@@ -359,6 +360,29 @@ export class ServiceChannel implements cm.IFeedbackChannel {
         }
 
         return this._issues[recordId];
+    }
+
+    //------------------------------------------------------------------
+    // Test publishing Items
+    //------------------------------------------------------------------  
+    public initializeTestManagement(projectName: string): void {
+        this._testApi = webapi.QTestManagementApi(this.collectionUrl + "/" + projectName, this.jobInfo.systemAuthHandler);
+    }
+
+    public createTestRun(testRun: ifm.TestRun): Q.Promise<ifm.TestRun> {
+        return this._testApi.createTestRun(testRun);
+    }
+
+    public endTestRun(testRunId: number) : Q.Promise<ifm.TestRun> {
+        return this._testApi.endTestRun(testRunId);
+    }
+
+    public createTestRunResult(testRunId: number, testRunResults: ifm.TestRunResult[]): Q.Promise<ifm.TestRunResult[]> {
+        return this._testApi.createTestRunResult(testRunId, testRunResults);
+    }
+
+    public createTestRunAttachment(testRunId: number, fileName: string, contents: string): Q.Promise<any> {
+        return this._testApi.createTestRunAttachment(testRunId, fileName, contents);
     }
 }
 

@@ -1,6 +1,7 @@
 import ctxm = require('../context');
 import cm = require('../common');
 import trp = require('../testrunpublisher');
+import trr = require('../testresultreader');
 
 var Q = require('q');
 var xmlreader = require('xmlreader');
@@ -28,38 +29,41 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
     public runCommandAsync() {
         var defer = Q.defer();
 
-        setTimeout(() => {
-            var resultFilePath: string = this.command.message;
-            var resultType: string = this.command.properties['type'].toLowerCase();
-            var command: cm.ITaskCommand = this.command;
+        var teamProject = this.taskCtx.variables["system.teamProject"];
+        var resultFilePath: string = this.command.message;
+        var resultType: string = this.command.properties['type'].toLowerCase();
+        var command = this.command;
+        
+        var testRunContext: trp.TestRunContext = {
+            requestedFor: this.taskCtx.variables["build.requestedFor"],
+            buildId: this.taskCtx.variables["build.buildId"],
+            platform: "",
+            config: ""
+        };
 
-            var testRunPublisher = new trp.TestRunPublisher(this.taskCtx);
-            var testRun = testRunPublisher.ReadResultsFromFile(resultFilePath, resultType);
-            var results = testRun.testResults;
+        var reader;
+        if (resultType == "junit") {
+            reader = new trr.JUnitResultReader();
+        }
+        else if (resultType == "nunit") {
+            reader = new trr.NUnitResultReader();
+        }
+        else {
+            this.command.warning("Test results of format '" + resultType + "'' are not supported by the VSO/TFS OSX and Linux build agent");
+        }
 
-            testRunPublisher.StartTestRun(testRun.testRun, resultFilePath).then(function (createdTestRun) {
-                
-                var testRunId: number = createdTestRun.id;
+        if (reader != null)
+        {
+            var testRunPublisher = new trp.TestRunPublisher(this.taskCtx.service, command, teamProject, testRunContext, reader);
 
-                testRunPublisher.AddResults(testRunId, results).then(function (createdTestRunResults) {
-                    
-                    testRunPublisher.EndTestRun(testRunId).then(function (createdTestRun) {
-
-                        // resolve or reject must get called!  In this sample, if you set result=fail, then it forces a failure
-                        if (command.properties && command.properties['result'] === 'fail') {
-
-                            // reject with an error will fail the task (and the build if not continue on error in definition)
-                            // if you don't want an error condition to fail the build, do command.error (above) and call resolve.
-                            defer.reject(new Error(command.message));
-                            return;
-                        }
-                        else {
-                            defer.resolve(null);
-                        }
-                    });      
-                });
+            testRunPublisher.publishTestRun(resultFilePath).then(function (createdTestRun) {
+                defer.resolve(null);
+            },
+            function (err)
+            {
+                defer.reject(err);
             });
-        }, 2000);
+        }
 
         return defer.promise;
     }   
