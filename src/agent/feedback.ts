@@ -366,22 +366,27 @@ export class ServiceChannel implements cm.IFeedbackChannel {
     // Test publishing Items
     //------------------------------------------------------------------  
     public initializeTestManagement(projectName: string): void {
+        trace.enter('servicechannel:initializeTestManagement');
         this._testApi = webapi.QTestManagementApi(this.collectionUrl + "/" + projectName, this.jobInfo.systemAuthHandler);
     }
 
     public createTestRun(testRun: ifm.TestRun): Q.Promise<ifm.TestRun> {
+        trace.enter('servicechannel:createTestRun');
         return this._testApi.createTestRun(testRun);
     }
 
     public endTestRun(testRunId: number) : Q.Promise<ifm.TestRun> {
+        trace.enter('servicechannel:endTestRun');
         return this._testApi.endTestRun(testRunId);
     }
 
     public createTestRunResult(testRunId: number, testRunResults: ifm.TestRunResult[]): Q.Promise<ifm.TestRunResult[]> {
+        trace.enter('servicechannel:createTestRunResult');
         return this._testApi.createTestRunResult(testRunId, testRunResults);
     }
 
     public createTestRunAttachment(testRunId: number, fileName: string, contents: string): Q.Promise<any> {
+        trace.enter('servicechannel:createTestRunAttachment');
         return this._testApi.createTestRunAttachment(testRunId, fileName, contents);
     }
 }

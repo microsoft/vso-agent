@@ -64,6 +64,10 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
                 defer.reject(err);
             });
         }
+        else 
+        {
+            defer.resolve(null);
+        }
 
         return defer.promise;
     }   

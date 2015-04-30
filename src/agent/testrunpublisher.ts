@@ -42,8 +42,26 @@ export class TestRunPublisher {
     // Read results from a file. Each file will be published as a separate test run
     // - file: string () - location of the results file 
     //-----------------------------------------------------
-    private readResults(file: string) {
-        return this.reader.readResults(file, this.runContext);
+    private readResults(file: string): Q.Promise<ifm.TestRun2> {
+        var defer = Q.defer();
+
+        var testRun: ifm.TestRun2;
+
+        try {
+            testRun = this.reader.readResults(file, this.runContext);
+
+            if (testRun != null) {
+                defer.resolve(testRun);
+            }
+            else {
+                defer.reject(new Error("Unable to read results file"));
+            }
+        }
+        catch (err) {
+            defer.reject(err);
+        }
+
+        return defer.promise;
     }
 
     //-----------------------------------------------------
@@ -123,7 +141,7 @@ export class TestRunPublisher {
                 _this.service.createTestRunResult(testRunId, currentBatch).then(function (createdTestResults)
                 {
                     returnedResults = createdTestResults;
-                    setTimeout(_callback, 1000);
+                    setTimeout(_callback, 10);
                 },
                 function (err) {
                     defer.reject(err);
@@ -144,38 +162,22 @@ export class TestRunPublisher {
         var defer = Q.defer();
         
         var _this = this;
-        var testRun: ifm.TestRun2;
+        var testRunId;
+        var results; 
 
-        try {
-            testRun = this.readResults(resultFilePath);
-        }
-        catch (err) {
+        _this.readResults(resultFilePath).then(function (res) {
+            results = res.testResults;
+            return _this.startTestRun(res.testRun, resultFilePath);
+        }).then(function (res) {
+            testRunId = res.id;
+            return _this.addResults(testRunId, results);
+        }).then(function (res) {
+            return _this.endTestRun(testRunId);
+        }).then(function (res) {
+            defer.resolve(res);
+        }).fail(function (err) {
             defer.reject(err);
-        }
-
-        if (testRun) {
-           var results = testRun.testResults;
-
-            this.startTestRun(testRun.testRun, resultFilePath).then(function (createdTestRun) {
-                var testRunId: number = createdTestRun.id;
-
-                _this.addResults(testRunId, results).then(function (createdTestRunResults) {
-                    
-                    _this.endTestRun(testRunId).then(function (createdTestRun) {
-                        defer.resolve(createdTestRun); 
-                    },
-                    function (err){
-                        defer.reject(err);
-                    });      
-                }, 
-                function (err) {
-                    defer.reject(err);
-                });
-            },
-            function (err) {
-                defer.reject(err);
-            });
-        }
+        }); 
 
         return defer.promise;
     }
