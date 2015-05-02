@@ -16,6 +16,7 @@ import cm = require('./common');
 import tm = require('./tracing');
 import taskm = require('./taskmanager');
 import webapi = require('./api/webapi');
+import heartbeat = require('./heartbeat');
 
 var Q = require('q');
 
@@ -30,6 +31,8 @@ if (supported.indexOf(process.platform) == -1) {
     console.error('Supported platforms are: ' + supported.toString());
     process.exit(1);
 }
+
+heartbeat.exitIfAlive();
 
 var ag: ctxm.AgentContext;
 var trace: tm.Tracing;
@@ -144,7 +147,11 @@ cm.readBasicCreds()
         trace.write('created message listener');
         ag.info('starting listener...');
 
-        // TODO: messageListener event emmitter for listening and reset
+        heartbeat.exitIfAlive();
+        
+        messageListener.on('listening', () => {
+            heartbeat.alive();
+        });
 
         messageListener.start((message: ifm.TaskAgentMessage) => {
             trace.callback('listener.start');
@@ -202,6 +209,8 @@ process.on('uncaughtException', function (err) {
 
 var gracefulShutdown = function() {
     console.log("\nShutting down host.");
+    heartbeat.stop();
+
     if (messageListener) {
         messageListener.stop(function (err) {
             if (err) {

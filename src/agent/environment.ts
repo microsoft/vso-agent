@@ -103,6 +103,9 @@ export function getEnv(envPath: string, complete: (err: any, env: {[key: string]
 
                 complete(null, env);
             });         
+        }
+        else {
+            complete(null, null);
         }   
     });
 }

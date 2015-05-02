@@ -22,7 +22,7 @@ var check = require('validator');
 var shell = require('shelljs');
 
 var configPath = path.join(__dirname, '..', '.agent');
-var envPath = path.join(__dirname, 'env.agent');
+var envPath = path.join(__dirname, '..', 'env.agent');
 
 
 export function exists(): boolean {
@@ -195,6 +195,10 @@ export class Configurator {
             var caps: cm.IStringDictionary = env.getCapabilities();
             caps['Agent.Name'] = settings.agentName;
             caps['Agent.OS'] = process.platform;
+
+            // get service milestone from package.json and set on agent as version for the server
+            // hmmmm - in place upgrade needs to set
+            var packageJson = path.join('')
 
             if (agents.length == 0) {
                 // doesn't exist, we need to create the agent

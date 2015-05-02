@@ -10,8 +10,22 @@ var targetDir = process.cwd();
 
 console.log('Installing agent to ' + targetDir);
 
-// ensure clean in case update
 var agentTarget = path.join(targetDir, 'agent');
+
+// 
+// migrate 0.2.4 env.agent up one level out of agent bin
+var pushConfigUp = function(file) {
+	var srcPath = path.join(agentTarget, file);
+	if (shell.test('-f', srcPath)) {
+		shell.cp(srcPath, path.join(targetDir, file));
+	}	
+}
+
+pushConfigUp('env.agent');
+pushConfigUp('.agent');
+pushConfigUp('.service');
+
+// ensure clean in case update
 if (shell.test('-d', agentTarget)) {
 	console.log('updating agent.  removing old code.')
 	shell.rm('-rf', agentTarget);
