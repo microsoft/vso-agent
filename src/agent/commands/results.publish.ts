@@ -75,26 +75,7 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
             var testRunPublisher = new trp.TestRunPublisher(this.taskCtx.service, command, teamProject, testRunContext, reader);
 
             if(mergeResults == "true") {
-                //create test run data to publish all test results to
-                var testRun: ifm.TestRun = <ifm.TestRun>    {
-                    name: resultType + "_TestResults_" + testRunContext.buildId,
-                    iteration: "",
-                    state: "InProgress",
-                    automated: true,
-                    errorMessage: "",
-                    type: "",
-                    controller: "",
-                    buildDropLocation: "",
-                    buildPlatform: testRunContext.platform,
-                    buildFlavor: testRunContext.config,
-                    comment: "",
-                    testEnvironmentId: "",
-                    startDate: new Date(),
-                    releaseUri: "",
-                    build: { id: testRunContext.buildId }
-                };       
-
-                testRunPublisher.publishResultsToTestRun(testRun, resultFiles).then(function (createdTestRun) {
+                testRunPublisher.publishResultsToSingleTestRun(resultFiles).then(function (createdTestRun) {
                     defer.resolve(null);
                 },
                 function (err)

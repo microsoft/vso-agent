@@ -73,25 +73,38 @@ export class TestRunPublisher {
         var defer = Q.defer();
 
         var _this = this;
+        var i = 0;
         
         _this.service.createTestRun(testRun).then(function (createdTestRun) {
 
             if(resultFiles && resultFiles.length > 0) {
-                for(var i = 0; i < resultFiles.length; i ++) {
-                    var resultFilePath = resultFiles[i];
-                    var contents = fs.readFileSync(resultFilePath, "ascii");
-                    contents = new Buffer(contents).toString('base64');
-                    _this.service.createTestRunAttachment(createdTestRun.id, path.basename(resultFilePath), contents).then(function (attachment) {
-                        defer.resolve(createdTestRun); 
+                async.whilst(
+                    function () {
+                        return i < resultFiles.length;
+                    },
+                    function (callback) {
+                        var resultFilePath = resultFiles[i];
+                        i = i + 1;
+
+                        var contents = fs.readFileSync(resultFilePath, "ascii");
+                        contents = new Buffer(contents).toString('base64');
+
+                        var _callback = callback;
+                        _this.service.createTestRunAttachment(createdTestRun.id, path.basename(resultFilePath), contents).then(function (attachment) {
+                            setTimeout(_callback, 10);
+                        },
+                        function (err) {
+                            // We can skip attachment publishing if it fails to upload
+                            if (_this.command) {
+                                _this.command.warning("Skipping attachment : " + resultFilePath + ". " + err.statusCode + " - " + err.message); 
+                            }                            
+                            
+                        }); 
                     },
                     function (err) {
-                        // We can skip attachment publishing if it fails to upload
-                        if (_this.command)
-                            _this.command.warning("Skipping attachment : " + resultFilePath + ". " + err.statusCode + " - " + err.message); 
-                            
                         defer.resolve(createdTestRun);  
-                    });                     
-                }
+                    }                                        
+                );
             }         
             
         }, function (err) {
@@ -189,14 +202,33 @@ export class TestRunPublisher {
     }    
 
     //-----------------------------------------------------
-    // Publish a test run with data from a single test result file
+    // Publish a single test run with test result data from given result file(s)
     // - resultFilePath: string - Path to the results file
     //-----------------------------------------------------
-    public publishResultsToTestRun(testRun : ifm.TestRun, resultFiles : string[]) : Q.Promise<ifm.TestRun> {
+    public publishResultsToSingleTestRun(resultFiles : string[]) : Q.Promise<ifm.TestRun> {
         var defer = Q.defer();
 
         var _this = this;
         var testRunId;
+
+        //create test run data to publish all test results to
+        var testRun: ifm.TestRun = <ifm.TestRun>    {
+            name: "TestResults_" + this.runContext.buildId,
+            iteration: "",
+            state: "InProgress",
+            automated: true,
+            errorMessage: "",
+            type: "",
+            controller: "",
+            buildDropLocation: "",
+            buildPlatform: this.runContext.platform,
+            buildFlavor: this.runContext.config,
+            comment: "",
+            testEnvironmentId: "",
+            startDate: new Date(),
+            releaseUri: "",
+            build: { id: this.runContext.buildId }
+        };      
 
         var results; 
 
@@ -233,13 +265,11 @@ export class TestRunPublisher {
                 return i < resultFiles.length; 
             },
             function (callback) {
-                console.log("current file = " + resultFiles[i] + ", i = " + i);
                 var currentFile = resultFiles[i];
                 i = i + 1;
 
                 var _callback = callback;
                 _this.readResults(currentFile).then(function (res) {
-                    console.log("added # of results = " + res.testResults.length);
                     returnedResults = returnedResults.concat(res.testResults);   
                     setTimeout(_callback, 10);                 
                 },
@@ -248,7 +278,6 @@ export class TestRunPublisher {
                 }); 
             },
             function (err) {
-                console.log("total # results = " + returnedResults);
                 defer.resolve(returnedResults); 
         });
 
