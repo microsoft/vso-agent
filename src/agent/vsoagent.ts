@@ -16,6 +16,7 @@ import cm = require('./common');
 import tm = require('./tracing');
 import taskm = require('./taskmanager');
 import webapi = require('./api/webapi');
+import heartbeat = require('./heartbeat');
 
 var Q = require('q');
 
@@ -30,6 +31,8 @@ if (supported.indexOf(process.platform) == -1) {
     console.error('Supported platforms are: ' + supported.toString());
     process.exit(1);
 }
+
+heartbeat.exitIfAlive();
 
 var ag: ctxm.AgentContext;
 var trace: tm.Tracing;
@@ -100,88 +103,91 @@ cm.readBasicCreds()
     _creds = credentials;
     return cfgr.ensureConfigured(credentials);
 })
-.then(function(settings: cm.ISettings) {
+.then((config: cm.IConfiguration) => {
+    var settings: cm.ISettings = config.settings;
 
-    ensureInitialized(settings, _creds, (err:any, config: cm.IConfiguration) => {
-        if (!settings) {
-            throw (new Error('Settings not configured.'));
+    if (!settings) {
+        throw (new Error('Settings not configured.'));
+    }
+
+    var agent: ifm.TaskAgent = config.agent;
+    ag = new ctxm.AgentContext(config, true);
+    trace = new tm.Tracing(__filename, ag);
+    trace.callback('initAgent');
+
+    ag.status('Agent Started.');
+
+    // clean up logs
+    trace.state('keepLogsSeconds', config.settings.keepLogsSeconds);
+    var ageSeconds = config.settings.keepLogsSeconds || cm.DEFAULT_LOG_SECONDS;
+    trace.state('ageSeconds', ageSeconds);
+    
+    var sweeper:dm.DiagnosticSweeper = new dm.DiagnosticSweeper(cm.getWorkerDiagPath(config), 'log', ageSeconds, SWEEP_DIAG_SECONDS);
+    sweeper.on('deleted', (path) => {
+        trace.write('log deleted: ' + path);
+    });
+    sweeper.on('info', (msg) => {
+        ag.info(msg);
+    });
+
+    var logsFolder = cm.getWorkerLogsPath(config);
+    var logSweeper:dm.DiagnosticSweeper = new dm.DiagnosticSweeper(logsFolder, '*', ageSeconds, SWEEP_LOGS_SECONDS);
+    logSweeper.on('deleted', (path) => {
+        trace.write('log deleted: ' + path);
+    });
+    logSweeper.on('info', (msg) => {
+        ag.info(msg);
+    }); 
+        
+    var queueName = agent.name;
+    ag.info('Listening for agent: ' + queueName);
+
+    var agentApi: ifm.IAgentApi = webapi.AgentApi(settings.serverUrl, cm.basicHandlerFromCreds(_creds));
+    messageListener = new listener.MessageListener(agentApi, agent, config.poolId);
+    trace.write('created message listener');
+    ag.info('starting listener...');
+
+    heartbeat.exitIfAlive();
+    
+    messageListener.on('listening', () => {
+        heartbeat.alive();
+    });
+
+    messageListener.start((message: ifm.TaskAgentMessage) => {
+        trace.callback('listener.start');
+        
+        ag.info('Message received');
+        trace.state('message', message);
+
+        var messageBody = null;
+        try  {
+            messageBody = JSON.parse(message.body);
+        } catch (e) {
+            ag.error(e);
+            return;
         }
 
-        var agent: ifm.TaskAgent = config.agent;
-        ag = new ctxm.AgentContext(config, true);
-        trace = new tm.Tracing(__filename, ag);
-        trace.callback('initAgent');
-
-        ag.status('Agent Started.');
-
-        // clean up logs
-        trace.state('keepLogsSeconds', config.settings.keepLogsSeconds);
-        var ageSeconds = config.settings.keepLogsSeconds || cm.DEFAULT_LOG_SECONDS;
-        trace.state('ageSeconds', ageSeconds);
+        ag.verbose(JSON.stringify(messageBody, null, 2));
         
-        var sweeper:dm.DiagnosticSweeper = new dm.DiagnosticSweeper(cm.getWorkerDiagPath(config), 'log', ageSeconds, SWEEP_DIAG_SECONDS);
-        sweeper.on('deleted', (path) => {
-            trace.write('log deleted: ' + path);
-        });
-        sweeper.on('info', (msg) => {
-            ag.info(msg);
-        });
-
-        var logsFolder = cm.getWorkerLogsPath(config);
-        var logSweeper:dm.DiagnosticSweeper = new dm.DiagnosticSweeper(logsFolder, '*', ageSeconds, SWEEP_LOGS_SECONDS);
-        logSweeper.on('deleted', (path) => {
-            trace.write('log deleted: ' + path);
-        });
-        logSweeper.on('info', (msg) => {
-            ag.info(msg);
-        }); 
-            
-        var queueName = agent.name;
-        ag.info('Listening for agent: ' + queueName);
-
-        var agentApi: ifm.IAgentApi = webapi.AgentApi(settings.serverUrl, cm.basicHandlerFromCreds(_creds));
-        messageListener = new listener.MessageListener(agentApi, agent, config.poolId);
-        trace.write('created message listener');
-        ag.info('starting listener...');
-
-        // TODO: messageListener event emmitter for listening and reset
-
-        messageListener.start((message: ifm.TaskAgentMessage) => {
-            trace.callback('listener.start');
-            
-            ag.info('Message received');
-            trace.state('message', message);
-
-            var messageBody = null;
-            try  {
-                messageBody = JSON.parse(message.body);
-            } catch (e) {
-                ag.error(e);
-                return;
+        if (message.messageType === 'JobRequest') {
+            var workerMsg = { 
+                messageType:"job",
+                config: config,
+                data: messageBody
             }
 
-            ag.verbose(JSON.stringify(messageBody, null, 2));
-            
-            if (message.messageType === 'JobRequest') {
-                var workerMsg = { 
-                    messageType:"job",
-                    config: config,
-                    data: messageBody
-                }
-
-                runWorker(ag, workerMsg);
-            }
-            else {
-                ag.error('Unknown Message Type');
-            }
-        },
-        (err: any) => {
-            if (!err || !err.hasOwnProperty('message')) {
-                ag.error("Unkown error occurred while connecting to the message queue.");
-            } else {
-                ag.error(err.message);
-            }
-        });
+            runWorker(ag, workerMsg);
+        }
+        else {
+            ag.error('Unknown Message Type');
+        }
+    },
+    (err: any) => {
+        if (!err || !err.hasOwnProperty('message')) {
+            ag.error("Unkown error occurred while connecting to the message queue.");
+        } else {
+            ag.error(err.message);
+        }
     });
 })
 .fail(function(err) {
@@ -203,22 +209,24 @@ process.on('uncaughtException', function (err) {
 var gracefulShutdown = function() {
     console.log("\nShutting down host.");
     if (messageListener) {
-        messageListener.stop(function (err) {
+        messageListener.stop((err) => {
             if (err) {
                 ag.error('Error deleting agent session:');
                 ag.error(err.message);
             }
+            heartbeat.stop();
             process.exit();
         });
     } else {
+        heartbeat.stop();
         process.exit();
-    }    
+    }
 }
 
-process.on('SIGINT', function () {
+process.on('SIGINT', () => {
     gracefulShutdown();
 });
 
-process.on('SIGTERM', function () {
+process.on('SIGTERM', () => {
     gracefulShutdown();
 });

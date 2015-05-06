@@ -1,8 +1,11 @@
 {
   "name": "vsoagent-installer",
-  "version": "0.2.3",
   "description": "Visual Studio Xplat Build Agent Installer",
   "main": "bin/install.js",
+  "version": "0.2.5",
+  "vsoAgentInfo" : {
+    "serviceMilestone": "1.82.0"
+  },
   "preferGlobal": true,
   "bin": {
     "vsoagent-installer": "./bin/install.js"
@@ -29,6 +32,7 @@
     "async": "0.x",
     "glob": "^5.0.3",
     "iniparser": "~1.0.5",
+    "minimatch": "^2.0.4",
     "minimist": "^0.2.0",
     "nconf": "0.6.x",
     "node-uuid": "1.x",
@@ -37,8 +41,9 @@
     "shelljs": "0.2.x",
     "svchost": "0.1.x",
     "svcinstall": "^0.2.1",
+    "touch": "0.0.3",
     "validator": "~3.11.0",
-    "vso-task-lib": "^0.1.6",
+    "vso-task-lib": "^0.2.0",
     "xmlreader": "^0.2.3"
   },
   "devDependencies": {

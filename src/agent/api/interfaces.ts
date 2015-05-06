@@ -62,15 +62,8 @@ export interface ITaskApi {
 export interface ArtifactResource {
     data: string;
     downloadUrl?: string;
-    type?: ArtifactResourceType;
+    type?: string;
     url?: string;
-}
-
-export enum ArtifactResourceType {
-    Unknown = 0,
-    LocalPath = 1,
-    VersionControl = 2,
-    Container = 3,
 }
 
 export interface BuildArtifact {
@@ -80,11 +73,11 @@ export interface BuildArtifact {
 }
 
 export interface IBuildApi {
-    postArtifact(buildId: number, artifact: BuildArtifact, onResult: (err: any, statusCode: number, artifact: BuildArtifact) => void): void;
+    postArtifact(projectId: string, buildId: number, artifact: BuildArtifact, onResult: (err: any, statusCode: number, artifact: BuildArtifact) => void): void;
 }
 
 export interface IQBuildApi {
-    postArtifact(buildId: number, artifact: BuildArtifact): Q.Promise<BuildArtifact>
+    postArtifact(projectId: string, buildId: number, artifact: BuildArtifact): Q.Promise<BuildArtifact>
 }
 
 //-----------------------------------------------------
@@ -405,6 +398,7 @@ export interface TaskAgent {
     id: number;
     maxParallelism: number;
     name: string;
+    version: string;
     properties: any;
     status: TaskAgentStatus;
     statusChangedOn: Date;

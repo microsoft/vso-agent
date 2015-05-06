@@ -1,5 +1,8 @@
 var Q = require('q');
 var os = require('os');
+//var util = require('util');
+//var stream = require('stream');
+var shell = require('shelljs');
 
 //
 // options (default):
@@ -13,24 +16,24 @@ var os = require('os');
 //
 
 var _debug = function(message) {
-    // do nothing by default, but consumer can override
+    // do nothing, overridden
 };
 exports.debug = _debug;
 
 var _toolRunner = (function(){
     function ToolRunner(toolPath) {
-        _debug('toolRunner toolPath: ' + toolPath);
+        exports.debug('toolRunner toolPath: ' + toolPath);
         this.toolPath = toolPath;
         this.args = [];
     }
 
     ToolRunner.prototype.arg = function(arguments) {
         if (arguments instanceof Array) {
-            _debug(this.toolPath + ' arg: ' + JSON.stringify(arguments));
+            exports.debug(this.toolPath + ' arg: ' + JSON.stringify(arguments));
             this.args = this.args.concat(arguments);
         }
         else if (typeof(arguments) === 'string') {
-            _debug(this.toolPath + ' arg: ' + arguments);
+            exports.debug(this.toolPath + ' arg: ' + arguments);
             this.args.push(arguments);
         }
     }
@@ -38,10 +41,10 @@ var _toolRunner = (function(){
     ToolRunner.prototype.exec = function(options) {
         var defer = Q.defer();
 
-        _debug('exec tool: ' + this.toolPath);
-        _debug('Arguments:');
+        exports.debug('exec tool: ' + this.toolPath);
+        exports.debug('Arguments:');
         this.args.forEach(function(arg) {
-            _debug('   ' + arg);
+            exports.debug('   ' + arg);
         });
 
         var success = true;
@@ -51,39 +54,27 @@ var _toolRunner = (function(){
             cwd: process.cwd(),
             env: process.env,
             silent: options.silent || false,
-            failOnStdErr: options.failOnStdErr || false,
-            ignoreReturnCode: options.ignoreReturnCode || false,
             outStream: options.outStream || process.stdout,
-            errStream: options.errStream || process.stderr
+            errStream: options.errStream || process.stderr,
+            failOnStdErr: options.failOnStdErr || false,
+            ignoreReturnCode: options.ignoreReturnCode || false
         };
 
         var argString = this.args.join(' ') || '';
-        ops.outStream.write('[command]' + this.toolPath + ' ' + argString + os.EOL);
+        var cmdString = this.toolPath;
+        if (argString) {
+            cmdString += (' ' + argString);
+        }
+        ops.outStream.write('[command]' + cmdString + os.EOL);
 
-        var cp = require('child_process').spawn;
-        var runCP = cp(this.toolPath, this.args, ops);
+        var runCP = shell.exec(cmdString, {async: true, silent: true}, function(code, output) {
+            exports.debug('rc:' + code);
 
-        runCP.stdout.on('data', function(data) {
-            if (!ops.silent) {
-                ops.outStream.write(data);
-            }
-        });
-
-        var _errStream = ops.failOnStdErr ? ops.errStream : ops.outStream;
-        runCP.stderr.on('data', function(data) {
-            success = !ops.failOnStdErr;
-            if (!ops.silent) {
-                _errStream.write(data);
-            }
-        });
-
-        runCP.on('exit', function(code) {
-            _debug('rc:' + code);
             if (code != 0 && !ops.ignoreReturnCode) {
                 success = false;
             }
             
-            _debug('success:' + success);
+            exports.debug('success:' + success);
             if (success) {
                 defer.resolve(code);
             }
@@ -91,6 +82,19 @@ var _toolRunner = (function(){
                 defer.reject(new Error(this.toolPath + ' failed with return code: ' + code));
             }
         });
+
+        runCP.stdout.on('data', function(data) {
+            if (!ops.silent) {
+                ops.outStream.write(data);    
+            }
+        });
+
+        runCP.stderr.on('data', function(data) {
+            success = !ops.failOnStdErr;
+            if (!ops.silent) {
+                ops.errStream.write(data);
+            }
+        })
 
         return defer.promise;
     }

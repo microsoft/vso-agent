@@ -68,7 +68,7 @@ Configuration will ask for the username and password of the account the agent wi
 note: if the agent isn't configured, on first run, it will configure.
 
 ```bash
-$ node vsoagent
+$ node agent/vsoagent
 
 Enter poolName(enter sets default) > 
 Enter serverUrl > https://contoso.visualstudio.com
@@ -77,10 +77,18 @@ Config saved
 Waiting ...
 ```
 
-Change Configuration Later:
+## Run Interactively
+
+To run the agent, simply run vsoagent in the agent directory with node
+
 ```bash
-$ node configure
+$ node vsoagent
 ```
+
+The agent will stay running interactively as long as your log on session is active.  
+If you want to keep running after you log off, consider running as a service (below), nohup (linux) or a docker container.
+
+To test out, we recommend running interactively.  It's also useful for running UI/emulator tests that require gui interaction.  (LaunchAgent other option below)
 
 ## Run as a Service
 

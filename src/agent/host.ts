@@ -3,7 +3,8 @@
 
 var sh = require('svchost')
   , shell = require('shelljs')
-  , path = require('path');
+  , path = require('path')
+  , heartbeat = require('./heartbeat');
 
 import env = require('./environment');
 
@@ -12,6 +13,8 @@ if (!shell.test('-f', path.join(__dirname, '..', '.agent'))) {
     console.error('Agent must be configured.  Run vsoagent configure');
     process.exit(1);
 }
+
+heartbeat.exitIfAlive();
 
 var banner = function(str) {
     console.log('--------------------------------------------');
@@ -52,28 +55,27 @@ host.on('stderr', function(data){
 // TODO: make more sophisticated.  For example, # failures within time period etc...
 // this example is simple - allows 10 starts with a wait of a second per restart in between
 //
-var maxStarts = 10;
-var RESTART_DELAY = 1000;  // 1 sec
+var MAX_DELAY = 5 * 60 * 1000;
+var delay = 0;
 
 var handleRestart = function(starts, relaunch) {
-    console.log(starts, 'starts');
-    if (starts < maxStarts) {
-        console.log('waiting to restart');
-        setTimeout(function(){
-                relaunch(true);
-            }, 
-            RESTART_DELAY*starts);          
-    } 
-    else {
-        console.log('fail');
-        relaunch(false);
-    }
+    console.log(starts + ' starts');
+
+    // add 10 seconds each restart up to MAX_DELAY
+    delay = delay >= MAX_DELAY ? MAX_DELAY : delay += (10 * 1000);
+
+    console.log('waiting to restart: ' + delay/1000 + ' seconds');
+    setTimeout(function(){
+            console.log('restarting')
+            relaunch(true);
+        }, 
+        delay);
 }
 
 // set additional env vars for the service from a file
 // then start up the service's host
 
-env.getEnv(path.join(__dirname, 'env.agent'), (err, env) => {
+env.getEnv(path.join(__dirname, '..', 'env.agent'), (err, env) => {
     if (err) {
         console.error(err);
         return;

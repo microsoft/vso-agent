@@ -156,7 +156,7 @@ export class TestFeedbackChannel implements cm.IFeedbackChannel {
     	return Q(containerItemTuple);
     }  
 
-    public postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact> {
+    public postArtifact(projectId: string, buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact> {
         return Q(artifact);
     }	
 

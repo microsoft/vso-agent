@@ -22,7 +22,8 @@ var check = require('validator');
 var shell = require('shelljs');
 
 var configPath = path.join(__dirname, '..', '.agent');
-var envPath = path.join(__dirname, 'env.agent');
+var envPath = path.join(__dirname, '..', 'env.agent');
+var pkgJsonPath = path.join(__dirname, '..', 'package.json');
 
 
 export function exists(): boolean {
@@ -62,23 +63,30 @@ export class Configurator {
     // ensure configured and return ISettings.  That's it
     // returns promise
     //
-    public ensureConfigured (creds: ifm.IBasicCredentials): Q.Promise<cm.ISettings> {
+    public ensureConfigured (creds: ifm.IBasicCredentials): Q.Promise<cm.IConfiguration> {
         var readSettings = exports.read();
 
         if (!readSettings.serverUrl) {
             return this.create(creds);
         } else {
-            var defer = Q.defer();
-            defer.resolve(readSettings);
-            return <Q.Promise<cm.ISettings>>defer.promise;
+            // update agent to the server
+            return this.update(creds, readSettings);
         }
+    }
+
+    public update(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
+        return this.writeAgentToPool(creds, settings, true)
+        .then((config: cm.IConfiguration) => {
+            return config;
+        });
     }
 
     //
     // Gether settings, register with the server and save the settings
     //
-    public create(creds: ifm.IBasicCredentials): Q.Promise<cm.ISettings> {
+    public create(creds: ifm.IBasicCredentials): Q.Promise<cm.IConfiguration> {
         var settings:cm.ISettings;
+        var configuration: cm.IConfiguration;
         var newAgent: ifm.TaskAgent;
         var agentPoolId = 0;
 
@@ -103,9 +111,10 @@ export class Configurator {
 
             this.validate(settings);
             
-            return this.writeAgentToPool(creds, settings);
+            return this.writeAgentToPool(creds, settings, false);
         })
-        .then(() => {
+        .then((config: cm.IConfiguration) => {
+            configuration = config;
             console.log('Creating work folder ...');
             return utilm.ensurePathExists(settings.workFolder);
         })
@@ -118,7 +127,7 @@ export class Configurator {
             return utilm.objectToFile(configPath, settings);
         })
         .then(() => {
-            return settings;
+            return configuration;
         })  
     }
 
@@ -170,9 +179,44 @@ export class Configurator {
         throwIf(!check.isURL(settings.serverUrl), settings.serverUrl + ' is not a valid URL');
     }
 
-    private writeAgentToPool(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
+    private getComputerName(): Q.Promise<string> {
+        // I don't want the DNS resolved name - I want the computer name
+        // OSX also has: 'scutil --get ComputerName'
+        // but that returns machinename.local
+        return utilm.exec('hostname');
+    }
+
+    private constructAgent(settings: cm.ISettings): Q.Promise<ifm.TaskAgent> {
+        var caps: cm.IStringDictionary = env.getCapabilities();
+        caps['Agent.Name'] = settings.agentName;
+        caps['Agent.OS'] = process.platform;
+        var version;
+        var computerName;
+
+        return this.getComputerName()
+        .then((ret: any) => {
+            computerName = ret.output;
+            return utilm.objectFromFile(pkgJsonPath);
+        })
+        .then((pkg: any) => {
+            caps['Agent.NpmVersion'] = pkg['version'];
+            caps['Agent.ComputerName'] = computerName;
+            
+            var newAgent: ifm.TaskAgent = <ifm.TaskAgent>{
+                maxParallelism: 1,
+                name: settings.agentName,
+                version: pkg['vsoAgentInfo']['serviceMilestone'],
+                systemCapabilities: caps
+            }
+
+            return newAgent;
+        })
+    }
+
+    private writeAgentToPool(creds: ifm.IBasicCredentials, settings: cm.ISettings, update: boolean): Q.Promise<cm.IConfiguration> {
         var agentApi: ifm.IQAgentApi = webapi.QAgentApi(settings.serverUrl, cm.basicHandlerFromCreds(creds));
         var agentPoolId = 0;
+        var agentId = 0;
 
         return agentApi.connect()
         .then((connected: any) => {
@@ -191,25 +235,24 @@ export class Configurator {
             return agentApi.getAgents(agentPoolId, settings.agentName);
         }) 
         .then((agents: ifm.TaskAgent[]) => {
-
-            var caps: cm.IStringDictionary = env.getCapabilities();
-            caps['Agent.Name'] = settings.agentName;
-            caps['Agent.OS'] = process.platform;
-
-            if (agents.length == 0) {
-                // doesn't exist, we need to create the agent
-                console.log('creating agent...');
-
-                var newAgent: ifm.TaskAgent = <ifm.TaskAgent>{
-                    maxParallelism: 1,
-                    name: settings.agentName,
-                    systemCapabilities: caps
-                }
-
-                return agentApi.createAgent(agentPoolId, newAgent);
+            if (update || agents.length == 1) {
+                agentId = agents[0].id;
+                return this.constructAgent(settings);
+            }
+            else if (agents.length == 0) {
+                return this.constructAgent(settings);    
             }
             else {
                 throw new Error('An agent already exists by the name ' + settings.agentName);
+            }
+        })
+        .then((agent: ifm.TaskAgent) => {
+            if (update) {
+                agent.id = agentId;
+                return agentApi.updateAgent(agentPoolId, agent);
+            }
+            else {
+                return agentApi.createAgent(agentPoolId, agent);    
             }
         })
         .then((agent: ifm.TaskAgent) => {
@@ -217,6 +260,7 @@ export class Configurator {
             config.creds = creds;
             config.poolId = agentPoolId;
             config.settings = settings;
+            config.agent = agent;
 
             return config;
         })

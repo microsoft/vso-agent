@@ -341,9 +341,9 @@ export class ServiceChannel implements cm.IFeedbackChannel {
             containerItemTuple.isGzipped);
     }  
 
-    public postArtifact(buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact> {
+    public postArtifact(projectId: string, buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact> {
         trace.state('artifact', artifact);
-        return this._buildApi.postArtifact(buildId, artifact);
+        return this._buildApi.postArtifact(projectId, buildId, artifact);
     }  
 
     //------------------------------------------------------------------

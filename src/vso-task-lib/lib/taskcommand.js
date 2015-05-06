@@ -51,11 +51,14 @@ function commandFromString(commandLine) {
     if (cmdParts.length == 2) {
         var propLines = cmdParts[1].split(';');
         propLines.forEach(function (propLine) {
-            var propParts = propLine.trim().split('=');
-            if (propParts.length != 2) {
-                throw new Error('Invalid property: ' + propLine);
+            propLine = propLine.trim();
+            if (propLine.length > 0) {
+                var propParts = propLine.split('=');
+                if (propParts.length != 2) {
+                    throw new Error('Invalid property: ' + propLine);
+                }
+                properties[propParts[0]] = propParts[1];
             }
-            properties[propParts[0]] = propParts[1];
         });
     }
     var msg = commandLine.substring(rbPos + 1);

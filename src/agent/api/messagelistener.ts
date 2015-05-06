@@ -1,11 +1,14 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+/// <reference path="../definitions/node.d.ts"/>
+
 import ifm = require('./interfaces');
+import events = require('events');
 var uuid = require('node-uuid');
 var QUEUE_RETRY_DELAY = 15000;
 
-export class MessageListener {
+export class MessageListener extends events.EventEmitter {
     sessionId: string;
     poolId: number;
     agentapi: ifm.IAgentApi;
@@ -15,9 +18,13 @@ export class MessageListener {
         this.agentapi = agentapi;
         this.agent = agent;
         this.poolId = poolId;
+
+        super();
     }
 
     getMessages(callback: (message: ifm.TaskAgentMessage) => void, onError: (err: any) => void): void {
+
+        this.emit('listening');
 
         this.agentapi.getMessage(this.poolId, this.sessionId, (err:any, statusCode: number, obj: any) => {
             // exit on some conditions such as bad credentials

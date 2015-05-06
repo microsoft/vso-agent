@@ -3,6 +3,7 @@ var shell = require('shelljs');
 var fs = require('fs');
 var path = require('path');
 var os = require('os');
+var minimatch = require('minimatch');
 var tcm = require('./taskcommand');
 var trm = require('./toolrunner');
 
@@ -40,7 +41,9 @@ exports.exit = _exit;
 // Input Helpers
 //-----------------------------------------------------
 var _getVariable = function(name) {
-    return process.env[name.replace('.', '_').toUpperCase()];
+    var varval = process.env[name.replace('.', '_').toUpperCase()];
+    _debug(name + '=' + varval);
+    return varval;
 }
 exports.getVariable = _getVariable;
 
@@ -52,6 +55,7 @@ var _getInput = function(name, required) {
         _exit(1);
     }
 
+    _debug(name + '=' + inval);
     return inval;    
 }
 exports.getInput = _getInput;
@@ -76,6 +80,8 @@ var _getPathInput = function(name, required, check) {
     if (check) {
         _checkPath(inval, name);
     }
+
+    _debug(name + '=' + inval);
     return inval;
 }
 exports.getPathInput = _getPathInput;
@@ -87,6 +93,7 @@ var _writeCommand = function(command, properties, message) {
     var taskCmd = new tcm.TaskCommand(command, properties, message);
     _writeLine(taskCmd.toString());
 }
+exports.command = _writeCommand;
 
 var _warning = function(message) {
     _writeCommand('task.issue', {'type': 'warning'}, message);
@@ -166,9 +173,30 @@ var _which = function(tool, check) {
     if (check) {
         _checkPath(toolPath, tool);
     }
+
+    _debug(tool + '=' + toolPath);
     return toolPath;
 }
 exports.which = _which;
+
+var _cp = function (options, source, dest) {
+    shell.cp(options, source, dest);
+}
+exports.cp = _cp;
+
+var _find = function(findPath) {
+    var matches = shell.find(findPath);
+    _debug('find ' + findPath);
+    _debug(matches.length + ' matches.');
+    return matches;
+}
+exports.find = _find;
+
+var _rmRF = function (path) {
+    _debug('rm -rf ' + path);
+    shell.rm('-rf', path);
+}
+exports.rmRF = _rmRF;
 
 //-----------------------------------------------------
 // Tools
@@ -178,4 +206,20 @@ exports.commandFromString = tcm.commandFromString;
 exports.ToolRunner = trm.ToolRunner;
 trm.debug = _debug;
 
+//-----------------------------------------------------
+// Matching helpers
+//-----------------------------------------------------
+var _match = function (list, pattern, options) {
+    return minimatch.match(list, pattern, options);
+}
+exports.match = _match;
 
+var _matchFile = function (list, pattern, options) {
+    return minimatch(list, pattern, options);
+}
+exports.matchFile = _matchFile;
+
+var _filter = function (pattern, options) {
+    return minimatch.filter(pattern, options);
+}
+exports.filter = _filter;
