@@ -98,7 +98,7 @@ describe('Test vso-task-lib', function() {
 			assert(tc.toString() === '##vso[some.cmd]a message');
 			done();
 		})
-		it('results.publish : basic', function(done) {
+		it('results.publish : JUnit results file', function(done) {
 			this.timeout(2000);
 
             var runContext: trp.TestRunContext = {
@@ -114,12 +114,34 @@ describe('Test vso-task-lib', function() {
 
 			testRunPublisher.publishTestRun(resultsFile).then(function (createdTestRun) {
 				assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
-                done();
+				done();
             },
             function (err) {
             	assert(false, 'ResultPublish Task Failed! Details : '  + err.message);
             });
-		})		
+		})	
+		it('results.publish : NUnit results file', function (done) {
+			this.timeout(2000);
+
+			var runContext: trp.TestRunContext = {
+				requestedFor: "userx",
+				buildId: "21",
+				platform: "",
+				config: ""
+			};
+			var reader = new trr.NUnitResultReader();
+			var resultsFile = path.resolve(__dirname, './testresults/nunitresults.xml');
+			var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
+			var testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, reader);
+
+			testRunPublisher.publishTestRun(resultsFile).then(function (createdTestRun) {
+				assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
+				done();
+			},
+			function (err) {
+				assert(false, 'RestulPublish Task Failed! Details : ' + err.message);
+			});
+		})	
 		it('results.publish : error handling for create test run', function(done) {
 			this.timeout(2000);
 
