@@ -23,6 +23,7 @@ var shell = require('shelljs');
 
 var configPath = path.join(__dirname, '..', '.agent');
 var envPath = path.join(__dirname, '..', 'env.agent');
+var pkgJsonPath = path.join(__dirname, '..', 'package.json');
 
 
 export function exists(): boolean {
@@ -170,6 +171,41 @@ export class Configurator {
         throwIf(!check.isURL(settings.serverUrl), settings.serverUrl + ' is not a valid URL');
     }
 
+    private getComputerName(): Q.Promise<string> {
+        // I don't want the DNS resolved name - I want the computer name
+        // OSX also has: 'scutil --get ComputerName'
+        // but that returns machinename.local
+        return utilm.exec('hostname');
+    }
+
+    private constructAgent(settings: cm.ISettings): Q.Promise<ifm.TaskAgent> {
+        var caps: cm.IStringDictionary = env.getCapabilities();
+        caps['Agent.Name'] = settings.agentName;
+        caps['Agent.OS'] = process.platform;
+        var version;
+        var computerName;
+
+        return this.getComputerName()
+        .then((ret: any) => {
+            computerName = ret.output;
+            return utilm.objectFromFile(pkgJsonPath);
+        })
+        .then((pkg: any) => {
+            caps['Agent.NpmVersion'] = pkg['version'];
+            caps['Agent.ComputerName'] = computerName;
+            
+            var newAgent: ifm.TaskAgent = <ifm.TaskAgent>{
+                maxParallelism: 1,
+                name: settings.agentName,
+                version: pkg['vsoAgentInfo']['serviceMilestone'],
+                systemCapabilities: caps
+            }
+
+            console.log(JSON.stringify(newAgent, null, 2));
+            return newAgent;
+        })
+    }
+
     private writeAgentToPool(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
         var agentApi: ifm.IQAgentApi = webapi.QAgentApi(settings.serverUrl, cm.basicHandlerFromCreds(creds));
         var agentPoolId = 0;
@@ -191,30 +227,15 @@ export class Configurator {
             return agentApi.getAgents(agentPoolId, settings.agentName);
         }) 
         .then((agents: ifm.TaskAgent[]) => {
-
-            var caps: cm.IStringDictionary = env.getCapabilities();
-            caps['Agent.Name'] = settings.agentName;
-            caps['Agent.OS'] = process.platform;
-
-            // get service milestone from package.json and set on agent as version for the server
-            // hmmmm - in place upgrade needs to set
-            var packageJson = path.join('')
-
             if (agents.length == 0) {
-                // doesn't exist, we need to create the agent
-                console.log('creating agent...');
-
-                var newAgent: ifm.TaskAgent = <ifm.TaskAgent>{
-                    maxParallelism: 1,
-                    name: settings.agentName,
-                    systemCapabilities: caps
-                }
-
-                return agentApi.createAgent(agentPoolId, newAgent);
+                return this.constructAgent(settings);
             }
             else {
                 throw new Error('An agent already exists by the name ' + settings.agentName);
             }
+        })
+        .then((agent: ifm.TaskAgent) => {
+            return agentApi.createAgent(agentPoolId, agent);
         })
         .then((agent: ifm.TaskAgent) => {
             var config: cm.IConfiguration = <cm.IConfiguration>{};

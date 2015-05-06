@@ -321,6 +321,7 @@ export interface TaskAgent {
     id: number;
     maxParallelism: number;
     name: string;
+    version: string;
     properties: any;
     status: TaskAgentStatus;
     statusChangedOn: Date;

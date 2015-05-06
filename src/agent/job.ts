@@ -51,7 +51,9 @@ export class JobRunner {
             this.job.tasks.forEach((task) => {
                 trace.write(task.name);
                 for (var key in task.inputs) {
-                    task.inputs[key] = task.inputs[key].replaceVars(this.job.environment.variables);
+                    if (task.inputs[key]) {
+                        task.inputs[key] = task.inputs[key].replaceVars(this.job.environment.variables);    
+                    }
                 }
             });
         }
@@ -383,7 +385,7 @@ export class JobRunner {
 
         for (var key in task.inputs) {
             trace.write('checking ' + key);
-            if (filePathInputs.hasOwnProperty(key)) {
+            if (filePathInputs.hasOwnProperty(key) && task.inputs[key]) {
                 trace.write('rewriting value for ' + key);
                 var resolvedPath = path.resolve(srcFolder, task.inputs[key]);
                 trace.write('resolvedPath: ' + resolvedPath);

@@ -50,6 +50,33 @@ export function objectToFile(filePath: string, obj: any): Q.Promise<void> {
     return defer.promise;
 }
 
+export function objectFromFile(filePath: string): Q.Promise<any> {
+    var defer = Q.defer<any>();
+
+    fs.readFile(filePath, (err, contents) => {
+        if (err) {
+            defer.reject(new Error('Could not read file (' + filePath + '): ' + err.message));
+        }
+        else {
+            var obj: any = JSON.parse(contents.toString());
+            defer.resolve(obj);
+        }
+    });
+
+    return defer.promise;
+}
+
+// ret is { output: string, code: number }
+export function exec(cmdLine: string): Q.Promise<any> {
+    var defer = Q.defer<any>();
+
+    shell.exec(cmdLine, (code, output) => {
+        defer.resolve({code: code, output: output});
+    });
+
+    return defer.promise;
+}
+
 export function readDirectory(directory: string, includeFiles: boolean, includeFolders: boolean): Q.Promise<string[]> {
     var results: string[] = [];
     var deferred = Q.defer<string[]>();
