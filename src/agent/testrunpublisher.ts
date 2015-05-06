@@ -181,67 +181,6 @@ export class TestRunPublisher {
 
         return defer.promise;
     }
-
-    public publishMergedTestRun(testRun : ifm.TestRun, resultFiles : string[]) : Q.Promise<ifm.TestRun> {
-        var defer = Q.defer();
-
-        var _this = this;
-        var testRunId;
-        var results = [];
-        
-        _this.startMergedTestRun(testRun, resultFiles).then(function (res) {
-            testRunId = res.id;
-            for (var i = 0; i < resultFiles.length; i++) {
-                _this.readResults(resultFiles[i]).then(function(res) {
-                    return _this.addResults(testRunId, res.testResults);
-                }).then(function (res) {
-                    console.log("Added test results for file");                    
-                }).fail(function (err) {
-                    _this.command.warning("Failed to add test results from file"); //TODO: seeing failures in adding results
-                });                         
-            }            
-        }).then(function (res) {
-            return _this.endTestRun(testRunId);
-        }).then(function (res) {
-            defer.resolve(res);
-        }).fail(function (err) {
-            defer.reject(err);
-        });
-
-        return defer.promise;
-    }
-
-    public startMergedTestRun(testRun : ifm.TestRun, resultFiles : string[]) {
-        var defer = Q.defer();
-
-        var _this = this;
-        
-        _this.service.createTestRun(testRun).then(function (createdTestRun) {
-
-            if(resultFiles && resultFiles.length > 0) {
-                for(var i = 0; i < resultFiles.length; i ++) {
-                    var resultFilePath = resultFiles[i];
-                    var contents = fs.readFileSync(resultFilePath, "ascii");
-                    contents = new Buffer(contents).toString('base64');
-                    _this.service.createTestRunAttachment(createdTestRun.id, path.basename(resultFilePath), contents).then(function (attachment) {
-                        defer.resolve(createdTestRun);  
-                    },
-                    function (err) {
-                        // We can skip attachment publishing if it fails to upload
-                        if (_this.command)
-                            _this.command.warning("Skipping attachment : " + resultFilePath + ". " + err.statusCode + " - " + err.message); 
-                            
-                        defer.resolve(createdTestRun);  
-                    });
-                     
-                }
-            }            
-            
-        }, function (err) {
-            defer.reject(err);  
-        });
-        return defer.promise;
-    }
 }
 
 //-----------------------------------------------------
