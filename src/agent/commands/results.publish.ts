@@ -32,11 +32,8 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
 
         var teamProject = this.taskCtx.variables["system.teamProject"];
         
-        //command message - test result files
         var resultFiles = [];
         resultFiles = resultFiles.concat(this.command.message.split(",")); //TOOD: need a reliable way to pass in array of file paths since "," is valid character in file path, JSON object?
-        
-        //command properties 
         var resultType: string = this.command.properties['type'].toLowerCase();
         
         var mergeResults = this.command.properties['mergeResults'];
@@ -48,15 +45,13 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
 
         var config = this.command.properties['configuration'];
         if(!config) { config = ""; }
-        
         var command = this.command;
         
-        //create run context
         var testRunContext: trp.TestRunContext = {
             requestedFor: this.taskCtx.variables["build.requestedFor"],
             buildId: this.taskCtx.variables["build.buildId"],
-            platform: platform,
-            config: config
+            platform: "",
+            config: ""
         };
 
         var reader;
@@ -75,7 +70,7 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
             var testRunPublisher = new trp.TestRunPublisher(this.taskCtx.service, command, teamProject, testRunContext, reader);
 
             if(mergeResults == "true") {
-                //create test run data to publish all test results to
+                //create test run data
                 var testRun: ifm.TestRun = <ifm.TestRun>    {
                     name: resultType + "_TestResults_" + testRunContext.buildId,
                     iteration: "",
@@ -85,8 +80,8 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
                     type: "",
                     controller: "",
                     buildDropLocation: "",
-                    buildPlatform: testRunContext.platform,
-                    buildFlavor: testRunContext.config,
+                    buildPlatform: platform,
+                    buildFlavor: config,
                     comment: "",
                     testEnvironmentId: "",
                     startDate: new Date(),
@@ -94,7 +89,7 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
                     build: { id: testRunContext.buildId }
                 };       
 
-                testRunPublisher.publishResultsToTestRun(testRun, resultFiles).then(function (createdTestRun) {
+                testRunPublisher.publishMergedTestRun(testRun, resultFiles).then(function (createdTestRun) {
                     defer.resolve(null);
                 },
                 function (err)

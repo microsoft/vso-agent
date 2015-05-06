@@ -39,7 +39,7 @@ export class TestRunPublisher {
     private reader: IResultReader;
 
     //-----------------------------------------------------
-    // Read results from a file 
+    // Read results from a file. Each file will be published as a separate test run
     // - file: string () - location of the results file 
     //-----------------------------------------------------    
     private readResults(file: string): Q.Promise<ifm.TestRun2> {
@@ -67,37 +67,31 @@ export class TestRunPublisher {
     //-----------------------------------------------------
     // Start a test run - create a test run entity on the server, and marks it in progress
     // - testRun: TestRun - test run to be published  
-    // - resultsFile(s) - needed for uploading the run level attachment(s)
+    // - resultsFilePath - needed for uploading the run level attachment 
     //-----------------------------------------------------
-    public startTestRun(testRun: ifm.TestRun, resultFiles: string[]): Q.Promise<ifm.TestRun> {
+    public startTestRun(testRun: ifm.TestRun, resultFilePath: string): Q.Promise<ifm.TestRun> {
         var defer = Q.defer();
 
         var _this = this;
         
         _this.service.createTestRun(testRun).then(function (createdTestRun) {
+            var contents = fs.readFileSync(resultFilePath, "ascii");
+            contents = new Buffer(contents).toString('base64');
 
-            if(resultFiles && resultFiles.length > 0) {
-                for(var i = 0; i < resultFiles.length; i ++) {
-                    var resultFilePath = resultFiles[i];
-                    var contents = fs.readFileSync(resultFilePath, "ascii");
-                    contents = new Buffer(contents).toString('base64');
-                    _this.service.createTestRunAttachment(createdTestRun.id, path.basename(resultFilePath), contents).then(function (attachment) {
-                        defer.resolve(createdTestRun); 
-                    },
-                    function (err) {
-                        // We can skip attachment publishing if it fails to upload
-                        if (_this.command)
-                            _this.command.warning("Skipping attachment : " + resultFilePath + ". " + err.statusCode + " - " + err.message); 
-                            
-                        defer.resolve(createdTestRun);  
-                    });                     
-                }
-            }         
+            _this.service.createTestRunAttachment(createdTestRun.id, path.basename(resultFilePath), contents).then(function (attachment) {
+                defer.resolve(createdTestRun);  
+            },
+            function (err) {
+                // We can skip attachment publishing if it fails to upload
+                if (_this.command)
+                    _this.command.warning("Skipping attachment : " + resultFilePath + ". " + err.statusCode + " - " + err.message); 
+                    
+                defer.resolve(createdTestRun);  
+            });
             
         }, function (err) {
             defer.reject(err);  
         });
-
         return defer.promise;
      }
 
@@ -158,10 +152,10 @@ export class TestRunPublisher {
         });
 
         return defer.promise;
-    }     
+    } 
 
     //-----------------------------------------------------
-    // Publish a test run with data from a single test result file
+    // Publish a test run
     // - resultFilePath: string - Path to the results file
     //-----------------------------------------------------
     public publishTestRun(resultFilePath: string): Q.Promise<ifm.TestRun> {
@@ -173,7 +167,7 @@ export class TestRunPublisher {
 
         _this.readResults(resultFilePath).then(function (res) {
             results = res.testResults;
-            return _this.startTestRun(res.testRun, [resultFilePath]);
+            return _this.startTestRun(res.testRun, resultFilePath);
         }).then(function (res) {
             testRunId = res.id;
             return _this.addResults(testRunId, results);
@@ -186,75 +180,69 @@ export class TestRunPublisher {
         }); 
 
         return defer.promise;
-    }    
+    }
 
-    //-----------------------------------------------------
-    // Publish a test run with data from a single test result file
-    // - resultFilePath: string - Path to the results file
-    //-----------------------------------------------------
-    public publishResultsToTestRun(testRun : ifm.TestRun, resultFiles : string[]) : Q.Promise<ifm.TestRun> {
+    public publishMergedTestRun(testRun : ifm.TestRun, resultFiles : string[]) : Q.Promise<ifm.TestRun> {
         var defer = Q.defer();
 
         var _this = this;
         var testRunId;
-
-        var results; 
-
-        _this.readResultsFromFiles(resultFiles).then(function (res) {
-            results = res;
-            return _this.startTestRun(testRun, resultFiles);
-        }).then(function (res) {
+        var results = [];
+        
+        _this.startMergedTestRun(testRun, resultFiles).then(function (res) {
             testRunId = res.id;
-            return _this.addResults(testRunId, results);
+            for (var i = 0; i < resultFiles.length; i++) {
+                _this.readResults(resultFiles[i]).then(function(res) {
+                    return _this.addResults(testRunId, res.testResults);
+                }).then(function (res) {
+                    console.log("Added test results for file");                    
+                }).fail(function (err) {
+                    _this.command.warning("Failed to add test results from file"); //TODO: seeing failures in adding results
+                });                         
+            }            
         }).then(function (res) {
             return _this.endTestRun(testRunId);
         }).then(function (res) {
             defer.resolve(res);
         }).fail(function (err) {
             defer.reject(err);
-        }); 
+        });
 
         return defer.promise;
     }
 
-    //-----------------------------------------------------
-    // Read test case results from the test result files
-    // - resultFiles: string [] - Array of test result files
-    //-----------------------------------------------------    
-    private readResultsFromFiles(resultFiles : string []) : Q.Promise<ifm.TestRunResult[]> {
+    public startMergedTestRun(testRun : ifm.TestRun, resultFiles : string[]) {
         var defer = Q.defer();
+
         var _this = this;
+        
+        _this.service.createTestRun(testRun).then(function (createdTestRun) {
 
-        var i = 0;
-        var returnedResults = [];
-
-        async.whilst(
-            function () {
-                return i < resultFiles.length; 
-            },
-            function (callback) {
-                console.log("current file = " + resultFiles[i] + ", i = " + i);
-                var currentFile = resultFiles[i];
-                i = i + 1;
-
-                var _callback = callback;
-                _this.readResults(currentFile).then(function (res) {
-                    console.log("added # of results = " + res.testResults.length);
-                    returnedResults = returnedResults.concat(res.testResults);   
-                    setTimeout(_callback, 10);                 
-                },
-                function (err) {
-                    defer.reject(err);
-                }); 
-            },
-            function (err) {
-                console.log("total # results = " + returnedResults);
-                defer.resolve(returnedResults); 
+            if(resultFiles && resultFiles.length > 0) {
+                for(var i = 0; i < resultFiles.length; i ++) {
+                    var resultFilePath = resultFiles[i];
+                    var contents = fs.readFileSync(resultFilePath, "ascii");
+                    contents = new Buffer(contents).toString('base64');
+                    _this.service.createTestRunAttachment(createdTestRun.id, path.basename(resultFilePath), contents).then(function (attachment) {
+                        defer.resolve(createdTestRun);  
+                    },
+                    function (err) {
+                        // We can skip attachment publishing if it fails to upload
+                        if (_this.command)
+                            _this.command.warning("Skipping attachment : " + resultFilePath + ". " + err.statusCode + " - " + err.message); 
+                            
+                        defer.resolve(createdTestRun);  
+                    });
+                     
+                }
+            }            
+            
+        }, function (err) {
+            defer.reject(err);  
         });
-
-        return defer.promise;     
+        return defer.promise;
     }
-}    
+}
 
 //-----------------------------------------------------
 // Will holds the test run context - buildId, platform, config, releaseuri, releaseEnvironmentUri used during publishing of test results   

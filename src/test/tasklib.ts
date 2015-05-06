@@ -139,7 +139,7 @@ describe('Test vso-task-lib', function() {
 	        };
 
 	        // error handling/propagation from start test run 
-			testRunPublisher.startTestRun(testRun, [resultsFile]).then(function (createdTestRun) {
+			testRunPublisher.startTestRun(testRun, resultsFile).then(function (createdTestRun) {
 				assert(false, 'ResultPublish Task did not fail as expected');
             },
             function (err) {
