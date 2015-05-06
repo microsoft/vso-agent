@@ -1,6 +1,7 @@
 var touch = require('touch');
 var fs = require('fs');
 var path = require('path');
+var shell = require('shelljs');
 
 //
 // We write to a .lock file in the agent's root directory and update on the long poll loop (50 sec) so:
@@ -27,13 +28,7 @@ export function alive() {
 }
 
 export function stop() {
-	try {
-		fs.unlinkSync(_lockPath);
-	}
-	catch(err) {
-		console.error('failed to remove heartbeat. ' + err.message);
-		console.error('agent will not be able to start for ' + CONSIDERED_DEAD_SEC / 60 + ' minutes.');
-	}
+	shell.rm(_lockPath);
 }
 
 export function isAlive(): boolean {
