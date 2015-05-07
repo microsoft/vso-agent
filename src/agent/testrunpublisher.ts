@@ -2,6 +2,7 @@ import ifm = require('./api/interfaces');
 import webapi = require('./api/webapi');
 import ctxm = require('./context');
 import cm = require('./common');
+import utilities = require('./utilities');
 
 var async = require('async');
 var fs = require('fs');
@@ -66,21 +67,24 @@ export class TestRunPublisher {
 
         var _this = this;
         
-        _this.service.createTestRun(testRun).then(function (createdTestRun) {
-            var contents = fs.readFileSync(resultFilePath, "ascii");
-            contents = new Buffer(contents).toString('base64');
+        _this.service.createTestRun(testRun).then(function (createdTestRun) { 
+            utilities.readFileContents(resultFilePath, "ascii").then(function (res) {
+                var contents = new Buffer(res).toString('base64');
+                _this.service.createTestRunAttachment(createdTestRun.id, path.basename(resultFilePath), contents).then(
+                    function (attachment) {
+                        defer.resolve(createdTestRun);
+                    },
+                    function (err) {
+                        // We can skip attachment publishing if it fails to upload
+                        if (_this.command)
+                            _this.command.warning("Skipping attachment : " + resultFilePath + ". " + err.statusCode + " - " + err.message);
 
-            _this.service.createTestRunAttachment(createdTestRun.id, path.basename(resultFilePath), contents).then(function (attachment) {
-                defer.resolve(createdTestRun);  
+                        defer.resolve(createdTestRun);
+                    });                
             },
             function (err) {
-                // We can skip attachment publishing if it fails to upload
-                if (_this.command)
-                    _this.command.warning("Skipping attachment : " + resultFilePath + ". " + err.statusCode + " - " + err.message); 
-                    
-                defer.resolve(createdTestRun);  
-            });
-            
+                defer.reject(err);
+            });        
         }, function (err) {
             defer.reject(err);  
         });
@@ -97,8 +101,7 @@ export class TestRunPublisher {
         this.service.endTestRun(testRunId).then(function (endedTestRun) {
             defer.resolve(endedTestRun);
         },
-        function (err)
-        {
+        function (err) {
             defer.reject(err);  
         });
         return defer.promise;
@@ -109,7 +112,7 @@ export class TestRunPublisher {
     // - testrunID: number - runId against which results are to be published 
     // - testRunResults: TestRunResult[] - testresults to be published  
     //-----------------------------------------------------
-    public addResults(testRunId: number, testResults: ifm.TestRunResult[]) : Q.Promise<ifm.TestRunResult[]>{
+    public addResults(testRunId: number, testResults: ifm.TestRunResult[]) : Q.Promise<ifm.TestRunResult[]> {
         var defer = Q.defer();
         var _this = this;
 
@@ -122,16 +125,14 @@ export class TestRunPublisher {
             },
             function (callback) {
                 var noOfResultsToBePublished = batchSize; 
-                if (i + batchSize >= testResults.length)
-                {
+                if (i + batchSize >= testResults.length) {
                     noOfResultsToBePublished = testResults.length - i;
                 }
                 var currentBatch = testResults.slice(i, i + noOfResultsToBePublished);
                 i = i + batchSize;
 
                 var _callback = callback;
-                _this.service.createTestRunResult(testRunId, currentBatch).then(function (createdTestResults)
-                {
+                _this.service.createTestRunResult(testRunId, currentBatch).then(function (createdTestResults) {
                     returnedResults = createdTestResults;
                     setTimeout(_callback, 10);
                 },

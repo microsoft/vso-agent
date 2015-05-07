@@ -33,7 +33,7 @@ export class TestManagementApi implements ifm.ITestManagementApi {
 
     public createTestRunResult(testRunId: number, testRunResults: ifm.TestRunResult[], onResult: (err: any, statusCode: number, createdTestRunResults: ifm.TestRunResult[]) => void): void {
     	this.restClient.create('/_apis/test/runs/' + testRunId + '/results', testRunResults, onResult);
-	}
+    }
 
     public createTestRunAttachment(testRunId: number, fileName: string, contents: string, onResult: (err: any, statusCode: number, obj: any) => void): void {
         var attachmentData = {
