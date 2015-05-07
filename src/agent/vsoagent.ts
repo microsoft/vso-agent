@@ -148,6 +148,7 @@ cm.readBasicCreds()
     ag.info('starting listener...');
 
     heartbeat.exitIfAlive();
+    heartbeat.alive();
     
     messageListener.on('listening', () => {
         heartbeat.alive();
