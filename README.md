@@ -63,7 +63,7 @@ Determine which account the agent will run as.
 
 [>> VIDEO:  OSX Configure - Interactive or Service <<](http://youtu.be/ILJlYGYbXtA)
 
-Run the agent from the agent folder.
+Run the vsoagent from the agent folder.
 Configuration will ask for the username and password of the account the agent will run as.
 note: if the agent isn't configured, on first run, it will configure.
 
@@ -82,7 +82,7 @@ Waiting ...
 To run the agent, simply run vsoagent in the agent directory with node
 
 ```bash
-$ node vsoagent
+$ node agent/vsoagent
 ```
 
 The agent will stay running interactively as long as your log on session is active.  

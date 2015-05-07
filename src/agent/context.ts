@@ -70,7 +70,7 @@ export class Context extends events.EventEmitter {
     }
 
     public verbose(message: string) {
-        this._write(cm.DiagnosticLevel.Verbose, null, message);
+        this._write(cm.DiagnosticLevel.Verbose, 'Debug', message);
     }
 
     private _write(level: cm.DiagnosticLevel, tag: string, message: string) {
@@ -84,7 +84,7 @@ export class Context extends events.EventEmitter {
         for (var i in lines) {
             var line = lines[i].replace(/(\r\n|\n|\r)/gm, '');
 
-            var prefix = tag ? '[' + tag + '] ' : '';
+            var prefix = tag ? '##[' + tag + '] ' : '';
             var dateTime = new Date().toISOString() + ': ';
 
             var logLine = prefix + dateTime + line + os.EOL;
