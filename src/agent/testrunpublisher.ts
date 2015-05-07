@@ -47,20 +47,12 @@ export class TestRunPublisher {
 
         var testRun: ifm.TestRun2;
 
-        try {
-            testRun = this.reader.readResults(file, this.runContext);
-
-            if (testRun != null) {
-                defer.resolve(testRun);
-            }
-            else {
-                defer.reject(new Error("Unable to read results file"));
-            }
-        }
-        catch (err) {
+        this.reader.readResults(file, this.runContext).then(function (testRun) {
+            defer.resolve(testRun);
+        }).fail(function (err) {
             defer.reject(err);
-        }
-     
+        });
+
         return defer.promise;
     }  
 
@@ -198,5 +190,5 @@ export interface TestRunContext {
 //-----------------------------------------------------
 export interface IResultReader {
     // Reads a test results file from disk  
-    readResults(filePath: string, runContext: TestRunContext): ifm.TestRun2; 
+    readResults(filePath: string, runContext: TestRunContext): Q.Promise<ifm.TestRun2>; 
 }
