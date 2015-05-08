@@ -35,6 +35,21 @@ export function ensurePathExists(path: string): Q.Promise<void> {
     return defer.promise;
 }
 
+export function readFileContents(filePath: string, encoding: string) : Q.Promise<string> {
+    var defer = Q.defer<string>();
+
+    fs.readFile(filePath, encoding, (err, data) => {
+        if(err) {
+            defer.reject(new Error('Could not read file (' + filePath + '): ' + err.message));
+        }
+        else {
+            defer.resolve(data);
+        }
+    });
+
+    return defer.promise;
+}
+
 export function objectToFile(filePath: string, obj: any): Q.Promise<void> {
     var defer = Q.defer<void>();
 

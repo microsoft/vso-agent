@@ -4,6 +4,7 @@
 import cm = require('../../agent/common');
 import ctxm = require('../../agent/context');
 import ifm = require('../../agent/api/interfaces');
+import Q = require('q');
 
 export class TestCmdQueue implements cm.IAsyncCommandQueue {
 	constructor() {
@@ -188,6 +189,145 @@ export class TestFeedbackChannel implements cm.IFeedbackChannel {
 
 		return false;
 	}
+
+    //------------------------------------------------------------------
+    // Test publishing Items
+    //------------------------------------------------------------------  
+    public initializeTestManagement(projectName: string): void {
+		var record = this._getFromBatch("1.createTestRun");
+		record.result = ifm.TaskResult.Failed;
+		record.state = ifm.TimelineRecordState.Completed;
+
+		var record = this._getFromBatch("2.createTestRunAttachment");
+		record.result = ifm.TaskResult.Failed;
+		record.state = ifm.TimelineRecordState.Completed;
+
+		var record = this._getFromBatch("3.createTestRunResult");
+		record.result = ifm.TaskResult.Failed;
+		record.state = ifm.TimelineRecordState.Completed;
+
+		var record = this._getFromBatch("4.endTestRun");
+		record.result = ifm.TaskResult.Failed;
+		record.state = ifm.TimelineRecordState.Completed;
+    }
+
+    public createTestRun(testRun: ifm.TestRun): Q.Promise<ifm.TestRun> {
+		var defer = Q.defer();
+
+		this._getFromBatch("1.createTestRun").result = ifm.TaskResult.Succeeded;
+
+        var createdTestRun: ifm.TestRun = <ifm.TestRun> {
+            name: testRun.name,
+        	id: 99
+        };
+
+        // fail the create test run step, whenever id = -1, and validate from testcode that error is propagated back   
+        if (testRun.id && testRun.id == -1)
+        {
+            var err = {
+		        message: "Too bad - createTestRun failed",
+	    	    statusCode: "400"
+        	};
+        	defer.reject(err);
+        }
+        else 
+        {
+        	defer.resolve(createdTestRun);
+        }
+            
+        return <Q.Promise<ifm.TestRun>>defer.promise;  
+    }
+
+    public endTestRun(testRunId: number) : Q.Promise<ifm.TestRun> {
+		var defer = Q.defer();
+
+		this._getFromBatch("4.endTestRun").result = ifm.TaskResult.Succeeded;
+
+		var createdTestRun: ifm.TestRun = <ifm.TestRun> {
+        	id: 99,
+        	state: "Completed"
+        };
+
+        // fail the end test run step, whenever id = -1, and validate from testcode that error is propagated back   
+        if (testRunId == -1)
+        {
+            var err = {
+		        message: "Too bad - endTestRun failed",
+	    	    statusCode: "400"
+        	};
+        	defer.reject(err);
+        }
+        else 
+        {
+        	defer.resolve(createdTestRun);
+        }
+            
+        return <Q.Promise<ifm.TestRun>>defer.promise;  
+	}
+
+    public createTestRunResult(testRunId: number, testRunResults: ifm.TestRunResult[]): Q.Promise<ifm.TestRunResult[]> {
+		var defer = Q.defer();
+
+		this._getFromBatch("3.createTestRunResult").result = ifm.TaskResult.Succeeded;
+
+        var createdTestResults = [];
+	    var testResult : ifm.TestRunResult = <ifm.TestRunResult> {
+            state: "Completed",
+            computerName: "localhost",
+            resolutionState: null,
+            testCasePriority: 1,
+            failureType: null,
+            automatedTestName: "testName",
+            automatedTestStorage: "testStorage",
+            automatedTestType: "JUnit",
+            automatedTestTypeId: null,
+            automatedTestId: null,
+            area: null,
+            owner: "buildRequestedFor", 
+            runBy: "buildRequestedFor",
+            testCaseTitle: "testName",
+            revision: 0,
+            dataRowCount: 0,
+            testCaseRevision: 0,
+            outcome: 'Failed',
+            errorMessage: "errorMessage",
+            durationInMs: 1000
+	    };
+    	
+    	createdTestResults.push(testResult);
+
+        // fail the add results step, whenever id = -1, and validate from testcode that error is propagated back   
+        if (testRunId == -1)
+        {
+            var err = {
+		        message: "Too bad",
+	    	    statusCode: "400"
+        	};
+        	defer.reject(err);
+        }
+        else 
+        {
+        	defer.resolve(createdTestResults);
+        }
+
+        return <Q.Promise<ifm.TestRunResult[]>>defer.promise;  
+    }
+
+    public createTestRunAttachment(testRunId: number, fileName: string, contents: string): Q.Promise<any> {
+		var defer = Q.defer();
+
+		this._getFromBatch("2.createTestRunAttachment").result = ifm.TaskResult.Succeeded;
+
+        // always fail attachment upload; and validate from testcode that, the task still succeeds 
+        // - failure to upload an atatchment (say because of size > 100MB, etc), should not stop publishing of test results 
+		var err = {
+	        message: "Too bad",
+    	    statusCode: "400"
+        };
+        defer.reject(err);
+
+        return <Q.Promise<any>>defer.promise;  
+    }
 
 	private _getFromBatch(recordId: string) {
 		if (!this._records.hasOwnProperty(recordId)) {
