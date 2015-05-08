@@ -14,7 +14,7 @@ export class JUnitResultReader implements trp.IResultReader {
         var _this = this;
 
         utilities.readFileContents(file, "utf-8").then(function (contents) {
-            var xmlContents = contents.replace("\ufeff", ""); //replace BOM if exits to avoid xml read error
+            var xmlContents = contents.replace("\ufeff", ""); //replace BOM if exists to avoid xml read error
             return _this.readJUnitTestRunData(xmlContents, runContext);
         }).then(function (testRun) {
             defer.resolve(testRun);
@@ -33,7 +33,7 @@ export class JUnitResultReader implements trp.IResultReader {
 
         xmlreader.read(contents, function (err, res) {
             if(err) {
-                defer.resolve(err);
+                defer.reject(err);
             } 
             else {
                 try {
@@ -198,7 +198,7 @@ export class NUnitResultReader implements trp.IResultReader {
         var _this = this;
 
         utilities.readFileContents(file, "utf-8").then(function (contents) {
-            var xmlContents = contents.replace("\ufeff", ""); //replace BOM if exits to avoid xml read error
+            var xmlContents = contents.replace("\ufeff", ""); //replace BOM if exists to avoid xml read error
             return _this.readNUnitTestRunData(xmlContents, runContext);
         }).then(function (testRun) {
             defer.resolve(testRun);
@@ -217,7 +217,7 @@ export class NUnitResultReader implements trp.IResultReader {
 
         xmlreader.read(contents, function (err, res) {
             if(err) {
-                defer.resolve(err);
+                defer.reject(err);
             } 
             else {
                 try {
