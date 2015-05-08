@@ -6,6 +6,7 @@ var path = require('path')
   , si = require('svcinstall')
   , argparser = require('minimist')
   , url = require('url')
+  , heartbeat = require('./heartbeat')
   , shelljs = require('shelljs');
 
 /// <reference path="./definitions/Q.d.ts" />
@@ -148,6 +149,14 @@ switch (action) {
             fs.unlinkSync(_cfgPath);
         }   
 
+        break;
+        
+    case 'stop':
+        var svcCfg = getSvcCfg();
+        if (svcCfg) {
+            runAction(action, svcCfg['definition']);
+            heartbeat.stop();
+        }
         break;
 
     case 'status':
