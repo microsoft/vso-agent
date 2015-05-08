@@ -6,6 +6,7 @@ var os = require('os');
 var minimatch = require('minimatch');
 var tcm = require('./taskcommand');
 var trm = require('./toolrunner');
+var tp = require('./testpublisher');
 
 //-----------------------------------------------------
 // General Helpers
@@ -204,6 +205,7 @@ exports.rmRF = _rmRF;
 exports.TaskCommand = tcm.TaskCommand;
 exports.commandFromString = tcm.commandFromString;
 exports.ToolRunner = trm.ToolRunner;
+exports.TestPublisher = tp.TestPublisher;
 trm.debug = _debug;
 
 //-----------------------------------------------------

@@ -10,12 +10,37 @@ var Q = require('q');
 export class JUnitResultReader implements trp.IResultReader {
 
     public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRun2> {
+        return new ResultReader("junit").readResults(file, runContext);
+    }
+          
+}
+
+//-----------------------------------------------------
+// Read NUnit results from a file
+// - file: string () - location of the NUnit results file 
+//-----------------------------------------------------
+export class NUnitResultReader implements trp.IResultReader {
+    
+    public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRun2> {
+        return  new ResultReader("nunit").readResults(file, runContext);
+    }    
+
+}
+
+export class ResultReader {
+
+    private type: string;
+    constructor(readerType: string) {
+        this.type = readerType;
+    }
+
+    public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRun2> {
         var defer = Q.defer(); 
         var _this = this;
 
         utilities.readFileContents(file, "utf-8").then(function (contents) {
             var xmlContents = contents.replace("\ufeff", ""); //replace BOM if exists to avoid xml read error
-            return _this.readJUnitTestRunData(xmlContents, runContext);
+            return _this.readTestRunData(xmlContents, runContext);
         }).then(function (testRun) {
             defer.resolve(testRun);
         }).fail(function (err) {
@@ -25,7 +50,7 @@ export class JUnitResultReader implements trp.IResultReader {
         return defer.promise;
     }
 
-    private readJUnitTestRunData(contents: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRun2> {
+    private readTestRunData(contents: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRun2> {
         var defer = Q.defer(); 
       
         var testRun2 : ifm.TestRun2;
@@ -37,7 +62,7 @@ export class JUnitResultReader implements trp.IResultReader {
             } 
             else {
                 try {
-                    testRun2 = _this.parseJUnitXml(res, runContext);
+                    testRun2 = _this.parseXml(res, runContext);
                     defer.resolve(testRun2);
                 }
                 catch(ex) {
@@ -47,6 +72,19 @@ export class JUnitResultReader implements trp.IResultReader {
         });
 
         return defer.promise;
+    }
+
+    private parseXml(res, runContext) {
+        if(this.type == "junit") {
+            return this.parseJUnitXml(res, runContext);
+        }
+        else if(this.type == "nunit") {
+            return this.parseNUnitXml(res, runContext);
+        }
+        else {
+            return null;
+        }
+
     }
 
     private parseJUnitXml(res, runContext) {
@@ -85,7 +123,7 @@ export class JUnitResultReader implements trp.IResultReader {
             }
 
             if(rootNode.attributes().time) {
-                totalRunDuration = rootNode.attributes().time; //in seconds
+                totalRunDuration = parseFloat(rootNode.attributes().time); //in seconds
             }
 
             //find test case nodes in JUnit result xml
@@ -108,8 +146,8 @@ export class JUnitResultReader implements trp.IResultReader {
                 //testcase duration
                 var testCaseDuration = 0; //in seconds
                 if(testCaseNode.attributes().time) {
-                    testCaseDuration = testCaseNode.attributes().time;
-                    totalTestCaseDuration = totalTestCaseDuration + testCaseDuration;
+                    testCaseDuration = parseFloat(testCaseNode.attributes().time);
+                    totalTestCaseDuration += testCaseDuration;
                 }
                 
                 //testcase outcome
@@ -184,53 +222,6 @@ export class JUnitResultReader implements trp.IResultReader {
         };         
 
         return testRun2;
-    }      
-}
-
-//-----------------------------------------------------
-// Read NUnit results from a file
-// - file: string () - location of the NUnit results file 
-//-----------------------------------------------------
-export class NUnitResultReader implements trp.IResultReader {
-    
-    public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRun2> {
-        var defer = Q.defer(); 
-        var _this = this;
-
-        utilities.readFileContents(file, "utf-8").then(function (contents) {
-            var xmlContents = contents.replace("\ufeff", ""); //replace BOM if exists to avoid xml read error
-            return _this.readNUnitTestRunData(xmlContents, runContext);
-        }).then(function (testRun) {
-            defer.resolve(testRun);
-        }).fail(function (err) {
-            defer.reject(err);
-        });        
-
-        return defer.promise;
-    }
-
-    private readNUnitTestRunData(contents: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRun2> {
-        var defer = Q.defer(); 
-      
-        var testRun2 : ifm.TestRun2;
-        var _this = this;
-
-        xmlreader.read(contents, function (err, res) {
-            if(err) {
-                defer.reject(err);
-            } 
-            else {
-                try {
-                    testRun2 = _this.parseNUnitXml(res, runContext);
-                    defer.resolve(testRun2);
-                }
-                catch(ex) {
-                    defer.reject(ex);
-                }
-            }
-        });
-
-        return defer.promise;
     }
 
     private parseNUnitXml(res, runContext) {
@@ -243,7 +234,7 @@ export class NUnitResultReader implements trp.IResultReader {
         var runName = "NUnit";
         var runStartTime = new Date(); 
         var totalRunDuration = 0;
-    
+
         var rootNode = res["test-results"].at(0);
         if(rootNode) {
                 
@@ -272,7 +263,7 @@ export class NUnitResultReader implements trp.IResultReader {
         var config = "";
         var runUser = "";
         var hostName = "";
-    
+
         if(rootNode.environment) { var envNode = rootNode.environment.at(0); }
 
         if(envNode) {
@@ -293,7 +284,7 @@ export class NUnitResultReader implements trp.IResultReader {
             testResults = testResults.concat(this.FindNUnitTestCaseNodes(rootNode["test-suite"].at(t), hostName, buildRequestedFor, rootNode.attributes().name));
 
             if(rootNode["test-suite"].at(t).attributes().time) {
-                totalRunDuration += rootNode["test-suite"].at(t).attributes().time;
+                totalRunDuration += parseFloat(rootNode["test-suite"].at(t).attributes().time);
             }
         }
 
@@ -352,7 +343,7 @@ export class NUnitResultReader implements trp.IResultReader {
                 //testcase duration
                 var testCaseDuration = 0; //in seconds
                 if(testCaseNode.attributes().time) {
-                    testCaseDuration = testCaseNode.attributes().time;
+                    testCaseDuration = parseFloat(testCaseNode.attributes().time);
                 }                            
 
                 //testcase outcome
@@ -400,5 +391,7 @@ export class NUnitResultReader implements trp.IResultReader {
         
         return foundTestResults;
     }
-
 }
+
+
+
