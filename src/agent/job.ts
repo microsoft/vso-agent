@@ -375,7 +375,6 @@ export class JobRunner {
             trace.write('input ' + input.name + ' is type ' + input.type);
             if (input.type === 'filePath') {
                 trace.write('adding ' + input.name);
-                ctx.verbose('filePathInput adding ' + input.name);
                 filePathInputs[input.name] = true;
             }
         });
