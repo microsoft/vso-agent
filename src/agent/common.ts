@@ -150,6 +150,13 @@ export interface IFeedbackChannel {
 
     // job
     updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void;
+
+    // test publishing 
+    initializeTestManagement(projectName: string): void;
+    createTestRun(testRun: ifm.TestRun): Q.Promise<ifm.TestRun>;
+    endTestRun(testRunId: number): Q.Promise<ifm.TestRun>;
+    createTestRunResult(testRunId: number, testRunResults: ifm.TestRunResult[]): Q.Promise<ifm.TestRunResult[]>;
+    createTestRunAttachment(testRunId: number, fileName: string, contents: string): Q.Promise<any>;
 }
 
 export interface IAsyncCommandQueue {

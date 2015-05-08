@@ -43,7 +43,8 @@
     "svcinstall": "^0.2.1",
     "touch": "0.0.3",
     "validator": "~3.11.0",
-    "vso-task-lib": "^0.2.0"
+    "vso-task-lib": "^0.2.0",
+    "xmlreader": "^0.2.3"
   },
   "devDependencies": {
     "del": "^1.1.1",
