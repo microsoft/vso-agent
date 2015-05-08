@@ -375,6 +375,7 @@ export class JobRunner {
             trace.write('input ' + input.name + ' is type ' + input.type);
             if (input.type === 'filePath') {
                 trace.write('adding ' + input.name);
+                ctx.verbose('filePathInput adding ' + input.name);
                 filePathInputs[input.name] = true;
             }
         });
@@ -385,9 +386,9 @@ export class JobRunner {
 
         for (var key in task.inputs) {
             trace.write('checking ' + key);
-            if (filePathInputs.hasOwnProperty(key) && task.inputs[key]) {
+            if (filePathInputs.hasOwnProperty(key)) {
                 trace.write('rewriting value for ' + key);
-                var resolvedPath = path.resolve(srcFolder, task.inputs[key]);
+                var resolvedPath = path.resolve(srcFolder, task.inputs[key] || '');
                 trace.write('resolvedPath: ' + resolvedPath);
                 task.inputs[key] = resolvedPath;
             }
