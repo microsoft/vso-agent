@@ -28,7 +28,9 @@ export function alive() {
 }
 
 export function stop() {
-	shell.rm(_lockPath);
+	if (shell.test('-f', _lockPath)) {
+		shell.rm(_lockPath);
+	}
 }
 
 export function isAlive(): boolean {
@@ -46,7 +48,7 @@ export function lastHeartbeat(): number {
 
 export function exitIfAlive() {
 	if (isAlive()) {
-	    console.error('Another agent process is running.  Exiting.');
+	    console.error((new Date).toISOString() + ': Another agent process is running.  Exiting.');
 	    process.exit(1);
 	}	
 }
