@@ -18,17 +18,11 @@ v0.12.0
 2.5.1
 ```
 
-## Agent From Package
+## Install the agent installer
 
-Installs the agent installer once globally.
+Installs the agent installer once globally.  This allows you to stamp out instances of the agent.
 
 ```bash
-$ sudo npm install vsoagent-installer -g
-```
-
-Update the installer with a new version.  It has been more reliable to uninstall and install
-```bash
-$ sudo npm uninstall vsoagent-installer -g
 $ sudo npm install vsoagent-installer -g
 ```
 
@@ -92,21 +86,22 @@ To test out, we recommend running interactively.  It's also useful for running U
 
 ## Run as a Service
 
-Run in the agent directory
-note: only works on OSX right now
+> OSX only for right now. Linux soon
 
 ### Install Service
 
 [OSX Types](https://developer.apple.com/library/mac/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/DesigningDaemons.html#//apple_ref/doc/uid/10000172i-SW4-SW9)
 
+Run in the agent directory
+
 Run as a daemon (OSX | Linux)
 ```bash
-$ ./svc.sh install
+$ ./agent/svc.sh install
 ```
 
 Run as launch agent (only OSX)
 ```bash
-$ ./svc.sh install agent
+$ ./agent/svc.sh install agent
 ```
 *potentially run UI tests*
 [Auto Logon and Lock](http://www.tuaw.com/2011/03/07/terminally-geeky-use-automatic-login-more-securely/)
@@ -133,6 +128,12 @@ $ ./svc.sh stop
 $ ./svc.sh start
 ```
 
+### Restart
+If the service is loaded but you want to stop and start or the host has exited from some reason:
+```bash
+$ ./svc.sh restart
+```
+
 ### Uninstall Service
 Stop first and then:
 ```bash
@@ -142,59 +143,22 @@ $ ./svc.sh uninstall
 ### Contents
 ```bash
 
-OSX:
-/Library/LaunchDaemons/vsoagent.{accountName}.{agentName}.plist 
-```
+A .service file is created with the information about the service such as where the .plist file is etc...
 
-## Building From Source
+### Update Existing Agents
 
-### Clone the repo
+Repeat the same steps to update the agent.  This will update the installer to the latest version.
+
 ```bash
-git clone https://github.com/Microsoft/vso-agent.git
+$ sudo npm install vsoagent-installer -g
 ```
 
-### Build Pre-reqs
+Go to the directory you created for the agent and run the same command you used to create the agent.
 
-Gulp is the build engine.  The cli needs to be installed globally
 ```bash
-sudo npm install -g gulp
-```
-Install remaining pre-reqs and gulp tasks (run from root of repo)
-```bash
-sudo npm install
+$ vsoagent-installer
 ```
 
-### Build
-run gulp in the root of the repo
-```bash
-$ gulp
-...
-[22:58:35] Finished 'default' after 2.39 s
-```
+## Contributing
 
-This creates a _package which is what is pushed to npm. 
-
-## Install from _package
-
-This installs from a local package instead of pulling from npm.
-```bash
-cd _package
-$ sudo npm install ./vsoxplat -g
-```
-Go to Create Agent above.
-
-### Run Tests
-Run all suites:
-```bash
-gulp test
-```
-
-Test agent and tasks:
-```bash
-gulp test --suite builds
-```
-
-Test vso-task-lib:
-```bash
-gulp test --suite tasklib
-```
+[How to contribute](docs/contribute.md)
