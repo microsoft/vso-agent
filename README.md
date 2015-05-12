@@ -141,7 +141,6 @@ $ ./svc.sh uninstall
 ```
 
 ### Contents
-```bash
 
 A .service file is created with the information about the service such as where the .plist file is etc...
 
