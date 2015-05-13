@@ -4,9 +4,9 @@ var fs = require('fs');
 var path = require('path');
 var os = require('os');
 var minimatch = require('minimatch');
+var glob = require('glob');
 var tcm = require('./taskcommand');
 var trm = require('./toolrunner');
-var tp = require('./testpublisher');
 
 //-----------------------------------------------------
 // General Helpers
@@ -200,12 +200,43 @@ var _rmRF = function (path) {
 exports.rmRF = _rmRF;
 
 //-----------------------------------------------------
+// Test Publisher
+//-----------------------------------------------------
+var _testPublisher = (function(){
+    function TestPublisher(testRunner) {
+        this.testRunner = testRunner;        
+    }
+
+    TestPublisher.prototype.publish = function(resultFiles, mergeResults, platform, config) {
+        
+        if(mergeResults == 'true') {
+            _writeLine("Merging test results from multiple files to one test run is not supported on this version of build agent for OSX/Linux, each test result file will be published as a separate test run in VSO/TFS.");
+        }
+        
+        var properties = {};
+        properties['type'] = this.testRunner;
+        if(platform) {
+            properties['platform'] = platform;
+        }
+        if(config) {
+            properties['config'] = config;
+        }
+
+        for(var i = 0; i < resultFiles.length; i ++) {            
+            _writeCommand('results.publish',  properties, resultFiles[i]);
+        }
+    }
+
+    return TestPublisher;
+})();
+
+//-----------------------------------------------------
 // Tools
 //-----------------------------------------------------
 exports.TaskCommand = tcm.TaskCommand;
 exports.commandFromString = tcm.commandFromString;
 exports.ToolRunner = trm.ToolRunner;
-exports.TestPublisher = tp.TestPublisher;
+exports.TestPublisher = _testPublisher;
 trm.debug = _debug;
 
 //-----------------------------------------------------
@@ -225,3 +256,8 @@ var _filter = function (pattern, options) {
     return minimatch.filter(pattern, options);
 }
 exports.filter = _filter;
+
+var _findFiles = function (pattern) {
+    return glob.sync(pattern);
+}
+exports.findFiles = _findFiles;

@@ -92,8 +92,8 @@ export class ResultReader {
 
         var buildId = runContext.buildId;
         var buildRequestedFor = runContext.requestedFor;
-        var platform = "";
-        var config = "";
+        var platform = runContext.platform;
+        var config = runContext.config;
 
         //read test run summary - runname, host, start time, run duration
         var runName = "JUnit";
@@ -259,8 +259,8 @@ export class ResultReader {
         }
 
         //run environment - platform, config, hostname
-        var platform = "";
-        var config = "";
+        var platform = runContext.platform;
+        var config = runContext.config;
         var runUser = "";
         var hostName = "";
 
