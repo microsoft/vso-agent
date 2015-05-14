@@ -86,7 +86,7 @@ To test out, we recommend running interactively.  It's also useful for running U
 
 ## Run as a Service
 
-Running interactively is good for testing and trying it out.  But, in production the agent should be run as a service
+Running interactively is good for testing and evaluation.  But, in production the agent should be run as a service
 to ensure the agent survives reboots.
 
 [How to run as a service](docs/service.md)
