@@ -4,7 +4,6 @@ var fs = require('fs');
 var path = require('path');
 var os = require('os');
 var minimatch = require('minimatch');
-var glob = require('glob');
 var tcm = require('./taskcommand');
 var trm = require('./toolrunner');
 
