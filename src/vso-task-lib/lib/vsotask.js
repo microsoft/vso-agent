@@ -256,8 +256,3 @@ var _filter = function (pattern, options) {
     return minimatch.filter(pattern, options);
 }
 exports.filter = _filter;
-
-var _findFiles = function (pattern) {
-    return glob.sync(pattern);
-}
-exports.findFiles = _findFiles;
