@@ -385,9 +385,9 @@ export class JobRunner {
 
         for (var key in task.inputs) {
             trace.write('checking ' + key);
-            if (filePathInputs.hasOwnProperty(key) && task.inputs[key]) {
+            if (filePathInputs.hasOwnProperty(key)) {
                 trace.write('rewriting value for ' + key);
-                var resolvedPath = path.resolve(srcFolder, task.inputs[key]);
+                var resolvedPath = path.resolve(srcFolder, task.inputs[key] || '');
                 trace.write('resolvedPath: ' + resolvedPath);
                 task.inputs[key] = resolvedPath;
             }

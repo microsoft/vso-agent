@@ -18,17 +18,11 @@ v0.12.0
 2.5.1
 ```
 
-## Agent From Package
+## Install the agent installer
 
-Installs the agent installer once globally.
+Installs the agent installer once globally.  This allows you to stamp out instances of the agent.
 
 ```bash
-$ sudo npm install vsoagent-installer -g
-```
-
-Update the installer with a new version.  It has been more reliable to uninstall and install
-```bash
-$ sudo npm uninstall vsoagent-installer -g
 $ sudo npm install vsoagent-installer -g
 ```
 
@@ -92,109 +86,25 @@ To test out, we recommend running interactively.  It's also useful for running U
 
 ## Run as a Service
 
-Run in the agent directory
-note: only works on OSX right now
+Running interactively is good for testing and evaluation.  But, in production the agent should be run as a service
+to ensure the agent survives reboots.
 
-### Install Service
+[How to run as a service](docs/service.md)
 
-[OSX Types](https://developer.apple.com/library/mac/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/DesigningDaemons.html#//apple_ref/doc/uid/10000172i-SW4-SW9)
+### Update Existing Agents
 
-Run as a daemon (OSX | Linux)
+Repeat the same steps to update the agent.  This will update the installer to the latest version.
+
 ```bash
-$ ./svc.sh install
+$ sudo npm install vsoagent-installer -g
 ```
 
-Run as launch agent (only OSX)
-```bash
-$ ./svc.sh install agent
-```
-*potentially run UI tests*
-[Auto Logon and Lock](http://www.tuaw.com/2011/03/07/terminally-geeky-use-automatic-login-more-securely/)
+Go to the directory you created for the agent and run the same command you used to create the agent.
 
-### Check Status
 ```bash
-$ ./svc.sh status
-8367	-	vsoagent.myaccount.agent1
+$ vsoagent-installer
 ```
 
-*note: 
-    output is (pid)  (rc)  (name)
-    if it is running pid will have a positive number
-    rc is last exit code.  if negative, term signal number.  if postive, err return code from last run.
-*
+## Contributing
 
-### Stop
-```bash
-$ ./svc.sh stop
-```
-
-### Start
-```bash
-$ ./svc.sh start
-```
-
-### Uninstall Service
-Stop first and then:
-```bash
-$ ./svc.sh uninstall
-```
-
-### Contents
-```bash
-
-OSX:
-/Library/LaunchDaemons/vsoagent.{accountName}.{agentName}.plist 
-```
-
-## Building From Source
-
-### Clone the repo
-```bash
-git clone https://github.com/Microsoft/vso-agent.git
-```
-
-### Build Pre-reqs
-
-Gulp is the build engine.  The cli needs to be installed globally
-```bash
-sudo npm install -g gulp
-```
-Install remaining pre-reqs and gulp tasks (run from root of repo)
-```bash
-sudo npm install
-```
-
-### Build
-run gulp in the root of the repo
-```bash
-$ gulp
-...
-[22:58:35] Finished 'default' after 2.39 s
-```
-
-This creates a _package which is what is pushed to npm. 
-
-## Install from _package
-
-This installs from a local package instead of pulling from npm.
-```bash
-cd _package
-$ sudo npm install ./vsoxplat -g
-```
-Go to Create Agent above.
-
-### Run Tests
-Run all suites:
-```bash
-gulp test
-```
-
-Test agent and tasks:
-```bash
-gulp test --suite builds
-```
-
-Test vso-task-lib:
-```bash
-gulp test --suite tasklib
-```
+[How to contribute](docs/contribute.md)
