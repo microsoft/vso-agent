@@ -32,6 +32,11 @@ if (supported.indexOf(process.platform) == -1) {
     process.exit(1);
 }
 
+if (process.getuid() == 0 && !process.env['VSO_AGENT_RUNASROOT']) {
+    console.error('Agent should not run elevated.  uid: ' + process.getuid());
+    process.exit(1);
+}
+
 heartbeat.exitIfAlive();
 
 var ag: ctxm.AgentContext;

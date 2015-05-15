@@ -4,7 +4,7 @@
   "main": "bin/install.js",
   "version": "0.2.9",
   "vsoAgentInfo" : {
-    "serviceMilestone": "1.82.0"
+    "serviceMilestone": "1.999.0"
   },
   "preferGlobal": true,
   "bin": {

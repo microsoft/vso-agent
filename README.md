@@ -79,6 +79,8 @@ To run the agent, simply run vsoagent in the agent directory with node
 $ node agent/vsoagent
 ```
 
+**Stop using ctrl-c**  The agent cleans up if you do this (sends SIGINT)
+
 The agent will stay running interactively as long as your log on session is active.  
 If you want to keep running after you log off, consider running as a service (below), nohup (linux) or a docker container.
 
