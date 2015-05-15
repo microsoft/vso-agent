@@ -178,8 +178,6 @@ export class HttpClient implements ifm.IHttpClient {
             if (socket) {
                 socket.end();
             }
-
-            onResult(new Error('Request Timeout: ' + options.path), null, null);
         });
 
         req.on('error', function (err) {
