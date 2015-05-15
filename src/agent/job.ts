@@ -258,7 +258,7 @@ export class JobRunner {
                 _this.runTask(item, taskCtx, (err) => {
 
                     var taskResult: ifm.TaskResult = ifm.TaskResult.Succeeded;
-                    if (err || taskCtx.hasErrors) {
+                    if (err) {
                         taskResult = ifm.TaskResult.Failed;
 
                         if (item.continueOnError) {
