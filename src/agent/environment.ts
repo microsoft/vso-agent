@@ -181,6 +181,7 @@ export function getCapabilities(): cm.IStringDictionary {
     resolveCapability(filteredEnv, 'ant');
     resolveCapability(filteredEnv, 'clang');
     resolveCapability(filteredEnv, 'cmake');
+    resolveCapability(filteredEnv, 'curl');
     resolveCapability(filteredEnv, 'git');
     resolveCapability(filteredEnv, 'jake', null, '.'); // If not in global path, use jake packaged in this agent
     resolveCapability(filteredEnv, 'java');
