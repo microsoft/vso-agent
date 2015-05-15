@@ -23,6 +23,9 @@ exports.debug = _debug;
 var _toolRunner = (function(){
     function ToolRunner(toolPath) {
         exports.debug('toolRunner toolPath: ' + toolPath);
+        if(toolPath.indexOf(' ') > 0) {
+            toolPath = '\'' + toolPath + '\'';
+        }
         this.toolPath = toolPath;
         this.args = [];
     }
