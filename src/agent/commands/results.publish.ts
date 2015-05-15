@@ -31,14 +31,21 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
 
         var teamProject = this.taskCtx.variables["system.teamProject"];
         var resultFilePath: string = this.command.message;
-        var resultType: string = this.command.properties['type'].toLowerCase();
+        
+        var resultType: string = this.command.properties['type'];
+        if(resultType) { 
+            resultType = resultType.toLowerCase(); 
+        }
+
+        var platform: string = this.command.properties['platform'];
+        var config : string = this.command.properties['config'];
         var command = this.command;
         
         var testRunContext: trp.TestRunContext = {
             requestedFor: this.taskCtx.variables["build.requestedFor"],
             buildId: this.taskCtx.variables["build.buildId"],
-            platform: "",
-            config: ""
+            platform: platform,
+            config: config
         };
 
         var reader;
