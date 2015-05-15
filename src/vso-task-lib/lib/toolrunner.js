@@ -33,6 +33,11 @@ var _toolRunner = (function(){
             this.args = this.args.concat(arguments);
         }
         else if (typeof(arguments) === 'string') {
+            // single quote args with space
+            if (arguments.indexOf(' ') > 0) {
+                arguments = '\'' + arguments + '\'';
+            }
+
             exports.debug(this.toolPath + ' arg: ' + arguments);
             this.args.push(arguments);
         }
