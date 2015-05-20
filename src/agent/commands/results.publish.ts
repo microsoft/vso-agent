@@ -59,6 +59,7 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
             this.command.warning("Test results of format '" + resultType + "'' are not supported by the VSO/TFS OSX and Linux build agent");
         }
 
+        var _this = this;
         if (reader != null) {
             var testRunPublisher = new trp.TestRunPublisher(this.taskCtx.service, command, teamProject, testRunContext, reader);
 
@@ -66,7 +67,8 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
                 defer.resolve(null);
             },
             function (err) {
-                defer.reject(err);
+                _this.command.warning("Failed to publish test results: " + err.message);
+                defer.resolve(null);
             });
         }
         else {
