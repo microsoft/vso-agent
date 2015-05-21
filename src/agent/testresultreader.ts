@@ -211,7 +211,7 @@ export class ResultReader {
             comment: "",
             testEnvironmentId: "",
             startDate: timeStamp,
-            //completeDate: completedDate,
+            completeDate: completedDate,
             releaseUri: "",
             build: { id: buildId }
         };
@@ -306,7 +306,7 @@ export class ResultReader {
             comment: "",
             testEnvironmentId: "",
             startDate: runStartTime,
-            //completeDate: completedDate,
+            completeDate: completedDate,
             releaseUri: "",
             build: { id: buildId }
         };
