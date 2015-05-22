@@ -64,9 +64,10 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
 
             testRunPublisher.publishTestRun(resultFilePath).then(function (createdTestRun) {
                 defer.resolve(null);
-            },
-            function (err) {
-                defer.reject(err);
+            })
+            .fail((err) => {
+                this.command.warning("Failed to publish test results: " + err.message);
+                defer.resolve(null);
             });
         }
         else {
