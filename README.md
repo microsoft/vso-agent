@@ -24,7 +24,10 @@ Installs the agent installer once globally.  This allows you to stamp out instan
 
 ```bash
 $ sudo npm install vsoagent-installer -g
+$ sudo chown -R $USER ~/.npm
 ```
+
+[more on npm issue](http://stackoverflow.com/questions/22152162/npm-cannot-install-dependencies-attempt-to-unlock-something-which-hasnt-been)
 
 This does not update your agents.  It simply pulls down the latest version of the agent installer.
 Stop old agents and configure new/updated agents in a new directory.
