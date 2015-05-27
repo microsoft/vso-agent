@@ -32,8 +32,9 @@ String.prototype.isEqual = function(ignoreCase, str) {
 //
 String.prototype.replaceVars = function (vars) {
     return this.replace(/\$\(([^\)]+)\)/g, function (placeholder, variable) {
-      if (vars[variable]) {
-        return vars[variable];
+      var lowerVar = variable.toLowerCase();
+      if (vars[lowerVar]) {
+        return vars[lowerVar];
       }
       else {
         return placeholder;

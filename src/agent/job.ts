@@ -43,44 +43,43 @@ export class JobRunner {
 
     private job: ifm.JobRequestMessage;
 
-    private _replaceTaskInputVars() {
-        trace.enter('replaceTaskInputVars');
+    private _processVariables() {
+        this.workerContext.info('_processVariables');
 
         // replace variables in inputs
-        if (this.job.environment.variables) {
+        var vars = this.job.environment.variables;
+        if (vars) {
+            // we don't want vars to be case sensitive
+            var lowerVars = {};
+            for (var varName in vars) {
+                lowerVars[varName.toLowerCase()] = vars[varName];
+            }
+
             this.job.tasks.forEach((task) => {
                 trace.write(task.name);
                 for (var key in task.inputs) {
                     if (task.inputs[key]) {
-                        task.inputs[key] = task.inputs[key].replaceVars(this.job.environment.variables);    
+                        task.inputs[key] = task.inputs[key].replaceVars(lowerVars);    
                     }
                 }
             });
+
+            // set env vars
+            for (var variable in vars) {
+                var envVarName = variable.replace(".", "_").toUpperCase();
+                process.env[envVarName] = vars[variable];
+            }
+            trace.state('variables', process.env);     
         }
 
         trace.state('tasks', this.job.tasks);
     }
 
-    private _setEnvVars() {
-        trace.enter('setEnvVars');
-
-        // replace variables in inputs
-        if (this.job.environment.variables) {
-            for (var variable in this.job.environment.variables) {
-                var envVarName = variable.replace(".", "_").toUpperCase();
-                process.env[envVarName] = this.job.environment.variables[variable];
-            }
-        }
-
-        trace.state('variables', process.env);
-    }  
-
     public run(complete: (err: any, result: ifm.TaskResult) => void) {
         trace.enter('run');
 
         var wk = this.workerContext;
-        this._replaceTaskInputVars();
-        this._setEnvVars();
+        this._processVariables();
 
         var _this: JobRunner = this;
         var jobCtx: ctxm.JobContext = this.jobContext;
@@ -173,8 +172,7 @@ export class JobRunner {
                                         trace.state('variables after plugins:', _this.job.environment.variables);
 
                                         // plugins can contribute to vars so replace again
-                                        _this._replaceTaskInputVars();
-                                        _this._setEnvVars();
+                                        _this._processVariables();
 
                                         jobResult = !err && success ? ifm.TaskResult.Succeeded : ifm.TaskResult.Failed;
                                         trace.write('jobResult: ' + jobResult);
