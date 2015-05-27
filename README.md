@@ -29,9 +29,7 @@ $ sudo chown -R $USER ~/.npm
 
 [more on npm issue](http://stackoverflow.com/questions/22152162/npm-cannot-install-dependencies-attempt-to-unlock-something-which-hasnt-been)
 
-This does not update your agents.  It simply pulls down the latest version of the agent installer.
-Stop old agents and configure new/updated agents in a new directory.
-Updating an agent in place is coming soon.
+This does not install an agent.  It simply pulls down the latest version of the agent installer.
 
 ### Create Agents
 
