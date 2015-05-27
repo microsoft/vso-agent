@@ -34,9 +34,11 @@ This does not install an agent.  It simply pulls down the latest version of the 
 ### Create Agents
 
 From a directory you created for the agent, run the installer.  Repeat from different folders for multiple agents.
+Prefer running this from under your home directory (~)
 
 ```bash
-$ vsoagent-installer
+~$ mkdir myagent; cd myagent
+~/myagent$ vsoagent-installer
 ```
 
 ## Configure Agent
