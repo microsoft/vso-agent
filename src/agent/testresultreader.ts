@@ -27,6 +27,16 @@ export class NUnitResultReader implements trp.IResultReader {
 
 }
 
+export class TestSuiteSummary {    
+    constructor() {    
+        name = "JUnit";
+        host = "";
+        timeStamp = new Date();
+        duration = 0;
+        results = []; 
+    }       
+}
+
 export class ResultReader {
 
     private type: string;
@@ -85,7 +95,7 @@ export class ResultReader {
             return null;
         }
 
-    }
+    }    
 
     private parseJUnitXml(res, runContext) {
         var testRun2 : ifm.TestRun2;
@@ -95,110 +105,39 @@ export class ResultReader {
         var platform = runContext.platform;
         var config = runContext.config;
 
-        //read test run summary - runname, host, start time, run duration
-        var runName = "JUnit";
-        var hostName = "";
-        var timeStamp = new Date(); 
-        var totalRunDuration = 0;
-        var totalTestCaseDuration = 0;
+        //init test run summary - runname, host, start time, run duration
+        TestSuiteSummary runSummary = new TestSuiteSummary();
+        
+        var testSuitesNode = res.testsuites.at(0);
 
-        var rootNode = res.testsuite.at(0);
-
-        if(rootNode) {
-
-            if(rootNode.attributes().name) {
-                runName = rootNode.attributes().name;
-            }
-
-            if(rootNode.attributes().hostname) {
-                hostName = rootNode.attributes().hostname;
-            }
-
-            //assume runtimes from xl are current local time since timezone information is not in the xml. If xml date > current local date, fall back to local
-            if(rootNode.attributes().timestamp) {
-                var timestampFromXml = new Date(rootNode.attributes().timestamp);
-                if(timestampFromXml < new Date()) {
-                    timeStamp = timestampFromXml;
-                }                    
-            }
-
-            if(rootNode.attributes().time) {
-                totalRunDuration = parseFloat(rootNode.attributes().time); //in seconds
-            }
-
-            //find test case nodes in JUnit result xml
-            var testResults = [];
-
-            for(var i = 0; i < rootNode.testcase.count(); i ++) {
-                var testCaseNode = rootNode.testcase.at(i);
-
-                //testcase name and type
-                var testName = "";
-                if(testCaseNode.attributes().name) {
-                    testName = testCaseNode.attributes().name;                    
-                } 
-
-                var testStorage = "";
-                if(testCaseNode.attributes().classname) {
-                    testStorage = testCaseNode.attributes().classname;
+        if(testSuitesNode) {
+            if(testSuitesNode.testsuite) {
+                var numTestSuites = testSuitesNode.testsuite.count();
+                for(var n = 0; n < numTestSuites; n ++) {
+                    TestSuiteSummary testSuiteSummary = readTestSuiteJUnitXml(testSuitesNode.testsuite.at(n));
+                    runSummary.duration += testSuiteSummary.duration;
+                    runSummary.results = runSummary.results.concat(testSuiteSummary.results);
+                    runSummary.host = testSuiteSummary.host;
+                    runSummary.name = testSuiteSummary.name;
                 }
-
-                //testcase duration
-                var testCaseDuration = 0; //in seconds
-                if(testCaseNode.attributes().time) {
-                    testCaseDuration = parseFloat(testCaseNode.attributes().time);
-                    totalTestCaseDuration += testCaseDuration;
+                if(numTestSuites > 1) {
+                    runSummary.name = "JUnit";
                 }
-                
-                //testcase outcome
-                var outcome = "Passed";
-                var errorMessage = "";
-                if(testCaseNode.failure) {
-                    outcome = "Failed";
-                    errorMessage = testCaseNode.failure.text();
-                }
-                else if(testCaseNode.error) {
-                    outcome = "Failed";
-                    errorMessage = testCaseNode.error.text();
-                }
-
-                var testResult : ifm.TestRunResult = <ifm.TestRunResult> {
-                    state: "Completed",
-                    computerName: hostName,
-                    resolutionState: null,
-                    testCasePriority: 1,
-                    failureType: null,
-                    automatedTestName: testName,
-                    automatedTestStorage: testStorage,
-                    automatedTestType: "JUnit",
-                    automatedTestTypeId: null,
-                    automatedTestId: null,
-                    area: null,
-                    owner: buildRequestedFor, 
-                    runBy: buildRequestedFor,
-                    testCaseTitle: testName,
-                    revision: 0,
-                    dataRowCount: 0,
-                    testCaseRevision: 0,
-                    outcome: outcome,
-                    errorMessage: errorMessage,
-                    durationInMs: testCaseDuration * 1000, //convert to milliseconds
-                };
-                
-                testResults.push(testResult);
             }
         }
+        else {
+            var testSuiteNode = res.testsuite.at(0);
+            if(testSuiteNode) {
+                runSummary = readTestSuiteJUnitXml(testSuiteNode);
+            }
+        }            
 
-        if(totalRunDuration < totalTestCaseDuration) {
-            totalRunDuration = totalTestCaseDuration; //run duration may not be set in the xml, so use teh testcase duration
-        }
-
-        var completedDate = timeStamp;
-        completedDate.setSeconds(timeStamp.getSeconds() + totalRunDuration);
+        var completedDate = runSummary.timeStamp;
+        completedDate.setSeconds(runSummary.timeStamp.getSeconds() + runSummary.duration);
 
         //create test run data
         var testRun: ifm.TestRun = <ifm.TestRun>    {
-            name: runName,
+            name: runSummary.name,
             iteration: "",
             state: "InProgress",
             automated: true,
@@ -210,7 +149,7 @@ export class ResultReader {
             buildFlavor: config,
             comment: "",
             testEnvironmentId: "",
-            startDate: timeStamp,
+            startDate: runSummary.timeStamp,
             completeDate: completedDate,
             releaseUri: "",
             build: { id: buildId }
@@ -222,6 +161,100 @@ export class ResultReader {
         };         
 
         return testRun2;
+    }
+
+    private TestSuiteSummary readTestSuiteJUnitXml(var rootNode) {
+        TestSuiteSummary testSuiteSummary = new TestSuiteSummary();
+        totalTestSuiteDuration = 0;
+
+        if(rootNode.attributes().name) {
+            testSuiteSummary.name = rootNode.attributes().name;
+        }
+
+        if(rootNode.attributes().hostname) {
+            testSuiteSummary.host = rootNode.attributes().hostname;
+        }
+
+        //assume runtimes from xl are current local time since timezone information is not in the xml. If xml date > current local date, fall back to local
+        if(rootNode.attributes().timestamp) {
+            var timestampFromXml = new Date(rootNode.attributes().timestamp);
+            if(timestampFromXml < new Date()) {
+                testSuiteSummary.timeStamp = timestampFromXml;
+            }                    
+        }
+
+        if(rootNode.attributes().time) {
+            totalRunDuration = parseFloat(rootNode.attributes().time); //in seconds
+        }
+
+        //find test case nodes in JUnit result xml
+        var testResults = [];
+
+        for(var i = 0; i < rootNode.testcase.count(); i ++) {
+            var testCaseNode = rootNode.testcase.at(i);
+
+            //testcase name and type
+            var testName = "";
+            if(testCaseNode.attributes().name) {
+                testName = testCaseNode.attributes().name;                    
+            } 
+
+            var testStorage = "";
+            if(testCaseNode.attributes().classname) {
+                testStorage = testCaseNode.attributes().classname;
+            }
+
+            //testcase duration
+            var testCaseDuration = 0; //in seconds
+            if(testCaseNode.attributes().time) {
+                testCaseDuration = parseFloat(testCaseNode.attributes().time);
+                totalTestCaseDuration += testCaseDuration;
+            }
+            
+            //testcase outcome
+            var outcome = "Passed";
+            var errorMessage = "";
+            if(testCaseNode.failure) {
+                outcome = "Failed";
+                errorMessage = testCaseNode.failure.text();
+            }
+            else if(testCaseNode.error) {
+                outcome = "Failed";
+                errorMessage = testCaseNode.error.text();
+            }
+
+            var testResult : ifm.TestRunResult = <ifm.TestRunResult> {
+                state: "Completed",
+                computerName: testSuiteSummary.host,
+                resolutionState: null,
+                testCasePriority: 1,
+                failureType: null,
+                automatedTestName: testName,
+                automatedTestStorage: testStorage,
+                automatedTestType: "JUnit",
+                automatedTestTypeId: null,
+                automatedTestId: null,
+                area: null,
+                owner: buildRequestedFor, 
+                runBy: buildRequestedFor,
+                testCaseTitle: testName,
+                revision: 0,
+                dataRowCount: 0,
+                testCaseRevision: 0,
+                outcome: outcome,
+                errorMessage: errorMessage,
+                durationInMs: testCaseDuration * 1000, //convert to milliseconds
+            };
+            
+            testResults.push(testResult);
+        }    
+
+        if(totalRunDuration < totalTestCaseDuration) {
+            totalRunDuration = totalTestCaseDuration; //run duration may not be set in the xml, so use teh testcase duration
+        }
+        testSuiteSummary.duration = totalRunDuration;
+
+        return testSuiteSummary;
     }
 
     private parseNUnitXml(res, runContext) {
