@@ -225,6 +225,15 @@ export interface ILogPageInfo {
 // Helpers
 //-----------------------------------------------------------
 
+//
+// during config, there's no context, working directory or logs.  So, if tracing enabled, we should go to console.
+//
+export function consoleTrace(message) {
+    if (process.env[envTrace]) {
+        console.log(new Date().toString() + " : " + message);
+    }
+}
+
 export function jsonString(obj: any) {
     if (!obj) {
         return '(null)';

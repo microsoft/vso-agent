@@ -2,7 +2,7 @@
 
 A cross platform build agent for Microsoft Visual Studio Online (VSO) and Team Foundation Server (TFS).  Supported on Mac OSX and Linux.
 
-*NOTE: This is for the unreleased build.vnext service which is in preview for a subset of accounts*
+*NOTE: This is a supported pre-release agent*
 
 ## Pre-Reqs
 

@@ -122,9 +122,11 @@ export function getEnv(envPath: string, complete: (err: any, env: {[key: string]
 var resolveCapability = function (filteredEnv: any, tool: any, capability?: string, valueIfMissing?: string): boolean {
     // Initialize
     var result = false;
+    var toolName;
 
     // Is tool an object or a string?
     if (typeof tool === 'object') {
+        toolName = tool.name;
         // First, attempt to find the tool using 'which'
         result = resolveCapability(filteredEnv, tool.name, capability);
         if (result == false && tool.paths != null) {
@@ -140,6 +142,7 @@ var resolveCapability = function (filteredEnv: any, tool: any, capability?: stri
     }
     else {
         // Attempt to find the tool using 'which'
+        toolName = tool;
         var toolpath = shell.which(tool);
         if (toolpath) {
             setCapability(filteredEnv, capability || tool, toolpath);
@@ -153,6 +156,9 @@ var resolveCapability = function (filteredEnv: any, tool: any, capability?: stri
         result = true;
     }
 
+    if (!result) {
+        cm.consoleTrace('cap ' + toolName + ' not found');
+    }
     return result;
 }
 
@@ -171,6 +177,7 @@ var resolveCapabilityViaShell = function(filteredEnv: any, command: string, args
 
 // Adds the specified capability name and value to the specified environment.
 var setCapability = function (filteredEnv: cm.IStringDictionary, name: string, val: string) {
+    cm.consoleTrace('cap ' + name + '=' + val);
     filteredEnv[name.trim()] = val;
 }
 
@@ -178,6 +185,7 @@ var setCapability = function (filteredEnv: cm.IStringDictionary, name: string, v
 export function getCapabilities(): cm.IStringDictionary {
     var filteredEnv: cm.IStringDictionary = getFilteredEnv();
 
+    cm.consoleTrace('PATH=' + process.env['PATH']);
     resolveCapability(filteredEnv, 'ant');
     resolveCapability(filteredEnv, 'clang');
     resolveCapability(filteredEnv, 'cmake');
