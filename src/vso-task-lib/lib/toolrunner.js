@@ -100,7 +100,8 @@ var _toolRunner = (function(){
         runCP.stderr.on('data', function(data) {
             success = !ops.failOnStdErr;
             if (!ops.silent) {
-                ops.errStream.write(data);
+                var s = ops.failOnStdErr ? ops.errStream : ops.outStream;
+                s.write(data);
             }
         })
 

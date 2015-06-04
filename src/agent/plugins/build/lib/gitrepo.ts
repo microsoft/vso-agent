@@ -126,7 +126,7 @@ export function getcode(ctx, options, callback) {
             else {
                 ctx.section('Git clone ' + options.repoLocation);
                 ctx.info('Cloning into folder: ' + repoFolder);
-                ctx.util.spawn('git', ['clone', '--progress', options.repoLocation, repoFolder, '-c', askpass], { failOnStdErr: false }, function(err){
+                ctx.util.spawn('git', ['clone', '--progress', options.repoLocation, repoFolder], { failOnStdErr: false }, function(err){
                     if (err) {
                         complete(err);
                     }
