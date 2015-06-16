@@ -145,6 +145,7 @@ export class ResultReader {
 
                 //testcase duration
                 var testCaseDuration = 0; //in seconds
+                var testCaseDurationInMs = 0;
                 if(testCaseNode.attributes().time) {
                     testCaseDuration = parseFloat(testCaseNode.attributes().time);
                     totalTestCaseDuration += testCaseDuration;
@@ -182,7 +183,7 @@ export class ResultReader {
                     testCaseRevision: 0,
                     outcome: outcome,
                     errorMessage: errorMessage,
-                    durationInMs: testCaseDuration * 1000, //convert to milliseconds
+                    durationInMs: Math.round(testCaseDuration * 1000) //convert to milliseconds and round to nearest whole number since server can't handle decimals for test case duration
                 };
                 
                 testResults.push(testResult);
