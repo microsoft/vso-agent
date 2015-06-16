@@ -145,7 +145,6 @@ export class ResultReader {
 
                 //testcase duration
                 var testCaseDuration = 0; //in seconds
-                var testCaseDurationInMs = 0;
                 if(testCaseNode.attributes().time) {
                     testCaseDuration = parseFloat(testCaseNode.attributes().time);
                     totalTestCaseDuration += testCaseDuration;
