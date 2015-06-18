@@ -7,17 +7,6 @@ import fs = require('fs');
 import async = require('async');
 var iniparser = require('iniparser');
 
-var shellError = function(ctx, callback) {
-    var errMsg = shell.error();
-    if (errMsg) {
-        ctx.error(errMsg);
-        callback(new Error(errMsg));
-        return true;
-    }
-
-    return false;
-}
-
 function _translateRef(ref) {
     var brPre = 'refs/heads/';
     if (ref.startsWith(brPre)) {
@@ -90,7 +79,11 @@ export function getcode(ctx, options, callback) {
     if (!fs.existsSync (repoDirName)) {
         ctx.info('Creating repo dir: ' + repoDirName)
         shell.mkdir('-p', repoDirName);
-        if (shellError(ctx, callback)) return;
+        var errMsg = shell.error();
+        if (errMsg) {
+            callback(new Error('Failed to create directory: ' + errMsg));
+            return;
+        }
     }
     shell.cd(repoDirName);
     ctx.info('cwd: ' + process.cwd());
@@ -105,46 +98,53 @@ export function getcode(ctx, options, callback) {
         }
     }
 
-    var handle = function(err, complete) {
-        if (err) { complete(err); }
-        complete(); 
-    }
-
     async.series([
         function(complete) {
-            ctx.util.spawn('git', ['--version'], {}, function(err){ handle(err, complete); });
+            ctx.util.spawn('git', ['--version'], {}, function(err){ complete(err); });
         },
         function(complete) {
             if (repoExists) {
                 ctx.section('Git fetch');
                 shell.cd(repoPath);
                 ctx.verbose('cwd: ' + process.cwd());
-                if (shellError(ctx, callback)) return;
-                ctx.util.spawn('git', ['fetch'], { failOnStdErr: false }, function(err){ handle(err, complete); });
+
+                // TODO: rewrite with toolrunner that supports retries
+                ctx.util.spawn('git', ['fetch'], { failOnStdErr: false }, function(err){
+                    if (err) {
+                        ctx.info('Retrying fetch ...');
+                        
+                        // retry on fetch in the event that creds have expired - git.exe askpass only challenges on subsequent executions
+                        ctx.util.spawn('git', ['fetch'], { failOnStdErr: false }, function(err){
+                            complete(err); 
+                        });
+                    }
+                    else {
+                        complete();     
+                    }                    
+                });
             }
             else {
                 ctx.section('Git clone ' + options.repoLocation);
                 ctx.info('Cloning into folder: ' + repoFolder);
-                ctx.util.spawn('git', ['clone', '--progress', options.repoLocation, repoFolder, '-c', askpass], { failOnStdErr: false }, function(err){
+                ctx.util.spawn('git', ['clone', '--progress', options.repoLocation, repoFolder], { failOnStdErr: false }, function(err){
                     if (err) {
                         complete(err);
                     }
                     else {
                         shell.cd(repoPath);
-                        if (shellError(ctx, callback)) return;
-                        handle(err, complete);
+                        complete();
                     }
                 });
             }
         },
         function(complete) {
             ctx.section('Git checkout ' + ref + ' ...');
-            ctx.util.spawn('git', ['checkout', ref], { failOnStdErr: false }, function(err){ handle(err, complete); });
+            ctx.util.spawn('git', ['checkout', ref], { failOnStdErr: false }, function(err){ complete(err); });
         },
         function(complete) {
             if (options.submodules) {
                 ctx.section('Git submodule init ...');
-                ctx.util.spawn('git', ['submodule', 'init'], { failOnStdErr: false }, function(err){ handle(err, complete); });
+                ctx.util.spawn('git', ['submodule', 'init'], { failOnStdErr: false }, function(err){ complete(err); });
             }
             else {
                 complete(null);
@@ -153,7 +153,7 @@ export function getcode(ctx, options, callback) {
         function(complete) {
             if (options.submodules) {
                 ctx.section('Git submodule update ...');
-                ctx.util.spawn('git', ['submodule', 'update'], { failOnStdErr: false }, function(err){ handle(err, complete); });
+                ctx.util.spawn('git', ['submodule', 'update'], { failOnStdErr: false }, function(err){ complete(err); });
             }
             else {
                 complete(null);
@@ -166,7 +166,6 @@ export function getcode(ctx, options, callback) {
         process.env['GIT_USERNAME'] = '';
         process.env['GIT_PASSWORD'] = '';
 
-        if (err) { callback(err); }
-        callback();
+        callback(err);
     });
 }

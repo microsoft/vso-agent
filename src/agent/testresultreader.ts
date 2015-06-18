@@ -27,14 +27,24 @@ export class NUnitResultReader implements trp.IResultReader {
 
 }
 
-export class TestSuiteSummary {    
-    constructor() {    
-        name = "JUnit";
-        host = "";
-        timeStamp = new Date();
-        duration = 0;
-        results = []; 
-    }       
+export class TestSuiteSummary {  
+    name: string;
+    host: string;
+    timeStamp: Date;
+    duration: number;
+    results: ifm.TestRunResult[];
+
+    constructor() {
+        this.name = "JUnit";
+        this.host = "";
+        this.timeStamp = new Date();
+        this.duration = 0;
+        this.results = [];
+    }
+    
+    addResults(res) {
+        this.results.concat(res);
+    }
 }
 
 export class ResultReader {
@@ -106,7 +116,7 @@ export class ResultReader {
         var config = runContext.config;
 
         //init test run summary - runname, host, start time, run duration
-        TestSuiteSummary runSummary = new TestSuiteSummary();
+        var runSummary = new TestSuiteSummary();
         
         var testSuitesNode = res.testsuites.at(0);
 
@@ -114,11 +124,14 @@ export class ResultReader {
             if(testSuitesNode.testsuite) {
                 var numTestSuites = testSuitesNode.testsuite.count();
                 for(var n = 0; n < numTestSuites; n ++) {
-                    TestSuiteSummary testSuiteSummary = readTestSuiteJUnitXml(testSuitesNode.testsuite.at(n));
+                    var testSuiteSummary = this.readTestSuiteJUnitXml(testSuitesNode.testsuite.at(n), buildRequestedFor);
                     runSummary.duration += testSuiteSummary.duration;
-                    runSummary.results = runSummary.results.concat(testSuiteSummary.results);
+                    runSummary.addResults(testSuiteSummary.results);
                     runSummary.host = testSuiteSummary.host;
                     runSummary.name = testSuiteSummary.name;
+                    if(runSummary.timeStamp > testSuiteSummary.timeStamp) {
+                        runSummary.timeStamp = testSuiteSummary.timeStamp;
+                    }
                 }
                 if(numTestSuites > 1) {
                     runSummary.name = "JUnit";
@@ -128,7 +141,7 @@ export class ResultReader {
         else {
             var testSuiteNode = res.testsuite.at(0);
             if(testSuiteNode) {
-                runSummary = readTestSuiteJUnitXml(testSuiteNode);
+                runSummary = this.readTestSuiteJUnitXml(testSuiteNode, buildRequestedFor);
             }
         }            
 
@@ -157,15 +170,16 @@ export class ResultReader {
 
         testRun2 = <ifm.TestRun2>{
             testRun: testRun,
-            testResults: testResults,
+            testResults: runSummary.results,
         };         
 
         return testRun2;
     }
 
-    private TestSuiteSummary readTestSuiteJUnitXml(var rootNode) {
-        TestSuiteSummary testSuiteSummary = new TestSuiteSummary();
-        totalTestSuiteDuration = 0;
+    private readTestSuiteJUnitXml(rootNode, buildRequestedFor) {
+        var testSuiteSummary = new TestSuiteSummary();
+        var totalRunDuration = 0;
+        var totalTestCaseDuration = 0;
 
         if(rootNode.attributes().name) {
             testSuiteSummary.name = rootNode.attributes().name;
@@ -243,9 +257,9 @@ export class ResultReader {
                 testCaseRevision: 0,
                 outcome: outcome,
                 errorMessage: errorMessage,
-                durationInMs: testCaseDuration * 1000, //convert to milliseconds
+                durationInMs: Math.round(testCaseDuration * 1000) //convert to milliseconds and round to nearest whole number since server can't handle decimals for test case duration
             };
-            
+                
             testResults.push(testResult);
         }    
 

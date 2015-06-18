@@ -235,10 +235,13 @@ export class Configurator {
             return agentApi.getAgents(agentPoolId, settings.agentName);
         }) 
         .then((agents: ifm.TaskAgent[]) => {
-            if (update || agents.length == 1) {
+            if (update && agents.length == 1) {
                 agentId = agents[0].id;
                 return this.constructAgent(settings);
             }
+            else if (update && agents.length == 0) {
+                throw new Error('Agent was deleted.  Reconfigure');
+            }            
             else if (agents.length == 0) {
                 return this.constructAgent(settings);    
             }

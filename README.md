@@ -2,7 +2,7 @@
 
 A cross platform build agent for Microsoft Visual Studio Online (VSO) and Team Foundation Server (TFS).  Supported on Mac OSX and Linux.
 
-*NOTE: This is for the unreleased build.vnext service which is in preview for a subset of accounts*
+*NOTE: This is a supported pre-release agent*
 
 ## Pre-Reqs
 
@@ -24,38 +24,36 @@ Installs the agent installer once globally.  This allows you to stamp out instan
 
 ```bash
 $ sudo npm install vsoagent-installer -g
+$ sudo chown -R $USER ~/.npm
 ```
 
-This does not update your agents.  It simply pulls down the latest version of the agent installer.
-Stop old agents and configure new/updated agents in a new directory.
-Updating an agent in place is coming soon.
+[more on npm issue](http://stackoverflow.com/questions/22152162/npm-cannot-install-dependencies-attempt-to-unlock-something-which-hasnt-been)
+
+This does not install an agent.  It simply pulls down the latest version of the agent installer.
 
 ### Create Agents
 
 From a directory you created for the agent, run the installer.  Repeat from different folders for multiple agents.
+Prefer running this from under your home directory (~)
 
 ```bash
-$ vsoagent-installer
+~$ mkdir myagent; cd myagent
+~/myagent$ vsoagent-installer
 ```
 
-## Provide Permissions to Account
+## Configure Agent
+[>> Video: Configure VSO Xplat Agent<<](http://youtu.be/_snVbL39kyU)
 
-[>> VIDEO:  Configure Permissions <<](http://youtu.be/VgRpl67nOKU)
+### Provide Permissions to Account
 
 Determine which account the agent will run as.
 
-   1. Enable alternate credentials for account agent will run builds as.
-   2. Project Admin UI: (from project, gear upper right) 
-      * Ensure queue created.  Name first default. (elect to create a pool if creating)
-   3. Collection Admin UI: Security tab, 
-      * Add user to Project Collection Build Service Accounts (allows agent to write back build data)
-   4. Account Admin (Control Panel): Agent Pools tab, expand pool
+   1. Enable alternate credentials for account agent will run builds as. Profile in upper right.
+   2. Account Admin (gear upper right), Control Panel link: Agent Pools tab, expand pool
       * Add user to Agent Pool Administrators (allows adding agent to pool)
       * Add user to Agent Pool Service Accounts (allows agent to listen to the build queue)
 
-## Configure Agent
-
-[>> VIDEO:  OSX Configure - Interactive or Service <<](http://youtu.be/ILJlYGYbXtA)
+### Configure on first run
 
 Run the vsoagent from the agent folder.
 Configuration will ask for the username and password of the account the agent will run as.
