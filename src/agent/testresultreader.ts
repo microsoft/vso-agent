@@ -43,7 +43,7 @@ export class TestSuiteSummary {
     }
     
     addResults(res) {
-        this.results.concat(res);
+        this.results = this.results.concat(res);
     }
 }
 
@@ -118,7 +118,9 @@ export class ResultReader {
         //init test run summary - runname, host, start time, run duration
         var runSummary = new TestSuiteSummary();
         
-        var testSuitesNode = res.testsuites.at(0);
+        if(res.testsuites) {
+            var testSuitesNode = res.testsuites.at(0);
+        }
 
         if(testSuitesNode) {
             if(testSuitesNode.testsuite) {
@@ -139,7 +141,9 @@ export class ResultReader {
             }
         }
         else {
-            var testSuiteNode = res.testsuite.at(0);
+            if(res.testsuite) {
+                var testSuiteNode = res.testsuite.at(0);
+            }
             if(testSuiteNode) {
                 runSummary = this.readTestSuiteJUnitXml(testSuiteNode, buildRequestedFor);
             }
@@ -267,6 +271,7 @@ export class ResultReader {
             totalRunDuration = totalTestCaseDuration; //run duration may not be set in the xml, so use teh testcase duration
         }
         testSuiteSummary.duration = totalRunDuration;
+        testSuiteSummary.addResults(testResults);
 
         return testSuiteSummary;
     }
