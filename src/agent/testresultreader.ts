@@ -132,7 +132,7 @@ export class ResultReader {
                     runSummary.host = testSuiteSummary.host;
                     runSummary.name = testSuiteSummary.name;
                     if(runSummary.timeStamp > testSuiteSummary.timeStamp) {
-                        runSummary.timeStamp = testSuiteSummary.timeStamp;
+                        runSummary.timeStamp = testSuiteSummary.timeStamp; //use earlier Date for run start time
                     }
                 }
                 if(numTestSuites > 1) {
@@ -193,7 +193,7 @@ export class ResultReader {
             testSuiteSummary.host = rootNode.attributes().hostname;
         }
 
-        //assume runtimes from xl are current local time since timezone information is not in the xml. If xml date > current local date, fall back to local
+        //assume runtimes from xml are current local time since timezone information is not in the xml. If xml date > current local date, fall back to local
         if(rootNode.attributes().timestamp) {
             var timestampFromXml = new Date(rootNode.attributes().timestamp);
             if(timestampFromXml < new Date()) {
@@ -268,7 +268,7 @@ export class ResultReader {
         }    
 
         if(totalRunDuration < totalTestCaseDuration) {
-            totalRunDuration = totalTestCaseDuration; //run duration may not be set in the xml, so use teh testcase duration
+            totalRunDuration = totalTestCaseDuration; //run duration may not be set in the xml, so use the testcase duration
         }
         testSuiteSummary.duration = totalRunDuration;
         testSuiteSummary.addResults(testResults);
