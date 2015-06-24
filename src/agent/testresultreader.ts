@@ -407,7 +407,7 @@ export class ResultReader {
                         errorMessage = testCaseNode.failure.message.text();
                     }
                 }       
-                            
+                
                 var testResult : ifm.TestRunResult = <ifm.TestRunResult> {
                     state: "Completed",
                     computerName: hostName,
@@ -428,7 +428,7 @@ export class ResultReader {
                     testCaseRevision: 0,
                     outcome: outcome,
                     errorMessage: errorMessage,
-                    durationInMs: testCaseDuration * 1000, //convert to milliseconds
+                    durationInMs: Math.round(testCaseDuration * 1000), //convert to milliseconds
                 };
 
                 foundTestResults.push(testResult);
