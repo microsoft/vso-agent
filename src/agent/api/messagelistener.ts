@@ -7,17 +7,21 @@ import ifm = require('./interfaces');
 import events = require('events');
 var uuid = require('node-uuid');
 var QUEUE_RETRY_DELAY = 15000;
+var MAX_SESSION_RETRIES = 10;
 
 export class MessageListener extends events.EventEmitter {
     sessionId: string;
     poolId: number;
     agentapi: ifm.IAgentApi;
     agent: ifm.TaskAgent;
+    
+    private _sessionRetryCount;
 
     constructor(agentapi: ifm.IAgentApi, agent: ifm.TaskAgent, poolId: number) {
         this.agentapi = agentapi;
         this.agent = agent;
         this.poolId = poolId;
+        this._sessionRetryCount = 0;
 
         super();
     }
@@ -79,13 +83,28 @@ export class MessageListener extends events.EventEmitter {
                 console.error('Unauthorized.  Confirm credentials are correct and restart.  Exiting.');
                 return;
             }
-
+            
             if (err) {
                 onError(new Error('Could not create an agent session.  Retrying in ' + QUEUE_RETRY_DELAY/1000 + ' sec'));
                 onError(err);
-                setTimeout(() => {
-                        this.start(callback, onError);
-                    }, QUEUE_RETRY_DELAY);
+                
+                // retry 409 (session already exists) a few times
+                if (statusCode == 409) {
+                    if (this._sessionRetryCount++ < MAX_SESSION_RETRIES) {
+                        setTimeout(() => {
+                                this.start(callback, onError);
+                            }, QUEUE_RETRY_DELAY);
+                    }
+                    else {
+                        console.error('A session already exists for this agent. Is there a copy of this agent running elsewhere?');
+                    }
+                }
+                else {
+                    // otherwise, just retry
+                    setTimeout(() => {
+                            this.start(callback, onError);
+                        }, QUEUE_RETRY_DELAY);
+                }
                 return;
             }
 
