@@ -30,15 +30,15 @@ var _toolRunner = (function(){
         this.args = [];
     }
 
-    ToolRunner.prototype.arg = function(arguments, doNotEscapeArgs) {
+    ToolRunner.prototype.arg = function(arguments, raw) {
         if (arguments instanceof Array) {
             exports.debug(this.toolPath + ' arg: ' + JSON.stringify(arguments));
             this.args = this.args.concat(arguments);
         }
         else if (typeof(arguments) === 'string') {
             
-            // single quote args with space unless doNotEscapeArgs is true
-            if (arguments.indexOf(' ') > 0 && !doNotEscapeArgs) {
+            // single quote args with space unless raw is true
+            if (arguments.indexOf(' ') > 0 && !raw) {
                 arguments = '\'' + arguments + '\'';
             }
 
