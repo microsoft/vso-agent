@@ -190,7 +190,7 @@ cm.readBasicCreds()
     },
     (err: any) => {
         if (!err || !err.hasOwnProperty('message')) {
-            ag.error("Unkown error occurred while connecting to the message queue.");
+            ag.error("Unknown error occurred while connecting to the message queue.");
         } else {
             ag.error(err.message);
         }

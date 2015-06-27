@@ -52,8 +52,7 @@ host.on('stderr', function(data){
 });
 
 //
-// TODO: make more sophisticated.  For example, # failures within time period etc...
-// this example is simple - allows 10 starts with a wait of a second per restart in between
+// Will restart indefinately.  Each restart adds 10 seconds to wait up to 5 min
 //
 var MAX_DELAY = 5 * 60 * 1000;
 var delay = 0;
@@ -68,8 +67,20 @@ var handleRestart = function(starts, relaunch) {
     setTimeout(function(){
             console.log('restarting')
             relaunch(true);
-        }, 
+        },
         delay);
+}
+
+var zombieWatch = function() {
+    setTimeout(function(){
+            if (!heartbeat.isAlive()) {
+                console.error('agent is a zombie.  restarting.');
+                
+            }
+
+            zombieWatch();
+        },
+        1000);
 }
 
 // set additional env vars for the service from a file

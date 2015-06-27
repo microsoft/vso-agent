@@ -29,12 +29,12 @@ export class MessageListener extends events.EventEmitter {
         this.agentapi.getMessage(this.poolId, this.sessionId, (err:any, statusCode: number, obj: any) => {
             // exit on some conditions such as bad credentials
             if (statusCode == 401) {
-                console.error('Unauthorized.  Confirm credentials are correct and restart.  Exiting.');
+                onError(new Error('Unauthorized.  Confirm credentials are correct and restart.  Exiting.'));
                 return;
             }
 
             if (statusCode == 400) {
-                console.error('Invalid Configuration.  Check pools and agent configuration and restart');
+                onError(new Error('Invalid Configuration.  Check pools and agent configuration and restart'));
                 return;
             }
 

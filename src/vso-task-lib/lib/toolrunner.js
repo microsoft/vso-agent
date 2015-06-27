@@ -60,8 +60,8 @@ var _toolRunner = (function(){
         options = options || {};
 
         var ops = {
-            cwd: process.cwd(),
-            env: process.env,
+            cwd: options.cwd || process.cwd(),
+            env: options.env || process.env,
             silent: options.silent || false,
             outStream: options.outStream || process.stdout,
             errStream: options.errStream || process.stderr,
