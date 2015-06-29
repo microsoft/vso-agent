@@ -73,6 +73,7 @@ export class MessageListener extends events.EventEmitter {
     }
 
     start(callback: (message: any) => void, onError: (err: any) => void): void {
+        this.sessionId = null;
         var session: ifm.TaskAgentSession = <ifm.TaskAgentSession>{};
         session.agent = this.agent;
         session.ownerName = uuid.v1();
@@ -97,6 +98,7 @@ export class MessageListener extends events.EventEmitter {
                     }
                     else {
                         console.error('A session already exists for this agent. Is there a copy of this agent running elsewhere?');
+                        this.emit('sessionUnavailable');
                     }
                 }
                 else {
@@ -106,6 +108,10 @@ export class MessageListener extends events.EventEmitter {
                         }, QUEUE_RETRY_DELAY);
                 }
                 return;
+            }
+            else {
+                // success. reset retry count 
+                this._sessionRetryCount = 0;
             }
 
             this.sessionId = session.sessionId;

@@ -158,6 +158,11 @@ cm.readBasicCreds()
     messageListener.on('listening', () => {
         heartbeat.alive();
     });
+    
+    messageListener.on('sessionUnavailable', () => {
+        ag.error('Could not create a session with the server.');
+        gracefulShutdown();
+    });
 
     messageListener.start((message: ifm.TaskAgentMessage) => {
         trace.callback('listener.start');
