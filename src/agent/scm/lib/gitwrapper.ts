@@ -1,48 +1,109 @@
+/// <reference path="../../definitions/node.d.ts"/>
 
 // TODO: convert vso-task-lib to TS and generate .d.ts file
 var tl = require('vso-task-lib');
+import events = require('events');
+import Q = require('q');
+var path = require('path');
 
 export var envGitUsername = 'GIT_USERNAME';
 export var envGitPassword = 'GIT_PASSWORD';
 
 export interface IGitExecOptions {
+    useGitExe: boolean;
+    creds: boolean;
     cwd: string;
     env: { [key: string]: string };
     silent: boolean;
-    outStream: WritableStream;
-    errStream: WritableStream;
+    outStream: NodeJS.WritableStream;
+    errStream: NodeJS.WritableStream;
 };
 
+// TODO: support isolated local copy of git
+var _gitLocalPath = path.join(__dirname, process.platform, 'libgit_host');
+
 // TODO: move into vso-task-lib??
-export class GitWrapper {
-	public username: string;
-	public password: string;
+export class GitWrapper extends events.EventEmitter {
+    constructor() {
+        this.gitInstalled = tl.which('git', false) !== null;
+        super();
+    }
 
-	public exec(argLine: string, options?: IGitExecOptions): Q.Promise<number> {
-		var defer = Q.defer<number>();
+    public username: string;
+    public password: string;
 
-		var gitPath = tl.which('git', false);
-		if (!gitPath) {
-			defer.reject(new Error('git not found in the path'));
-			return;
-		}
+    public gitInstalled: boolean;
 
-		var git = new tl.ToolRunner(gitPath);
+    public clone(repository: string, progress: boolean, folder: string, options?: IGitExecOptions): Q.Promise<number> {
+        options = options || <IGitExecOptions>{};
+        options.useGitExe = true;
+        options.creds = true;
+        var args = ['clone', repository];
 
-		if (argLine) {
-			git.arg(argLine, true); // raw arg
-		}
-		
-		// TODO: if HTTP_PROXY is set (debugging) we can also supply http.proxy config
-		// TODO: handle and test with spaces in the path
+        if (progress) {
+            args.push('--progress');
+        }
 
-		if (this.username) {
-			process.env[envGitUsername] = this.username;
-			process.env[envGitPassword] = this.password || '';
-			var credHelper = path.join(__dirname, 'credhelper.js');
-			git.arg('-c credential.helper=' + credhelper, true); // raw arg
-		}
+        if (folder) {
+            args.push(folder);
+        }
 
+        return this.exec(args, options);
+    }
+
+    public fetch(options?: IGitExecOptions): Q.Promise<number> {
+        options = options || <IGitExecOptions>{};
+        options.useGitExe = true;
+        options.creds = true;        
+        return this.exec(['fetch'], options);
+    }
+
+    public checkout(ref: string, options?: IGitExecOptions): Q.Promise<number> {
+        options = options || <IGitExecOptions>{};
+        options.useGitExe = true;
+        options.creds = true;
+        return this.exec(['checkout', ref], options);
+    }
+
+    public clean(args: string[], options?: IGitExecOptions): Q.Promise<number> {
+        options = options || <IGitExecOptions>{};
+        options.useGitExe = true;
+        return this.exec(args, options);
+    }
+
+    public submodule(args: string[], options?: IGitExecOptions): Q.Promise<number> {
+        options = options || <IGitExecOptions>{};
+        options.useGitExe = true;
+        return this.exec(['submodule'].concat(args), options);
+    }
+
+    public exec(args: string[], options?: IGitExecOptions): Q.Promise<number> {
+        var defer = Q.defer<number>();
+
+        var gitPath = options.useGitExe || process.env['AGENT_USEGITEXE'] ? tl.which('git', false) : _gitLocalPath;
+        if (!gitPath) {
+            defer.reject(new Error('git not found in the path'));
+            return;
+        }
+
+        var git = new tl.ToolRunner(gitPath);
+
+        if (args.map((arg: string) => {
+            git.arg(arg, true); // raw arg
+        }));
+        
+        // TODO: if HTTP_PROXY is set (debugging) we can also supply http.proxy config
+        // TODO: handle and test with spaces in the path
+
+        if (options.creds) {
+            // protect against private repo where no creds are supplied (external) - we don't want a prompt
+            process.env[envGitUsername] = this.username || 'none';
+            process.env[envGitPassword] = this.password || '';
+            var credHelper = path.join(__dirname, 'credhelper.js');
+            git.arg('-c credential.helper=' + credHelper, true); // raw arg
+        }
+
+        options = options || <IGitExecOptions>{};
         var ops: any = {
             cwd: options.cwd || process.cwd(),
             env: options.env || process.env,
@@ -53,13 +114,10 @@ export class GitWrapper {
             ignoreReturnCode: false
         };
 
-		return git.exec(ops)
-		.fin(() => {
-			process.env[envGitUsername] = null;
-			process.env[envGitPassword] = null;
-		}); 
-	}
+        return git.exec(ops)
+        .fin(() => {
+            process.env[envGitUsername] = null;
+            process.env[envGitPassword] = null;
+        }); 
+    }
 }
-
-
-// optional - no tasks will concat nothing

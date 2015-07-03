@@ -11,7 +11,7 @@ import ifm = require('../../api/interfaces');
 import gitrepo = require('./lib/gitrepo');
 
 // keep lower case, we do a lower case compare
-var supported: string[] = ['tfsgit', 'git', 'github'];
+var supported: string[] = ['tfsgit', 'git', 'github', 'tfsversioncontrol'];
 
 export function pluginName() {
     return "prepareWorkspace";
@@ -32,89 +32,72 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
 
     var endpoints: ifm.JobEndpoint[] = ctx.job.environment.endpoints;
 
-    // TODO: support TfsVersionControl
-    var invalidType: string;
-    endpoints.every((endpoint) => {
-        if (!endpoint.type) {
-            return false;
-        }
+    var variables = ctx.job.environment.variables;    
 
-        if (supported.indexOf(endpoint.type.toLowerCase()) < 0) {
-            invalidType = endpoint.type;
-            return false;
-        }
-    });
-
-    if (invalidType) {
-        var msg = 'Unsupported repository type:' + invalidType;
-        ctx.error(msg)
-        callback(new Error(msg));
-        return;
-    }
-
-    var variables = ctx.job.environment.variables;
-
-    var srcVersion = variables['build.sourceVersion'];
-    var srcBranch = variables['build.sourceBranch'];
-    ctx.info('srcVersion: ' + srcVersion);
-    ctx.info('srcBranch: ' + srcBranch);
-
-    
-    var selectedRef = srcVersion ? srcVersion : srcBranch;
-    ctx.info('selectedRef: ' + selectedRef);
-
-    var srcendpoints = endpoints.filter(function (endpoint) {
+    var srcendpoints = endpoints.filter(function (endpoint: ifm.JobEndpoint) {
         if (!endpoint.type) {
             return false;
         }
         return (supported.indexOf(endpoint.type.toLowerCase()) >= 0);
     });
 
-    // TODO: we only really support one.  Consider changing to index 0 of filter result and warn | fail if length > 0
-    //       what's odd is we will set sys.sourceFolder so > 1 means last one wins
-    async.forEachSeries(srcendpoints, function (endpoint, done) {
-        
-        // fallback is basic creds
-        var creds = { username: process.env.altusername, password: process.env.altpassword };
+    if (true) {
+        callback(new Error('Testing error.  Remove'));
+        return;
+    }
 
-        if (endpoint.authorization && endpoint.authorization['scheme']) {
-            var scheme = endpoint.authorization['scheme'];
-            ctx.info('Using auth scheme: ' + scheme);
+    if (srcendpoints.length == 0) {
+        callback(new Error('No valid repository type'));
+        return;
+    }
 
-            switch (scheme) {
-                case 'OAuth':
-                    creds.username = 'OAuth';
-                    creds.password = endpoint.authorization['parameters']['AccessToken'];
-                    break;
+    // only support 1
+    var endpoint: ifm.JobEndpoint = endpoints[0];
 
-                default:
-                    ctx.warning('invalid auth scheme: ' + scheme);
-            }
+    var repoPath = path.resolve('repo');
+    ctx.job.environment.variables['build.sourceDirectory'] = repoPath;
+    ctx.job.environment.variables['build.stagingdirectory'] = path.resolve("staging");
+
+    // TODO: remove compat variable
+    ctx.job.environment.variables['sys.sourcesFolder'] = repoPath;
+
+    var scmm;
+    var providerType = endpoint.type;
+    ctx.info('using source provider: ' + providerType);
+
+    try {
+        var provPath = path.join(ctx.scmPath, providerType);
+        ctx.info('loading: ' + provPath);
+        scmm = require(provPath);    
+    }
+    catch(err) {
+        callback(new Error('Source Provider not found: ' + providerType));
+        return;        
+    }
+    
+    var scmProvider = scmm.getProvider(ctx, repoPath);
+    scmProvider.initialize(endpoint);
+
+    return Q(null)
+    .then(() => {
+        if (endpoint.data['clean'] === "true") {
+            ctx.info('running clean');
+            return scmProvider.clean();
         }
-
-        // encodes projects and repo names with spaces
-        var gu = url.parse(endpoint.url);
-        var giturl = gu.format(gu);
-
-        var options = {
-            repoLocation: giturl,
-            ref: selectedRef,
-            creds: creds,
-            localPath: 'repo', // not allowing custom local paths - we always put in repo
-            submodules: endpoint.data['checkoutSubmodules'] === "True",
-            clean: endpoint.data['clean'] === "true"
-        };
-
-        var repoPath = path.resolve(options.localPath);
-        ctx.job.environment.variables['build.sourceDirectory'] = repoPath;
-        ctx.job.environment.variables['build.stagingdirectory'] = path.resolve("staging");
-
-        // TODO: remove compat variable
-        ctx.job.environment.variables['sys.sourcesFolder'] = repoPath;
-        gitrepo.getcode(ctx, options, done);
-    }, function (err) {
-        process.env['altusername'] = '';
-        process.env['altpassword'] = '';
+        else {
+            return 0;
+        }
+    })
+    .then((code: number) => {
+        ctx.info('getting code');
+        return scmProvider.getCode();
+    })
+    .then((code: number) => {
+        callback();
+    })    
+    .fail((err) => {
         callback(err);
-    });
+        return;
+    })
+
 }

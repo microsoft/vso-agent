@@ -142,6 +142,7 @@ export class AgentContext extends Context implements cm.ITraceWriter {
         ensureTrace(this);
         this.config = config;
 
+        this.agentPath = __dirname;
         var rootAgentDir = path.join(__dirname, '..');
 
         // Set full path for work folder, as it is used by others - config can have a relative path (./work)
@@ -160,6 +161,7 @@ export class AgentContext extends Context implements cm.ITraceWriter {
         super(writers);
     }
 
+    public agentPath: string;
     public diagFolder: string;
     private fileWriter: cm.IDiagnosticWriter;
 
@@ -182,6 +184,7 @@ export class WorkerContext extends Context implements cm.ITraceWriter {
         this.workFolder = cm.getWorkPath(config); 
         this.config.settings.workFolder = this.workFolder;
         this.diagFolder = cm.getWorkerDiagPath(config);
+        process.env[cm.envWorkerDiagPath] = this.diagFolder;
         
         this.fileWriter = new dm.DiagnosticFileWriter(process.env[cm.envVerbose] ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info,
             this.diagFolder,
@@ -305,6 +308,7 @@ export class JobContext extends ExecutionContext {
         this.service = service;
         this.config = workerCtx.config;
         trace.state('this.config', this.config);
+        this.scmPath = path.join(__dirname, 'scm');
 
         super(info, authHandler, job.jobId, service, workerCtx);
     }
@@ -313,6 +317,7 @@ export class JobContext extends ExecutionContext {
     public jobInfo: cm.IJobInfo;
     public service: cm.IFeedbackChannel;
     public authHandler: ifm.IRequestHandler;
+    public scmPath: string;
 
     //------------------------------------------------------------------------------------
     // Job/Task Status

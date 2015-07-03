@@ -22,6 +22,7 @@ var handlerPath = path.join(agentPath, 'handlers');
 var pluginPath = path.join(agentPath, 'plugins');
 var buildPluginPath = path.join(pluginPath, 'build');
 var buildPluginLibPath = path.join(buildPluginPath, 'lib');
+var scmLibPath = path.join(agentPath, 'scm', 'lib');
 
 // grunt is 0, task is 1
 var mopts = {
@@ -50,6 +51,8 @@ gulp.task('build', ['clean'], function () {
 		gulp.src(['package.json']).pipe(gulp.dest(buildPath)),
 		gulp.src(['src/agent/svc.sh']).pipe(gulp.dest(agentPath)),
 	    gulp.src(['src/agent/plugins/build/lib/askpass.js']).pipe(gulp.dest(buildPluginLibPath)),
+	    gulp.src(['src/agent/scm/lib/credhelper.js']).pipe(gulp.dest(scmLibPath)),
+	    gulp.src(['src/agent/scm/lib/gitw.js']).pipe(gulp.dest(scmLibPath)),
 		gulp.src(['src/bin/install.js']).pipe(gulp.dest(binPath))
 	]);	
 });

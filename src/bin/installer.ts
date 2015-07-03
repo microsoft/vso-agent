@@ -56,5 +56,7 @@ shell.cp(path.join(installDir, 'package.json'), targetDir);
 console.log('making scripts executable')
 shell.chmod('u+x', path.join(targetAgent, 'svc.sh'));
 shell.chmod('u+x', path.join(targetAgent, 'plugins/build/lib/askpass.js'));
+shell.chmod('u+x', path.join(targetAgent, 'scm/lib/credhelper.js'));
+shell.chmod('u+x', path.join(targetAgent, 'scm/lib/gitw.js'));
 
 console.log('Done.');

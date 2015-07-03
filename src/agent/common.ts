@@ -40,11 +40,13 @@ buildVars.stagingDirectory = 'build.stagingDirectory';
 // ENV VARS
 //-----------------------------------------------------------
 export var envTrace: string = 'VSO_AGENT_TRACE';
+export var envCredTrace: string = 'VSO_CRED_TRACE';
 export var envVerbose: string = 'VSO_AGENT_VERBOSE';
 
 // comma delimited list of envvars to ignore when registering agent with server
 export var envIgnore: string = 'VSO_AGENT_IGNORE';
 export var envService: string = 'VSO_AGENT_SVC';
+export var envWorkerDiagPath: string = 'WORKER_DIAG_PATH';
 
 //-----------------------------------------------------------
 // Enums

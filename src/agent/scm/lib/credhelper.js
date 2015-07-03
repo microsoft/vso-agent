@@ -11,17 +11,16 @@ var action = process.argv[2] || 'none';
 var username = process.env['GIT_USERNAME'] || '';
 var password = process.env['GIT_PASSWORD'] || '';
 
+var tracePath = path.join(process.env[cm.envWorkerDiagPath] || __dirname, 'git_' + new Date().toISOString().replace(':', '-') + '.log');
 var trace = function(message) {
-	if (process.env[cm.envTrace]) {
-		// get _diag path from envvar
-		fs.appendFileSync('./test2.txt', message);
+	if (process.env[cm.envCredTrace]) {
+		fs.appendFileSync(tracePath, message);
 	}
 }
 
-trace(new Date().toString() + ':' + action + ':' + username + ':' + password.length);
+trace(new Date().toString() + ':' + action + ':' + username + ':' + password);
 
 if (action && username && password && action === 'get') {
 	console.log('username=' + username);
 	console.log('password=' + password);	
 }
-
