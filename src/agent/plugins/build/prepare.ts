@@ -62,7 +62,7 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     ctx.job.environment.variables['sys.sourcesFolder'] = repoPath;
 
     var scmm;
-    var providerType = endpoint.type;
+    var providerType = endpoint.type.toLowerCase();
     ctx.info('using source provider: ' + providerType);
 
     try {

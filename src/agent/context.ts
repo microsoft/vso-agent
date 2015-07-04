@@ -246,6 +246,8 @@ export class ExecutionContext extends Context {
 
         this.util = new um.Utilities(this);
 
+        this.scmPath = path.join(__dirname, 'scm');
+
         super([logger]);
     }
 
@@ -260,6 +262,11 @@ export class ExecutionContext extends Context {
     public util: um.Utilities;
 
     public error(message: string): void {
+        var obj = <any>message;
+        if (typeof (message) === 'object' && obj.hasOwnProperty('message')) { 
+            message = obj.message;
+        }
+
         this.service.addError(this.recordId, "Console", message, null);
         super.error(message);
     }
@@ -308,7 +315,6 @@ export class JobContext extends ExecutionContext {
         this.service = service;
         this.config = workerCtx.config;
         trace.state('this.config', this.config);
-        this.scmPath = path.join(__dirname, 'scm');
 
         super(info, authHandler, job.jobId, service, workerCtx);
     }

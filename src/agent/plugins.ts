@@ -104,7 +104,7 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerConte
             plugin.beforeJob(pluginCtx, function (err) {
                 if (err) {
                     ctx.setTaskResult(plugin.beforeId, plugin.pluginName(), ifm.TaskResult.Failed);
-                    ctx.error(err);
+                    pluginCtx.error(err);
                     pluginCtx.end();
                     done(err);
                     return;
@@ -153,7 +153,7 @@ export function afterJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerContex
             plugin.afterJob(pluginCtx, function (err) {
                 if (err) {
                     ctx.setTaskResult(plugin.afterId, plugin.pluginName(), ifm.TaskResult.Failed);
-                    ctx.error(err);
+                    pluginCtx.error(err);
                     pluginCtx.end();
                     done(err);
                     return;
