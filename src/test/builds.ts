@@ -41,11 +41,10 @@ describe('Test Agent + Tasks', function() {
 			wk.run(workerMsg, false,
 				function(agentUrl, taskUrl, jobInfo, ag) {
 					return feedbackChannel;
-				},
-				function() {
+				}).then(() => {
 					assert(feedbackChannel.jobsCompletedSuccessfully(), 'XCode Build Failed! Details:' + feedbackChannel.getRecordsString());
 					done();
-			});
+				});
 		});
 	} : function() { it ('current system does not support xcode');});
 
@@ -57,11 +56,10 @@ describe('Test Agent + Tasks', function() {
 			wk.run(workerMsg, false,
 				function(agentUrl, taskUrl, jobInfo, ag) {
 					return feedbackChannel;
-				},
-				function() {
+				}).then(() => {
 					assert(feedbackChannel.jobsCompletedSuccessfully(), 'CMake Build Failed! Details:' + feedbackChannel.getRecordsString());
 					done();
-			});
+				});
 		});
 	} : function() { it ('current system does not support jake');});
 
@@ -73,11 +71,10 @@ describe('Test Agent + Tasks', function() {
 			wk.run(workerMsg, false,
 				function(agentUrl, taskUrl, jobInfo, ag) {
 					return feedbackChannel;
-				},
-				function() {
+				}).then(() => {
 					assert(feedbackChannel.jobsCompletedSuccessfully(), 'Shellscript Build Failed! Details:' + feedbackChannel.getRecordsString());
 					done();
-			});
+				});
 		});
 	} : function() { it ('current system does not support shellscript');});
 
@@ -90,11 +87,10 @@ describe('Test Agent + Tasks', function() {
 			wk.run(workerMsg, false,
 				function(agentUrl, taskUrl, jobInfo, ag) {
 					return feedbackChannel;
-				},
-				function() {
+				}).then(() => {
 					assert(feedbackChannel.jobsCompletedSuccessfully(), 'Gradle Build Failed! Details:' + feedbackChannel.getRecordsString());
 					done();
-			});
+				});
 		});
 	} : function() { it ('current system does not support java to run gradle wrapper script');});
 
@@ -107,11 +103,10 @@ describe('Test Agent + Tasks', function() {
 			wk.run(workerMsg, false,
 				function(agentUrl, taskUrl, jobInfo, ag) {
 					return feedbackChannel;
-				},
-				function() {
+				}).then(() => {
 					assert(feedbackChannel.jobsCompletedSuccessfully(), 'Maven Build Failed! Details:' + feedbackChannel.getRecordsString());
 					done();
-			});
+				});
 		});
 	} : function() { it ('current system does not support Maven');});
 
@@ -123,11 +118,10 @@ describe('Test Agent + Tasks', function() {
 			wk.run(workerMsg, false,
 				function(agentUrl, taskUrl, jobInfo, ag) {
 					return feedbackChannel;
-				},
-				function() {
+				}).then(() => {
 					assert(feedbackChannel.jobsCompletedSuccessfully(), 'ANT Build Failed! Details:' + feedbackChannel.getRecordsString());
 					done();
-			});
+				});
 		});
 	} : function() { it ('current system does not support Ant');});
 });
