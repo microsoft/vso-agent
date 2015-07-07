@@ -113,7 +113,7 @@ export interface IConfiguration {
     agent: ifm.TaskAgent;
 }
 
-export interface IFeedbackChannel {
+export interface IFeedbackChannel extends NodeJS.EventEmitter {
     agentUrl: string;
     collectionUrl: string;
     timelineApi: ifm.ITimelineApi;
@@ -121,7 +121,7 @@ export interface IFeedbackChannel {
     enabled: boolean;
 
     // lifetime
-    drain(callback: (err: any) => void): void;
+    drain(): Q.Promise<any>;
 
     // queues
     queueLogPage(page: ILogPageInfo): void;
@@ -149,7 +149,7 @@ export interface IFeedbackChannel {
     postArtifact(projectId: string, buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact>;
 
     // job
-    updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void;
+    finishJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest): Q.Promise<any>;
 
     // test publishing 
     initializeTestManagement(projectName: string): void;

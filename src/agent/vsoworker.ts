@@ -8,13 +8,14 @@ import cm = require('./common');
 import ctxm = require('./context');
 import dm = require('./diagnostics');
 import ifm = require('./api/interfaces');
-import jrm = require("./job");
+import jrm = require('./job');
 import fm = require('./feedback');
 import os = require('os');
 import tm = require('./tracing');
 import path = require('path');
 import crypto = require('crypto');
 import wapim = require('./api/webapi');
+import Q = require('q');
 
 var wk: ctxm.WorkerContext;
 var trace: tm.Tracing;
@@ -68,9 +69,8 @@ function deserializeEnumValues(job: ifm.JobRequestMessage) {
 // Worker process waits for a job message, processes and then exits
 //
 export function run(msg, consoleOutput: boolean, 
-                    createFeedbackChannel: (agentUrl, taskUrl, jobInfo, ag) => cm.IFeedbackChannel, 
-                    finished: () => void) {
-
+                    createFeedbackChannel: (agentUrl, taskUrl, jobInfo, ag) => cm.IFeedbackChannel): Q.Promise<any> {
+    var deferred = Q.defer();
     wk = new ctxm.WorkerContext(msg.config, true);
     trace = new tm.Tracing(__filename, wk);
     trace.enter('.onMessage');
@@ -81,7 +81,6 @@ export function run(msg, consoleOutput: boolean,
         var job: ifm.JobRequestMessage = msg.data;
         deserializeEnumValues(job);
         setVariables(job, wk);
-
 
         trace.write('Creating AuthHandler');
         var systemAuthHandler: ifm.IRequestHandler;
@@ -125,6 +124,23 @@ export function run(msg, consoleOutput: boolean,
         var jobRunner: jrm.JobRunner = new jrm.JobRunner(wk, ctx);
         trace.write('created jobRunner');
 
+        // guard to ensure we only "finish" once 
+        var finishingJob: boolean = false;
+        
+        serviceChannel.on(fm.Events.JobAbandoned, () => {
+            // if finishingJob is true here, then the jobRunner finished
+            // ctx.finishJob will take care of draining the service channel
+            if (!finishingJob) {
+                finishingJob = true;
+                wk.error("Job abandoned by the server.");
+                // nothing much to do if drain rejects...
+                serviceChannel.drain().fin(() => {
+                    trace.write("Service channel drained");
+                    deferred.resolve(null);
+                });
+            }
+        });
+
         jobRunner.run((err: any, result: ifm.TaskResult) => {
             trace.callback('job.run');
 
@@ -133,26 +149,37 @@ export function run(msg, consoleOutput: boolean,
                 wk.error('Error: ' + err.message);
             }
 
-            ctx.finishJob(result, (err: any) => {
-                trace.callback('ctx.finishJob');
- 
-                wk.status('Job Finished: ' + job.jobName);
-                if (err) {
-                    wk.error('Error: ' + err.message);
-                }
-
-                finished();
-            });
+            // if finishingJob is true here, then the lock renewer got a 404, which means the server abandoned the job
+            // it's already calling serviceChannel.drain() and it's going to call finished()
+            if (!finishingJob) {
+                finishingJob = true;
+                ctx.finishJob(result).fin(() => {
+                    // trace and status no matter what. if finishJob failed, the fail handler below will be called
+                    trace.callback('ctx.finishJob');
+                    wk.status('Job Finished: ' + job.jobName);
+                }).fail((err: any) => {
+                    if (err) {
+                        wk.error('Error: ' + err.message);
+                    }
+                }).fin(() => {
+                    deferred.resolve(null);
+                });
+            }
         });
     }
+    else {
+        // don't know what to do with this message
+        deferred.resolve(null);
+    }
+    
+    return deferred.promise;
 }
 
 process.on('message', function (msg) {
     run(msg, true,
         function (agentUrl, taskUrl, jobInfo, ag) {
             return new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, ag);
-        },
-        function () {
+        }).fin(() => {
             process.exit();
         });
 });
