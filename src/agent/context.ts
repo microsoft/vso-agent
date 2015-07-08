@@ -73,6 +73,10 @@ export class Context extends events.EventEmitter {
         this._write(cm.DiagnosticLevel.Verbose, 'Debug', message);
     }
 
+    public debug(message: string) {
+        this._write(cm.DiagnosticLevel.Info, 'task.debug' , message);
+    }
+
     private _write(level: cm.DiagnosticLevel, tag: string, message: string) {
         if (typeof (message) !== 'string') {
             trace.error('invalid message type: ' + typeof (message));
@@ -257,6 +261,7 @@ export class ExecutionContext extends Context {
     public variables: { [key: string]: string };
     public recordId: string;
     public buildDirectory: string;
+    public scmPath: string;
     public workingDirectory: string;
     public service: cm.IFeedbackChannel;
     public util: um.Utilities;

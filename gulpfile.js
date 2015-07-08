@@ -3,11 +3,11 @@ var path = require('path');
 var gulp = require('gulp');
 var del = require('del');
 var mocha = require('gulp-mocha');
-var ts = require('gulp-typescript');
 var tar = require('gulp-tar');
 var gzip = require('gulp-gzip');
 var merge = require('merge2');
 var minimist = require('minimist');
+var typescript = require('gulp-tsc');
 
 var buildRoot = path.join(__dirname, '_build');
 var tarRoot = path.join(__dirname, '_tar');
@@ -24,7 +24,6 @@ var buildPluginPath = path.join(pluginPath, 'build');
 var buildPluginLibPath = path.join(buildPluginPath, 'lib');
 var scmLibPath = path.join(agentPath, 'scm', 'lib');
 
-// grunt is 0, task is 1
 var mopts = {
   boolean: 'ci',
   string: 'suite',
@@ -33,28 +32,21 @@ var mopts = {
 
 var options = minimist(process.argv.slice(2), mopts);
 
-
-var tsProject = ts.createProject({
-	declartionFiles:false,
-	noExternalResolve: true,
-	module: 'commonjs'
-});
-
-
-gulp.task('build', ['clean'], function () { 
-	var tsResult = gulp.src(['src/**/*.ts'])
-		.pipe(ts(tsProject))
-		.on('error', function (err) { process.exit(1) });
-	
+gulp.task('copy', ['clean'], function () {
 	return merge([
-		tsResult.js.pipe(gulp.dest(buildPath), null, ts.reporter.fullReporter(true)),
 		gulp.src(['package.json']).pipe(gulp.dest(buildPath)),
 		gulp.src(['src/agent/svc.sh']).pipe(gulp.dest(agentPath)),
 	    gulp.src(['src/agent/plugins/build/lib/askpass.js']).pipe(gulp.dest(buildPluginLibPath)),
 	    gulp.src(['src/agent/scm/lib/credhelper.js']).pipe(gulp.dest(scmLibPath)),
 	    gulp.src(['src/agent/scm/lib/gitw.js']).pipe(gulp.dest(scmLibPath)),
 		gulp.src(['src/bin/install.js']).pipe(gulp.dest(binPath))
-	]);	
+	]);			
+});
+
+gulp.task('build', ['copy'], function () {
+	return gulp.src(['src/**/*.ts'])
+		.pipe(typescript())
+		.pipe(gulp.dest(buildPath));
 });
 
 gulp.task('testPrep', function () {

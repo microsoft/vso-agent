@@ -3,7 +3,7 @@
   "description": "Visual Studio Xplat Build Agent Installer",
   "main": "bin/install.js",
   "version": "0.2.20",
-  "vsoAgentInfo" : {
+  "vsoAgentInfo": {
     "serviceMilestone": "1.999.0"
   },
   "preferGlobal": true,
@@ -43,7 +43,7 @@
     "svcinstall": "^0.2.1",
     "touch": "0.0.3",
     "validator": "~3.11.0",
-    "vso-task-lib": "^0.2.0",
+    "vso-task-lib": "^0.3.0",
     "xmlreader": "^0.2.3"
   },
   "devDependencies": {
@@ -52,6 +52,7 @@
     "gulp-gzip": "^1.0.0",
     "gulp-mocha": "^2.0.0",
     "gulp-tar": "^1.4.0",
+    "gulp-tsc": "^0.10.1",
     "gulp-typescript": "^2.4.2",
     "merge2": "^0.3.1",
     "mocha": "^2.1.0"

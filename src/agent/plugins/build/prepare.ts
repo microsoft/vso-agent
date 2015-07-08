@@ -9,6 +9,7 @@ import async = require('async');
 import ctxm = require('../../context');
 import ifm = require('../../api/interfaces');
 import gitrepo = require('./lib/gitrepo');
+import Q = require('q');
 
 // keep lower case, we do a lower case compare
 var supported: string[] = ['tfsgit', 'git', 'github', 'tfsversioncontrol'];
@@ -40,11 +41,6 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
         }
         return (supported.indexOf(endpoint.type.toLowerCase()) >= 0);
     });
-
-    if (true) {
-        callback(new Error('Testing error.  Remove'));
-        return;
-    }
 
     if (srcendpoints.length == 0) {
         callback(new Error('No valid repository type'));

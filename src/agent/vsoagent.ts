@@ -204,7 +204,7 @@ cm.readBasicCreds()
 
 process.on('uncaughtException', function (err) {
     if (ag) {
-        ag.error('agent handled:')
+        ag.error('agent unhandled:')
         ag.error(err.message);
     }
     else {

@@ -78,6 +78,7 @@ export class GitWrapper extends events.EventEmitter {
     }
 
     public exec(args: string[], options?: IGitExecOptions): Q.Promise<number> {
+        options = options || <IGitExecOptions>{};
         var defer = Q.defer<number>();
 
         var gitPath = options.useGitExe || process.env['AGENT_USEGITEXE'] ? tl.which('git', false) : _gitLocalPath;
@@ -87,6 +88,13 @@ export class GitWrapper extends events.EventEmitter {
         }
 
         var git = new tl.ToolRunner(gitPath);
+        git.on('stdout', (data) => {
+            this.emit('stdout', data);
+        })
+
+        git.on('stderr', (data) => {
+            this.emit('stderr', data);
+        })
 
         if (args.map((arg: string) => {
             git.arg(arg, true); // raw arg
@@ -107,7 +115,7 @@ export class GitWrapper extends events.EventEmitter {
         var ops: any = {
             cwd: options.cwd || process.cwd(),
             env: options.env || process.env,
-            silent: options.silent || false,
+            silent: true,
             outStream: options.outStream || process.stdout,
             errStream: options.errStream || process.stderr,
             failOnStdErr: false,

@@ -25,6 +25,14 @@ function _translateRef(ref) {
 export class GitScmProvider extends scmm.ScmProvider {
 	constructor(ctx: ctxm.JobContext, targetPath: string) {
 		this.gitw = new gitwm.GitWrapper();
+		this.gitw.on('stdout', (data) => {
+			ctx.info(data.toString());
+		});
+
+		this.gitw.on('stderr', (data) => {
+			ctx.info(data.toString());
+		});
+
 		super(ctx, targetPath);
 	}
 
@@ -34,6 +42,8 @@ export class GitScmProvider extends scmm.ScmProvider {
 	public endpoint: ifm.JobEndpoint;
 
 	public initialize(endpoint: ifm.JobEndpoint) {
+		this.endpoint = endpoint;
+		
 		if (!endpoint) {
 			throw (new Error('endpoint null initializing git scm provider'));
 		}
@@ -62,7 +72,7 @@ export class GitScmProvider extends scmm.ScmProvider {
         // encodes projects and repo names with spaces
         var gu = url.parse(this.endpoint.url);
         var giturl = gu.format(gu);
-        var folder = path.dirname(this.targetPath);
+        var folder = path.basename(this.targetPath);
 
         // figure out ref
 	    var srcVersion = this.ctx.job.environment.variables['build.sourceVersion'];
@@ -72,7 +82,6 @@ export class GitScmProvider extends scmm.ScmProvider {
 
 	    
 	    var selectedRef = srcVersion ? srcVersion : srcBranch;
-	    this.ctx.info('selectedRef: ' + selectedRef);
 
 	    var inputref = "refs/heads/master";
 	    if (selectedRef && selectedRef.trim().length > 0) {
@@ -85,7 +94,7 @@ export class GitScmProvider extends scmm.ScmProvider {
 
         return Q(0)
         .then((code: number) => {
-	        if (this.enlistmentExists()) {
+	        if (!this.enlistmentExists()) {
 	        	return this.gitw.clone(giturl, true, folder);
 	        }
 	        else {
