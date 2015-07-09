@@ -30,7 +30,7 @@ export class MessageListener extends events.EventEmitter {
 
         this.emit('listening');
 
-        this.agentapi.getMessage(this.poolId, this.sessionId, (err:any, statusCode: number, obj: any) => {
+        this.agentapi.getMessage(this.poolId, this.sessionId, (err: any, statusCode: number, obj: any) => {
             // exit on some conditions such as bad credentials
             if (statusCode == 401) {
                 console.error('Unauthorized.  Confirm credentials are correct and restart.  Exiting.');
