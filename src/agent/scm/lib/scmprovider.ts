@@ -29,6 +29,16 @@ export class ScmProvider implements IScmProvider {
 		// should override if you need store creds, info, etc.. from the endpoint
 	}
 
+	public getAuthParameter(endpoint: ifm.JobEndpoint, paramName: string) {
+		var paramValue = null;
+
+		if (endpoint && endpoint.authorization && endpoint.authorization['parameters']) {
+			paramValue = endpoint.authorization['parameters'][paramName];	
+		}
+		
+		return paramValue;
+	}
+	
 	// virtual - must override
 	public getCode(): Q.Promise<number> {
 		var defer = Q.defer<number>();

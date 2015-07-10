@@ -43,7 +43,7 @@ export class GitScmProvider extends scmm.ScmProvider {
 
 	public initialize(endpoint: ifm.JobEndpoint) {
 		this.endpoint = endpoint;
-		
+
 		if (!endpoint) {
 			throw (new Error('endpoint null initializing git scm provider'));
 		}
@@ -53,9 +53,9 @@ export class GitScmProvider extends scmm.ScmProvider {
 	        this.ctx.info('Using auth scheme: ' + scheme);
 
 	        switch (scheme) {
-	            case 'OAuth':
-	                this.username = 'OAuth';
-	                this.password = endpoint.authorization['parameters']['AccessToken'];
+	            case 'UsernamePassword':
+	                this.username = this.getAuthParameter(endpoint, 'Username') || 'not supplied';
+	                this.password = this.getAuthParameter(endpoint, 'Password') || 'not supplied';
 	                break;
 
 	            default:
@@ -92,20 +92,29 @@ export class GitScmProvider extends scmm.ScmProvider {
 	    var ref = _translateRef(inputref);
 	    this.ctx.info('Using ref: ' + ref);
 
+	    var gopt = <gitwm.IGitExecOptions>{
+	    	creds: true
+	    }
+
+	    this.gitw.username = this.username;
+	    this.gitw.password = this.password;
+
         return Q(0)
         .then((code: number) => {
 	        if (!this.enlistmentExists()) {
-	        	return this.gitw.clone(giturl, true, folder);
+	        	return this.gitw.clone(giturl, true, folder, gopt);
 	        }
 	        else {
-	        	return this.gitw.fetch()
+	        	tl.cd(this.targetPath);
+	        	return this.gitw.fetch(gopt)
 	        	.then((code: number) => {
-	        		return this.gitw.checkout(ref);
+	        		return this.gitw.checkout(ref, gopt);
 	        	})
 	        }
         })
         .then((code: number) => {
         	if (this.endpoint.data['checkoutSubmodules'] === "True") {
+        		tl.cd(this.targetPath);
         		return this.gitw.submodule(['init'])
         		.then((code: number) => {
         			return this.gitw.submodule(['update']);

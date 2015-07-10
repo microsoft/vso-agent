@@ -95,10 +95,6 @@ export class GitWrapper extends events.EventEmitter {
         git.on('stderr', (data) => {
             this.emit('stderr', data);
         })
-
-        if (args.map((arg: string) => {
-            git.arg(arg, true); // raw arg
-        }));
         
         // TODO: if HTTP_PROXY is set (debugging) we can also supply http.proxy config
         // TODO: handle and test with spaces in the path
@@ -108,8 +104,15 @@ export class GitWrapper extends events.EventEmitter {
             process.env[envGitUsername] = this.username || 'none';
             process.env[envGitPassword] = this.password || '';
             var credHelper = path.join(__dirname, 'credhelper.js');
-            git.arg('-c credential.helper=' + credHelper, true); // raw arg
+            git.arg('-c');
+            
+            // TODO: test quoting and spaces
+            git.arg('credential.helper=' + credHelper, true); // raw arg
         }
+
+        if (args.map((arg: string) => {
+            git.arg(arg, true); // raw arg
+        }));
 
         options = options || <IGitExecOptions>{};
         var ops: any = {

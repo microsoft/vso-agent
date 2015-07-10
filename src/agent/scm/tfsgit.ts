@@ -13,7 +13,7 @@ export class GitTfsScmProvider extends gitm.GitScmProvider {
 	// override since TfsGit uses the generated OAuth token
 	public initialize(endpoint: ifm.JobEndpoint) {
 		this.endpoint = endpoint;
-		
+
 	    if (endpoint.authorization && endpoint.authorization['scheme']) {
 	        var scheme = endpoint.authorization['scheme'];
 	        this.ctx.info('Using auth scheme: ' + scheme);
@@ -21,7 +21,7 @@ export class GitTfsScmProvider extends gitm.GitScmProvider {
 	        switch (scheme) {
 	            case 'OAuth':
 	                this.username = 'OAuth';
-	                this.password = endpoint.authorization['parameters']['AccessToken'];
+	                this.password = this.getAuthParameter(endpoint, 'AccessToken') || 'not supplied';
 	                break;
 
 	            default:
