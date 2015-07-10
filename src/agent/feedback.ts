@@ -10,6 +10,7 @@ import fs = require('fs');
 import tm = require('./tracing');
 import cq = require('./concurrentqueue');
 import Q = require('q');
+import events = require('events');
 
 var async = require('async');
 
@@ -20,8 +21,13 @@ var LOCK_DELAY = 29323;
 var CHECK_INTERVAL = 1000;
 var MAX_DRAIN_WAIT = 60 * 1000; // 1 min
 
-export class TimedWorker {
+export class Events {
+    static JobAbandoned = "jobAbandoned";
+}
+
+export class TimedWorker extends events.EventEmitter {
     constructor(msDelay: number) {
+        super();
         this._msDelay = msDelay;
         this.enabled = true;
         this._waitAndSend();
@@ -39,9 +45,8 @@ export class TimedWorker {
     }
 
     // need to override
-    public doWork(callback: (err: any) => void): void {
-        throw new Error('Abstract.  Must override.')
-        callback(null);
+    public doWork(): Q.Promise<any> {
+        return Q.reject(new Error('Abstract.  Must override.'));
     }
 
     // should likely override
@@ -52,7 +57,7 @@ export class TimedWorker {
     private _waitAndSend(): void {
         setTimeout(() => {
             if (this.shouldDoWork()) {
-                this.doWork((err) => {
+                this.doWork().fin(() => {
                     this.continueSending();
                 });
             }
@@ -84,11 +89,12 @@ function ensureTrace(writer: cm.ITraceWriter) {
     }
 }
 
-export class ServiceChannel implements cm.IFeedbackChannel {
+export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackChannel {
     constructor(agentUrl: string,
                 collectionUrl: string,
                 jobInfo: cm.IJobInfo,
                 workerCtx: ctxm.WorkerContext) {
+        super();
 
         ensureTrace(workerCtx);
         trace.enter('ServiceChannel');
@@ -110,6 +116,11 @@ export class ServiceChannel implements cm.IFeedbackChannel {
 
         this._totalWaitTime = 0;
         this._lockRenewer = new LockRenewer(jobInfo, workerCtx.config.poolId, this._agentApi);
+
+        // pass the jobAbandoned event up to the owner
+        this._lockRenewer.on(Events.JobAbandoned, () => {
+            this.emit(Events.JobAbandoned);
+        });
 
         // timelines
         this._timelineRecordQueue = new cq.ConcurrentBatch<ifm.TimelineRecord>(
@@ -172,7 +183,7 @@ export class ServiceChannel implements cm.IFeedbackChannel {
     private _logPageQueue: LogPageQueue;
 
     // wait till all the queues are empty and not processing.
-    public drain(callback: (err: any) => void): void {
+    public drain(): Q.Promise<any> {
         trace.enter('servicechannel:drain');
 
         var consoleFinished = this._consoleQueue.waitForEmpty();
@@ -188,13 +199,7 @@ export class ServiceChannel implements cm.IFeedbackChannel {
             this._timelineRecordQueue.finishAdding();
         });
 
-        Q.all([consoleFinished, logFinished, timelineFinished])
-            .fail((err: any) => {
-                callback(err);
-            })
-            .then((results: any) => {
-                callback(null);
-            });
+        return Q.all([consoleFinished, logFinished, timelineFinished]);
     }
 
     //------------------------------------------------------------------
@@ -220,14 +225,41 @@ export class ServiceChannel implements cm.IFeedbackChannel {
         this._consoleQueue.section(line);
     }
 
-    public updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void {
+    private updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest): Q.Promise<any> {
         trace.enter('servicechannel:updateJobRequest');
         trace.write('poolId: ' + poolId);
         trace.write('lockToken: ' + lockToken);
+        
+        var deferred = Q.defer();
         this._agentApi.updateJobRequest(poolId, lockToken, jobRequest, (err, status, jobRequest) => {
             trace.write('err: ' + err);
             trace.write('status: ' + status);
-            callback(err);
+            if (status === 404) {
+                // job not found, probably because the server abandoned it. stop the lock renewer
+                this.emit(Events.JobAbandoned);
+                this._lockRenewer.end();
+            }
+            if (err) {
+                deferred.reject(err);
+            }
+            else {
+                deferred.resolve(null);
+            }
+        });
+        return deferred.promise;
+    }
+    
+    public finishJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest): Q.Promise<any> {
+        trace.enter('servicechannel:finishJobRequest');
+        
+        // end the lock renewer. if it's currently waiting on its timeout, .finished will be a previously resolved promise
+        trace.write('shutting down lock renewer...');
+        this._lockRenewer.end();
+        
+        // wait for the lock renewer to finish. this is only really meaningful if it's actually in the middle of an HTTP request
+        return this._lockRenewer.finished.then(() => {
+            trace.write('lock renewer shut down');
+            return this.updateJobRequest(poolId, lockToken, jobRequest); 
         });
     }
 
@@ -653,6 +685,9 @@ export class LockRenewer extends TimedWorker {
     constructor(jobInfo: cm.IJobInfo, poolId: number, agentApi: ifm.IAgentApi) {
         trace.enter('LockRenewer');
 
+        // finished is initially a resolved promise, because a renewal is not in progress
+        this.finished = Q(null);
+        
         this._jobInfo = jobInfo;
         trace.state('_jobInfo', this._jobInfo);
         this._agentApi = agentApi;
@@ -665,25 +700,39 @@ export class LockRenewer extends TimedWorker {
     private _poolId: number;
     private _agentApi: ifm.IAgentApi;
     private _jobInfo: cm.IJobInfo;
+    
+    // consumers can use this promise to wait for the lock renewal to finish
+    public finished: Q.Promise<any>;
 
-    public doWork(callback: (err: any) => void): void {
-        this._renewLock(callback);
+    public doWork(): Q.Promise<any> {
+        return this._renewLock();
     }
 
-    public stop() {
-        this.enabled = false;
-    }
-
-    private _renewLock(callback: (err: any) => void): void {
+    private _renewLock(): Q.Promise<any> {
         var jobRequest: ifm.TaskAgentJobRequest = <ifm.TaskAgentJobRequest>{};
         jobRequest.requestId = this._jobInfo.requestId;
 
         trace.state('jobRequest', jobRequest);
+        
+        // create a new, unresolved "finished" promise
+        var deferred: Q.Deferred<any> = Q.defer();
+        this.finished = deferred.promise;
+        
+        // lock token is ignored by newer servers
         this._agentApi.updateJobRequest(this._poolId, this._jobInfo.lockToken, jobRequest, (err, status, jobRequest) => {
-            callback(err);
+            if (status === 404) {
+                // job not found. stop this loop.
+                this.emit(Events.JobAbandoned);
+                this.end();
+            }
+            if (err) {
+                deferred.reject(err);
+            }
+            else {
+                deferred.resolve(null);
+            }
         });
+        
+        return deferred.promise;
     }
 }
-
-
-

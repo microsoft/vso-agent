@@ -17,8 +17,7 @@ import tm = require('./tracing');
 import taskm = require('./taskmanager');
 import webapi = require('./api/webapi');
 import heartbeat = require('./heartbeat');
-
-var Q = require('q');
+import Q = require('q');
 
 var SWEEP_DIAG_SECONDS = 57;
 var SWEEP_LOGS_SECONDS = 43;
@@ -157,6 +156,11 @@ cm.readBasicCreds()
     
     messageListener.on('listening', () => {
         heartbeat.alive();
+    });
+    
+    messageListener.on('sessionUnavailable', () => {
+        ag.error('Could not create a session with the server.');
+        gracefulShutdown();
     });
 
     messageListener.start((message: ifm.TaskAgentMessage) => {

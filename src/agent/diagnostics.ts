@@ -9,6 +9,7 @@ import os = require("os");
 import cm = require('./common');
 import fm = require('./feedback');
 import events = require('events');
+import Q = require('q');
 var shell = require('shelljs');
 var async = require('async');
 
@@ -94,21 +95,21 @@ export class DiagnosticSweeper extends fm.TimedWorker  {
         return this.emitter;
     }
 
-    public doWork(callback: (err: any) => void): void {
-        this._cleanFiles(callback);
+    public doWork(): Q.Promise<any> {
+        return this._cleanFiles();
     }
 
-    private _cleanFiles(callback: (err: any) => void): void {
+    private _cleanFiles(): Q.Promise<any> {
         this.emitter.emit('info', 'Cleaning Files: ' + this.path);
         if (!shell.test('-d', this.path)) {
-            callback(null);
-            return;
+            return Q(null);
         }
 
         var candidates = shell.find(this.path).filter((file) => { return this.ext === '*' || file.endsWith('.' + this.ext); });
 
         var _that = this;
         var delCount = 0;
+        var deferred = Q.defer();
         async.forEachSeries(candidates,
             function (candidate, done: (err: any) => void) {
                 fs.stat(candidate, (err, stats) => {
@@ -135,8 +136,10 @@ export class DiagnosticSweeper extends fm.TimedWorker  {
             }, function (err) {
                 _that.emitter.emit('info', 'deleted file count: ' + delCount);
                 // ignoring errors. log and go
-                callback(null);
-            });        
+                deferred.resolve(null);
+            });
+            
+        return deferred.promise;
     }
 }
 

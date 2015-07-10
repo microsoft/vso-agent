@@ -5,6 +5,7 @@ import cm = require('../../agent/common');
 import ctxm = require('../../agent/context');
 import ifm = require('../../agent/api/interfaces');
 import Q = require('q');
+import events = require('events');
 
 export class TestCmdQueue implements cm.IAsyncCommandQueue {
 	constructor() {
@@ -34,7 +35,7 @@ export class TestCmdQueue implements cm.IAsyncCommandQueue {
     public errorMessage: string;
 }
 
-export class TestFeedbackChannel implements cm.IFeedbackChannel {
+export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeedbackChannel {
 	public agentUrl: string;
 	public collectionUrl: string;
 	public timelineApi: ifm.ITimelineApi;
@@ -46,14 +47,15 @@ export class TestFeedbackChannel implements cm.IFeedbackChannel {
 	private _logPages: any;
 
 	constructor() {
+		super();
 		this._webConsole = [];
 		this._records = {};
 		this._logPages = {};
 	}
 
 
-	public drain(callback: (err: any) => void): void {
-		callback(null);
+	public drain(): Q.Promise<any> {
+		return Q(null);
 	}
 
 	public queueLogPage(page: cm.ILogPageInfo): void {
@@ -148,8 +150,8 @@ export class TestFeedbackChannel implements cm.IFeedbackChannel {
 		this._getFromBatch(recordId).order = order;
 	}
 
-	public updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest, callback: (err: any) => void): void {
-		callback(null);
+	public finishJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest): Q.Promise<any> {
+		return Q(null);
 	}
 
     public uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.Promise<any> {

@@ -333,7 +333,7 @@ export class JobContext extends ExecutionContext {
     //------------------------------------------------------------------------------------
     // Job/Task Status
     //------------------------------------------------------------------------------------
-    public finishJob(result: ifm.TaskResult, callback: (err: any) => void): void {
+    public finishJob(result: ifm.TaskResult): Q.Promise<any> {
         trace.enter('finishJob');
         trace.state('result', ifm.TaskResult[result]);
 
@@ -347,14 +347,11 @@ export class JobContext extends ExecutionContext {
         trace.state('jobRequest', jobRequest);
         trace.state('this.config', this.config);
 
-        // marking the job complete and then drain so the next worker can start
-        this.service.updateJobRequest(this.config.poolId,
-            this.job.lockToken,
-            jobRequest,
-            (err: any) => {
-                trace.write('draining feedback');
-                this.service.drain(callback);
-            });
+        // stop the lock renewal timer, mark the job complete and then drain so the next worker can start
+        return this.service.finishJobRequest(this.config.poolId, this.job.lockToken, jobRequest).fin(() => {
+            trace.write('draining feedback');
+            return this.service.drain();
+        });
     }
 
     public writeConsoleSection(message: string) {
