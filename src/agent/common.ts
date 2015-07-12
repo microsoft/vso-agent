@@ -110,7 +110,6 @@ export interface ISettings {
 // this is not persisted but read from settings, server and/or user at runtime
 export interface IConfiguration {
     settings: ISettings;
-    creds: any;
     poolId: number;
     agent: ifm.TaskAgent;
 }

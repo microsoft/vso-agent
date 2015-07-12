@@ -1,9 +1,11 @@
 /// <reference path="../../definitions/node.d.ts"/>
+/// <reference path="../../definitions/toolrunner.d.ts"/>
 
 // TODO: convert vso-task-lib to TS and generate .d.ts file
 var tl = require('vso-task-lib');
 import events = require('events');
 import Q = require('q');
+var shell = require('shelljs');
 var path = require('path');
 
 export var envGitUsername = 'GIT_USERNAME';
@@ -25,7 +27,7 @@ var _gitLocalPath = path.join(__dirname, process.platform, 'libgit_host');
 // TODO: move into vso-task-lib??
 export class GitWrapper extends events.EventEmitter {
     constructor() {
-        this.gitInstalled = tl.which('git', false) !== null;
+        this.gitInstalled = shell.which('git', false) !== null;
         super();
     }
 
@@ -81,13 +83,19 @@ export class GitWrapper extends events.EventEmitter {
         options = options || <IGitExecOptions>{};
         var defer = Q.defer<number>();
 
-        var gitPath = options.useGitExe || process.env['AGENT_USEGITEXE'] ? tl.which('git', false) : _gitLocalPath;
+        var gitPath = options.useGitExe || process.env['AGENT_USEGITEXE'] ? shell.which('git', false) : _gitLocalPath;
         if (!gitPath) {
             defer.reject(new Error('git not found in the path'));
             return;
         }
 
         var git = new tl.ToolRunner(gitPath);
+        git.silent = true;
+
+        git.on('debug', (message) => {
+            this.emit('stdout', '[debug]' + message);
+        })
+
         git.on('stdout', (data) => {
             this.emit('stdout', data);
         })

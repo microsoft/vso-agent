@@ -59,10 +59,7 @@ export function createTestConfig(): cm.IConfiguration {
 	config.settings.poolName = 'testPool';
 	config.settings.serverUrl = 'https://yosoylocoporcornballs.com';
 	config.settings.agentName = 'testAgent';
-	config.settings.workFolder = './_work'
-	config.creds = {};
-	config.creds.username = 'username';
-	config.creds.password = 'password';
+	config.settings.workFolder = './_work';
 	config.poolId = 1;
 
 	return config;

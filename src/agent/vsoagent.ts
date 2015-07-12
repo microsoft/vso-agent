@@ -36,8 +36,6 @@ if (process.getuid() == 0 && !process.env['VSO_AGENT_RUNASROOT']) {
     process.exit(1);
 }
 
-heartbeat.exitIfAlive();
-
 var ag: ctxm.AgentContext;
 var trace: tm.Tracing;
 var cfgr: cfgm.Configurator = new cfgm.Configurator();
@@ -151,16 +149,15 @@ cm.readBasicCreds()
     trace.write('created message listener');
     ag.info('starting listener...');
 
-    heartbeat.exitIfAlive();
-    heartbeat.alive();
+    heartbeat.write();
     
     messageListener.on('listening', () => {
-        heartbeat.alive();
+        heartbeat.write();
     });
     
     messageListener.on('sessionUnavailable', () => {
         ag.error('Could not create a session with the server.');
-        gracefulShutdown();
+        gracefulShutdown(0);
     });
 
     messageListener.start((message: ifm.TaskAgentMessage) => {
@@ -189,7 +186,7 @@ cm.readBasicCreds()
             runWorker(ag, workerMsg);
         }
         else {
-            ag.error('Unknown Message Type');
+            ag.error('Unknown Message Type: ' + message.messageType);
         }
     },
     (err: any) => {
@@ -203,20 +200,29 @@ cm.readBasicCreds()
 .fail(function(err) {
     console.error('Error starting the agent');
     console.error(err.message);
-    process.exit(1);
+    if (ag) {
+        ag.error(err.stack);
+    }
+
+    gracefulShutdown(0);
 })
 
 process.on('uncaughtException', function (err) {
     if (ag) {
         ag.error('agent unhandled:')
-        ag.error(err.message);
+        ag.error(err.stack);
     }
     else {
-        console.error(err.message);
+        console.error(err.stack);
     }
 });
 
-var gracefulShutdown = function() {
+//
+// TODO: re-evaluate and match .net agent exit codes
+// 0: agent will go down and host will not attempt restart
+// 1: agent will attempt
+//
+var gracefulShutdown = function(code: number) {
     console.log("\nShutting down host.");
     if (messageListener) {
         messageListener.stop((err) => {
@@ -225,18 +231,18 @@ var gracefulShutdown = function() {
                 ag.error(err.message);
             }
             heartbeat.stop();
-            process.exit();
+            process.exit(code);
         });
     } else {
         heartbeat.stop();
-        process.exit();
+        process.exit(code);
     }
 }
 
 process.on('SIGINT', () => {
-    gracefulShutdown();
+    gracefulShutdown(0);
 });
 
 process.on('SIGTERM', () => {
-    gracefulShutdown();
+    gracefulShutdown(0);
 });

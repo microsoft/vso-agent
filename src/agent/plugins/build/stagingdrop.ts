@@ -253,8 +253,8 @@ class CreateDrop implements plugins.IPlugin {
         return dropPromise.then((artifactLocation: string) => {
             if (artifactLocation) {
                 var serverUrl = ctx.job.environment.systemConnection ? ctx.job.environment.systemConnection.url : ctx.job.authorization.serverUrl;
-                var buildClient = webapi.QBuildApi(serverUrl,
-                    cm.basicHandlerFromCreds(ctx.workerCtx.config.creds));
+                var accessToken = ctx.job.environment.systemConnection.authorization.parameters['AccessToken'];
+                var buildClient = webapi.QBuildApi(serverUrl, webapi.bearerHandler(accessToken));
 
                 return ctx.service.postArtifact(ctx.variables[ctxm.WellKnownVariables.projectId],
                     parseInt(ctx.variables[ctxm.WellKnownVariables.buildId]), {

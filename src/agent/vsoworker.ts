@@ -92,7 +92,7 @@ export function run(msg, consoleOutput: boolean,
         }
         else {
             trace.write('using altcreds');
-            systemAuthHandler = wapim.basicHandler(msg.config.creds.username, msg.config.creds.password);
+            wk.error('system connection token not supplied.  unsupported deployment.')
         }
 
         // TODO: jobInfo should go away and we should just have JobContext

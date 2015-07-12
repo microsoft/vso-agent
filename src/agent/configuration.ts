@@ -163,7 +163,6 @@ export class Configurator {
             var agent = agents[0];
 
             var config: cm.IConfiguration = <cm.IConfiguration>{};
-            config.creds = creds;
             config.poolId = agentPoolId;
             config.settings = settings;
             config.agent = agent;
@@ -260,7 +259,6 @@ export class Configurator {
         })
         .then((agent: ifm.TaskAgent) => {
             var config: cm.IConfiguration = <cm.IConfiguration>{};
-            config.creds = creds;
             config.poolId = agentPoolId;
             config.settings = settings;
             config.agent = agent;
