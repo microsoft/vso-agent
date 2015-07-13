@@ -70,7 +70,7 @@ export class GitWrapper extends events.EventEmitter {
     public clean(args: string[], options?: IGitExecOptions): Q.Promise<number> {
         options = options || <IGitExecOptions>{};
         options.useGitExe = true;
-        return this.exec(args, options);
+        return this.exec(['clean'].concat(args), options);
     }
 
     public submodule(args: string[], options?: IGitExecOptions): Q.Promise<number> {

@@ -4,7 +4,7 @@ import gitwm = require('./lib/gitwrapper');
 import ctxm = require('../context');
 import ifm = require('../api/interfaces');
 var path = require('path');
-var tl = require('vso-task-lib');
+var shell = require('shelljs');
 var url = require('url');
 
 export function getProvider(ctx: ctxm.JobContext, targetPath: string): scmm.IScmProvider {
@@ -105,7 +105,7 @@ export class GitScmProvider extends scmm.ScmProvider {
 	        	return this.gitw.clone(giturl, true, folder, gopt);
 	        }
 	        else {
-	        	tl.cd(this.targetPath);
+	        	shell.cd(this.targetPath);
 	        	return this.gitw.fetch(gopt)
 	        	.then((code: number) => {
 	        		return this.gitw.checkout(ref, gopt);
@@ -114,7 +114,7 @@ export class GitScmProvider extends scmm.ScmProvider {
         })
         .then((code: number) => {
         	if (this.endpoint.data['checkoutSubmodules'] === "True") {
-        		tl.cd(this.targetPath);
+        		shell.cd(this.targetPath);
         		return this.gitw.submodule(['init'])
         		.then((code: number) => {
         			return this.gitw.submodule(['update']);
@@ -130,7 +130,14 @@ export class GitScmProvider extends scmm.ScmProvider {
 	}
 
 	public clean(): Q.Promise<number> {
-		return this.gitw.exec(['clean', '-fdx']);
+		if (this.enlistmentExists()) {
+			shell.cd(this.targetPath);
+			return this.gitw.clean(['-fdx']);	
+		}
+		else {
+			this.ctx.debug('skipping clean since repo does not exist');
+			return Q(0);
+		}
 	}	
 
 }
