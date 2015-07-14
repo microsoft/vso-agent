@@ -3,8 +3,7 @@
 
 var sh = require('svchost')
   , shell = require('shelljs')
-  , path = require('path')
-  , heartbeat = require('./heartbeat');
+  , path = require('path');
 
 import env = require('./environment');
 
@@ -13,8 +12,6 @@ if (!shell.test('-f', path.join(__dirname, '..', '.agent'))) {
     console.error('Agent must be configured.  Run vsoagent configure');
     process.exit(1);
 }
-
-heartbeat.exitIfAlive();
 
 var banner = function(str) {
     console.log('--------------------------------------------');
@@ -69,18 +66,6 @@ var handleRestart = function(starts, relaunch) {
             relaunch(true);
         },
         delay);
-}
-
-var zombieWatch = function() {
-    setTimeout(function(){
-            if (!heartbeat.isAlive()) {
-                console.error('agent is a zombie.  restarting.');
-                
-            }
-
-            zombieWatch();
-        },
-        1000);
 }
 
 // set additional env vars for the service from a file
