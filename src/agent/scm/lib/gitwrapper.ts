@@ -73,9 +73,16 @@ export class GitWrapper extends events.EventEmitter {
         return this.exec(['clean'].concat(args), options);
     }
 
+    public reset(args: string[], options?: IGitExecOptions): Q.Promise<number> {
+        options = options || <IGitExecOptions>{};
+        options.useGitExe = true;
+        return this.exec(['reset'].concat(args), options);
+    }
+
     public submodule(args: string[], options?: IGitExecOptions): Q.Promise<number> {
         options = options || <IGitExecOptions>{};
         options.useGitExe = true;
+        options.creds = true;
         return this.exec(['submodule'].concat(args), options);
     }
 

@@ -114,6 +114,7 @@ export class GitScmProvider extends scmm.ScmProvider {
         })
         .then((code: number) => {
         	if (this.endpoint.data['checkoutSubmodules'] === "True") {
+        		this.ctx.info('Updating Submodules');
         		shell.cd(this.targetPath);
         		return this.gitw.submodule(['init'])
         		.then((code: number) => {
@@ -132,7 +133,10 @@ export class GitScmProvider extends scmm.ScmProvider {
 	public clean(): Q.Promise<number> {
 		if (this.enlistmentExists()) {
 			shell.cd(this.targetPath);
-			return this.gitw.clean(['-fdx']);	
+			return this.gitw.clean(['-fdx'])
+			.then((code: number) => {
+				return this.gitw.reset(['--hard']);
+			})
 		}
 		else {
 			this.ctx.debug('skipping clean since repo does not exist');
