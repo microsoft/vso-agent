@@ -17,6 +17,7 @@ export class ScmProvider implements IScmProvider {
 	}
 
 	public ctx: ctxm.JobContext;
+	public debugOutput: boolean;
 
 	// full path of final root of enlistment
 	public targetPath: string;

@@ -255,10 +255,8 @@ export class JobRunner {
                 jobCtx.setTaskStarted(item.instanceId, item.name);
                 _this.runTask(item, taskCtx, (err) => {
 
-                    var taskResult: ifm.TaskResult = ifm.TaskResult.Succeeded;
-                    if (err) {
-                        taskResult = ifm.TaskResult.Failed;
-
+                    var taskResult: ifm.TaskResult = taskCtx.result;
+                    if (err || taskResult == ifm.TaskResult.Failed) {
                         if (item.continueOnError) {
                             taskResult = jobResult = ifm.TaskResult.SucceededWithIssues;
                             err = null;

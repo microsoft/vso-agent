@@ -74,7 +74,7 @@ export class Context extends events.EventEmitter {
     }
 
     public debug(message: string) {
-        this._write(cm.DiagnosticLevel.Info, 'task.debug' , message);
+        this._write(cm.DiagnosticLevel.Verbose, 'task.debug' , message);
     }
 
     private _write(level: cm.DiagnosticLevel, tag: string, message: string) {
@@ -226,6 +226,7 @@ export class ExecutionContext extends Context {
 
         this.jobInfo = jobInfo;
         this.authHandler = authHandler;
+
         this.variables = jobInfo.variables;
         this.recordId = recordId;
         this.workerCtx = workerCtx;
@@ -240,8 +241,10 @@ export class ExecutionContext extends Context {
         logData.jobInfo = jobInfo;
         logData.recordId = recordId;
 
+        this.debugOutput = this.variables[cm.sysVars.debug] == 'true';
         var logger: lm.PagingLogger = new lm.PagingLogger(logFolder, logData);
-        logger.level = this.variables[cm.sysVars.debug] == 'true' ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info;
+
+        logger.level =  this.debugOutput ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info;
 
         logger.on('pageComplete', (info: cm.ILogPageInfo) => {
             trace.state('pageComplete', info);
@@ -255,6 +258,7 @@ export class ExecutionContext extends Context {
         super([logger]);
     }
 
+    public debugOutput: boolean;
     public workerCtx: WorkerContext;
     public jobInfo: cm.IJobInfo;
     public authHandler: ifm.IRequestHandler;
@@ -447,11 +451,14 @@ export class TaskContext extends ExecutionContext {
         recordId: string,
         feedback: cm.IFeedbackChannel,
         workerCtx: WorkerContext) {
-
+        this.result = ifm.TaskResult.Succeeded;
+        this.resultMessage = '';
         this.webapi = wapim;
         super(jobInfo, authHandler, recordId, feedback, workerCtx);
     }
 
+    public result: ifm.TaskResult;
+    public resultMessage: string;
     public inputs: ifm.TaskInputs;
     public webapi: any;
 }

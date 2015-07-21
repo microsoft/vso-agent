@@ -15,6 +15,7 @@ export interface IGitExecOptions {
     useGitExe: boolean;
     creds: boolean;
     cwd: string;
+    debugOutput: boolean;
     env: { [key: string]: string };
     silent: boolean;
     outStream: NodeJS.WritableStream;
@@ -100,7 +101,9 @@ export class GitWrapper extends events.EventEmitter {
         git.silent = true;
 
         git.on('debug', (message) => {
-            this.emit('stdout', '[debug]' + message);
+            if (options.debugOutput) {
+                this.emit('stdout', '[debug]' + message);    
+            }
         })
 
         git.on('stdout', (data) => {

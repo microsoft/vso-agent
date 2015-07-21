@@ -94,6 +94,7 @@ export class GitScmProvider extends scmm.ScmProvider {
 
 	    var gopt = <gitwm.IGitExecOptions>{
 	    	creds: true
+	    	debugOutput: this.debugOutput
 	    }
 
 	    this.gitw.username = this.username;

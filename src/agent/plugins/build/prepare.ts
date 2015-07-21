@@ -73,6 +73,7 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     
     var scmProvider = scmm.getProvider(ctx, repoPath);
     scmProvider.initialize(endpoint);
+    scmProvider.debugOutput = ctx.debugOutput;
 
     return Q(null)
     .then(() => {
