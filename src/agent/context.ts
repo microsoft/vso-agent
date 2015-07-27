@@ -152,9 +152,11 @@ export class AgentContext extends Context implements cm.ITraceWriter {
         // Set full path for work folder, as it is used by others - config can have a relative path (./work)
         this.diagFolder = path.join(rootAgentDir, '_diag');
         
-        this.fileWriter = new dm.DiagnosticFileWriter(process.env[cm.envVerbose] ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info,
+        this.fileWriter = new dm.RollingDiagnosticFileWriter(process.env[cm.envVerbose] ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info,
             this.diagFolder,
-            new Date().toISOString().replace(/:/gi, '_') + '_' + process.pid + '.log');
+            'agent',
+            1000,
+            2);
 
         var writers: cm.IDiagnosticWriter[] = [this.fileWriter];
 
