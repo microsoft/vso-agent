@@ -93,7 +93,7 @@ export class GitScmProvider extends scmm.ScmProvider {
 	    this.ctx.info('Using ref: ' + ref);
 
 	    var gopt = <gitwm.IGitExecOptions>{
-	    	creds: true
+	    	creds: true,
 	    	debugOutput: this.debugOutput
 	    }
 
