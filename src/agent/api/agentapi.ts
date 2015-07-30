@@ -59,8 +59,8 @@ export class AgentApi implements ifm.IAgentApi {
         this.restClient.delete('/_apis/distributedtask/pools/' + poolId + '/sessions/' + sessionId, onResult);
     }
 
-    getMessage(poolId: number, sessionId: string, onResult: (err: any, statusCode: number, message: any) => void): void {
-        var path: string = '_apis/distributedtask/pools/' + poolId + '/messages?sessionId=' + sessionId;
+    getMessage(poolId: number, sessionId: string, lastMessageId: number, onResult: (err: any, statusCode: number, message: any) => void): void {
+        var path: string = '_apis/distributedtask/pools/' + poolId + '/messages?sessionId=' + sessionId + '&lastMessageId=' + lastMessageId;
         this.restClient.getJson(path, onResult);
     }
 

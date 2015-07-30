@@ -648,9 +648,11 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                                                 trace.write('error uploading log file: ' + err.message);
                                             }
 
-                                            // we're going to continue here so we can get the next logs
-                                            // TODO: we should consider requeueing?
-                                            doneStep(null);
+                                            fs.unlink(pagePath, (err) => {
+                                                // we're going to continue here so we can get the next logs
+                                                // TODO: we should consider requeueing?
+                                                doneStep(null);
+                                            });
                                         });
                                 }
                                 else {

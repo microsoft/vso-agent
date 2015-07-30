@@ -9,6 +9,8 @@ var uuid = require('node-uuid');
 var QUEUE_RETRY_DELAY = 15000;
 var MAX_SESSION_RETRIES = 10;
 
+var lastMessageId = 0;
+
 export class MessageListener extends events.EventEmitter {
     sessionId: string;
     poolId: number;
@@ -30,7 +32,7 @@ export class MessageListener extends events.EventEmitter {
 
         this.emit('listening');
 
-        this.agentapi.getMessage(this.poolId, this.sessionId, (err: any, statusCode: number, obj: any) => {
+        this.agentapi.getMessage(this.poolId, this.sessionId, lastMessageId, (err: any, statusCode: number, obj: any) => {
             // exit on some conditions such as bad credentials
             if (statusCode == 401) {
                 onError(new Error('Unauthorized.  Confirm credentials are correct and restart.  Exiting.'));
@@ -48,6 +50,8 @@ export class MessageListener extends events.EventEmitter {
                 return;
             }
 
+            this.emit('info', 'working status code: ' + statusCode);
+
             // the queue should be robust to the server being unreachable - wait and reconnect
             if (err) {
                 onError(new Error('Could not connect to the queue.  Retrying in ' + QUEUE_RETRY_DELAY/1000 + ' sec'));
@@ -61,8 +65,9 @@ export class MessageListener extends events.EventEmitter {
             callback(obj);
 
             // the message has been handed off to the caller - delete the message and listen for the next one
-            var messageId = obj.messageId;
-            this.agentapi.deleteMessage(this.poolId, this.sessionId, messageId, (err:any, statusCode: number) => {
+            lastMessageId = obj.messageId;
+            this.emit('info', 'processing messageId ' + lastMessageId);
+            this.agentapi.deleteMessage(this.poolId, this.sessionId, lastMessageId, (err:any, statusCode: number) => {
                 // TODO: how to handle failure in deleting message?  Just log?  we need to continue nd get the next message ...
                 if (err) {
                     onError(err);

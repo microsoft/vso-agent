@@ -100,9 +100,11 @@ export class GitWrapper extends events.EventEmitter {
         var git = new tl.ToolRunner(gitPath);
         git.silent = true;
 
+        var creds = this.username + ':' + this.password;
         git.on('debug', (message) => {
             if (options.debugOutput) {
-                this.emit('stdout', '[debug]' + message);    
+                var repl = message.replace(creds, '...');
+                this.emit('stdout', '[debug]' + repl);    
             }
         })
 
@@ -117,7 +119,9 @@ export class GitWrapper extends events.EventEmitter {
         // TODO: if HTTP_PROXY is set (debugging) we can also supply http.proxy config
         // TODO: handle and test with spaces in the path
 
-        if (options.creds) {
+        if (false                // not using credhelper for now, user/pass in url
+            && options.creds) {
+            
             // protect against private repo where no creds are supplied (external) - we don't want a prompt
             process.env[envGitUsername] = this.username || 'none';
             process.env[envGitPassword] = this.password || '';

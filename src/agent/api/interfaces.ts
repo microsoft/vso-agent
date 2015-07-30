@@ -21,7 +21,7 @@ export interface IAgentApi {
     httpClient: IHttpClient;
     restClient: IRestClient;
     connect(onResult: (err: any, statusCode: number, obj: any) => void): void;
-    getMessage(poolId: number, sessionId: string, onResult: (err: any, statusCode: number, message: any) => void): void;
+    getMessage(poolId: number, sessionId: string, lastMessageId: number, onResult: (err: any, statusCode: number, message: any) => void): void;
     deleteMessage(poolId: number, sessionId: string, messageId: number, onResult: (err: any, statusCode: number) => void): void;
     getAgentPools(poolName: string, onResult: (err: any, statusCode: number, pools: TaskAgentPool[]) => void): void;
     getAgents(poolId: number, agentName: string, onResult: (err: any, statusCode: number, agents: TaskAgent[]) => void): void;

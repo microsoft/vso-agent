@@ -69,8 +69,15 @@ export class GitScmProvider extends scmm.ScmProvider {
 			throw (new Error('endpoint not set.  initialize not called'));
 		}
 
+        this.ctx.info(this.endpoint.url);
+        
         // encodes projects and repo names with spaces
         var gu = url.parse(this.endpoint.url);
+
+        if (this.username && this.password) {
+            gu.auth = this.username + ':' + this.password;    
+        }
+        
         var giturl = gu.format(gu);
         var folder = path.basename(this.targetPath);
 

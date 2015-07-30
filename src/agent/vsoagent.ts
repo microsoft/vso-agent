@@ -123,24 +123,7 @@ cm.readBasicCreds()
     trace.state('keepLogsSeconds', config.settings.keepLogsSeconds);
     var ageSeconds = config.settings.keepLogsSeconds || cm.DEFAULT_LOG_SECONDS;
     trace.state('ageSeconds', ageSeconds);
-    
-    var sweeper:dm.DiagnosticSweeper = new dm.DiagnosticSweeper(cm.getWorkerDiagPath(config), 'log', ageSeconds, SWEEP_DIAG_SECONDS);
-    sweeper.on('deleted', (path) => {
-        trace.write('log deleted: ' + path);
-    });
-    sweeper.on('info', (msg) => {
-        ag.info(msg);
-    });
-
-    var logsFolder = cm.getWorkerLogsPath(config);
-    var logSweeper:dm.DiagnosticSweeper = new dm.DiagnosticSweeper(logsFolder, '*', ageSeconds, SWEEP_LOGS_SECONDS);
-    logSweeper.on('deleted', (path) => {
-        trace.write('log deleted: ' + path);
-    });
-    logSweeper.on('info', (msg) => {
-        ag.info(msg);
-    }); 
-        
+      
     var queueName = agent.name;
     ag.info('Listening for agent: ' + queueName);
 
@@ -154,7 +137,11 @@ cm.readBasicCreds()
     messageListener.on('listening', () => {
         heartbeat.write();
     });
-    
+
+    messageListener.on('info', (message: string) => {
+        ag.info('messanger: ' + message);
+    });
+
     messageListener.on('sessionUnavailable', () => {
         ag.error('Could not create a session with the server.');
         gracefulShutdown(0);
@@ -164,6 +151,8 @@ cm.readBasicCreds()
         trace.callback('listener.start');
         
         ag.info('Message received');
+        ag.info('Message Type: ' + message.messageType);
+
         trace.state('message', message);
 
         var messageBody = null;
@@ -193,6 +182,7 @@ cm.readBasicCreds()
         if (!err || !err.hasOwnProperty('message')) {
             ag.error("Unknown error occurred while connecting to the message queue.");
         } else {
+            ag.error('Message Queue Error:');
             ag.error(err.message);
         }
     });

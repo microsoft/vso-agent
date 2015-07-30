@@ -56,7 +56,6 @@ export class PagingLogger extends events.EventEmitter implements cm.IDiagnosticW
         // TODO: split lines - line count not completely accurate
         if (++this.lineCount >= PAGE_SIZE) {
             this.newPage();
-            
         }
     }
 
