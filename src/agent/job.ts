@@ -88,7 +88,7 @@ export class JobRunner {
         jobCtx.setJobInProgress();
         jobCtx.writeConsoleSection('Preparing tasks');
 
-        jobCtx.status('Donloading required tasks');
+        wk.info('Downloading required tasks');
         var taskManager = new taskm.TaskManager(wk, jobCtx.authHandler);
         taskManager.ensureTasksExist(this.job.tasks, function (err) {
             if (err) {

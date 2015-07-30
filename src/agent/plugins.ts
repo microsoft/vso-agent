@@ -83,7 +83,7 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerConte
 
     async.forEachSeries(plugins['beforeJob'],
         function (plugin, done) {
-            ctx.info('Running beforeJob for : ' + plugin.pluginName() + ', ' + plugin.beforeId);
+            wkCtx.info('Running beforeJob for : ' + plugin.pluginName() + ', ' + plugin.beforeId);
 
             ctx.writeConsoleSection('Running ' + plugin.pluginName());
 
@@ -111,7 +111,7 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerConte
                 }
 
                 ctx.setTaskResult(plugin.beforeId, plugin.pluginName(), ifm.TaskResult.Succeeded);
-                ctx.info('Done beforeJob for : ' + plugin.pluginName());
+                wkCtx.info('Done beforeJob for : ' + plugin.pluginName());
                 pluginCtx.end();
                 done(null);
             });
@@ -135,7 +135,7 @@ export function afterJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerContex
                 return;
             }
 
-            ctx.info('Running afterJob for : ' + plugin.pluginName());
+            wkCtx.info('Running afterJob for : ' + plugin.pluginName());
 
             ctx.writeConsoleSection('Running ' + plugin.pluginName());
             var logDescr = 'Plugin afterJob:' + plugin.pluginName();
@@ -160,7 +160,7 @@ export function afterJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerContex
                 }
 
                 ctx.setTaskResult(plugin.afterId, plugin.pluginName(), ifm.TaskResult.Succeeded);
-                ctx.info('Done afterJob for : ' + plugin.pluginName());
+                wkCtx.info('Done afterJob for : ' + plugin.pluginName());
                 pluginCtx.end();
                 done(null);
             });
