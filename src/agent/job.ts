@@ -262,7 +262,8 @@ export class JobRunner {
                             err = null;
                         }
                         else {
-                            taskResult = jobResult = ifm.TaskResult.Failed;    
+                            taskResult = jobResult = ifm.TaskResult.Failed;
+                            err = new Error('Task Failed');  
                         }
                     }
 
