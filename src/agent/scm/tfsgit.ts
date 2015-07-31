@@ -20,8 +20,8 @@ export class GitTfsScmProvider extends gitm.GitScmProvider {
 
 	        switch (scheme) {
 	            case 'OAuth':
-	                this.username = 'OAuth';
-	                this.password = this.getAuthParameter(endpoint, 'AccessToken') || 'not supplied';
+	                this.username = process.env['VSO_GIT_USERNAME'] || 'OAuth';
+	                this.password = process.env['VSO_GIT_PASSWORD'] || this.getAuthParameter(endpoint, 'AccessToken') || 'not supplied';
 	                break;
 
 	            default:

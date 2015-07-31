@@ -75,8 +75,6 @@ export class PagingLogger extends events.EventEmitter implements cm.IDiagnosticW
 
         this.metadata.pagesId = this.pagesId;
         this.metadata.logPath = this.logPath;
-        var data = JSON.stringify(this.metadata, null, 2);
-        fs.writeFileSync(this.logPath, data);
 
         this.newPage();
         this.created = true;
