@@ -137,6 +137,7 @@ export class RollingDiagnosticFileWriter implements cm.IDiagnosticWriter {
             var existingContents = fs.readFileSync(mostRecentFile).toString();
             var lineCount = existingContents.split('\n').length;
             if (lineCount < this._maxLinesPerFile) {
+                // if the file isn't full, use it. if it is, we'll create a new one the next time _getFileDescriptor() is called
                 this._lineCount = lineCount;
                 this._fileDescriptor = fs.openSync(mostRecentFile, 'a');
             }
