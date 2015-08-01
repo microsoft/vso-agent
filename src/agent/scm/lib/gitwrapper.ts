@@ -93,7 +93,7 @@ export class GitWrapper extends events.EventEmitter {
 
         var gitPath = options.useGitExe || process.env['AGENT_USEGITEXE'] ? shell.which('git', false) : _gitLocalPath;
         if (!gitPath) {
-            defer.reject(new Error('git not found in the path'));
+            throw (new Error('git not found.  ensure installed and in the path'));
             return;
         }
 

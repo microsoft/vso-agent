@@ -51,7 +51,7 @@ export class ScmProvider implements IScmProvider {
 	// virtual - must override
 	public clean(): Q.Promise<number> {
 		var defer = Q.defer<number>();
-		defer.reject(new Error('Must override the getCode method'));
+		defer.reject(new Error('Must override the clean method'));
 		// defer.resolve(null);
 		return defer.promise;
 	}	
