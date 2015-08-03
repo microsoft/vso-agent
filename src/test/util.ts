@@ -4,6 +4,7 @@
 import cm = require('../agent/common');
 import env = require('../agent/environment');
 import gm = require('./lib/gitrepo');
+import dm = require('../agent/diagnostics');
 
 var fs = require('fs');
 var os = require('os');
@@ -61,6 +62,11 @@ export function createTestConfig(): cm.IConfiguration {
 	config.settings.agentName = 'testAgent';
 	config.settings.workFolder = './_work';
 	config.poolId = 1;
+	config.createDiagnosticWriter = () => {
+		return new dm.DiagnosticFileWriter(cm.DiagnosticLevel.Verbose,
+            cm.getWorkerDiagPath(config),
+            new Date().toISOString().replace(/:/gi, '_') + '_' + process.pid + '.log');
+	};
 
 	return config;
 }

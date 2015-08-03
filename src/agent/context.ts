@@ -141,6 +141,14 @@ export class Context extends events.EventEmitter {
     }
 }
 
+function getDefaultDiagnosticWriter(config: cm.IConfiguration, folder: string, prefix: string) {
+    // default writer is verbose. it's rolling, so it shouldn't take up too much space
+    return new dm.RollingDiagnosticFileWriter(cm.DiagnosticLevel.Verbose,
+        folder,
+        prefix,
+        config.settings.logSettings);
+}
+
 export class AgentContext extends Context implements cm.ITraceWriter {
     constructor(config: cm.IConfiguration, consoleOutput: boolean) {
         ensureTrace(this);
@@ -152,11 +160,7 @@ export class AgentContext extends Context implements cm.ITraceWriter {
         // Set full path for work folder, as it is used by others - config can have a relative path (./work)
         this.diagFolder = path.join(rootAgentDir, '_diag');
         
-        this.fileWriter = new dm.RollingDiagnosticFileWriter(process.env[cm.envVerbose] ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info,
-            this.diagFolder,
-            'agent',
-            1000,
-            2);
+        this.fileWriter = config.createDiagnosticWriter ? config.createDiagnosticWriter() : getDefaultDiagnosticWriter(config, this.diagFolder, 'agent');
 
         var writers: cm.IDiagnosticWriter[] = [this.fileWriter];
 
@@ -192,10 +196,8 @@ export class WorkerContext extends Context implements cm.ITraceWriter {
         this.diagFolder = cm.getWorkerDiagPath(config);
         process.env[cm.envWorkerDiagPath] = this.diagFolder;
         
-        this.fileWriter = new dm.DiagnosticFileWriter(process.env[cm.envVerbose] ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info,
-            this.diagFolder,
-            new Date().toISOString().replace(/:/gi, '_') + '_' + process.pid + '.log');
-
+        this.fileWriter = config.createDiagnosticWriter ? config.createDiagnosticWriter() : getDefaultDiagnosticWriter(config, this.diagFolder, 'worker');
+        
         var writers: cm.IDiagnosticWriter[] = [this.fileWriter];
 
         if (consoleOutput) {

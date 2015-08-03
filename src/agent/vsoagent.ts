@@ -19,9 +19,6 @@ import webapi = require('./api/webapi');
 import heartbeat = require('./heartbeat');
 import Q = require('q');
 
-var SWEEP_DIAG_SECONDS = 57;
-var SWEEP_LOGS_SECONDS = 43;
-
 var inDebugger = (typeof global.v8debug === 'object');
 
 var supported = ['darwin', 'linux'];
@@ -118,11 +115,6 @@ cm.readBasicCreds()
     trace.callback('initAgent');
 
     ag.status('Agent Started.');
-
-    // clean up logs
-    trace.state('keepLogsSeconds', config.settings.keepLogsSeconds);
-    var ageSeconds = config.settings.keepLogsSeconds || cm.DEFAULT_LOG_SECONDS;
-    trace.state('ageSeconds', ageSeconds);
       
     var queueName = agent.name;
     ag.info('Listening for agent: ' + queueName);
@@ -139,7 +131,7 @@ cm.readBasicCreds()
     });
 
     messageListener.on('info', (message: string) => {
-        ag.info('messanger: ' + message);
+        ag.info('messenger: ' + message);
     });
 
     messageListener.on('sessionUnavailable', () => {

@@ -49,12 +49,12 @@ export class DiagnosticFileWriter implements cm.IDiagnosticWriter {
 }
 
 export class RollingDiagnosticFileWriter implements cm.IDiagnosticWriter {
-    constructor(level: cm.DiagnosticLevel, folder: string, filenamePrefix: string, maxLinesPerFile: number, filesToKeep: number) {
+    constructor(level: cm.DiagnosticLevel, folder: string, filenamePrefix: string, settings: cm.ILogSettings) {
         this.level = level;
         this._folder = folder;
         this._filenamePrefix = filenamePrefix;
-        this._maxLinesPerFile = maxLinesPerFile;
-        this._filesToKeep = filesToKeep;
+        this._maxLinesPerFile = settings.linesPerFile;
+        this._filesToKeep = settings.maxFiles;
         
         this._initializeFileQueue();
     }
@@ -67,11 +67,16 @@ export class RollingDiagnosticFileWriter implements cm.IDiagnosticWriter {
     private _maxLinesPerFile: number;
     private _filesToKeep: number;
     private _fileQueue: string[];
+    private _previouslyGeneratedFilename: string;
+    private _uniqueFileCounter: number = 1;
     
     public write(message: string): void {
         var fileDescriptor = this._getFileDescriptor();
         fs.writeSync(fileDescriptor, message);
-        this._lineCount++;
+        if (message) {
+            // count newlines
+            this._lineCount += message.split('\n').length - 1;
+        }
     }
     
     public writeError(message: string): void {
@@ -109,38 +114,55 @@ export class RollingDiagnosticFileWriter implements cm.IDiagnosticWriter {
     
     private _generateFilename(): string {
         var datePart = new Date().toISOString().replace(/:/gi, '_');
-        var filename = this._filenamePrefix + '_' + process.pid + '_' + datePart + '_.log';
+        var filename = this._filenamePrefix + '_' + process.pid + '_' + datePart;
+        
+        if (filename === this._previouslyGeneratedFilename) {
+            filename += '_' + this._uniqueFileCounter++;
+        }
+        else {
+            this._previouslyGeneratedFilename = filename;
+            this._uniqueFileCounter = 1;
+        }
+        
+        filename += '.log';
         return path.join(this._folder, filename);
     }
     
     private _initializeFileQueue(): void {
-        this._fileQueue = fs.readdirSync(this._folder).filter((filename: string) => {
-            // get files that start with the prefix
-            return filename.substr(0, this._filenamePrefix.length) == this._filenamePrefix;
-        }).map((filename: string) => {
-            // get last modified time
-            return {
-                filename: filename,
-                lastModified: fs.statSync(path.join(this._folder, filename)).mtime.getTime()
-            };
-        }).sort((a, b) => {
-            // sort by lastModified 
-            return a.lastModified - b.lastModified;
-        }).map((entry) => {
-            return entry.filename;
-        });
-        
-        if (this._fileQueue.length > 0) {
-            // open the most recent file and count the lines
-            // these files should not be huge. if they become huge, and we need to stream them, we'll need to refactor
-            var mostRecentFile = this._fileQueue[this._fileQueue.length - 1]; 
-            var existingContents = fs.readFileSync(mostRecentFile).toString();
-            var lineCount = existingContents.split('\n').length;
-            if (lineCount < this._maxLinesPerFile) {
-                // if the file isn't full, use it. if it is, we'll create a new one the next time _getFileDescriptor() is called
-                this._lineCount = lineCount;
-                this._fileDescriptor = fs.openSync(mostRecentFile, 'a');
+        if (fs.existsSync(this._folder)) {
+            this._fileQueue = fs.readdirSync(this._folder).filter((filename: string) => {
+                // get files that start with the prefix
+                return filename.substr(0, this._filenamePrefix.length) == this._filenamePrefix;
+            }).map((filename: string) => {
+                // get last modified time
+                return {
+                    filename: filename,
+                    lastModified: fs.statSync(path.join(this._folder, filename)).mtime.getTime()
+                };
+            }).sort((a, b) => {
+                // sort by lastModified 
+                return a.lastModified - b.lastModified;
+            }).map((entry) => {
+                return path.join(this._folder, entry.filename);
+            });
+            
+            if (this._fileQueue.length > 0) {
+                // open the most recent file and count the lines
+                // these files should not be huge. if they become huge, and we need to stream them, we'll need to refactor
+                var mostRecentFile = this._fileQueue[this._fileQueue.length - 1]; 
+                var existingContents = fs.readFileSync(mostRecentFile).toString();
+                var lineCount = existingContents.split('\n').length;
+                if (lineCount < this._maxLinesPerFile) {
+                    // if the file isn't full, use it. if it is, we'll create a new one the next time _getFileDescriptor() is called
+                    this._lineCount = lineCount;
+                    this._fileDescriptor = fs.openSync(mostRecentFile, 'a');
+                }
             }
+        }
+        else {
+            shell.mkdir('-p', this._folder);
+            shell.chmod(775, this._folder);
+            this._fileQueue = [];
         }
     }
 }
@@ -224,4 +246,3 @@ export class DiagnosticSweeper extends fm.TimedWorker  {
         return deferred.promise;
     }
 }
-
