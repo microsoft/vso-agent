@@ -6,8 +6,10 @@ import ctxm = require('./context');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 import ifm = require('./api/interfaces');
+import vssifm = require('vso-node-api/interfaces/common/VSSInterfaces');
 import agentm = require('vso-node-api/TaskAgentApi');
 import buildm = require('vso-node-api/BuildApi');
+import taskm = require('vso-node-api/TaskApi');
 import oldwebapim = require('./api/WebApi');
 import webapim = require('vso-node-api/WebApi');
 import zlib = require('zlib');
@@ -116,7 +118,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         // service apis
         var webapi: webapim.WebApi = new webapim.WebApi(collectionUrl, jobInfo.systemAuthHandler);
         this._agentApi = webapi.getTaskAgentApi(agentUrl);
-        this.timelineApi = oldwebapim.TimelineApi(collectionUrl, jobInfo.systemAuthHandler);
+        this.taskApi = webapi.getTaskApi();
         this._fileContainerApi = oldwebapim.QFileContainerApi(collectionUrl, jobInfo.systemAuthHandler);
         this._buildApi = webapi.getQBuildApi();
 
@@ -140,8 +142,12 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
                     callback(0);
                 }
                 else {
-                    this.timelineApi.updateTimelineRecords(this.jobInfo.planId,
-                        this.jobInfo.timelineId, values,
+                    this.taskApi.updateRecords(
+                        { value: values, count: values.length },
+                        this.jobInfo.variables[cm.sysVars.teamProjectId], 
+                        this.jobInfo.description, 
+                        this.jobInfo.planId,
+                        this.jobInfo.timelineId,
                         (err, status, records) => {
                             callback(err);
                         });
@@ -177,7 +183,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
     private _buildApi: buildm.IQBuildApi;
     private _agentApi: agentm.ITaskAgentApi;
     private _fileContainerApi: ifm.IQFileContainerApi;
-    public timelineApi: ifm.ITimelineApi;
+    public taskApi: taskm.ITaskApi;
     public _testApi: ifm.IQTestManagementApi;
 
     private _issues: any;
@@ -475,12 +481,12 @@ export class BaseQueue<T> {
 
 export class WebConsoleQueue extends BaseQueue<string> {
     private _jobInfo: cm.IJobInfo;
-    private _timelineApi: ifm.ITimelineApi;
+    private _taskApi: taskm.ITaskApi;
 
     constructor(feedback: cm.IFeedbackChannel, workerCtx: ctxm.WorkerContext, msDelay: number) {
         super(workerCtx, msDelay);
         this._jobInfo = feedback.jobInfo;
-        this._timelineApi = feedback.timelineApi;
+        this._taskApi = feedback.taskApi;
     }
 
     public section(line: string): void {
@@ -496,11 +502,14 @@ export class WebConsoleQueue extends BaseQueue<string> {
             callback(null);
         }
         else {
-            this._timelineApi.appendTimelineRecordFeed(this._jobInfo.planId,
+            this._taskApi.postLines(
+                { value: values, count: values.length },
+                this._jobInfo.variables[cm.sysVars.teamProjectId], 
+                this._jobInfo.description, 
+                this._jobInfo.planId,
                 this._jobInfo.timelineId,
                 this._jobInfo.jobId,
-                values,
-                (err, status, lines) => {
+                (err, status) => {
                     trace.write('done writing lines');
                     if (err) {
                         trace.write('err: ' + err.message);
@@ -572,7 +581,7 @@ export class AsyncCommandQueue extends BaseQueue<cm.IAsyncCommand> implements cm
 export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
     private _recordToLogIdMap: { [recordId: string]: number } = {};
     private _jobInfo: cm.IJobInfo;
-    private _timelineApi: ifm.ITimelineApi;
+    private _taskApi: taskm.ITaskApi;
     private _workerCtx: ctxm.WorkerContext;
     private _service: cm.IFeedbackChannel;
 
@@ -580,7 +589,7 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
         super(workerCtx, msDelay);
         this._service = service;
         this._jobInfo = service.jobInfo;
-        this._timelineApi = service.timelineApi;
+        this._taskApi = service.taskApi;
         this._workerCtx = workerCtx;
     }
 
@@ -622,8 +631,11 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                                 //
                                 if (!this._recordToLogIdMap.hasOwnProperty(logPageInfo.logInfo.recordId)) {
                                     serverLogPath = 'logs\\' + recordId; // FCS expects \
-                                    this._timelineApi.createLog(planId,
-                                        serverLogPath,
+                                    this._taskApi.createLog(
+                                        <agentifm.TaskLog>{ path: serverLogPath },
+                                        this._jobInfo.variables[cm.sysVars.teamProjectId], 
+                                        this._jobInfo.description, 
+                                        planId,
                                         (err: any, statusCode: number, log: agentifm.TaskLog) => {
                                             if (err) {
                                                 trace.write('error creating log record: ' + err.message);
@@ -646,20 +658,30 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                                 logId = this._recordToLogIdMap[recordId];
                                 if (logId) {
                                     trace.write('uploading log page: ' + pagePath);
-                                    this._timelineApi.uploadLogFile(planId,
-                                        logId,
-                                        pagePath,
-                                        (err: any, statusCode: number, obj: any) => {
-                                            if (err) {
-                                                trace.write('error uploading log file: ' + err.message);
-                                            }
+                                    fs.stat(pagePath, (err, stats) => {
+                                        if (err) {
+                                            trace.write('Error reading log file: ' + err.message);
+                                            return;
+                                        }
+                                        var pageStream: NodeJS.ReadableStream = fs.createReadStream(pagePath);
+                                        this._taskApi.appendLog(
+                                            { "Content-Length": stats.size }, pageStream,
+                                            this._jobInfo.variables[cm.sysVars.teamProjectId],
+                                            this._jobInfo.description,
+                                            planId,
+                                            logId,
+                                            (err: any, statusCode: number, obj: any) => {
+                                                if (err) {
+                                                    trace.write('error uploading log file: ' + err.message);
+                                                }
 
-                                            fs.unlink(pagePath, (err) => {
-                                                // we're going to continue here so we can get the next logs
-                                                // TODO: we should consider requeueing?
-                                                doneStep(null);
+                                                fs.unlink(pagePath, (err) => {
+                                                    // we're going to continue here so we can get the next logs
+                                                    // TODO: we should consider requeueing?
+                                                    doneStep(null);
+                                                });
                                             });
-                                        });
+                                    });
                                 }
                                 else {
                                     this._workerCtx.error('Skipping log upload.  Log record does not exist.')

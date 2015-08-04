@@ -13,6 +13,7 @@ import basicm = require('vso-node-api/handlers/basiccreds')
 import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 import ifm = require('./api/interfaces');
+import taskm = require('vso-node-api/TaskApi');
 import webapi = require('vso-node-api/WebApi');
 import cfgm = require('./configuration');
 
@@ -27,7 +28,8 @@ sysVars.system = 'system';
 sysVars.collectionId = 'system.collectionId';
 sysVars.definitionId = 'system.definitionId';
 sysVars.tfsUri = 'system.teamFoundationServerUri';
-sysVars.collectionUri = 'system.teamFoundationCollectionUri'
+sysVars.collectionUri = 'system.teamFoundationCollectionUri';
+sysVars.teamProjectId = 'system.teamProjectId';
 sysVars.debug = 'system.debug';
 
 export var agentVars = <any>{};
@@ -128,7 +130,7 @@ export interface IConfiguration {
 export interface IFeedbackChannel extends NodeJS.EventEmitter {
     agentUrl: string;
     collectionUrl: string;
-    timelineApi: ifm.ITimelineApi;
+    taskApi: taskm.ITaskApi;
     jobInfo: IJobInfo;
     enabled: boolean;
 
