@@ -1,6 +1,8 @@
+/// <reference path="../definitions/vso-node-api.d.ts" />
+
 import ctxm = require('../context');
 import cm = require('../common');
-import ifm = require('../api/interfaces');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 
 export function createSyncCommand(command: cm.ITaskCommand) {
 	return new TaskCompleteCommand(command);
@@ -21,11 +23,11 @@ export class TaskCompleteCommand implements cm.ISyncCommand {
 
 		switch (result.toLowerCase()) {			
 			case "failed":
-				taskCtx.result = ifm.TaskResult.Failed;
+				taskCtx.result = agentifm.TaskResult.Failed;
 				break;
 
 			default:
-				taskCtx.result = ifm.TaskResult.Succeeded;
+				taskCtx.result = agentifm.TaskResult.Succeeded;
 				break;
 		}
 	}

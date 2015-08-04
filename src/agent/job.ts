@@ -7,7 +7,7 @@ import async = require('async');
 import ctxm = require('./context');
 import dm = require('./diagnostics');
 import fs = require('fs');
-import ifm = require('./api/interfaces');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import lm = require('./logging');
 import path = require('path');
 import plgm = require('./plugins');
@@ -41,7 +41,7 @@ export class JobRunner {
     private workerContext: ctxm.WorkerContext;
     private jobContext: ctxm.JobContext;
 
-    private job: ifm.JobRequestMessage;
+    private job: agentifm.JobRequestMessage;
 
     private _processVariables() {
         this.workerContext.info('_processVariables');
@@ -75,7 +75,7 @@ export class JobRunner {
         trace.state('tasks', this.job.tasks);
     }
 
-    public run(complete: (err: any, result: ifm.TaskResult) => void) {
+    public run(complete: (err: any, result: agentifm.TaskResult) => void) {
         trace.enter('run');
 
         var wk = this.workerContext;
@@ -92,7 +92,7 @@ export class JobRunner {
         var taskManager = new taskm.TaskManager(wk, jobCtx.authHandler);
         taskManager.ensureTasksExist(this.job.tasks, function (err) {
             if (err) {
-                complete(err, ifm.TaskResult.Failed);
+                complete(err, agentifm.TaskResult.Failed);
                 return;
             }
             // prepare (might download) up to 5 tasks in parallel and then run tasks seuentially
@@ -104,7 +104,7 @@ export class JobRunner {
                 function (err) {
                     if (err) {
                         trace.write('error preparing tasks');
-                        complete(err, ifm.TaskResult.Failed);
+                        complete(err, agentifm.TaskResult.Failed);
                         return;
                     }
 
@@ -117,7 +117,7 @@ export class JobRunner {
                     plgm.load(system, wk, jobCtx, (err: any, plugins: any) => {
                         if (err) {
                             trace.write('error loading plugins');
-                            complete(err, ifm.TaskResult.Failed);
+                            complete(err, agentifm.TaskResult.Failed);
                             return;
                         }
 
@@ -162,7 +162,7 @@ export class JobRunner {
                         shell.cd(jobCtx.buildDirectory);
                         trace.write(process.cwd());
 
-                        var jobResult: ifm.TaskResult = ifm.TaskResult.Succeeded;
+                        var jobResult: agentifm.TaskResult = agentifm.TaskResult.Succeeded;
                         async.series(
                             [
                                 function (done) {
@@ -175,7 +175,7 @@ export class JobRunner {
                                         // plugins can contribute to vars so replace again
                                         _this._processVariables();
 
-                                        jobResult = !err && success ? ifm.TaskResult.Succeeded : ifm.TaskResult.Failed;
+                                        jobResult = !err && success ? agentifm.TaskResult.Succeeded : agentifm.TaskResult.Failed;
                                         trace.write('jobResult: ' + jobResult);
 
                                         // we always run afterJob plugins
@@ -184,13 +184,13 @@ export class JobRunner {
                                 },
                                 function (done) {
                                     // if prepare plugins fail, we should not run tasks (getting code failed etc...)
-                                    if (jobResult == ifm.TaskResult.Failed) {
+                                    if (jobResult == agentifm.TaskResult.Failed) {
                                         trace.write('skipping running tasks since prepare plugins failed.');
                                         done(null);
                                     }
                                     else {
                                         wk.info('Running Tasks ...');
-                                        _this.runTasks((err: any, result: ifm.TaskResult) => {
+                                        _this.runTasks((err: any, result: agentifm.TaskResult) => {
                                             wk.info('Finished running tasks');
                                             jobResult = result;
                                             trace.write('jobResult: ' + result);
@@ -202,10 +202,10 @@ export class JobRunner {
                                 function (done) {
                                     wk.info('Running afterJob Plugins ...');
 
-                                    plgm.afterJob(plugins, jobCtx, wk, jobResult != ifm.TaskResult.Failed, function (err, success) {
+                                    plgm.afterJob(plugins, jobCtx, wk, jobResult != agentifm.TaskResult.Failed, function (err, success) {
                                         wk.info('Finished running afterJob plugins');
                                         trace.write('afterJob Success: ' + success);
-                                        jobResult = !err && success ? jobResult : ifm.TaskResult.Failed;
+                                        jobResult = !err && success ? jobResult : agentifm.TaskResult.Failed;
                                         trace.write('jobResult: ' + jobResult);
 
                                         done(err);
@@ -216,7 +216,7 @@ export class JobRunner {
                                 trace.write('jobResult: ' + jobResult);
 
                                 if (err) {
-                                    jobResult = ifm.TaskResult.Failed;
+                                    jobResult = agentifm.TaskResult.Failed;
                                 }
 
                                 complete(err, jobResult);
@@ -227,19 +227,19 @@ export class JobRunner {
         });
     }
 
-    private runTasks(callback: (err: any, jobResult: ifm.TaskResult) => void): void {
+    private runTasks(callback: (err: any, jobResult: agentifm.TaskResult) => void): void {
         trace.enter('runTasks');
 
-        var job: ifm.JobRequestMessage = this.job;
+        var job: agentifm.JobRequestMessage = this.job;
         var wk = this.workerContext;
         var jobCtx: ctxm.JobContext = this.jobContext;
 
-        var jobResult: ifm.TaskResult = ifm.TaskResult.Succeeded;
+        var jobResult: agentifm.TaskResult = agentifm.TaskResult.Succeeded;
         var _this: JobRunner = this;
 
         trace.state('tasks', job.tasks);
         async.forEachSeries(job.tasks,
-            function (item: ifm.TaskInstance, done: (err: any) => void) {
+            function (item: agentifm.TaskInstance, done: (err: any) => void) {
 
                 jobCtx.writeConsoleSection('Running ' + item.name);
                 var taskCtx: ctxm.TaskContext = new ctxm.TaskContext(jobCtx.jobInfo,
@@ -256,14 +256,14 @@ export class JobRunner {
                 jobCtx.setTaskStarted(item.instanceId, item.name);
                 _this.runTask(item, taskCtx, (err) => {
 
-                    var taskResult: ifm.TaskResult = taskCtx.result;
-                    if (err || taskResult == ifm.TaskResult.Failed) {
+                    var taskResult: agentifm.TaskResult = taskCtx.result;
+                    if (err || taskResult == agentifm.TaskResult.Failed) {
                         if (item.continueOnError) {
-                            taskResult = jobResult = ifm.TaskResult.SucceededWithIssues;
+                            taskResult = jobResult = agentifm.TaskResult.SucceededWithIssues;
                             err = null;
                         }
                         else {
-                            taskResult = jobResult = ifm.TaskResult.Failed;
+                            taskResult = jobResult = agentifm.TaskResult.Failed;
                             err = new Error('Task Failed');  
                         }
                     }
@@ -291,7 +291,7 @@ export class JobRunner {
     private taskExecution = {};
     private taskMetadata = {};
 
-    private prepareTask(task: ifm.TaskInstance, callback) {
+    private prepareTask(task: agentifm.TaskInstance, callback) {
         trace.enter('prepareTask');
 
         var wk = this.workerContext;
@@ -359,7 +359,7 @@ export class JobRunner {
     // TODO: add beforeTask plugin step and move to their.  This is build specific code
     // and should not be in the generic agent code
     //
-    private _processInputs(task: ifm.TaskInstance) {
+    private _processInputs(task: agentifm.TaskInstance) {
         trace.enter('processInputs');
 
         //
@@ -395,7 +395,7 @@ export class JobRunner {
         trace.state('task.inputs', task.inputs);
     }
 
-    private runTask(task: ifm.TaskInstance, ctx: ctxm.TaskContext, callback) {
+    private runTask(task: agentifm.TaskInstance, ctx: ctxm.TaskContext, callback) {
         trace.enter('runTask');
         var wk = this.workerContext;
 

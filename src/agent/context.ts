@@ -7,13 +7,15 @@ import dm = require('./diagnostics');
 import events = require('events');
 import fm = require('feedback');
 import fs = require('fs');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
+import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 import ifm = require('./api/interfaces');
 import lm = require('./logging');
 import os = require("os");
 import path = require('path');
 import tm = require('./tracing');
 import um = require('./utilities');
-import wapim = require('./api/webapi');
+import wapim = require('vso-node-api/WebApi');
 
 var trace: tm.Tracing;
 
@@ -220,7 +222,7 @@ export class WorkerContext extends Context implements cm.ITraceWriter {
 
 export class ExecutionContext extends Context {
     constructor(jobInfo: cm.IJobInfo,
-        authHandler: ifm.IRequestHandler,
+        authHandler: baseifm.IRequestHandler,
         recordId: string,
         service: cm.IFeedbackChannel,
         workerCtx: WorkerContext) {
@@ -265,7 +267,7 @@ export class ExecutionContext extends Context {
     public debugOutput: boolean;
     public workerCtx: WorkerContext;
     public jobInfo: cm.IJobInfo;
-    public authHandler: ifm.IRequestHandler;
+    public authHandler: baseifm.IRequestHandler;
     public variables: { [key: string]: string };
     public recordId: string;
     public buildDirectory: string;
@@ -310,8 +312,8 @@ export class ExecutionContext extends Context {
 var LOCK_RENEWAL_MS = 60 * 1000;
 
 export class JobContext extends ExecutionContext {
-    constructor(job: ifm.JobRequestMessage,
-        authHandler: ifm.IRequestHandler,
+    constructor(job: agentifm.JobRequestMessage,
+        authHandler: baseifm.IRequestHandler,
         service: cm.IFeedbackChannel,
         workerCtx: WorkerContext) {
 
@@ -332,22 +334,22 @@ export class JobContext extends ExecutionContext {
         super(info, authHandler, job.jobId, service, workerCtx);
     }
 
-    public job: ifm.JobRequestMessage;
+    public job: agentifm.JobRequestMessage;
     public jobInfo: cm.IJobInfo;
     public service: cm.IFeedbackChannel;
-    public authHandler: ifm.IRequestHandler;
+    public authHandler: baseifm.IRequestHandler;
     public scmPath: string;
 
     //------------------------------------------------------------------------------------
     // Job/Task Status
     //------------------------------------------------------------------------------------
-    public finishJob(result: ifm.TaskResult): Q.Promise<any> {
+    public finishJob(result: agentifm.TaskResult): Q.Promise<any> {
         trace.enter('finishJob');
-        trace.state('result', ifm.TaskResult[result]);
+        trace.state('result', agentifm.TaskResult[result]);
 
         this.setTaskResult(this.job.jobId, this.job.jobName, result);
 
-        var jobRequest: ifm.TaskAgentJobRequest = <ifm.TaskAgentJobRequest>{};
+        var jobRequest: agentifm.TaskAgentJobRequest = <agentifm.TaskAgentJobRequest>{};
         jobRequest.requestId = this.job.requestId;
         jobRequest.finishTime = new Date();
         jobRequest.result = result;
@@ -374,7 +376,7 @@ export class JobContext extends ExecutionContext {
         this.service.setCurrentOperation(jobId, "Starting");
         this.service.setName(jobId, this.job.jobName);
         this.service.setStartTime(jobId, new Date());
-        this.service.setState(jobId, ifm.TimelineRecordState.InProgress);
+        this.service.setState(jobId, agentifm.TimelineRecordState.InProgress);
         this.service.setType(jobId, "Job");
         this.service.setWorkerName(jobId, this.config.settings.agentName);
     }
@@ -384,7 +386,7 @@ export class JobContext extends ExecutionContext {
         this.service.setCurrentOperation(id, "Initializing");
         this.service.setParentId(id, this.job.jobId);
         this.service.setName(id, name);
-        this.service.setState(id, ifm.TimelineRecordState.Pending);
+        this.service.setState(id, agentifm.TimelineRecordState.Pending);
         this.service.setType(id, "Task");
         this.service.setWorkerName(id, this.config.settings.agentName);
         this.service.setOrder(id, order);
@@ -398,15 +400,15 @@ export class JobContext extends ExecutionContext {
         // update the task
         this.service.setCurrentOperation(id, "Starting " + name);
         this.service.setStartTime(id, new Date());
-        this.service.setState(id, ifm.TimelineRecordState.InProgress);
+        this.service.setState(id, agentifm.TimelineRecordState.InProgress);
         this.service.setType(id, "Task");
         this.service.setName(id, name);
     }
 
-    public setTaskResult(id: string, name: string, result: ifm.TaskResult): void {
+    public setTaskResult(id: string, name: string, result: agentifm.TaskResult): void {
         trace.enter('setTaskResult');
         this.service.setCurrentOperation(id, "Completed " + name);
-        this.service.setState(id, ifm.TimelineRecordState.Completed);
+        this.service.setState(id, agentifm.TimelineRecordState.Completed);
         this.service.setFinishTime(id, new Date());
         this.service.setResult(id, result);
         this.service.setType(id, "Task");
@@ -424,8 +426,8 @@ export class JobContext extends ExecutionContext {
 //=================================================================================================
 
 export class PluginContext extends ExecutionContext {
-    constructor(job: ifm.JobRequestMessage,
-        authHandler: ifm.IRequestHandler,
+    constructor(job: agentifm.JobRequestMessage,
+        authHandler: baseifm.IRequestHandler,
         recordId: string,
         feedback: cm.IFeedbackChannel,
         workerCtx: WorkerContext) {
@@ -436,7 +438,7 @@ export class PluginContext extends ExecutionContext {
         super(jobInfo, authHandler, recordId, feedback, workerCtx);
     }
 
-    public job: ifm.JobRequestMessage;
+    public job: agentifm.JobRequestMessage;
 }
 
 //=================================================================================================
@@ -451,17 +453,17 @@ export class PluginContext extends ExecutionContext {
 
 export class TaskContext extends ExecutionContext {
     constructor(jobInfo: cm.IJobInfo,
-        authHandler: ifm.IRequestHandler,
+        authHandler: baseifm.IRequestHandler,
         recordId: string,
         feedback: cm.IFeedbackChannel,
         workerCtx: WorkerContext) {
-        this.result = ifm.TaskResult.Succeeded;
+        this.result = agentifm.TaskResult.Succeeded;
         this.resultMessage = '';
         this.webapi = wapim;
         super(jobInfo, authHandler, recordId, feedback, workerCtx);
     }
 
-    public result: ifm.TaskResult;
+    public result: agentifm.TaskResult;
     public resultMessage: string;
     public inputs: ifm.TaskInputs;
     public webapi: any;

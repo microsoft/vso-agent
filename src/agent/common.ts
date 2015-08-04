@@ -2,14 +2,18 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 /// <reference path="./definitions/Q.d.ts" />
+/// <reference path="./definitions/vso-node-api.d.ts" />
 
 import Q = require('q');
 import dm = require('./diagnostics');
 import path = require('path');
 import inputs = require('./inputs');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
+import basicm = require('vso-node-api/handlers/basiccreds')
+import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
+import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 import ifm = require('./api/interfaces');
-import basicm = require('./api/handlers/basiccreds');
-import webapi = require('./api/webapi');
+import webapi = require('vso-node-api/WebApi');
 import cfgm = require('./configuration');
 
 var crypto = require('crypto');
@@ -118,8 +122,8 @@ export interface ISettings {
 export interface IConfiguration {
     settings: ISettings;
     poolId: number;
-    agent: ifm.TaskAgent;
     createDiagnosticWriter?: () => IDiagnosticWriter;
+    agent: agentifm.TaskAgent;
 }
 
 export interface IFeedbackChannel extends NodeJS.EventEmitter {
@@ -145,20 +149,20 @@ export interface IFeedbackChannel extends NodeJS.EventEmitter {
     setName(recordId: string, name: string): void;
     setStartTime(recordId: string, startTime: Date): void;
     setFinishTime(recordId: string, finishTime: Date): void;
-    setState(recordId: string, state: ifm.TimelineRecordState): void;
-    setResult(recordId: string, result: ifm.TaskResult): void;
+    setState(recordId: string, state: agentifm.TimelineRecordState): void;
+    setResult(recordId: string, result: agentifm.TaskResult): void;
     setType(recordId: string, type: string): void;
     setParentId(recordId: string, parentId: string): void;
     setWorkerName(recordId: string, workerName: string): void;
-    setLogId(recordId: string, logRef: ifm.TaskLogReference): void;
+    setLogId(recordId: string, logRef: agentifm.TaskLogReference): void;
     setOrder(recordId: string, order: number): void;
 
     // drops
     uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.Promise<any>;
-    postArtifact(projectId: string, buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact>;
+    postArtifact(projectId: string, buildId: number, artifact: buildifm.BuildArtifact): Q.Promise<buildifm.BuildArtifact>;
 
     // job
-    finishJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest): Q.Promise<any>;
+    finishJobRequest(poolId: number, lockToken: string, jobRequest: agentifm.TaskAgentJobRequest): Q.Promise<any>;
 
     // test publishing 
     initializeTestManagement(projectName: string): void;
@@ -212,7 +216,7 @@ export interface IJobInfo {
     timelineId: string;
     requestId: number;
     lockToken: string;
-    systemAuthHandler: ifm.IRequestHandler;
+    systemAuthHandler: baseifm.IRequestHandler;
     variables: { [key: string]: string };
     mask: (input: string) => string;
 }
@@ -284,15 +288,15 @@ interface IndexFunction {
     (input: string): ReplacementPosition[];
 }
 
-function createMaskFunction(jobEnvironment: ifm.JobEnvironment): ReplacementFunction {
+function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): ReplacementFunction {
     var noReplacement = (input: string) => {
         return input;
     };
 
     var envMasks = jobEnvironment.mask || [];
     var maskHints = [];
-    envMasks.forEach((maskHint: ifm.MaskHint) => { 
-        if (maskHint.type === ifm.MaskType.Variable && maskHint.value) {
+    envMasks.forEach((maskHint: agentifm.MaskHint) => { 
+        if (maskHint.type === agentifm.MaskType.Variable && maskHint.value) {
             if (jobEnvironment.variables[maskHint.value]) {
                 maskHints.push(maskHint);
             }
@@ -304,7 +308,7 @@ function createMaskFunction(jobEnvironment: ifm.JobEnvironment): ReplacementFunc
     }
     else if (maskHints.length === 1) {
         var maskHint = maskHints[0];
-        if (maskHint.type === ifm.MaskType.Variable) {
+        if (maskHint.type === agentifm.MaskType.Variable) {
             var toReplace = jobEnvironment.variables[maskHint.value];
             return (input: string) => {
                 return input.replace(toReplace, MASK_REPLACEMENT);
@@ -315,8 +319,8 @@ function createMaskFunction(jobEnvironment: ifm.JobEnvironment): ReplacementFunc
     else {
         // multiple strings to replace
         var indexFunctions: IndexFunction[] = [];
-        maskHints.forEach((maskHint: ifm.MaskHint, index: number) => {
-            if (maskHint.type === ifm.MaskType.Variable) {
+        maskHints.forEach((maskHint: agentifm.MaskHint, index: number) => {
+            if (maskHint.type === agentifm.MaskType.Variable) {
                 var toReplace = jobEnvironment.variables[maskHint.value];
                 indexFunctions.push((input: string) => {
                     var results: ReplacementPosition[] = [];
@@ -380,7 +384,7 @@ function createMaskFunction(jobEnvironment: ifm.JobEnvironment): ReplacementFunc
     }
 }
 
-export function jobInfoFromJob(job: ifm.JobRequestMessage, systemAuthHandler: ifm.IRequestHandler): IJobInfo {
+export function jobInfoFromJob(job: agentifm.JobRequestMessage, systemAuthHandler: baseifm.IRequestHandler): IJobInfo {
     var info: IJobInfo = {
         description: job.jobName,
         jobId: job.jobId,
@@ -396,7 +400,7 @@ export function jobInfoFromJob(job: ifm.JobRequestMessage, systemAuthHandler: if
     return info;
 }
 
-export function versionStringFromTaskDef(task: ifm.TaskDefinition): string {
+export function versionStringFromTaskDef(task: agentifm.TaskDefinition): string {
     return task.version.major + '.' + task.version.minor + '.' + task.version.patch;
 }
 
@@ -435,12 +439,12 @@ export function getWorkerLogsPath(config: IConfiguration) {
 //-----------------------------------------------------------
 // Cred Utilities
 //-----------------------------------------------------------
-export function basicHandlerFromCreds(creds: ifm.IBasicCredentials): basicm.BasicCredentialHandler {
+export function basicHandlerFromCreds(creds: baseifm.IBasicCredentials): basicm.BasicCredentialHandler {
     return new basicm.BasicCredentialHandler(creds.username, creds.password);
 }
 
 // gets basic creds from args or prompts
-export function readBasicCreds(): Q.Promise<ifm.IBasicCredentials> {
+export function readBasicCreds(): Q.Promise<baseifm.IBasicCredentials> {
     var defer = Q.defer();
 
     var credInputs = [
@@ -458,11 +462,11 @@ export function readBasicCreds(): Q.Promise<ifm.IBasicCredentials> {
             return;
         }
 
-        var cred: ifm.IBasicCredentials = <ifm.IBasicCredentials>{};
+        var cred: baseifm.IBasicCredentials = <baseifm.IBasicCredentials>{};
         cred.username = result['username'];
         cred.password = result['password'];
         defer.resolve(cred);
     });
 
-    return <Q.Promise<ifm.IBasicCredentials>>defer.promise;
+    return <Q.Promise<baseifm.IBasicCredentials>>defer.promise;
 }

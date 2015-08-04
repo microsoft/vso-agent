@@ -2,11 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 /// <reference path="../definitions/Q.d.ts" />
+/// <reference path="../definitions/vso-node-api.d.ts" />
 
 import Q = require('q');
 import ifm = require('./interfaces');
-import httpm = require('./httpclient');
-import restm = require('./restclient');
+import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
+import httpm = require('vso-node-api/HttpClient');
+import restm = require('vso-node-api/RestClient');
 import stream = require("stream");
 import querystring = require('querystring');
 
@@ -15,10 +17,10 @@ export class FileContainerApi {
     httpClient: httpm.HttpClient;
     restClient: restm.RestClient;
 
-    constructor(collectionUrl: string, handlers: ifm.IRequestHandler[]) {
+    constructor(collectionUrl: string, handlers: baseifm.IRequestHandler[]) {
         this.collectionUrl = collectionUrl;
         this.httpClient = new httpm.HttpClient('vso-build-api', handlers);
-        this.restClient = new restm.RestClient(collectionUrl, this.httpClient);
+        this.restClient = new restm.RestClient(this.httpClient);
     }
 
 /*
@@ -66,7 +68,7 @@ export class FileContainerApi {
             addtlHeaders["x-vso-contentId"] = contentIdentifier.toString("base64");
         }
 
-        this.restClient.uploadStream('PUT', targetUrl, contentStream, addtlHeaders, (err: any, statusCode: number, obj: any) => {
+        this.restClient.uploadStream('PUT', targetUrl, "3.0-preview-1", contentStream, addtlHeaders, null, (err: any, statusCode: number, obj: any) => {
             var item: ifm.FileContainerItem  = err ? null : this._deserializeFileContainerItem(obj);
             onResult(err, statusCode, item);
         });
@@ -91,7 +93,7 @@ var TypeInfo = {
 export class QFileContainerApi {
     _containerApi: ifm.IFileContainerApi;
 
-    constructor(accountUrl:string, handlers: ifm.IRequestHandler[]) {
+    constructor(accountUrl:string, handlers: baseifm.IRequestHandler[]) {
         this._containerApi = new FileContainerApi(accountUrl, handlers);
     }
 

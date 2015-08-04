@@ -3,8 +3,13 @@
 
 import cm = require('./common');
 import ctxm = require('./context');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
+import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 import ifm = require('./api/interfaces');
-import webapi = require('./api/webapi');
+import agentm = require('vso-node-api/TaskAgentApi');
+import buildm = require('vso-node-api/BuildApi');
+import oldwebapim = require('./api/WebApi');
+import webapim = require('vso-node-api/WebApi');
 import zlib = require('zlib');
 import fs = require('fs');
 import tm = require('./tracing');
@@ -109,10 +114,18 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         this._issues = {};
 
         // service apis
+<<<<<<< HEAD
         this._agentApi = webapi.AgentApi(agentUrl, jobInfo.systemAuthHandler);
         this.timelineApi = webapi.TimelineApi(this.jobInfo.variables[cm.sysVars.teamProjectId], this.jobInfo.description, collectionUrl, jobInfo.systemAuthHandler);
         this._fileContainerApi = webapi.QFileContainerApi(collectionUrl, jobInfo.systemAuthHandler);
         this._buildApi = webapi.QBuildApi(collectionUrl, jobInfo.systemAuthHandler);
+=======
+        var webapi: webapim.WebApi = new webapim.WebApi(collectionUrl, jobInfo.systemAuthHandler);
+        this._agentApi = webapi.getTaskAgentApi(agentUrl);
+        this.timelineApi = oldwebapim.TimelineApi(collectionUrl, jobInfo.systemAuthHandler);
+        this._fileContainerApi = oldwebapim.QFileContainerApi(collectionUrl, jobInfo.systemAuthHandler);
+        this._buildApi = webapi.getQBuildApi();
+>>>>>>> added ref to vso-node-api, converted Task, Agent, and Build
 
         this._totalWaitTime = 0;
         this._lockRenewer = new LockRenewer(jobInfo, workerCtx.config.poolId, this._agentApi);
@@ -123,13 +136,13 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         });
 
         // timelines
-        this._timelineRecordQueue = new cq.ConcurrentBatch<ifm.TimelineRecord>(
+        this._timelineRecordQueue = new cq.ConcurrentBatch<agentifm.TimelineRecord>(
             (key: string) => {
-                return <ifm.TimelineRecord>{
+                return <agentifm.TimelineRecord>{
                     id: key
                 };
             },
-            (values: ifm.TimelineRecord[], callback: (err: any) => void) => {
+            (values: agentifm.TimelineRecord[], callback: (err: any) => void) => {
                 if (values.length === 0) {
                     callback(0);
                 }
@@ -168,8 +181,8 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
     private _logQueue: LogPageQueue;
     private _lockRenewer: LockRenewer;
 
-    private _buildApi: ifm.IQBuildApi;
-    private _agentApi: ifm.IAgentApi;
+    private _buildApi: buildm.IQBuildApi;
+    private _agentApi: agentm.ITaskAgentApi;
     private _fileContainerApi: ifm.IQFileContainerApi;
     public timelineApi: ifm.ITimelineApi;
     public _testApi: ifm.IQTestManagementApi;
@@ -178,7 +191,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
 
     private _recordCount: number;
 
-    private _timelineRecordQueue: cq.ConcurrentBatch<ifm.TimelineRecord>;
+    private _timelineRecordQueue: cq.ConcurrentBatch<agentifm.TimelineRecord>;
     private _consoleQueue: WebConsoleQueue;
     private _logPageQueue: LogPageQueue;
 
@@ -225,13 +238,13 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         this._consoleQueue.section(line);
     }
 
-    private updateJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest): Q.Promise<any> {
+    private updateJobRequest(poolId: number, lockToken: string, jobRequest: agentifm.TaskAgentJobRequest): Q.Promise<any> {
         trace.enter('servicechannel:updateJobRequest');
         trace.write('poolId: ' + poolId);
         trace.write('lockToken: ' + lockToken);
         
         var deferred = Q.defer();
-        this._agentApi.updateJobRequest(poolId, lockToken, jobRequest, (err, status, jobRequest) => {
+        this._agentApi.updateRequest(jobRequest, poolId, jobRequest.requestId, lockToken, (err, status, jobRequest) => {
             trace.write('err: ' + err);
             trace.write('status: ' + status);
             if (status === 404) {
@@ -249,7 +262,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         return deferred.promise;
     }
     
-    public finishJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest): Q.Promise<any> {
+    public finishJobRequest(poolId: number, lockToken: string, jobRequest: agentifm.TaskAgentJobRequest): Q.Promise<any> {
         trace.enter('servicechannel:finishJobRequest');
         
         // end the lock renewer. if it's currently waiting on its timeout, .finished will be a previously resolved promise
@@ -276,9 +289,9 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         var current = this._getIssues(recordId);
         var record = this._getFromBatch(recordId);
         if (current.errorCount < process.env.VSO_ERROR_COUNT ? process.env.VSO_ERROR_COUNT : 10) {
-            var error = <ifm.TaskIssue> {};
+            var error = <agentifm.Issue> {};
             error.category = category;
-            error.issueType = ifm.TaskIssueType.Error;
+            error.type = agentifm.IssueType.Error;
             error.message = message;
             error.data = data;
             current.issues.push(error);
@@ -293,9 +306,9 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         var current = this._getIssues(recordId);
         var record = this._getFromBatch(recordId);
         if (current.warningCount < process.env.VSO_WARNING_COUNT ? process.env.VSO_WARNING_COUNT : 10) {
-            var warning = <ifm.TaskIssue> {};
+            var warning = <agentifm.Issue> {};
             warning.category = category;
-            warning.issueType = ifm.TaskIssueType.Error;
+            warning.type = agentifm.IssueType.Error;
             warning.message = message;
             warning.data = data;
             current.issues.push(warning);
@@ -325,12 +338,12 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         this._getFromBatch(recordId).finishTime = finishTime;
     }
 
-    public setState(recordId: string, state: ifm.TimelineRecordState): void {
+    public setState(recordId: string, state: agentifm.TimelineRecordState): void {
         trace.state('state', state);
         this._getFromBatch(recordId).state = state;
     }
 
-    public setResult(recordId: string, result: ifm.TaskResult): void {
+    public setResult(recordId: string, result: agentifm.TaskResult): void {
         trace.state('result', result);
         this._getFromBatch(recordId).result = result;
     }
@@ -350,7 +363,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         this._getFromBatch(recordId).workerName = workerName;
     }
 
-    public setLogId(recordId: string, logRef: ifm.TaskLogReference): void {
+    public setLogId(recordId: string, logRef: agentifm.TaskLogReference): void {
         trace.state('logRef', logRef);
         this._getFromBatch(recordId).log = logRef;
     }
@@ -373,15 +386,15 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
             containerItemTuple.isGzipped);
     }  
 
-    public postArtifact(projectId: string, buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact> {
+    public postArtifact(projectId: string, buildId: number, artifact: buildifm.BuildArtifact): Q.Promise<buildifm.BuildArtifact> {
         trace.state('artifact', artifact);
-        return this._buildApi.postArtifact(projectId, buildId, artifact);
+        return this._buildApi.createArtifact(artifact, buildId, projectId);
     }  
 
     //------------------------------------------------------------------
     // Timeline internal batching
     //------------------------------------------------------------------
-    private _getFromBatch(recordId: string): ifm.TimelineRecord {
+    private _getFromBatch(recordId: string): agentifm.TimelineRecord {
         trace.enter('servicechannel:_getFromBatch');
         return this._timelineRecordQueue.getOrAdd(recordId);
     }
@@ -399,7 +412,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
     //------------------------------------------------------------------  
     public initializeTestManagement(projectName: string): void {
         trace.enter('servicechannel:initializeTestManagement');
-        this._testApi = webapi.QTestManagementApi(this.collectionUrl + "/" + projectName, this.jobInfo.systemAuthHandler);
+        this._testApi = oldwebapim.QTestManagementApi(this.collectionUrl + "/" + projectName, this.jobInfo.systemAuthHandler);
     }
 
     public createTestRun(testRun: ifm.TestRun): Q.Promise<ifm.TestRun> {
@@ -618,7 +631,7 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                                     serverLogPath = 'logs\\' + recordId; // FCS expects \
                                     this._timelineApi.createLog(planId,
                                         serverLogPath,
-                                        (err: any, statusCode: number, log: ifm.TaskLog) => {
+                                        (err: any, statusCode: number, log: agentifm.TaskLog) => {
                                             if (err) {
                                                 trace.write('error creating log record: ' + err.message);
                                                 doneStep(err);
@@ -661,7 +674,7 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                                 }
                             },
                             (doneStep) => {
-                                var logRef = <ifm.TaskLogReference>{};
+                                var logRef = <agentifm.TaskLogReference>{};
                                 logRef.id = logId;
                                 this._service.setLogId(recordId, logRef);
                                 doneStep(null);
@@ -684,7 +697,7 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
 
 // Job Renewal
 export class LockRenewer extends TimedWorker {
-    constructor(jobInfo: cm.IJobInfo, poolId: number, agentApi: ifm.IAgentApi) {
+    constructor(jobInfo: cm.IJobInfo, poolId: number, agentApi: agentm.ITaskAgentApi) {
         trace.enter('LockRenewer');
 
         // finished is initially a resolved promise, because a renewal is not in progress
@@ -700,7 +713,7 @@ export class LockRenewer extends TimedWorker {
     }
 
     private _poolId: number;
-    private _agentApi: ifm.IAgentApi;
+    private _agentApi: agentm.ITaskAgentApi;
     private _jobInfo: cm.IJobInfo;
     
     // consumers can use this promise to wait for the lock renewal to finish
@@ -711,7 +724,7 @@ export class LockRenewer extends TimedWorker {
     }
 
     private _renewLock(): Q.Promise<any> {
-        var jobRequest: ifm.TaskAgentJobRequest = <ifm.TaskAgentJobRequest>{};
+        var jobRequest: agentifm.TaskAgentJobRequest = <agentifm.TaskAgentJobRequest>{};
         jobRequest.requestId = this._jobInfo.requestId;
 
         trace.state('jobRequest', jobRequest);
@@ -721,7 +734,7 @@ export class LockRenewer extends TimedWorker {
         this.finished = deferred.promise;
         
         // lock token is ignored by newer servers
-        this._agentApi.updateJobRequest(this._poolId, this._jobInfo.lockToken, jobRequest, (err, status, jobRequest) => {
+        this._agentApi.updateRequest(jobRequest, this._poolId, jobRequest.requestId, this._jobInfo.lockToken, (err, status, jobRequest) => {
             if (status === 404) {
                 // job not found. stop this loop.
                 this.emit(Events.JobAbandoned);

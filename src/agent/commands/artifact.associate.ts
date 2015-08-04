@@ -1,9 +1,11 @@
+/// <reference path="../definitions/vso-node-api.d.ts" />
+
 import ctxm = require('../context');
 import cm = require('../common');
 import Q = require('q');
 import cmdm = require('./command');
-import webapi = require('../api/webapi');
-import ifm = require('../api/interfaces');
+import webapim = require('vso-node-api/WebApi');
+import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 
 export function createAsyncCommand(taskCtx: ctxm.TaskContext, command: cm.ITaskCommand) {
 	return new ArtifactAssociateCommand(taskCtx, command);
@@ -32,7 +34,7 @@ export class ArtifactAssociateCommand implements cm.IAsyncCommand {
 		this.command.info('Associating artifact...');
 		
 		var buildId: number = parseInt(this.taskCtx.variables[ctxm.WellKnownVariables.buildId]);
-		var artifact: ifm.BuildArtifact = {
+		var artifact: buildifm.BuildArtifact = <buildifm.BuildArtifact>{
 			name: artifactName,
 			resource: {
 				type: artifactType,
@@ -40,7 +42,8 @@ export class ArtifactAssociateCommand implements cm.IAsyncCommand {
 			}
 		};
 		
-		var buildClient = webapi.QBuildApi(this.taskCtx.service.collectionUrl, this.taskCtx.authHandler);
+		var webapi = new webapi(this.taskCtx.service.collectionUrl, this.taskCtx.authHandler);
+		var buildClient = webapi.getQBuildApi(this.taskCtx.service.collectionUrl, this.taskCtx.authHandler);
 		return buildClient.postArtifact(this.taskCtx.variables[ctxm.WellKnownVariables.projectId], buildId, artifact);
 	}	
 }

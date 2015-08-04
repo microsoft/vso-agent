@@ -13,8 +13,10 @@ import shelljs = require("shelljs");
 import ctxm = require('../../context');
 import cm = require('../../common');
 import util = require('../../utilities');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
+import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 import ifm = require('../../api/interfaces');
-import webapi = require("../../api/webapi");
+import webapim = require("vso-node-api/WebApi");
 import tm = require('../../tracing');
 import dropm = require('./lib/dropUploader');
 import plugins = require('../../plugins');
@@ -44,12 +46,12 @@ exports.afterJobPlugins = function (ctx: ctxm.JobContext) {
      */
     var afterJobPlugins: plugins.IPlugin[] = [];
     if (ctx.job.environment.options) {
-        var stagingOption: ifm.JobOption = ctx.job.environment.options[stagingOptionId];
+        var stagingOption: agentifm.JobOption = ctx.job.environment.options[stagingOptionId];
         if (stagingOption) {
             afterJobPlugins.push(new CopyToStagingFolder(stagingOption));
         }
 
-        var dropOption: ifm.JobOption = ctx.job.environment.options[dropOptionId];
+        var dropOption: agentifm.JobOption = ctx.job.environment.options[dropOptionId];
         if (dropOption) {
             afterJobPlugins.push(new CreateDrop(stagingOption, dropOption));
         }
@@ -58,11 +60,11 @@ exports.afterJobPlugins = function (ctx: ctxm.JobContext) {
 };
 
 class CopyToStagingFolder implements plugins.IPlugin {
-    private _stagingOption: ifm.JobOption;
+    private _stagingOption: agentifm.JobOption;
 
     public afterId: string;
 
-    constructor(stagingOption: ifm.JobOption) {
+    constructor(stagingOption: agentifm.JobOption) {
         this._stagingOption = stagingOption;
     }
 
@@ -186,12 +188,12 @@ class CopyToStagingFolder implements plugins.IPlugin {
 }
 
 class CreateDrop implements plugins.IPlugin {
-    private _stagingOption: ifm.JobOption;
-    private _dropOption: ifm.JobOption;
+    private _stagingOption: agentifm.JobOption;
+    private _dropOption: agentifm.JobOption;
 
     public afterId: string;
 
-    constructor(stagingOption: ifm.JobOption, dropOption: ifm.JobOption) {
+    constructor(stagingOption: agentifm.JobOption, dropOption: agentifm.JobOption) {
         this._stagingOption = stagingOption;
         this._dropOption = dropOption;
     }
@@ -252,12 +254,13 @@ class CreateDrop implements plugins.IPlugin {
 
         return dropPromise.then((artifactLocation: string) => {
             if (artifactLocation) {
-                var serverUrl = ctx.job.environment.systemConnection ? ctx.job.environment.systemConnection.url : ctx.job.authorization.serverUrl;
+                var serverUrl = ctx.job.environment.systemConnection.url;
                 var accessToken = ctx.job.environment.systemConnection.authorization.parameters['AccessToken'];
-                var buildClient = webapi.QBuildApi(serverUrl, webapi.bearerHandler(accessToken));
+                var token = webapim.getBearerHandler(accessToken);
+                var buildClient = new webapim.WebApi(serverUrl, webapim.getBearerHandler(accessToken)).getQBuildApi();
 
                 return ctx.service.postArtifact(ctx.variables[ctxm.WellKnownVariables.projectId],
-                    parseInt(ctx.variables[ctxm.WellKnownVariables.buildId]), {
+                    parseInt(ctx.variables[ctxm.WellKnownVariables.buildId]), <buildifm.BuildArtifact>{
                     name: "drop",
                     resource: {
                         data: artifactLocation,
@@ -345,7 +348,7 @@ class CreateDrop implements plugins.IPlugin {
     }
 }
 
-function getStagingFolder(ctx: ctxm.PluginContext, stagingOption: ifm.JobOption): string {
+function getStagingFolder(ctx: ctxm.PluginContext, stagingOption: agentifm.JobOption): string {
     // determine staging folder: $(build.stagingdirectory)[/{stagingfolder}]
     ctx.info("looking for staging folder in " + ctxm.WellKnownVariables.stagingFolder);
     var stagingFolder = ctx.job.environment.variables[ctxm.WellKnownVariables.stagingFolder].replaceVars(ctx.job.environment.variables)
