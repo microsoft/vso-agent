@@ -12,16 +12,6 @@ import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 
 //-----------------------------------------------------
-// Timeline Api
-//-----------------------------------------------------
-export interface ITimelineApi {
-    updateTimelineRecords(planId: string, timelineId: string, record: agentifm.TimelineRecord[], onResult: (err: any, statusCode: number, records: agentifm.TimelineRecord[]) => void): void;
-    appendTimelineRecordFeed(planId: string, timelineId: string, recordId: string, lines: string[], onResult: (err: any, statusCode: number, obj: any) => void): void;
-    createLog(planId: string, logPath: string, onResult: (err: any, statusCode: number, log: agentifm.TaskLog) => void): void;
-    uploadLogFile(planId: string, logId: number, filePath: string, onResult: (err: any, statusCode: number, obj: any) => void): void;    
-}
-
-//-----------------------------------------------------
 // FileContainer Api
 //-----------------------------------------------------
 export enum ContainerItemType {

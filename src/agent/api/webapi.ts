@@ -3,7 +3,6 @@
 
 import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 import ifm = require('./interfaces');
-import timelinem = require('./timelineapi');
 import filecontainerm = require('./filecontainerapi');
 import apivm = require('vso-node-api/handlers/apiversion');
 import basicm = require('vso-node-api/handlers/basiccreds');
@@ -28,19 +27,6 @@ export function bearerHandler(token) {
 
 export function QFileContainerApi(serverUrl: string, authHandler: baseifm.IRequestHandler): ifm.IQFileContainerApi {
     return new filecontainerm.QFileContainerApi(serverUrl, [authHandler, versionHandler('1.0; res-version=3')]);    
-}
-
-<<<<<<< HEAD
-export function TimelineApi(scopeIdentifier: string, hubName:string, collectionUrl: string, authHandler: ifm.IRequestHandler): ifm.ITimelineApi {
-    return new timelinem.TimelineApi(scopeIdentifier, hubName, collectionUrl, [authHandler, versionHandler('2.0-preview.1')]);   
-}
-
-export function TaskApi(serverUrl: string, authHandler: ifm.IRequestHandler): ifm.ITaskApi {
-    return new taskm.TaskApi(serverUrl, [authHandler, versionHandler('1.0')]);
-=======
-export function TimelineApi(collectionUrl: string, authHandler: baseifm.IRequestHandler): ifm.ITimelineApi {
-    return new timelinem.TimelineApi(collectionUrl, [authHandler, versionHandler('1.0')]);
->>>>>>> added ref to vso-node-api, converted Task, Agent, and Build
 }
 
 export function TestManagementApi(serverUrl: string, authHandler: baseifm.IRequestHandler): ifm.ITestManagementApi {

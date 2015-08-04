@@ -6,6 +6,7 @@ import ctxm = require('../../agent/context');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 import ifm = require('../../agent/api/interfaces');
+import taskm = require('vso-node-api/TaskApi');
 import Q = require('q');
 import events = require('events');
 
@@ -40,7 +41,7 @@ export class TestCmdQueue implements cm.IAsyncCommandQueue {
 export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeedbackChannel {
 	public agentUrl: string;
 	public collectionUrl: string;
-	public timelineApi: ifm.ITimelineApi;
+	public taskApi: taskm.ITaskApi;
 	public jobInfo: cm.IJobInfo;	
 	public enabled: boolean;
 
