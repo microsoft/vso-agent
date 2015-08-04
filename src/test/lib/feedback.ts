@@ -3,6 +3,8 @@
 
 import cm = require('../../agent/common');
 import ctxm = require('../../agent/context');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
+import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 import ifm = require('../../agent/api/interfaces');
 import Q = require('q');
 import events = require('events');
@@ -81,9 +83,9 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
 	public addError(recordId: string, category: string, message: string, data: any): void {
 		var record = this._getFromBatch(recordId);
 		if (record.errorCount < 10) {
-			var error = <ifm.TaskIssue> {};
+			var error = <agentifm.Issue> {};
 			error.category = category;
-			error.issueType = ifm.TaskIssueType.Error;
+			error.type = agentifm.IssueType.Error;
 			error.message = message;
 			error.data = data;
 			record.issues.push(error);
@@ -95,9 +97,9 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
 	public addWarning(recordId: string, category: string, message: string, data: any): void {
 		var record = this._getFromBatch(recordId);
 		if (record.warningCount < 10) {
-			var warning = <ifm.TaskIssue> {};
+			var warning = <agentifm.Issue> {};
 			warning.category = category;
-			warning.issueType = ifm.TaskIssueType.Error;
+			warning.type = agentifm.IssueType.Error;
 			warning.message = message;
 			warning.data = data;
 			record.issues.push(warning);
@@ -122,11 +124,11 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
 		this._getFromBatch(recordId).finishTime = finishTime;
 	}
 
-	public setState(recordId: string, state: ifm.TimelineRecordState): void {
+	public setState(recordId: string, state: agentifm.TimelineRecordState): void {
 		this._getFromBatch(recordId).state = state;
 	}
 
-	public setResult(recordId: string, result: ifm.TaskResult): void {
+	public setResult(recordId: string, result: agentifm.TaskResult): void {
 		this._getFromBatch(recordId).result = result;
 	}
 
@@ -142,7 +144,7 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
 		this._getFromBatch(recordId).workerName = workerName;
 	}
 
-	public setLogId(recordId: string, logRef: ifm.TaskLogReference): void {
+	public setLogId(recordId: string, logRef: agentifm.TaskLogReference): void {
 		this._getFromBatch(recordId).log = logRef;
 	}
 
@@ -150,7 +152,7 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
 		this._getFromBatch(recordId).order = order;
 	}
 
-	public finishJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest): Q.Promise<any> {
+	public finishJobRequest(poolId: number, lockToken: string, jobRequest: agentifm.TaskAgentJobRequest): Q.Promise<any> {
 		return Q(null);
 	}
 
@@ -158,7 +160,7 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
     	return Q(containerItemTuple);
     }  
 
-    public postArtifact(projectId: string, buildId: number, artifact: ifm.BuildArtifact): Q.Promise<ifm.BuildArtifact> {
+    public postArtifact(projectId: string, buildId: number, artifact: buildifm.BuildArtifact): Q.Promise<buildifm.BuildArtifact> {
         return Q(artifact);
     }	
 
@@ -170,9 +172,9 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
 		for(var id in this._records) {
 			if (this._records.hasOwnProperty(id)) {
 				var record = this._records[id];
-				if (record.state != ifm.TimelineRecordState.Completed) {
+				if (record.state != agentifm.TimelineRecordState.Completed) {
 					return false;
-				} else if(record.result != ifm.TaskResult.Succeeded) {
+				} else if(record.result != agentifm.TaskResult.Succeeded) {
 					return false;
 				}
 			}
@@ -184,7 +186,7 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
 		if (!this._records.hasOwnProperty(recordId)) {
 			var record = this._records[recordId];
 
-			if (record.result && record.result == ifm.TaskResult.Failed) {
+			if (record.result && record.result == agentifm.TaskResult.Failed) {
 				return true;
 			}
 		}
@@ -197,26 +199,26 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
     //------------------------------------------------------------------  
     public initializeTestManagement(projectName: string): void {
 		var record = this._getFromBatch("1.createTestRun");
-		record.result = ifm.TaskResult.Failed;
-		record.state = ifm.TimelineRecordState.Completed;
+		record.result = agentifm.TaskResult.Failed;
+		record.state = agentifm.TimelineRecordState.Completed;
 
 		var record = this._getFromBatch("2.createTestRunAttachment");
-		record.result = ifm.TaskResult.Failed;
-		record.state = ifm.TimelineRecordState.Completed;
+		record.result = agentifm.TaskResult.Failed;
+		record.state = agentifm.TimelineRecordState.Completed;
 
 		var record = this._getFromBatch("3.createTestRunResult");
-		record.result = ifm.TaskResult.Failed;
-		record.state = ifm.TimelineRecordState.Completed;
+		record.result = agentifm.TaskResult.Failed;
+		record.state = agentifm.TimelineRecordState.Completed;
 
 		var record = this._getFromBatch("4.endTestRun");
-		record.result = ifm.TaskResult.Failed;
-		record.state = ifm.TimelineRecordState.Completed;
+		record.result = agentifm.TaskResult.Failed;
+		record.state = agentifm.TimelineRecordState.Completed;
     }
 
     public createTestRun(testRun: ifm.TestRun): Q.Promise<ifm.TestRun> {
 		var defer = Q.defer();
 
-		this._getFromBatch("1.createTestRun").result = ifm.TaskResult.Succeeded;
+		this._getFromBatch("1.createTestRun").result = agentifm.TaskResult.Succeeded;
 
         var createdTestRun: ifm.TestRun = <ifm.TestRun> {
             name: testRun.name,
@@ -243,7 +245,7 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
     public endTestRun(testRunId: number) : Q.Promise<ifm.TestRun> {
 		var defer = Q.defer();
 
-		this._getFromBatch("4.endTestRun").result = ifm.TaskResult.Succeeded;
+		this._getFromBatch("4.endTestRun").result = agentifm.TaskResult.Succeeded;
 
 		var createdTestRun: ifm.TestRun = <ifm.TestRun> {
         	id: 99,
@@ -270,7 +272,7 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
     public createTestRunResult(testRunId: number, testRunResults: ifm.TestRunResult[]): Q.Promise<ifm.TestRunResult[]> {
 		var defer = Q.defer();
 
-		this._getFromBatch("3.createTestRunResult").result = ifm.TaskResult.Succeeded;
+		this._getFromBatch("3.createTestRunResult").result = agentifm.TaskResult.Succeeded;
 
         var createdTestResults = [];
 	    var testResult : ifm.TestRunResult = <ifm.TestRunResult> {
@@ -318,7 +320,7 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
     public createTestRunAttachment(testRunId: number, fileName: string, contents: string): Q.Promise<any> {
 		var defer = Q.defer();
 
-		this._getFromBatch("2.createTestRunAttachment").result = ifm.TaskResult.Succeeded;
+		this._getFromBatch("2.createTestRunAttachment").result = agentifm.TaskResult.Succeeded;
 
         // always fail attachment upload; and validate from testcode that, the task still succeeds 
         // - failure to upload an atatchment (say because of size > 100MB, etc), should not stop publishing of test results 

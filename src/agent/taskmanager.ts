@@ -4,23 +4,25 @@
 /// <reference path="./definitions/async.d.ts"/>
 import cm = require('./common');
 import ctxm = require('./context');
-import ifm = require('./api/interfaces');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
+import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 import async = require('async');
 import fs = require('fs');
 import path = require('path');
 import shell = require('shelljs');
-import webapi = require('./api/webapi');
+import agentm = require('vso-node-api/TaskAgentApi');
+import webapi = require('vso-node-api/WebApi');
 
 export class TaskManager {
 
-    constructor(workerContext: ctxm.WorkerContext, authHandler: ifm.IRequestHandler) {
+    constructor(workerContext: ctxm.WorkerContext, authHandler: baseifm.IRequestHandler) {
         this.context = workerContext;
-        this.taskApi = webapi.TaskApi(workerContext.config.settings.serverUrl, 
-                                      authHandler);
+        this.agentApi = new webapi.WebApi(workerContext.config.settings.serverUrl, 
+                                      authHandler).getTaskAgentApi();
         this.taskFolder = path.resolve(workerContext.config.settings.workFolder, 'tasks');
     }
 
-    public ensureTaskExists(task: ifm.TaskInstance, callback) : void {
+    public ensureTaskExists(task: agentifm.TaskInstance, callback) : void {
         if (!this.hasTask(task)) {
             this.downloadTask(task, callback);
         } else {
@@ -28,7 +30,7 @@ export class TaskManager {
         }
     }
 
-    public hasTask(task: ifm.TaskInstance) : boolean {
+    public hasTask(task: agentifm.TaskInstance) : boolean {
         if (fs.existsSync(this.getTaskPath(task))) {
             return true;
         } else {
@@ -36,7 +38,7 @@ export class TaskManager {
         }
     }
 
-    public ensureTasksExist(tasks: ifm.TaskInstance[], callback: (err: any) => void) : void {
+    public ensureTasksExist(tasks: agentifm.TaskInstance[], callback: (err: any) => void) : void {
         // Check only once for each id/version combo
         var alreadyAdded = {};
         var uniqueTasks = [];
@@ -57,7 +59,7 @@ export class TaskManager {
 
     public ensureLatestExist(callback: (err: any) => void) : void {
         // Get all tasks
-        this.taskApi.getTasks(null, (err, status, tasks) => {
+        this.agentApi.getTaskDefinitions(null, (err, status, tasks) => {
             if (err) {
                 callback(err);
                 return;
@@ -84,35 +86,46 @@ export class TaskManager {
         });
     }
 
-    private downloadTask(task: ifm.TaskInstance, callback: (err: any) => void): void {
+    private downloadTask(task: agentifm.TaskInstance, callback: (err: any) => void): void {
         var taskPath = this.getTaskPath(task);
+        var filePath = taskPath + '.zip';
+        if (fs.existsSync(filePath)) {
+            callback(new Error('File ' + filePath + ' already exists.'));
+            return;
+        }
         shell.mkdir('-p', taskPath);
-        this.taskApi.downloadTask(task.id, task.version, taskPath + '.zip', (err, statusCode) => {
+        this.agentApi.getTaskContentZip(task.id, task.version, (err, statusCode, res) => {
             if (err) {
                 callback(err);
                 return;
             }
 
-            cm.extractFile(taskPath + '.zip', taskPath, (err) => {
-                if (err) {
-                    shell.rm('-rf', taskPath);
-                }
+            var fileStream: NodeJS.WritableStream = fs.createWriteStream(filePath);
+            res.pipe(fileStream);
 
-                shell.rm('-rf', taskPath + '.zip');
-                callback(err);
+            fileStream.on('finish', function () {
+                cm.extractFile(filePath, taskPath, (err) => {
+                    if (err) {
+                        shell.rm('-rf', taskPath);
+                    }
+
+                    shell.rm('-rf', filePath);
+                    fileStream.end();
+                    callback(err);
+                });
             });
         });
     }
 
-    private getTaskPath(task: ifm.TaskInstance) : string {
+    private getTaskPath(task: agentifm.TaskInstance) : string {
         return path.resolve(this.taskFolder, task.name, task.version);
     }
 
-    private getTaskInstance(task: ifm.TaskDefinition) : ifm.TaskInstance {
-        return <ifm.TaskInstance>{'id':task.id, 'name': task.name, 'version': cm.versionStringFromTaskDef(task)}
+    private getTaskInstance(task: agentifm.TaskDefinition) : agentifm.TaskInstance {
+        return <agentifm.TaskInstance>{'id':task.id, 'name': task.name, 'version': cm.versionStringFromTaskDef(task)}
     }
 
     private context: ctxm.WorkerContext;
-    private taskApi: ifm.ITaskApi;
+    private agentApi: agentm.ITaskAgentApi;
     private taskFolder: string;
 }

@@ -3,14 +3,18 @@
 
 /// <reference path="./definitions/nconf.d.ts"/>
 /// <reference path="./definitions/Q.d.ts" />
+/// <reference path="./definitions/vso-node-api.d.ts" />
 
 import Q = require('q');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
+import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 import ifm = require('./api/interfaces');
 import cm = require('./common');
 import env = require('./environment');
 import inputs = require('./inputs');
-import webapi = require('./api/webapi');
-import basicm = require('./api/handlers/basiccreds');
+import agentm = require('vso-node-api/TaskAgentApi');
+import webapi = require('vso-node-api/WebApi');
+import basicm = require('vso-node-api/handlers/basiccreds');
 import utilm = require('./utilities');
 
 var os = require('os');
@@ -66,7 +70,7 @@ export class Configurator {
     // ensure configured and return ISettings.  That's it
     // returns promise
     //
-    public ensureConfigured (creds: ifm.IBasicCredentials): Q.Promise<cm.IConfiguration> {
+    public ensureConfigured (creds: baseifm.IBasicCredentials): Q.Promise<cm.IConfiguration> {
         var readSettings = exports.read();
 
         if (!readSettings.serverUrl) {
@@ -77,7 +81,7 @@ export class Configurator {
         }
     }
 
-    public update(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
+    public update(creds: baseifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
         return this.writeAgentToPool(creds, settings, true)
         .then((config: cm.IConfiguration) => {
             return config;
@@ -87,10 +91,10 @@ export class Configurator {
     //
     // Gether settings, register with the server and save the settings
     //
-    public create(creds: ifm.IBasicCredentials): Q.Promise<cm.IConfiguration> {
+    public create(creds: baseifm.IBasicCredentials): Q.Promise<cm.IConfiguration> {
         var settings:cm.ISettings;
         var configuration: cm.IConfiguration;
-        var newAgent: ifm.TaskAgent;
+        var newAgent: agentifm.TaskAgent;
         var agentPoolId = 0;
 
         var cfgInputs = [
@@ -137,17 +141,17 @@ export class Configurator {
         })  
     }
 
-    public readConfiguration(creds: ifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
-        var agentApi: ifm.IQAgentApi = webapi.QAgentApi(settings.serverUrl, cm.basicHandlerFromCreds(creds));
+    public readConfiguration(creds: baseifm.IBasicCredentials, settings: cm.ISettings): Q.Promise<cm.IConfiguration> {
+        var agentApi: agentm.IQTaskAgentApi = new webapi.WebApi(settings.serverUrl, cm.basicHandlerFromCreds(creds)).getQTaskAgentApi();
         var agentPoolId = 0;
         var agent;
 
         return agentApi.connect()
         .then((connected: any) => {
             console.log('successful connect as ' + connected.authenticatedUser.customDisplayName);
-            return agentApi.getAgentPools(settings.poolName);
+            return agentApi.getPools(settings.poolName, null);
         })
-        .then((agentPools: ifm.TaskAgentPool[]) => {
+        .then((agentPools: agentifm.TaskAgentPool[]) => {
             if (agentPools.length == 0) {
                 cm.throwAgentError(cm.AgentError.PoolNotExist, settings.poolName + ' pool does not exist.');
                 return;
@@ -159,7 +163,7 @@ export class Configurator {
 
             return agentApi.getAgents(agentPoolId, settings.agentName);
         }) 
-        .then((agents: ifm.TaskAgent[]) => {
+        .then((agents: agentifm.TaskAgent[]) => {
             if (agents.length == 0) {
                 cm.throwAgentError(cm.AgentError.AgentNotExist, settings.agentName + ' does not exist in pool ' + settings.poolName);
                 return;
@@ -191,7 +195,7 @@ export class Configurator {
         return utilm.exec('hostname');
     }
 
-    private constructAgent(settings: cm.ISettings): Q.Promise<ifm.TaskAgent> {
+    private constructAgent(settings: cm.ISettings): Q.Promise<agentifm.TaskAgent> {
         var caps: cm.IStringDictionary = env.getCapabilities();
         caps['Agent.Name'] = settings.agentName;
         caps['Agent.OS'] = process.platform;
@@ -207,7 +211,7 @@ export class Configurator {
             caps['Agent.NpmVersion'] = pkg['version'];
             caps['Agent.ComputerName'] = computerName;
             
-            var newAgent: ifm.TaskAgent = <ifm.TaskAgent>{
+            var newAgent: agentifm.TaskAgent = <agentifm.TaskAgent>{
                 maxParallelism: 1,
                 name: settings.agentName,
                 version: pkg['vsoAgentInfo']['serviceMilestone'],
@@ -218,17 +222,17 @@ export class Configurator {
         })
     }
 
-    private writeAgentToPool(creds: ifm.IBasicCredentials, settings: cm.ISettings, update: boolean): Q.Promise<cm.IConfiguration> {
-        var agentApi: ifm.IQAgentApi = webapi.QAgentApi(settings.serverUrl, cm.basicHandlerFromCreds(creds));
+    private writeAgentToPool(creds: baseifm.IBasicCredentials, settings: cm.ISettings, update: boolean): Q.Promise<cm.IConfiguration> {
+        var agentApi: agentm.IQTaskAgentApi = new webapi.WebApi(settings.serverUrl, cm.basicHandlerFromCreds(creds)).getQTaskAgentApi();
         var agentPoolId = 0;
         var agentId = 0;
 
         return agentApi.connect()
         .then((connected: any) => {
             console.log('successful connect as ' + connected.authenticatedUser.customDisplayName);
-            return agentApi.getAgentPools(settings.poolName);
+            return agentApi.getPools(settings.poolName, null);
         })
-        .then((agentPools: ifm.TaskAgentPool[]) => {
+        .then((agentPools: agentifm.TaskAgentPool[]) => {
             if (agentPools.length == 0) {
                 throw new Error(settings.poolName + ' pool does not exist.');
             }
@@ -239,7 +243,7 @@ export class Configurator {
 
             return agentApi.getAgents(agentPoolId, settings.agentName);
         }) 
-        .then((agents: ifm.TaskAgent[]) => {
+        .then((agents: agentifm.TaskAgent[]) => {
             if (update && agents.length == 1) {
                 agentId = agents[0].id;
                 return this.constructAgent(settings);
@@ -254,16 +258,16 @@ export class Configurator {
                 throw new Error('An agent already exists by the name ' + settings.agentName);
             }
         })
-        .then((agent: ifm.TaskAgent) => {
+        .then((agent: agentifm.TaskAgent) => {
             if (update) {
                 agent.id = agentId;
-                return agentApi.updateAgent(agentPoolId, agent);
+                return agentApi.updateAgent(agent, agentPoolId, agentId);
             }
             else {
-                return agentApi.createAgent(agentPoolId, agent);    
+                return agentApi.createAgent(agent, agentPoolId);    
             }
         })
-        .then((agent: ifm.TaskAgent) => {
+        .then((agent: agentifm.TaskAgent) => {
             var config: cm.IConfiguration = <cm.IConfiguration>{};
             config.poolId = agentPoolId;
             config.settings = settings;
