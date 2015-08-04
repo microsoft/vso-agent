@@ -92,7 +92,6 @@ var trace: tm.Tracing;
 
 function ensureTrace(writer: cm.ITraceWriter) {
     if (!trace) {
-        console.log(__filename);
         trace = new tm.Tracing(__filename, writer);
     }
 }
@@ -632,7 +631,6 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                                 //
                                 if (!this._recordToLogIdMap.hasOwnProperty(logPageInfo.logInfo.recordId)) {
                                     serverLogPath = 'logs\\' + recordId; // FCS expects \
-                                    console.log(serverLogPath);
                                     this._taskApi.createLog(
                                         <agentifm.TaskLog>{ path: serverLogPath },
                                         this._jobInfo.variables[cm.sysVars.teamProjectId], 
@@ -646,7 +644,6 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                                             }
 
                                             // associate log with timeline recordId
-                                            console.log('added log id to map: ' + log.id);
                                             this._recordToLogIdMap[recordId] = log.id;
                                             trace.write('added log id to map: ' + log.id);
                                             doneStep(null);
@@ -661,8 +658,6 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                                 logId = this._recordToLogIdMap[recordId];
                                 if (logId) {
                                     trace.write('uploading log page: ' + pagePath);
-                                    console.log(pagePath);
-                                    console.log(logId);
                                     fs.stat(pagePath, (err, stats) => {
                                         if (err) {
                                             trace.write('Error reading log file: ' + err.message);
