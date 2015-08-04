@@ -30,10 +30,6 @@ export class Tracing {
     }
 
     public write(message: string) {
-        if (!process.env[cm.envTrace]) {
-            return;
-        }
-
         this.writer.trace('[' + new Date().toISOString()  + '] ' + this.scope + ':' + '> ' + message + os.EOL);
     }
 

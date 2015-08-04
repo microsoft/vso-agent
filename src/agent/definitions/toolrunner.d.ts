@@ -20,6 +20,6 @@ export declare class ToolRunner extends events.EventEmitter {
     args: string[];
     silent: boolean;
     private _debug(message);
-    arg(arguments: any, raw: any): void;
+    arg(args: any, raw: any): void;
     exec(options: IExecOptions): Q.Promise<{}>;
 }

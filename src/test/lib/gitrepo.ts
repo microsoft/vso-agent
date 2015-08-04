@@ -22,16 +22,16 @@ export class GitRepo {
 	}
 
 	public commit(message: string, addModified: boolean, callback: (err:any) => void) {
-		var arguments = [];
-		arguments.push('commit');
-		arguments.push('-m');
-		arguments.push(message);
+		var args = [];
+		args.push('commit');
+		args.push('-m');
+		args.push(message);
 
 		if (addModified) {
-			arguments.push('-a');
+			args.push('-a');
 		}
 
-		this.execute(arguments, callback);
+		this.execute(args, callback);
 	}
 
 	private execute(parameters: string[], callback: (err:any) => void) {

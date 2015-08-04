@@ -78,7 +78,8 @@ export function throwAgentError(errorCode: AgentError, message: string) {
 // Constants
 //-----------------------------------------------------------
 export var CMD_PREFIX: string = '##vso[';
-export var DEFAULT_LOG_SECONDS = 4 * 24 * 3600;  // 4 day default so logs survive the weekend
+export var DEFAULT_LOG_LINESPERFILE = 5000;
+export var DEFAULT_LOG_MAXFILES = 5;
 
 //-----------------------------------------------------------
 // Interfaces
@@ -97,13 +98,18 @@ export interface ITraceWriter {
     trace(message: string): void;
 }
 
+export interface ILogSettings {
+    linesPerFile: number;
+    maxFiles: number;
+}
+
 // settings are user input & stored in settings file (.agent)
 export interface ISettings {
     poolName: string;
     serverUrl: string;
     agentName: string;
     workFolder: string;
-    keepLogsSeconds: number;
+    logSettings: ILogSettings;
 }
 
 // contains configuration data from server, runtime creds + settings
@@ -112,6 +118,7 @@ export interface IConfiguration {
     settings: ISettings;
     poolId: number;
     agent: ifm.TaskAgent;
+    createDiagnosticWriter?: () => IDiagnosticWriter;
 }
 
 export interface IFeedbackChannel extends NodeJS.EventEmitter {
@@ -230,9 +237,7 @@ export interface ILogPageInfo {
 // during config, there's no context, working directory or logs.  So, if tracing enabled, we should go to console.
 //
 export function consoleTrace(message) {
-    if (process.env[envTrace]) {
-        console.log(new Date().toString() + " : " + message);
-    }
+    console.log(new Date().toString() + " : " + message);
 }
 
 export function jsonString(obj: any) {

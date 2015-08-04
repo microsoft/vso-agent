@@ -1,6 +1,9 @@
 
 node_modules
 
+# VS Code
+.settings/
+
 # =========================
 # build output
 # =========================

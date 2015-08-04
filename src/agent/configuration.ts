@@ -38,13 +38,16 @@ export function read(): cm.ISettings {
     nconf.argv()
            .env()
            .file({ file: configPath }); 
-
-    var settings: cm.ISettings  = {
-        poolName : nconf.get("poolName")
-      , serverUrl : nconf.get("serverUrl")
-      , agentName : nconf.get("agentName")
-      , workFolder: nconf.get("workFolder")
-      , keepLogsSeconds: nconf.get("keepLogsSeconds")
+    
+    var settings: cm.ISettings = {
+        poolName : nconf.get("poolName"),
+        serverUrl : nconf.get("serverUrl"),
+        agentName : nconf.get("agentName"),
+        workFolder: nconf.get("workFolder"),
+        logSettings: {
+            linesPerFile: nconf.get("log.linesPerFile"),
+            maxFiles: nconf.get("log.maxFiles")
+        }
     }
 
     return settings;
@@ -107,7 +110,10 @@ export class Configurator {
             settings.serverUrl = result['serverUrl'];
             settings.agentName = result['agentName'];
             settings.workFolder = './_work';
-            settings.keepLogsSeconds = cm.DEFAULT_LOG_SECONDS;
+            settings.logSettings = {
+                maxFiles: cm.DEFAULT_LOG_MAXFILES,
+                linesPerFile: cm.DEFAULT_LOG_LINESPERFILE
+            };
 
             this.validate(settings);
             
