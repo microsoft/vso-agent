@@ -4,6 +4,8 @@ A cross platform build agent for Microsoft Visual Studio Online (VSO) and Team F
 
 *NOTE: This is a supported pre-release agent*
 
+Related:[VSO Build Tasks](https://github.com/Microsoft/vso-agent-tasks), [VSO Task SDK](https://github.com/Microsoft/vso-task-lib), [VSO Node API](https://github.com/Microsoft/vso-node-api)
+
 ## Pre-Reqs
 
 ### Node and Npm:
