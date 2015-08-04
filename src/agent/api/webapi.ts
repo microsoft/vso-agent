@@ -43,8 +43,8 @@ export function QFileContainerApi(serverUrl: string, authHandler: ifm.IRequestHa
     return new filecontainerm.QFileContainerApi(serverUrl, [authHandler, versionHandler('1.0; res-version=3')]);    
 }
 
-export function TimelineApi(collectionUrl: string, authHandler: ifm.IRequestHandler): ifm.ITimelineApi {
-    return new timelinem.TimelineApi(collectionUrl, [authHandler, versionHandler('1.0')]);   
+export function TimelineApi(scopeIdentifier: string, hubName:string, collectionUrl: string, authHandler: ifm.IRequestHandler): ifm.ITimelineApi {
+    return new timelinem.TimelineApi(scopeIdentifier, hubName, collectionUrl, [authHandler, versionHandler('2.0-preview.1')]);   
 }
 
 export function TaskApi(serverUrl: string, authHandler: ifm.IRequestHandler): ifm.ITaskApi {
