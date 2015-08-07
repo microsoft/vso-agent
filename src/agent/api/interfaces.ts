@@ -10,52 +10,16 @@
 
 import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
+import fcifm = require('vso-node-api/interfaces/FileContainerInterfaces');
 
 //-----------------------------------------------------
 // FileContainer Api
 //-----------------------------------------------------
-export enum ContainerItemType {
-    Any = 0,
-    Folder = 1,
-    File = 2
-}
 
-export interface ContainerItemInfo {
+export interface FileContainerItemInfo {
     fullPath: string;
-    containerItem?: FileContainerItem;
-    contentIdentifier?: Buffer;
-    compressedLength?: number;
-    uncompressedLength?: number;
-    isGzipped: boolean;
-}
-
-export interface FileContainerItem {
-    containerId: number;
-    itemType: ContainerItemType;
-    path: string;
-    contentId?: string;
-    fileLength?: number;
-}
-
-export interface IFileContainerApi {
-    uploadFile(containerId: number, 
-              itemPath: string, 
-              contentStream: NodeJS.ReadableStream, 
-              contentIdentifier: Buffer, 
-              uncompressedLength: number, 
-              compressedLength: number, 
-              isGzipped: boolean,
-              onResult: (err: any, statusCode: number, item: FileContainerItem) => void): void;
-}
-
-export interface IQFileContainerApi {
-    uploadFile(containerId: number, 
-        itemPath: string, 
-        contentStream: NodeJS.ReadableStream, 
-        contentIdentifier: Buffer, 
-        uncompressedLength: number, 
-        compressedLength: number, 
-        isGzipped: boolean): Q.Promise<FileContainerItem>
+    containerItem?: fcifm.FileContainerItem;
+    uploadHeaders?: { [header: string]: any; };
 }
 
 // ---------------------------------------------------------------------------

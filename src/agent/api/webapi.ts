@@ -3,7 +3,6 @@
 
 import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 import ifm = require('./interfaces');
-import filecontainerm = require('./filecontainerapi');
 import apivm = require('vso-node-api/handlers/apiversion');
 import basicm = require('vso-node-api/handlers/basiccreds');
 import bearm = require('vso-node-api/handlers/bearertoken');
@@ -24,10 +23,6 @@ export function bearerHandler(token) {
 // ---------------------------------------------------------------------------
 // factory to return hostapi (for building build host/agents) or buildapi (for querying and queuing builds)
 //----------------------------------------------------------------------------
-
-export function QFileContainerApi(serverUrl: string, authHandler: baseifm.IRequestHandler): ifm.IQFileContainerApi {
-    return new filecontainerm.QFileContainerApi(serverUrl, [authHandler, versionHandler('1.0; res-version=3')]);    
-}
 
 export function TestManagementApi(serverUrl: string, authHandler: baseifm.IRequestHandler): ifm.ITestManagementApi {
     return new testm.TestManagementApi(serverUrl, [authHandler, versionHandler('2.0-preview')]); 

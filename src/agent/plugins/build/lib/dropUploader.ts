@@ -7,6 +7,8 @@ import Q = require("q");
 import shell = require("shelljs");
 import ctxm = require('../../../context');
 import cm = require('../../../common');
+import fchelperm = require('../../../filecontainerhelper');
+import fcifm = require('vso-node-api/interfaces/FileContainerInterfaces');
 import ifm = require('../../../api/interfaces');
 import webapi = require("../../../api/webapi");
 import tm = require('../../../tracing');
@@ -138,16 +140,14 @@ function _uploadZip(filePath: string, fileSize: number, containerPath: string) {
 	.then((zipSize) => {
 		_trace.write(info.zipPath + ':' + zipSize);
 
-		var item: ifm.ContainerItemInfo =  <ifm.ContainerItemInfo>{
+		var item: ifm.FileContainerItemInfo =  <ifm.FileContainerItemInfo>{
 	        fullPath: info.zipPath,
-	        containerItem: {
+	        containerItem: <fcifm.FileContainerItem>{
 	            containerId: _containerId,
-	            itemType: ifm.ContainerItemType.File,
+	            itemType: fcifm.ContainerItemType.File,
 	            path: containerPath
 	        },
-	        compressedLength: zipSize,
-	        uncompressedLength: fileSize,
-	        isGzipped: true
+			uploadHeaders: fchelperm.getUploadHeaders(true, fileSize, zipSize)
 	    };
 	    _trace.state('item', item);
 
@@ -171,15 +171,14 @@ function _uploadFile(filePath) {
 			return _uploadZip(filePath, size, containerPath);
 		}
 		else {
-			var item: ifm.ContainerItemInfo = <ifm.ContainerItemInfo>{
+			var item: ifm.FileContainerItemInfo = <ifm.FileContainerItemInfo>{
 		        fullPath: filePath,
-		        containerItem: {
+		        containerItem: <fcifm.FileContainerItem>{
 		            containerId: _containerId,
-		            itemType: ifm.ContainerItemType.File,
+		            itemType: fcifm.ContainerItemType.File,
 		            path: containerPath
 		        },
-		        uncompressedLength: size,
-		        isGzipped: false
+				uploadHeaders: fchelperm.getUploadHeaders(false, size)
 		    };
 
 		    _trace.state('item', item);
