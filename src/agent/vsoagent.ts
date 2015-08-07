@@ -9,13 +9,15 @@ import fs = require("fs");
 import cfgm = require("./configuration");
 import ctxm = require('./context');
 import listener = require('./api/messagelistener');
-import ifm = require('./api/interfaces');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
+import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 import dm = require('./diagnostics');
 import path = require('path');
 import cm = require('./common');
 import tm = require('./tracing');
 import taskm = require('./taskmanager');
-import webapi = require('./api/webapi');
+import agentm = require('vso-node-api/TaskAgentApi');
+import webapim = require('vso-node-api/WebApi');
 import heartbeat = require('./heartbeat');
 import Q = require('q');
 
@@ -95,10 +97,10 @@ var ensureInitialized = function(settings: cm.ISettings, creds: any, complete: (
     })
 }
 
-var _creds: ifm.IBasicCredentials;
+var _creds: baseifm.IBasicCredentials;
 
 cm.readBasicCreds()
-.then(function(credentials: ifm.IBasicCredentials) {
+.then(function(credentials: baseifm.IBasicCredentials) {
     _creds = credentials;
     return cfgr.ensureConfigured(credentials);
 })
@@ -109,7 +111,7 @@ cm.readBasicCreds()
         throw (new Error('Settings not configured.'));
     }
 
-    var agent: ifm.TaskAgent = config.agent;
+    var agent: agentifm.TaskAgent = config.agent;
     ag = new ctxm.AgentContext(config, true);
     trace = new tm.Tracing(__filename, ag);
     trace.callback('initAgent');
@@ -119,7 +121,7 @@ cm.readBasicCreds()
     var queueName = agent.name;
     ag.info('Listening for agent: ' + queueName);
 
-    var agentApi: ifm.IAgentApi = webapi.AgentApi(settings.serverUrl, cm.basicHandlerFromCreds(_creds));
+    var agentApi: agentm.ITaskAgentApi = new webapim.WebApi(settings.serverUrl, cm.basicHandlerFromCreds(_creds)).getTaskAgentApi();
     messageListener = new listener.MessageListener(agentApi, agent, config.poolId);
     trace.write('created message listener');
     ag.info('starting listener...');
@@ -139,7 +141,7 @@ cm.readBasicCreds()
         gracefulShutdown(0);
     });
 
-    messageListener.start((message: ifm.TaskAgentMessage) => {
+    messageListener.start((message: agentifm.TaskAgentMessage) => {
         trace.callback('listener.start');
         
         ag.info('Message received');

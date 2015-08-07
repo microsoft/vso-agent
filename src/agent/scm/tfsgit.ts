@@ -2,7 +2,7 @@
 import scmm = require('./lib/scmprovider');
 import gitm = require('./git');
 import ctxm = require('../context');
-import ifm = require('../api/interfaces');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 
 export function getProvider(ctx: ctxm.JobContext, targetPath: string): scmm.IScmProvider {
 	return new GitTfsScmProvider(ctx, targetPath);
@@ -11,7 +11,7 @@ export function getProvider(ctx: ctxm.JobContext, targetPath: string): scmm.IScm
 export class GitTfsScmProvider extends gitm.GitScmProvider {
 
 	// override since TfsGit uses the generated OAuth token
-	public initialize(endpoint: ifm.JobEndpoint) {
+	public initialize(endpoint: agentifm.ServiceEndpoint) {
 		this.endpoint = endpoint;
 
 	    if (endpoint.authorization && endpoint.authorization['scheme']) {
