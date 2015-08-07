@@ -12,6 +12,7 @@ import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import basicm = require('vso-node-api/handlers/basiccreds')
 import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
+import fcifm = require('vso-node-api/interfaces/FileContainerInterfaces');
 import ifm = require('./api/interfaces');
 import taskm = require('vso-node-api/TaskApi');
 import webapi = require('vso-node-api/WebApi');
@@ -159,7 +160,7 @@ export interface IFeedbackChannel extends NodeJS.EventEmitter {
     setOrder(recordId: string, order: number): void;
 
     // drops
-    uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.Promise<any>;
+    uploadFileToContainer(containerId: number, containerItemTuple: ifm.FileContainerItemInfo): Q.Promise<any>;
     postArtifact(projectId: string, buildId: number, artifact: buildifm.BuildArtifact): Q.Promise<buildifm.BuildArtifact>;
 
     // job

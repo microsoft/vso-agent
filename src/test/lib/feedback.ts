@@ -157,7 +157,7 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
 		return Q(null);
 	}
 
-    public uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.Promise<any> {
+    public uploadFileToContainer(containerId: number, containerItemTuple: ifm.FileContainerItemInfo): Q.Promise<any> {
     	return Q(containerItemTuple);
     }  
 

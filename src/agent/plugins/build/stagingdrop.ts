@@ -303,7 +303,7 @@ class CreateDrop implements plugins.IPlugin {
         }
         _trace.state('containerRoot', containerRoot);
 
-        var contentMap: { [path: string]: ifm.ContainerItemInfo; } = {}
+        var contentMap: { [path: string]: ifm.FileContainerItemInfo; } = {}
 
         return readDirectory(ctx, stagingFolder, true, false)
             .then((files: string[]) => {
