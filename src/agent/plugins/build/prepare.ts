@@ -7,7 +7,7 @@ import fs = require('fs');
 var url = require('url');
 import async = require('async');
 import ctxm = require('../../context');
-import ifm = require('../../api/interfaces');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import gitrepo = require('./lib/gitrepo');
 import Q = require('q');
 
@@ -31,11 +31,11 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     // Get Code from Repos
     //------------------------------------------------------------
 
-    var endpoints: ifm.JobEndpoint[] = ctx.job.environment.endpoints;
+    var endpoints: agentifm.ServiceEndpoint[] = ctx.job.environment.endpoints;
 
     var variables = ctx.job.environment.variables;    
 
-    var srcendpoints = endpoints.filter(function (endpoint: ifm.JobEndpoint) {
+    var srcendpoints = endpoints.filter(function (endpoint: agentifm.ServiceEndpoint) {
         if (!endpoint.type) {
             return false;
         }
@@ -48,7 +48,7 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     }
 
     // only support 1
-    var endpoint: ifm.JobEndpoint = endpoints[0];
+    var endpoint: agentifm.ServiceEndpoint = endpoints[0];
 
     var repoPath = path.resolve('repo');
     ctx.job.environment.variables['build.sourceDirectory'] = repoPath;

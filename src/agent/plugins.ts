@@ -7,7 +7,7 @@ var async = require('async');
 var uuid = require('node-uuid');
 var shell = require('shelljs');
 
-import ifm = require('./api/interfaces');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import ctxm = require('./context');
 import tm = require('./tracing');
 
@@ -103,14 +103,14 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerConte
 
             plugin.beforeJob(pluginCtx, function (err) {
                 if (err) {
-                    ctx.setTaskResult(plugin.beforeId, plugin.pluginName(), ifm.TaskResult.Failed);
+                    ctx.setTaskResult(plugin.beforeId, plugin.pluginName(), agentifm.TaskResult.Failed);
                     pluginCtx.error(err);
                     pluginCtx.end();
                     done(err);
                     return;
                 }
 
-                ctx.setTaskResult(plugin.beforeId, plugin.pluginName(), ifm.TaskResult.Succeeded);
+                ctx.setTaskResult(plugin.beforeId, plugin.pluginName(), agentifm.TaskResult.Succeeded);
                 wkCtx.info('Done beforeJob for : ' + plugin.pluginName());
                 pluginCtx.end();
                 done(null);
@@ -152,14 +152,14 @@ export function afterJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerContex
             ctx.setTaskStarted(plugin.afterId, plugin.pluginName());
             plugin.afterJob(pluginCtx, function (err) {
                 if (err) {
-                    ctx.setTaskResult(plugin.afterId, plugin.pluginName(), ifm.TaskResult.Failed);
+                    ctx.setTaskResult(plugin.afterId, plugin.pluginName(), agentifm.TaskResult.Failed);
                     pluginCtx.error(err);
                     pluginCtx.end();
                     done(err);
                     return;
                 }
 
-                ctx.setTaskResult(plugin.afterId, plugin.pluginName(), ifm.TaskResult.Succeeded);
+                ctx.setTaskResult(plugin.afterId, plugin.pluginName(), agentifm.TaskResult.Succeeded);
                 wkCtx.info('Done afterJob for : ' + plugin.pluginName());
                 pluginCtx.end();
                 done(null);
