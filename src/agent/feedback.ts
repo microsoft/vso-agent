@@ -665,8 +665,7 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                                         }
                                         var pageStream: NodeJS.ReadableStream = fs.createReadStream(pagePath);
                                         this._taskApi.appendLog(
-                                            pageStream,
-                                            { "Content-Length": stats.size }, "",
+                                            { "Content-Length": stats.size }, pageStream,
                                             this._jobInfo.variables[cm.sysVars.teamProjectId],
                                             this._jobInfo.description,
                                             planId,
