@@ -2,8 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 /// <reference path="../definitions/node.d.ts"/>
+/// <reference path="../definitions/vso-node-api.d.ts" />
 
 import ifm = require('./interfaces');
+import agentm = require('vso-node-api/TaskAgentApi');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import events = require('events');
 var uuid = require('node-uuid');
 var QUEUE_RETRY_DELAY = 15000;
@@ -14,12 +17,12 @@ var lastMessageId = 0;
 export class MessageListener extends events.EventEmitter {
     sessionId: string;
     poolId: number;
-    agentapi: ifm.IAgentApi;
-    agent: ifm.TaskAgent;
+    agentapi: agentm.ITaskAgentApi;
+    agent: agentifm.TaskAgent;
     
     private _sessionRetryCount;
 
-    constructor(agentapi: ifm.IAgentApi, agent: ifm.TaskAgent, poolId: number) {
+    constructor(agentapi: agentm.ITaskAgentApi, agent: agentifm.TaskAgent, poolId: number) {
         this.agentapi = agentapi;
         this.agent = agent;
         this.poolId = poolId;
@@ -28,7 +31,7 @@ export class MessageListener extends events.EventEmitter {
         super();
     }
 
-    getMessages(callback: (message: ifm.TaskAgentMessage) => void, onError: (err: any) => void): void {
+    getMessages(callback: (message: agentifm.TaskAgentMessage) => void, onError: (err: any) => void): void {
 
         this.emit('listening');
 
@@ -67,7 +70,7 @@ export class MessageListener extends events.EventEmitter {
             // the message has been handed off to the caller - delete the message and listen for the next one
             lastMessageId = obj.messageId;
             this.emit('info', 'processing messageId ' + lastMessageId);
-            this.agentapi.deleteMessage(this.poolId, this.sessionId, lastMessageId, (err:any, statusCode: number) => {
+            this.agentapi.deleteMessage(this.poolId, lastMessageId, this.sessionId, (err:any, statusCode: number) => {
                 // TODO: how to handle failure in deleting message?  Just log?  we need to continue nd get the next message ...
                 if (err) {
                     onError(err);
@@ -79,11 +82,11 @@ export class MessageListener extends events.EventEmitter {
 
     start(callback: (message: any) => void, onError: (err: any) => void): void {
         this.sessionId = null;
-        var session: ifm.TaskAgentSession = <ifm.TaskAgentSession>{};
+        var session: agentifm.TaskAgentSession = <agentifm.TaskAgentSession>{};
         session.agent = this.agent;
         session.ownerName = uuid.v1();
 
-        this.agentapi.createSession(this.poolId, session, (err, statusCode, session) => {
+        this.agentapi.createSession(session, this.poolId, (err, statusCode, session) => {
             // exit on some conditions such as bad credentials
             if (statusCode == 401) {
                 console.error('Unauthorized.  Confirm credentials are correct and restart.  Exiting.');
