@@ -5,10 +5,12 @@ import cm = require('./common');
 import ctxm = require('./context');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
+import fcifm = require('vso-node-api/interfaces/FileContainerInterfaces');
 import ifm = require('./api/interfaces');
 import vssifm = require('vso-node-api/interfaces/common/VSSInterfaces');
 import agentm = require('vso-node-api/TaskAgentApi');
 import buildm = require('vso-node-api/BuildApi');
+import fcm = require('vso-node-api/FileContainerApi');
 import taskm = require('vso-node-api/TaskApi');
 import oldwebapim = require('./api/WebApi');
 import webapim = require('vso-node-api/WebApi');
@@ -116,18 +118,11 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         this._issues = {};
 
         // service apis
-<<<<<<< HEAD
-        this._agentApi = webapi.AgentApi(agentUrl, jobInfo.systemAuthHandler);
-        this.timelineApi = webapi.TimelineApi(this.jobInfo.variables[cm.sysVars.teamProjectId], this.jobInfo.description, collectionUrl, jobInfo.systemAuthHandler);
-        this._fileContainerApi = webapi.QFileContainerApi(collectionUrl, jobInfo.systemAuthHandler);
-        this._buildApi = webapi.QBuildApi(collectionUrl, jobInfo.systemAuthHandler);
-=======
         var webapi: webapim.WebApi = new webapim.WebApi(collectionUrl, jobInfo.systemAuthHandler);
         this._agentApi = webapi.getTaskAgentApi(agentUrl);
         this.taskApi = webapi.getTaskApi();
-        this._fileContainerApi = oldwebapim.QFileContainerApi(collectionUrl, jobInfo.systemAuthHandler);
+        this._fileContainerApi = webapi.getQFileContainerApi();
         this._buildApi = webapi.getQBuildApi();
->>>>>>> added ref to vso-node-api, converted Task, Agent, and Build
 
         this._totalWaitTime = 0;
         this._lockRenewer = new LockRenewer(jobInfo, workerCtx.config.poolId, this._agentApi);
@@ -189,7 +184,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
 
     private _buildApi: buildm.IQBuildApi;
     private _agentApi: agentm.ITaskAgentApi;
-    private _fileContainerApi: ifm.IQFileContainerApi;
+    private _fileContainerApi: fcm.IQFileContainerApi;
     public taskApi: taskm.ITaskApi;
     public _testApi: ifm.IQTestManagementApi;
 
@@ -379,17 +374,15 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         this._getFromBatch(recordId).order = order;
     }
 
-    public uploadFileToContainer(containerId: number, containerItemTuple: ifm.ContainerItemInfo): Q.Promise<any> {
+    public uploadFileToContainer(containerId: number, containerItemTuple: ifm.FileContainerItemInfo): Q.Promise<any> {
         trace.state('containerItemTuple', containerItemTuple);
         var contentStream: NodeJS.ReadableStream = fs.createReadStream(containerItemTuple.fullPath);
 
-        return this._fileContainerApi.uploadFile(containerId,
-            containerItemTuple.containerItem.path,
-            contentStream,
-            containerItemTuple.contentIdentifier,
-            containerItemTuple.uncompressedLength,
-            containerItemTuple.compressedLength,
-            containerItemTuple.isGzipped);
+        return this._fileContainerApi.createItem(containerItemTuple.uploadHeaders, 
+            contentStream, 
+            containerId, 
+            containerItemTuple.containerItem.path, 
+            this.jobInfo.variables[cm.sysVars.teamProjectId]);
     }  
 
     public postArtifact(projectId: string, buildId: number, artifact: buildifm.BuildArtifact): Q.Promise<buildifm.BuildArtifact> {
