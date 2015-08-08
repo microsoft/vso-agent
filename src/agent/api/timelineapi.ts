@@ -7,10 +7,14 @@ import restm = require('./restclient');
 
 export class TimelineApi implements ifm.ITimelineApi {
     collectionUrl: string;
+    scopeIdentifier: string;
+    hubName: string;
     httpClient: httpm.HttpClient;
     restClient: restm.RestClient;
 
-    constructor(collectionUrl: string, handlers: ifm.IRequestHandler[]) {
+    constructor(scopeIdentifier: string, hubName: string, collectionUrl: string, handlers: ifm.IRequestHandler[]) {
+        this.scopeIdentifier = scopeIdentifier;
+        this.hubName = hubName;
         this.collectionUrl = collectionUrl;
         this.httpClient = new httpm.HttpClient('vso-task-api', handlers);
         this.restClient = new restm.RestClient(collectionUrl, this.httpClient);
@@ -19,11 +23,11 @@ export class TimelineApi implements ifm.ITimelineApi {
     createLog(planId: string, logPath: string, onResult: (err: any, statusCode: number, log: ifm.TaskLog) => void): void {
         var log: ifm.TaskLog = <ifm.TaskLog>{};
         log.path = logPath;
-        this.restClient.create('/_apis/distributedtask/plans/' + planId + '/logs', log, onResult);
+        this.restClient.create('/' + this.scopeIdentifier + '/_apis/distributedtask/hubs/' + this.hubName + '/plans/' + planId + '/logs', log, onResult);
     }
 
     uploadLogFile(planId: string, logId: number, filePath: string, onResult: (err: any, statusCode: number, obj: any) => void): void {
-        this.restClient.uploadFile('_apis/distributedtask/plans/' + planId + '/logs/' + logId, filePath, null, onResult);
+        this.restClient.uploadFile('/' + this.scopeIdentifier + '/_apis/distributedtask/hubs/' + this.hubName + '/plans/' + planId + '/logs/' + logId, filePath, null, onResult);
     }
 
     updateTimelineRecords(planId: string, timelineId: string, records: ifm.TimelineRecord[], onResult: (err: any, statusCode: number, records: ifm.TimelineRecord[]) => void): void {
@@ -44,13 +48,11 @@ export class TimelineApi implements ifm.ITimelineApi {
             genericRecords.push(genericRecord);
         });
 
-        this.restClient.updateJsonWrappedArray('/_apis/distributedtask/plans/' + planId + '/timelines/' + timelineId + '/records', genericRecords, onResult);
+        this.restClient.updateJsonWrappedArray('/' + this.scopeIdentifier + '/_apis/distributedtask/hubs/' + this.hubName + '/plans/' + planId + '/timelines/' + timelineId + '/records', genericRecords, onResult);
     }
 
     appendTimelineRecordFeed(planId: string, timelineId: string, recordId: string, lines: string[], onResult: (err: any, statusCode: number, obj: any) => void): void {
-        var relUrl = '/_apis/distributedtask/plans/' + planId + '/timelines/' + timelineId +
-            '/records/' + recordId + '/feed';
-
+        var relUrl = '/' + this.scopeIdentifier + '/_apis/distributedtask/hubs/' + this.hubName + '/plans/' + planId + '/timelines/' + timelineId + '/records/' + recordId + '/feed';
         this.restClient.createJsonWrappedArray(relUrl, lines, onResult);
     }
 }

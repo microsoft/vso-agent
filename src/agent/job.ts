@@ -113,7 +113,8 @@ export class JobRunner {
                     // TODO: replace build with sender id once confirm how sent
 
                     wk.info('loading plugins...');
-                    plgm.load('build', wk, jobCtx, (err: any, plugins: any) => {
+                    var system = _this.job.environment.variables[cm.sysVars.system];
+                    plgm.load(system, wk, jobCtx, (err: any, plugins: any) => {
                         if (err) {
                             trace.write('error loading plugins');
                             complete(err, ifm.TaskResult.Failed);
@@ -399,8 +400,12 @@ export class JobRunner {
         var wk = this.workerContext;
 
         wk.info('Task: ' + task.name);
+        
+        //TODO: This call should be made to the plugin as it is build specific
+        if (ctx.jobInfo.description.toUpperCase() === 'Build'.toUpperCase()) {
+            this._processInputs(task);
+        }
 
-        this._processInputs(task);
         for (var key in task.inputs) {
             ctx.verbose(key + ': ' + task.inputs[key]);
         }

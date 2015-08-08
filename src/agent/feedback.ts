@@ -110,7 +110,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
 
         // service apis
         this._agentApi = webapi.AgentApi(agentUrl, jobInfo.systemAuthHandler);
-        this.timelineApi = webapi.TimelineApi(collectionUrl, jobInfo.systemAuthHandler);
+        this.timelineApi = webapi.TimelineApi(this.jobInfo.variables[cm.sysVars.teamProjectId], this.jobInfo.description, collectionUrl, jobInfo.systemAuthHandler);
         this._fileContainerApi = webapi.QFileContainerApi(collectionUrl, jobInfo.systemAuthHandler);
         this._buildApi = webapi.QBuildApi(collectionUrl, jobInfo.systemAuthHandler);
 
