@@ -57,7 +57,7 @@ function _handleCommand(commandLine: string, taskCtx: ctxm.TaskContext) {
 }
 
 export function run(scriptEngine: string, scriptPath: string, taskCtx:ctxm.TaskContext, callback) {
-    _trace = new tm.Tracing(__filename, taskCtx.workerCtx);
+    _trace = new tm.Tracing(__filename, taskCtx.serviceContext);
     _cmdQueue = taskCtx.service.createAsyncCommandQueue(taskCtx);
     _cmdQueue.startProcessing();
 

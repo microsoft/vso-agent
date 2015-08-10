@@ -142,7 +142,7 @@ export interface IFeedbackChannel extends NodeJS.EventEmitter {
     queueLogPage(page: ILogPageInfo): void;
     queueConsoleLine(line: string): void;
     queueConsoleSection(line: string): void;
-    createAsyncCommandQueue(workerCtx: any): IAsyncCommandQueue;
+    createAsyncCommandQueue(serviceCtx: any): IAsyncCommandQueue;
 
     // timelines
     addError(recordId: string, category: string, message: string, data: any): void;

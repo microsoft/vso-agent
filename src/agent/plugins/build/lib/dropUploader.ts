@@ -23,7 +23,7 @@ var _containerRoot: string;
 var _trace: tm.Tracing;
 
 function _ensureTracing(ctx: ctxm.ExecutionContext, area: string) {
-    _trace = new tm.Tracing(__filename, ctx.workerCtx);
+    _trace = new tm.Tracing(__filename, ctx.serviceContext);
     _trace.enter(area);
 }
 

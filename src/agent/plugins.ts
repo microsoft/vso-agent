@@ -25,7 +25,7 @@ export interface IPlugin {
     afterJob(pluginContext: ctxm.PluginContext, callback: (err?: any) => void): void;
 }
 
-export function load(pluginType, ctx: ctxm.WorkerContext, jobContext: ctxm.JobContext, callback) {
+export function load(pluginType, ctx: ctxm.ServiceContext, jobContext: ctxm.JobContext, callback) {
     var plugins = {};
     plugins['beforeJob'] = [];
     plugins['afterJob'] = [];
@@ -77,13 +77,13 @@ export function load(pluginType, ctx: ctxm.WorkerContext, jobContext: ctxm.JobCo
     })
 }
 
-export function beforeJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerContext, callback: (err: any, success: boolean) => void): void {
-    trace = new tm.Tracing(__filename, wkCtx);
+export function beforeJob(plugins, ctx: ctxm.JobContext, serviceContext: ctxm.ServiceContext, callback: (err: any, success: boolean) => void): void {
+    trace = new tm.Tracing(__filename, serviceContext);
     trace.enter('beforeJob plugins');
 
     async.forEachSeries(plugins['beforeJob'],
         function (plugin, done) {
-            wkCtx.info('Running beforeJob for : ' + plugin.pluginName() + ', ' + plugin.beforeId);
+            serviceContext.info('Running beforeJob for : ' + plugin.pluginName() + ', ' + plugin.beforeId);
 
             ctx.writeConsoleSection('Running ' + plugin.pluginName());
 
@@ -92,7 +92,7 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerConte
                 ctx.authHandler,
                 plugin.beforeId,
                 ctx.service,
-                wkCtx);
+                serviceContext);
 
             pluginCtx.on('message', function (message) {
                 ctx.service.queueConsoleLine(message);
@@ -111,7 +111,7 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerConte
                 }
 
                 ctx.setTaskResult(plugin.beforeId, plugin.pluginName(), agentifm.TaskResult.Succeeded);
-                wkCtx.info('Done beforeJob for : ' + plugin.pluginName());
+                serviceContext.info('Done beforeJob for : ' + plugin.pluginName());
                 pluginCtx.end();
                 done(null);
             });
@@ -121,8 +121,8 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerConte
         });
 }
 
-export function afterJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerContext, jobSuccess: Boolean, callback: (err: any, success: boolean) => void): void {
-    trace = new tm.Tracing(__filename, wkCtx);
+export function afterJob(plugins, ctx: ctxm.JobContext, serviceContext: ctxm.ServiceContext, jobSuccess: Boolean, callback: (err: any, success: boolean) => void): void {
+    trace = new tm.Tracing(__filename, serviceContext);
     trace.enter('afterJob plugins');
 
     async.forEachSeries(plugins['afterJob'],
@@ -135,7 +135,7 @@ export function afterJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerContex
                 return;
             }
 
-            wkCtx.info('Running afterJob for : ' + plugin.pluginName());
+            serviceContext.info('Running afterJob for : ' + plugin.pluginName());
 
             ctx.writeConsoleSection('Running ' + plugin.pluginName());
             var logDescr = 'Plugin afterJob:' + plugin.pluginName();
@@ -143,7 +143,7 @@ export function afterJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerContex
                 ctx.authHandler,
                 plugin.afterId,
                 ctx.service,
-                wkCtx);
+                serviceContext);
             pluginCtx.on('message', function (message) {
                 ctx.service.queueConsoleLine(message);
             });
@@ -160,7 +160,7 @@ export function afterJob(plugins, ctx: ctxm.JobContext, wkCtx: ctxm.WorkerContex
                 }
 
                 ctx.setTaskResult(plugin.afterId, plugin.pluginName(), agentifm.TaskResult.Succeeded);
-                wkCtx.info('Done afterJob for : ' + plugin.pluginName());
+                serviceContext.info('Done afterJob for : ' + plugin.pluginName());
                 pluginCtx.end();
                 done(null);
             });

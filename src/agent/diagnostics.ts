@@ -186,3 +186,11 @@ export class DiagnosticConsoleWriter implements cm.IDiagnosticWriter {
         
     }       
 }
+
+export function getDefaultDiagnosticWriter(config: cm.IConfiguration, folder: string, prefix: string) {
+    // default writer is verbose. it's rolling, so it shouldn't take up too much space
+    return new RollingDiagnosticFileWriter(cm.DiagnosticLevel.Verbose,
+        folder,
+        prefix,
+        config.settings.logSettings);
+}
