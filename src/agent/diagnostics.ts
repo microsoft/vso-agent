@@ -151,7 +151,7 @@ export class RollingDiagnosticFileWriter implements cm.IDiagnosticWriter {
                 // these files should not be huge. if they become huge, and we need to stream them, we'll need to refactor
                 var mostRecentFile = this._fileQueue[this._fileQueue.length - 1]; 
                 var existingContents = fs.readFileSync(mostRecentFile).toString();
-                var lineCount = existingContents.split('\n').length;
+                var lineCount = existingContents.split(os.EOL).length;
                 if (lineCount < this._maxLinesPerFile) {
                     // if the file isn't full, use it. if it is, we'll create a new one the next time _getFileDescriptor() is called
                     this._lineCount = lineCount;
