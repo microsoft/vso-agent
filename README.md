@@ -102,12 +102,14 @@ $ sudo npm install vsoagent-installer -g
 ```
 
 Go to the directory you created for the agent and run the same command you used to create the agent.
-*IMPORTANT:* that directory should have a package.json file in it and a sub folder named agent.
-NOTE: Updating the agent will overwrite the code in the agent subfolder and update the package.json 
+
+**IMPORTANT:** that directory should have a package.json file in it and a sub folder named agent.
 
 ```bash
 $ vsoagent-installer
 ```
+
+NOTE: Updating the agent will overwrite the code in the agent subfolder and update the package.json 
 
 ## Contributing
 
