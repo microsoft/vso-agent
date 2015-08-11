@@ -181,7 +181,7 @@ export class Configurator {
     // Private
     //-------------------------------------------------------------
     private validate(settings: cm.ISettings) {
-        throwIf(!check.isURL(settings.serverUrl), settings.serverUrl + ' is not a valid URL');
+        throwIf(!check.isURL(settings.serverUrl, { protocols:['http', 'https'], require_tld:false, require_protocol:true }), settings.serverUrl + ' is not a valid URL');
     }
 
     private getComputerName(): Q.Promise<string> {
