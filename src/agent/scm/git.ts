@@ -114,7 +114,11 @@ export class GitScmProvider extends scmm.ScmProvider {
 	        }
 	        else {
 	        	shell.cd(this.targetPath);
-	        	return this.gitw.fetch(gopt)
+
+	        	return this.gitw.remote(['set-url', 'origin', giturl], gopt)
+                .then((code: number) => {
+                    return this.gitw.fetch(gopt);
+                }) 
 	        	.then((code: number) => {
 	        		return this.gitw.checkout(ref, gopt);
 	        	})

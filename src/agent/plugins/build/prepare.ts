@@ -10,6 +10,7 @@ import ctxm = require('../../context');
 import ifm = require('../../api/interfaces');
 import gitrepo = require('./lib/gitrepo');
 import Q = require('q');
+import shell = require('shelljs');
 
 // keep lower case, we do a lower case compare
 var supported: string[] = ['tfsgit', 'git', 'github', 'tfsversioncontrol'];
@@ -78,8 +79,16 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     return Q(null)
     .then(() => {
         if (endpoint.data['clean'] === "true") {
-            ctx.info('running clean');
-            return scmProvider.clean();
+            var behavior = ctx.job.environment.variables['build.clean'];
+            if (behavior && behavior.toLowerCase() === 'delete') {
+                ctx.info('deleting ' + repoPath);
+                shell.rm('-rf', repoPath);
+                return 0;
+            }
+            else {
+                ctx.info('running clean');
+                return scmProvider.clean();                
+            }
         }
         else {
             return 0;

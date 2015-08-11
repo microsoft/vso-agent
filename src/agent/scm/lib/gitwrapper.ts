@@ -54,6 +54,13 @@ export class GitWrapper extends events.EventEmitter {
         return this.exec(args, options);
     }
 
+    public remote(args: string[], options?: IGitExecOptions): Q.Promise<number> {
+        options = options || <IGitExecOptions>{};
+        options.useGitExe = true;
+        options.creds = true;        
+        return this.exec(['remote'].concat(args), options);
+    }
+
     public fetch(options?: IGitExecOptions): Q.Promise<number> {
         options = options || <IGitExecOptions>{};
         options.useGitExe = true;
