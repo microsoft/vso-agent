@@ -402,7 +402,7 @@ export class JobRunner {
         wk.info('Task: ' + task.name);
         
         //TODO: This call should be made to the plugin as it is build specific
-        if (ctx.jobInfo.description.toUpperCase() === 'Build'.toUpperCase()) {
+        if (ctx.variables[cm.sysVars.system].toLowerCase() === 'Build'.toLowerCase()) {
             this._processInputs(task);
         }
 
