@@ -118,11 +118,12 @@ export class GitScmProvider extends scmm.ScmProvider {
 	        	return this.gitw.remote(['set-url', 'origin', giturl], gopt)
                 .then((code: number) => {
                     return this.gitw.fetch(gopt);
-                }) 
-	        	.then((code: number) => {
-	        		return this.gitw.checkout(ref, gopt);
-	        	})
+                })
 	        }
+        })
+        .then((code: number) => {
+            shell.cd(this.targetPath);
+            return this.gitw.checkout(ref, gopt);
         })
         .then((code: number) => {
         	if (this.endpoint.data['checkoutSubmodules'] === "True") {
