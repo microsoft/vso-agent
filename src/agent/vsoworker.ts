@@ -7,7 +7,8 @@ import cfgm = require('./configuration');
 import cm = require('./common');
 import ctxm = require('./context');
 import dm = require('./diagnostics');
-import ifm = require('./api/interfaces');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
+import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 import jrm = require('./job');
 import fm = require('./feedback');
 import os = require('os');
@@ -20,7 +21,7 @@ import Q = require('q');
 var wk: ctxm.WorkerContext;
 var trace: tm.Tracing;
 
-function setVariables(job: ifm.JobRequestMessage, workerContext: ctxm.WorkerContext) {
+function setVariables(job: agentifm.JobRequestMessage, workerContext: ctxm.WorkerContext) {
     trace.enter('setVariables');
     trace.state('variables', job.environment.variables);
 
@@ -31,7 +32,7 @@ function setVariables(job: ifm.JobRequestMessage, workerContext: ctxm.WorkerCont
     var collId = variables[cm.sysVars.collectionId];
 
     if (!variables[cm.sysVars.collectionUri]) {
-        variables[cm.sysVars.collectionUri] =  job.environment.systemConnection ? job.environment.systemConnection.url : job.authorization.serverUrl;     
+        variables[cm.sysVars.collectionUri] =  job.environment.systemConnection.url;     
     }
 
     var defId = variables[cm.sysVars.definitionId];
@@ -57,10 +58,10 @@ function setVariables(job: ifm.JobRequestMessage, workerContext: ctxm.WorkerCont
     trace.state('variables', job.environment.variables);
 }
 
-function deserializeEnumValues(job: ifm.JobRequestMessage) {
+function deserializeEnumValues(job: agentifm.JobRequestMessage) {
     if (job && job.environment && job.environment.mask) {
-        job.environment.mask.forEach((maskHint: ifm.MaskHint, index: number) => {
-            maskHint.type = ifm.TypeInfo.MaskType.enumValues[maskHint.type];
+        job.environment.mask.forEach((maskHint: agentifm.MaskHint, index: number) => {
+            maskHint.type = agentifm.TypeInfo.MaskType.enumValues[maskHint.type];
         });
     }
 }
@@ -78,12 +79,12 @@ export function run(msg, consoleOutput: boolean,
 
     wk.info('worker::onMessage');
     if (msg.messageType === "job") {
-        var job: ifm.JobRequestMessage = msg.data;
+        var job: agentifm.JobRequestMessage = msg.data;
         deserializeEnumValues(job);
         setVariables(job, wk);
 
         trace.write('Creating AuthHandler');
-        var systemAuthHandler: ifm.IRequestHandler;
+        var systemAuthHandler: baseifm.IRequestHandler;
         if (job.environment.systemConnection) {
             trace.write('using session token');
             var accessToken = job.environment.systemConnection.authorization.parameters['AccessToken'];
@@ -141,7 +142,7 @@ export function run(msg, consoleOutput: boolean,
             }
         });
 
-        jobRunner.run((err: any, result: ifm.TaskResult) => {
+        jobRunner.run((err: any, result: agentifm.TaskResult) => {
             trace.callback('job.run');
 
             wk.status('Job Completed: ' + job.jobName);

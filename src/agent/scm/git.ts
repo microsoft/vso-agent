@@ -2,7 +2,7 @@ import Q = require('q');
 import scmm = require('./lib/scmprovider');
 import gitwm = require('./lib/gitwrapper');
 import ctxm = require('../context');
-import ifm = require('../api/interfaces');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 var path = require('path');
 var shell = require('shelljs');
 var url = require('url');
@@ -39,9 +39,9 @@ export class GitScmProvider extends scmm.ScmProvider {
 	public username: string;
 	public password: string;
 	public gitw: gitwm.GitWrapper;
-	public endpoint: ifm.JobEndpoint;
+	public endpoint: agentifm.ServiceEndpoint;
 
-	public initialize(endpoint: ifm.JobEndpoint) {
+	public initialize(endpoint: agentifm.ServiceEndpoint) {
 		this.endpoint = endpoint;
 
 		if (!endpoint) {

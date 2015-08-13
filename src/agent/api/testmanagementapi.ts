@@ -3,36 +3,38 @@
 
 /// <reference path="../definitions/node.d.ts"/>
 /// <reference path="../definitions/Q.d.ts" />
+/// <reference path="../definitions/vso-node-api.d.ts" />
 
 import Q = require('q');
 import ifm = require('./interfaces');
-import httpm = require('./httpclient');
-import restm = require('./restclient');
+import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
+import httpm = require('vso-node-api/HttpClient');
+import restm = require('vso-node-api/RestClient');
 
 export class TestManagementApi implements ifm.ITestManagementApi {
     accountUrl: string;
     httpClient: httpm.HttpClient;
     restClient: restm.RestClient;
 
-    constructor(accountUrl:string, handlers: ifm.IRequestHandler[]) {
+    constructor(accountUrl:string, handlers: baseifm.IRequestHandler[]) {
         this.accountUrl = accountUrl;
         this.httpClient = new httpm.HttpClient('vso-build-api', handlers, 60000);
-        this.restClient = new restm.RestClient(accountUrl, this.httpClient);
+        this.restClient = new restm.RestClient(this.httpClient);
     }
     
     public createTestRun(testRun: ifm.TestRun, onResult: (err: any, statusCode: number, publishedTestRun: ifm.TestRun) => void): void {
-        this.restClient.create('/_apis/test/runs', testRun, onResult);
+        this.restClient.create('/_apis/test/runs', "3.0-preview.1", testRun, null, onResult);
     }
 
     public endTestRun(testRunId: number, onResult: (err: any, statusCode: number, publishedTestRun: ifm.TestRun) => void): void {
         var testRun: ifm.TestRun = <ifm.TestRun> {
             state: "Completed",
         };
-        this.restClient.update('/_apis/test/runs/' + testRunId, testRun, onResult);
+        this.restClient.update('/_apis/test/runs/' + testRunId, "3.0-preview.1", testRun, null, onResult);
     }
 
     public createTestRunResult(testRunId: number, testRunResults: ifm.TestRunResult[], onResult: (err: any, statusCode: number, createdTestRunResults: ifm.TestRunResult[]) => void): void {
-    	this.restClient.create('/_apis/test/runs/' + testRunId + '/results', testRunResults, onResult);
+        this.restClient.create('/_apis/test/runs/' + testRunId + '/results', "3.0-preview.1", testRunResults, null, onResult);
     }
 
     public createTestRunAttachment(testRunId: number, fileName: string, contents: string, onResult: (err: any, statusCode: number, obj: any) => void): void {
@@ -42,7 +44,7 @@ export class TestManagementApi implements ifm.ITestManagementApi {
             FileName: fileName,
             Stream: contents
         };
-        this.restClient.create('/_apis/test/runs/' + testRunId + '/Attachments', attachmentData, onResult);
+        this.restClient.create('/_apis/test/runs/' + testRunId + '/Attachments', "3.0-preview.1", attachmentData, null, onResult);
     }
 
 }
@@ -50,7 +52,7 @@ export class TestManagementApi implements ifm.ITestManagementApi {
 export class QTestManagementApi {
     testApi: ifm.ITestManagementApi;
 
-    constructor(accountUrl:string, handlers: ifm.IRequestHandler[]) {
+    constructor(accountUrl:string, handlers: baseifm.IRequestHandler[]) {
         this.testApi = new TestManagementApi(accountUrl, handlers);
     }
 

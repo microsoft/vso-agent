@@ -5,12 +5,36 @@ import shell = require("shelljs");
 import fs = require('fs');
 import ctxm = require('context');
 import zlib = require('zlib');
+import fcifm = require('vso-node-api/interfaces/FileContainerInterfaces');
 import ifm = require('./api/interfaces');
 var uuid = require('node-uuid');
 
 export function copyToFileContainer(taskCtx: ctxm.TaskContext, localPath: string, containerId: number, containerFolder: string): Q.Promise<string> {
 	var fc = new FileContainerHelper(taskCtx);
 	return fc.copyToFileContainer(localPath, containerId, containerFolder);
+}
+
+export function getUploadHeaders(isGzipped: boolean, 
+	uncompressedLength: number, 
+	compressedLength?: number, 
+	contentIdentifier?: Buffer): { [header: string]: any; } {
+
+    var addtlHeaders: { [header: string]: any; } = {};
+    var byteLengthToSend = isGzipped ? compressedLength : uncompressedLength;
+
+    addtlHeaders["Content-Range"] = "bytes 0-" + (byteLengthToSend - 1) + "/" + byteLengthToSend;
+    addtlHeaders["Content-Length"] = byteLengthToSend;
+
+    if (isGzipped) {
+        addtlHeaders["Accept-Encoding"] = "gzip";
+        addtlHeaders["Content-Encoding"] = "gzip";
+        addtlHeaders["x-tfs-filelength"] = uncompressedLength;
+    }
+
+    if (contentIdentifier) {
+        addtlHeaders["x-vso-contentId"] = contentIdentifier.toString("base64");
+    }
+	return addtlHeaders;
 }
 
 export class FileContainerHelper {	
@@ -98,15 +122,14 @@ export class FileContainerHelper {
 				return this._uploadZip(filePath, tempFolder, size, containerId, containerPath);
 			}
 			else {
-				var item: ifm.ContainerItemInfo = <ifm.ContainerItemInfo>{
-			        fullPath: filePath,
-			        containerItem: {
-			            containerId: containerId,
-			            itemType: ifm.ContainerItemType.File,
+				var item: ifm.FileContainerItemInfo = <ifm.FileContainerItemInfo>{
+					fullPath: filePath,
+					uploadHeaders: getUploadHeaders(false, size),
+		            containerItem: <fcifm.FileContainerItem>{
+						containerId: containerId,
+			            itemType: fcifm.ContainerItemType.File,
 			            path: containerPath
-			        },
-			        uncompressedLength: size,
-			        isGzipped: false
+					}
 			    };
 	
 				return this._taskCtx.service.uploadFileToContainer(containerId, item);			
@@ -164,16 +187,14 @@ export class FileContainerHelper {
 		.then((zipSize) => {
 			this._taskCtx.verbose(info.zipPath + ':' + zipSize);
 	
-			var item: ifm.ContainerItemInfo =  <ifm.ContainerItemInfo>{
-		        fullPath: info.zipPath,
-		        containerItem: {
-		            containerId: containerId,
-		            itemType: ifm.ContainerItemType.File,
+			var item: ifm.FileContainerItemInfo =  <ifm.FileContainerItemInfo>{
+	            fullPath: info.zipPath,
+				uploadHeaders: getUploadHeaders(true, fileSize, zipSize),
+				containerItem: <fcifm.FileContainerItem>{
+					containerId: containerId,
+		            itemType: fcifm.ContainerItemType.File,
 		            path: containerPath
-		        },
-		        compressedLength: zipSize,
-		        uncompressedLength: fileSize,
-		        isGzipped: true
+				}
 		    };
 		    
 			return this._taskCtx.service.uploadFileToContainer(containerId, item);

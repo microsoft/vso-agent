@@ -1,11 +1,11 @@
 import Q = require('q');
 import shell = require('shelljs');
 import ctxm = require('../../context');
-import ifm = require('../../api/interfaces');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 
 export interface IScmProvider {
 	// virtual - must override
-	initialize(endpoint: ifm.JobEndpoint);
+	initialize(endpoint: agentifm.ServiceEndpoint);
 	getCode(): Q.Promise<number>;
 	clean(): Q.Promise<number>;
 }
@@ -26,11 +26,11 @@ export class ScmProvider implements IScmProvider {
 		return shell.test('-d', this.targetPath);
 	}
 
-	public initialize(endpoint: ifm.JobEndpoint) {
+	public initialize(endpoint: agentifm.ServiceEndpoint) {
 		// should override if you need store creds, info, etc.. from the endpoint
 	}
 
-	public getAuthParameter(endpoint: ifm.JobEndpoint, paramName: string) {
+	public getAuthParameter(endpoint: agentifm.ServiceEndpoint, paramName: string) {
 		var paramValue = null;
 
 		if (endpoint && endpoint.authorization && endpoint.authorization['parameters']) {
