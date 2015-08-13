@@ -10,33 +10,19 @@ import async = require('async');
 import fs = require('fs');
 import path = require('path');
 import shell = require('shelljs');
-<<<<<<< HEAD
+import Q = require('q');
 import agentm = require('vso-node-api/TaskAgentApi');
 import webapi = require('vso-node-api/WebApi');
 
 export class TaskManager {
-
-    constructor(workerContext: ctxm.WorkerContext, authHandler: baseifm.IRequestHandler) {
-        this.context = workerContext;
+    constructor(serviceContext: ctxm.ServiceContext, authHandler: baseifm.IRequestHandler) {
+        this.context = serviceContext;
         this.agentApi = new webapi.WebApi(workerContext.config.settings.serverUrl, 
                                       authHandler).getTaskAgentApi();
-        this.taskFolder = path.resolve(workerContext.config.settings.workFolder, 'tasks');
-    }
-
-    public ensureTaskExists(task: agentifm.TaskInstance, callback) : void {
-=======
-import webapi = require('./api/webapi');
-import Q = require('q');
-
-export class TaskManager {
-    constructor(serviceContext: ctxm.ServiceContext, authHandler: ifm.IRequestHandler) {
-        this.context = serviceContext;
-        this.taskApi = webapi.TaskApi(serviceContext.config.settings.serverUrl, authHandler);
         this.taskFolder = path.resolve(serviceContext.workFolder, 'tasks');
     }
 
-    public ensureTaskExists(task: ifm.TaskInstance): Q.IPromise<any> {
->>>>>>> consolidate AgentContext and WorkerContext
+    public ensureTaskExists(task: agentifm.TaskInstance): Q.IPromise<any> {
         if (!this.hasTask(task)) {
             return this.downloadTask(task);
         } else {
@@ -52,11 +38,7 @@ export class TaskManager {
         }
     }
 
-<<<<<<< HEAD
-    public ensureTasksExist(tasks: agentifm.TaskInstance[], callback: (err: any) => void) : void {
-=======
-    public ensureTasksExist(tasks: ifm.TaskInstance[]): Q.IPromise<any> {
->>>>>>> consolidate AgentContext and WorkerContext
+    public ensureTasksExist(tasks: agentifm.TaskInstance[]): Q.IPromise<any> {
         // Check only once for each id/version combo
         var alreadyAdded = {};
         var uniqueTasks = [];
@@ -69,7 +51,7 @@ export class TaskManager {
             }
         }
         
-        var promises = tasks.map((task: ifm.TaskInstance) => {
+        var promises = tasks.map((task: agentifm.TaskInstance) => {
             return this.ensureTaskExists(task);
         });
         
@@ -113,17 +95,17 @@ export class TaskManager {
     }
 
     private downloadTask(task: agentifm.TaskInstance): Q.IPromise<any> {
-        var deferred = Q.defer();
         var taskPath = this.getTaskPath(task);
         var filePath = taskPath + '.zip';
         if (fs.existsSync(filePath)) {
-            deferred.reject(new Error('File ' + filePath + ' already exists.'));
-            return deferred.promise;
+            return Q.reject(new Error('File ' + filePath + ' already exists.'));
         }
+        
+        var deferred = Q.defer();
         shell.mkdir('-p', taskPath);
 
         this.context.trace("Downloading task " + task.id + " v" + task.version + " to " + taskPath);
-        this.agentApi.getTaskContentZip(task.id, task.version, (err, statusCode, res) => {
+        this.taskApi.getTaskContentZip(task.id, task.version, (err, statusCode, res) => {
             if (err) {
                 deferred.reject(err);
             }
