@@ -15,7 +15,7 @@ import os = require('os');
 import tm = require('./tracing');
 import path = require('path');
 import crypto = require('crypto');
-import wapim = require('./api/webapi');
+import wapim = require('vso-node-api/WebApi');
 import Q = require('q');
 
 var wk: ctxm.WorkerContext;
@@ -89,7 +89,7 @@ export function run(msg, consoleOutput: boolean,
             trace.write('using session token');
             var accessToken = job.environment.systemConnection.authorization.parameters['AccessToken'];
             trace.state('AccessToken:', accessToken);
-            systemAuthHandler = wapim.bearerHandler(accessToken);
+            systemAuthHandler = wapim.getBearerHandler(accessToken);
         }
         else {
             trace.write('using altcreds');

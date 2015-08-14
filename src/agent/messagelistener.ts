@@ -1,10 +1,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-/// <reference path="../definitions/node.d.ts"/>
-/// <reference path="../definitions/vso-node-api.d.ts" />
+/// <reference path="./definitions/node.d.ts"/>
+/// <reference path="./definitions/vso-node-api.d.ts" />
 
-import ifm = require('./interfaces');
 import agentm = require('vso-node-api/TaskAgentApi');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import events = require('events');

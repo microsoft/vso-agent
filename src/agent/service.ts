@@ -14,7 +14,6 @@ var path = require('path')
 import Q = require('q');
 import cm = require('./common');
 import cfgm = require('./configuration');
-import ifm = require('./api/interfaces');
 
 var SVC_FILE_NAME = '.service';
 var _cfgPath = path.join(__dirname, '..', SVC_FILE_NAME);

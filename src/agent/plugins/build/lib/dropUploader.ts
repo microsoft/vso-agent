@@ -9,8 +9,7 @@ import ctxm = require('../../../context');
 import cm = require('../../../common');
 import fchelperm = require('../../../filecontainerhelper');
 import fcifm = require('vso-node-api/interfaces/FileContainerInterfaces');
-import ifm = require('../../../api/interfaces');
-import webapi = require("../../../api/webapi");
+import ifm = require('../../../interfaces');
 import tm = require('../../../tracing');
 var uuid = require('node-uuid');
 

@@ -6,13 +6,14 @@ import ctxm = require('./context');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 import fcifm = require('vso-node-api/interfaces/FileContainerInterfaces');
-import ifm = require('./api/interfaces');
+import testifm = require('vso-node-api/interfaces/TestInterfaces');
+import ifm = require('./interfaces');
 import vssifm = require('vso-node-api/interfaces/common/VSSInterfaces');
 import agentm = require('vso-node-api/TaskAgentApi');
 import buildm = require('vso-node-api/BuildApi');
 import fcm = require('vso-node-api/FileContainerApi');
 import taskm = require('vso-node-api/TaskApi');
-import oldwebapim = require('./api/WebApi');
+import testm = require('vso-node-api/TestApi');
 import webapim = require('vso-node-api/WebApi');
 import zlib = require('zlib');
 import fs = require('fs');
@@ -186,7 +187,8 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
     private _agentApi: agentm.ITaskAgentApi;
     private _fileContainerApi: fcm.IQFileContainerApi;
     public taskApi: taskm.ITaskApi;
-    public _testApi: ifm.IQTestManagementApi;
+    public _testApi: testm.IQTestApi;
+    public _projectName: string;
 
     private _issues: any;
 
@@ -411,27 +413,37 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
     //------------------------------------------------------------------  
     public initializeTestManagement(projectName: string): void {
         trace.enter('servicechannel:initializeTestManagement');
-        this._testApi = oldwebapim.QTestManagementApi(this.collectionUrl + "/" + projectName, this.jobInfo.systemAuthHandler);
+        this._testApi = new webapim.WebApi(this.collectionUrl, this.jobInfo.systemAuthHandler).getQTestApi();
+        this._projectName = projectName;
     }
 
-    public createTestRun(testRun: ifm.TestRun): Q.Promise<ifm.TestRun> {
+    public createTestRun(testRun: testifm.RunCreateModel): Q.Promise<testifm.TestRun> {
         trace.enter('servicechannel:createTestRun');
-        return this._testApi.createTestRun(testRun);
+        return this._testApi.createTestRun(testRun, this._projectName);
     }
 
-    public endTestRun(testRunId: number) : Q.Promise<ifm.TestRun> {
+    public endTestRun(testRunId: number) : Q.Promise<testifm.TestRun> {
         trace.enter('servicechannel:endTestRun');
-        return this._testApi.endTestRun(testRunId);
+        var endedRun: testifm.RunUpdateModel = <testifm.RunUpdateModel> {
+            state: "Completed"
+        };
+        return this._testApi.updateTestRun(endedRun, this._projectName, testRunId);
     }
 
-    public createTestRunResult(testRunId: number, testRunResults: ifm.TestRunResult[]): Q.Promise<ifm.TestRunResult[]> {
+    public createTestRunResult(testRunId: number, testRunResults: testifm.TestResultCreateModel[]): Q.Promise<testifm.TestCaseResult[]> {
         trace.enter('servicechannel:createTestRunResult');
-        return this._testApi.createTestRunResult(testRunId, testRunResults);
+        return this._testApi.addTestResultsToTestRun(testRunResults, this._projectName, testRunId);
     }
 
     public createTestRunAttachment(testRunId: number, fileName: string, contents: string): Q.Promise<any> {
         trace.enter('servicechannel:createTestRunAttachment');
-        return this._testApi.createTestRunAttachment(testRunId, fileName, contents);
+        var attachmentData = <testifm.TestAttachmentRequestModel>{
+            attachmentType: "GeneralAttachment",
+            comment: "",
+            fileName: fileName,
+            stream: contents
+        }
+        return this._testApi.createTestRunAttachment(attachmentData, this._projectName, testRunId);
     }
 }
 

@@ -13,7 +13,8 @@ import basicm = require('vso-node-api/handlers/basiccreds')
 import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 import fcifm = require('vso-node-api/interfaces/FileContainerInterfaces');
-import ifm = require('./api/interfaces');
+import ifm = require('./interfaces');
+import testifm = require('vso-node-api/interfaces/TestInterfaces');
 import taskm = require('vso-node-api/TaskApi');
 import webapi = require('vso-node-api/WebApi');
 import cfgm = require('./configuration');
@@ -168,9 +169,9 @@ export interface IFeedbackChannel extends NodeJS.EventEmitter {
 
     // test publishing 
     initializeTestManagement(projectName: string): void;
-    createTestRun(testRun: ifm.TestRun): Q.Promise<ifm.TestRun>;
-    endTestRun(testRunId: number): Q.Promise<ifm.TestRun>;
-    createTestRunResult(testRunId: number, testRunResults: ifm.TestRunResult[]): Q.Promise<ifm.TestRunResult[]>;
+    createTestRun(testRun: testifm.RunCreateModel): Q.Promise<testifm.TestRun>;
+    endTestRun(testRunId: number): Q.Promise<testifm.TestRun>;
+    createTestRunResult(testRunId: number, testRunResults: testifm.TestResultCreateModel[]): Q.Promise<testifm.TestCaseResult[]>;
     createTestRunAttachment(testRunId: number, fileName: string, contents: string): Q.Promise<any>;
 }
 

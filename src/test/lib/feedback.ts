@@ -5,7 +5,8 @@ import cm = require('../../agent/common');
 import ctxm = require('../../agent/context');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
-import ifm = require('../../agent/api/interfaces');
+import ifm = require('../../agent/interfaces');
+import testifm = require('vso-node-api/interfaces/TestInterfaces');
 import taskm = require('vso-node-api/TaskApi');
 import Q = require('q');
 import events = require('events');
@@ -216,18 +217,18 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
 		record.state = agentifm.TimelineRecordState.Completed;
     }
 
-    public createTestRun(testRun: ifm.TestRun): Q.Promise<ifm.TestRun> {
+    public createTestRun(testRun: testifm.RunCreateModel): Q.Promise<testifm.TestRun> {
 		var defer = Q.defer();
 
 		this._getFromBatch("1.createTestRun").result = agentifm.TaskResult.Succeeded;
 
-        var createdTestRun: ifm.TestRun = <ifm.TestRun> {
+        var createdTestRun: testifm.TestRun = <testifm.TestRun> {
             name: testRun.name,
         	id: 99
         };
 
         // fail the create test run step, whenever id = -1, and validate from testcode that error is propagated back   
-        if (testRun.id && testRun.id == -1)
+        if (createdTestRun.id && createdTestRun.id == -1)
         {
             var err = {
 		        message: "Too bad - createTestRun failed",
@@ -240,15 +241,15 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
         	defer.resolve(createdTestRun);
         }
             
-        return <Q.Promise<ifm.TestRun>>defer.promise;  
+        return <Q.Promise<testifm.TestRun>>defer.promise;  
     }
 
-    public endTestRun(testRunId: number) : Q.Promise<ifm.TestRun> {
+    public endTestRun(testRunId: number) : Q.Promise<testifm.TestRun> {
 		var defer = Q.defer();
 
 		this._getFromBatch("4.endTestRun").result = agentifm.TaskResult.Succeeded;
 
-		var createdTestRun: ifm.TestRun = <ifm.TestRun> {
+		var createdTestRun: testifm.TestRun = <testifm.TestRun> {
         	id: 99,
         	state: "Completed"
         };
@@ -267,36 +268,28 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
         	defer.resolve(createdTestRun);
         }
             
-        return <Q.Promise<ifm.TestRun>>defer.promise;  
+        return <Q.Promise<testifm.TestRun>>defer.promise;  
 	}
 
-    public createTestRunResult(testRunId: number, testRunResults: ifm.TestRunResult[]): Q.Promise<ifm.TestRunResult[]> {
+    public createTestRunResult(testRunId: number, testRunResults: testifm.TestResultCreateModel[]): Q.Promise<testifm.TestCaseResult[]> {
 		var defer = Q.defer();
 
 		this._getFromBatch("3.createTestRunResult").result = agentifm.TaskResult.Succeeded;
 
         var createdTestResults = [];
-	    var testResult : ifm.TestRunResult = <ifm.TestRunResult> {
+	    var testResult : testifm.TestResultCreateModel = <testifm.TestResultCreateModel> {
             state: "Completed",
             computerName: "localhost",
-            resolutionState: null,
-            testCasePriority: 1,
-            failureType: null,
+            testCasePriority: "1",
             automatedTestName: "testName",
             automatedTestStorage: "testStorage",
             automatedTestType: "JUnit",
-            automatedTestTypeId: null,
-            automatedTestId: null,
-            area: null,
-            owner: "buildRequestedFor", 
-            runBy: "buildRequestedFor",
+            owner: { id: "buildRequestedFor" }, 
+            runBy: { id: "buildRequestedFor" },
             testCaseTitle: "testName",
-            revision: 0,
-            dataRowCount: 0,
-            testCaseRevision: 0,
             outcome: 'Failed',
             errorMessage: "errorMessage",
-            durationInMs: 1000
+            durationInMs: "1000"
 	    };
     	
     	createdTestResults.push(testResult);
@@ -315,7 +308,7 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
         	defer.resolve(createdTestResults);
         }
 
-        return <Q.Promise<ifm.TestRunResult[]>>defer.promise;  
+        return <Q.Promise<testifm.TestCaseResult[]>>defer.promise;  
     }
 
     public createTestRunAttachment(testRunId: number, fileName: string, contents: string): Q.Promise<any> {
