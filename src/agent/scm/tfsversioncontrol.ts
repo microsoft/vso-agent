@@ -1,6 +1,6 @@
 import Q = require('q');
 import scmm = require('./lib/scmprovider');
-import ifm = require('../api/interfaces');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import tfvcwm = require('./lib/tfvcwrapper');
 import ctxm = require('../context');
 import utilm = require('../utilities');
@@ -30,12 +30,12 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
 
     public tfvcw: tfvcwm.TfvcWrapper;
     public token: string;
-    public endpoint: ifm.JobEndpoint;
+    public endpoint: agentifm.ServiceEndpoint;
     public workspaceName: string;
     public version: string;
     public shelveset: string;
 
-    public initialize(endpoint: ifm.JobEndpoint) {
+    public initialize(endpoint: agentifm.ServiceEndpoint) {
         this.endpoint = endpoint;
 
         if (!endpoint) {
@@ -313,7 +313,7 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
         return localPath;
     }
 
-    private _getTfvcMappings(endpoint: ifm.JobEndpoint) {
+    private _getTfvcMappings(endpoint: agentifm.ServiceEndpoint) {
         if (endpoint && endpoint.data && endpoint.data['tfvcWorkspaceMapping']) {
             var tfvcMappings = JSON.parse(endpoint.data['tfvcWorkspaceMapping']);
             if (tfvcMappings && tfvcMappings.mappings) {
