@@ -59,7 +59,7 @@ export class TaskManager {
 
     public ensureLatestExist(callback: (err: any) => void) : void {
         // Get all tasks
-        this.agentApi.getTaskDefinitions(null, (err, status, tasks) => {
+        this.agentApi.getTaskDefinitions(null, null, null, null, (err, status, tasks) => {
             if (err) {
                 callback(err);
                 return;
@@ -94,7 +94,7 @@ export class TaskManager {
             return;
         }
         shell.mkdir('-p', taskPath);
-        this.agentApi.getTaskContentZip(task.id, task.version, (err, statusCode, res) => {
+        this.agentApi.getTaskContentZip(task.id, task.version, null, null, (err, statusCode, res) => {
             if (err) {
                 callback(err);
                 return;
