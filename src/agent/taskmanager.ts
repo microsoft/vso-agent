@@ -17,7 +17,7 @@ import webapi = require('vso-node-api/WebApi');
 export class TaskManager {
     constructor(serviceContext: ctxm.ServiceContext, authHandler: baseifm.IRequestHandler) {
         this.context = serviceContext;
-        this.agentApi = new webapi.WebApi(workerContext.config.settings.serverUrl, 
+        this.taskApi = new webapi.WebApi(serviceContext.config.settings.serverUrl, 
                                       authHandler).getTaskAgentApi();
         this.taskFolder = path.resolve(serviceContext.workFolder, 'tasks');
     }
@@ -62,7 +62,7 @@ export class TaskManager {
         var deferred = Q.defer();
         
         // Get all tasks
-        this.agentApi.getTaskDefinitions(null, (err, status, tasks) => {
+        this.taskApi.getTaskDefinitions(null, (err, status, tasks) => {
             if (err) {
                 deferred.reject(err);
             }
@@ -139,6 +139,6 @@ export class TaskManager {
     }
 
     private context: ctxm.ServiceContext;
-    private taskApi: agentifm.ITaskApi;
+    private taskApi: agentm.ITaskAgentApi;
     private taskFolder: string;
 }

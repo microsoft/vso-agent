@@ -4,7 +4,6 @@ import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import tfvcwm = require('./lib/tfvcwrapper');
 import ctxm = require('../context');
 import utilm = require('../utilities');
-import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 
 var shell = require('shelljs');
 var path = require('path');

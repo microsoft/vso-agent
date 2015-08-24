@@ -222,7 +222,7 @@ export class JobRunner {
                 });
         }, 
         (err: any) => {
-            complete(err, ifm.TaskResult.Failed);
+            complete(err, agentifm.TaskResult.Failed);
             return;
         });
     }
