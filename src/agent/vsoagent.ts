@@ -19,6 +19,7 @@ import taskm = require('./taskmanager');
 import agentm = require('vso-node-api/TaskAgentApi');
 import webapim = require('vso-node-api/WebApi');
 import heartbeat = require('./heartbeat');
+import fm = require('./feedback');
 import Q = require('q');
 
 var inDebugger = (typeof global.v8debug === 'object');
@@ -40,15 +41,15 @@ var trace: tm.Tracing;
 var cfgr: cfgm.Configurator = new cfgm.Configurator();
 var messageListener: listener.MessageListener;
 
-var runWorker = function(sc: ctxm.ServiceContext, workerMsg) {
+var runWorker = function(ag: ctxm.ServiceContext, agentApi: ifm.IAgentApi, workerMsg: any) {
 
     var worker: childProcess.ChildProcess = childProcess.fork(path.join(__dirname, 'vsoworker'), [], {
         env: process.env,
         execArgv: []
     });
-
+    
     // worker ipc callbacks
-    worker.on('message', function(msg){
+    worker.on('message', function(msg) {
         try {
             if (msg.messageType === 'log') {
                 // log data event - need to send to server
@@ -56,6 +57,19 @@ var runWorker = function(sc: ctxm.ServiceContext, workerMsg) {
             }
             else if (msg.messageType === 'status') {
                 // consoleWriter.writeStatus(msg.data);
+            }
+            else if (msg.messageType === 'updateJobRequest') {
+                var poolId: number = msg.poolId;
+                var lockToken: string = msg.lockToken;
+                var jobRequest: ifm.TaskAgentJobRequest = msg.jobRequest;
+                
+                agentApi.updateJobRequest(poolId, lockToken, jobRequest, (err, status, jobRequest) => {
+                    trace.write('err: ' + err);
+                    trace.write('status: ' + status);
+                    if (status === 404) {
+                        worker.send(fm.Events.JobAbandoned);
+                    } 
+                });
             }
         }
         catch (err) {
@@ -166,7 +180,7 @@ cm.readBasicCreds()
                 data: messageBody
             }
 
-            runWorker(serviceContext, workerMsg);
+            runWorker(serviceContext, agentApi, workerMsg);
         }
         else {
             serviceContext.error('Unknown Message Type: ' + message.messageType);

@@ -136,7 +136,7 @@ export function run(msg, consoleOutput: boolean,
         // guard to ensure we only "finish" once 
         var finishingJob: boolean = false;
         
-        serviceChannel.on(fm.Events.JobAbandoned, () => {
+        wk.on(fm.Events.JobAbandoned, () => {
             // if finishingJob is true here, then the jobRunner finished
             // ctx.finishJob will take care of draining the service channel
             if (!finishingJob) {
@@ -185,6 +185,13 @@ export function run(msg, consoleOutput: boolean,
 }
 
 process.on('message', function (msg) {
+    if (msg === fm.Events.JobAbandoned) {
+        if (wk) {
+            wk.emit(fm.Events.JobAbandoned);
+        }
+        return;
+    }
+    
     run(msg, true,
         function (agentUrl, taskUrl, jobInfo, ag) {
             return new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, ag);
