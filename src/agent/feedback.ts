@@ -31,7 +31,7 @@ var CHECK_INTERVAL = 1000;
 var MAX_DRAIN_WAIT = 60 * 1000; // 1 min
 
 export class Events {
-    static JobAbandoned = "jobAbandoned";
+    static Abandoned = "abandoned";
 }
 
 export class TimedWorker extends events.EventEmitter {
@@ -127,9 +127,9 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         this._totalWaitTime = 0;
         this._lockRenewer = new LockRenewer(jobInfo, serviceCtx.config.poolId);
 
-        // pass the jobAbandoned event up to the owner
-        this._lockRenewer.on(Events.JobAbandoned, () => {
-            this.emit(Events.JobAbandoned);
+        // pass the Abandoned event up to the owner
+        this._lockRenewer.on(Events.Abandoned, () => {
+            this.emit(Events.Abandoned);
         });
 
         // timelines

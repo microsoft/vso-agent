@@ -136,7 +136,7 @@ export function run(msg, consoleOutput: boolean,
         // guard to ensure we only "finish" once 
         var finishingJob: boolean = false;
         
-        hostContext.on(fm.Events.JobAbandoned, () => {
+        hostContext.on(fm.Events.Abandoned, () => {
             // if finishingJob is true here, then the jobRunner finished
             // ctx.finishJob will take care of draining the service channel
             if (!finishingJob) {
@@ -184,20 +184,20 @@ export function run(msg, consoleOutput: boolean,
     return deferred.promise;
 }
 
-process.on('message', function (msg) {
-    if (msg === fm.Events.JobAbandoned) {
+process.on('message', function (msg: cm.IWorkerMessage) {
+    if (msg.type === cm.WorkerMessageTypes.Abandoned) {
         if (hostContext) {
-            hostContext.emit(fm.Events.JobAbandoned);
+            hostContext.emit(fm.Events.Abandoned);
         }
-        return;
     }
-    
-    run(msg, true,
-        function (agentUrl, taskUrl, jobInfo, ag) {
-            return new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, ag);
-        }).fin(() => {
-            process.exit();
-        });
+    else if (msg.type === cm.WorkerMessageTypes.Job) {
+        run(msg.data, true,
+            function (agentUrl, taskUrl, jobInfo, ag) {
+                return new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, ag);
+            }).fin(() => {
+                process.exit();
+            });
+    }
 });
 
 process.on('uncaughtException', function (err) {

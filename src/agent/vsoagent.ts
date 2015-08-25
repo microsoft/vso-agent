@@ -48,6 +48,8 @@ var runWorker = function(sc: ctxm.HostContext, agentApi: agentm.ITaskAgentApi, w
         execArgv: []
     });
     
+    var abandoned: boolean = false;
+    
     // worker ipc callbacks
     worker.on('message', function(msg) {
         try {
@@ -58,7 +60,7 @@ var runWorker = function(sc: ctxm.HostContext, agentApi: agentm.ITaskAgentApi, w
             else if (msg.messageType === 'status') {
                 // consoleWriter.writeStatus(msg.data);
             }
-            else if (msg.messageType === 'updateJobRequest') {
+            else if (msg.messageType === 'updateJobRequest' && !abandoned) {
                 var poolId: number = msg.poolId;
                 var lockToken: string = msg.lockToken;
                 var jobRequest: agentifm.TaskAgentJobRequest = msg.jobRequest;
@@ -67,7 +69,10 @@ var runWorker = function(sc: ctxm.HostContext, agentApi: agentm.ITaskAgentApi, w
                     trace.write('err: ' + err);
                     trace.write('status: ' + status);
                     if (status === 404) {
-                        worker.send(fm.Events.JobAbandoned);
+                        abandoned = true;
+                        worker.send({
+                            type: cm.WorkerMessageTypes.Abandoned
+                        });
                     } 
                 });
             }
@@ -78,7 +83,10 @@ var runWorker = function(sc: ctxm.HostContext, agentApi: agentm.ITaskAgentApi, w
     });
 
     sc.verbose('host::workerSend');
-    worker.send(workerMsg);
+    worker.send({
+        type: cm.WorkerMessageTypes.Job,
+        data: workerMsg
+    });
 }
 
 var INIT_RETRY_DELAY = 15000;

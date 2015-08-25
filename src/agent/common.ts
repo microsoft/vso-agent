@@ -88,6 +88,11 @@ export var CMD_PREFIX: string = '##vso[';
 export var DEFAULT_LOG_LINESPERFILE = 5000;
 export var DEFAULT_LOG_MAXFILES = 5;
 
+export class WorkerMessageTypes {
+     static Abandoned = "abandoned";
+     static Job = "job";
+}
+
 //-----------------------------------------------------------
 // Interfaces
 //-----------------------------------------------------------
@@ -234,6 +239,11 @@ export interface ILogPageInfo {
     logInfo: ILogMetadata;
     pagePath: string;
     pageNumber: number;
+}
+
+export interface IWorkerMessage {
+    type: string;
+    data: any;
 }
 
 //-----------------------------------------------------------
