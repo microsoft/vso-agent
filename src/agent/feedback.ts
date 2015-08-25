@@ -102,7 +102,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
     constructor(agentUrl: string,
                 collectionUrl: string,
                 jobInfo: cm.IJobInfo,
-                serviceCtx: ctxm.ServiceContext) {
+                serviceCtx: ctxm.HostContext) {
         super();
 
         ensureTrace(serviceCtx);
@@ -175,7 +175,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
     public agentUrl: string;
     public collectionUrl: string;
     
-    public serviceCtx: ctxm.ServiceContext;
+    public serviceCtx: ctxm.HostContext;
     public jobInfo: cm.IJobInfo;
 
     private _totalWaitTime: number;
@@ -474,7 +474,7 @@ export class WebConsoleQueue extends BaseQueue<string> {
     private _jobInfo: cm.IJobInfo;
     private _taskApi: taskm.ITaskApi;
 
-    constructor(feedback: cm.IFeedbackChannel, serviceCtx: ctxm.ServiceContext, msDelay: number) {
+    constructor(feedback: cm.IFeedbackChannel, serviceCtx: ctxm.HostContext, msDelay: number) {
         super(serviceCtx, msDelay);
         this._jobInfo = feedback.jobInfo;
         this._taskApi = feedback.taskApi;
@@ -573,10 +573,10 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
     private _recordToLogIdMap: { [recordId: string]: number } = {};
     private _jobInfo: cm.IJobInfo;
     private _taskApi: taskm.ITaskApi;
-    private _workerCtx: ctxm.ServiceContext;
+    private _workerCtx: ctxm.HostContext;
     private _service: cm.IFeedbackChannel;
 
-    constructor(service: cm.IFeedbackChannel, serviceCtx: ctxm.ServiceContext, msDelay: number) {
+    constructor(service: cm.IFeedbackChannel, serviceCtx: ctxm.HostContext, msDelay: number) {
         super(serviceCtx, msDelay);
         this._service = service;
         this._jobInfo = service.jobInfo;

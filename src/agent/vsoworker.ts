@@ -18,7 +18,7 @@ import crypto = require('crypto');
 import wapim = require('./api/webapi');
 import Q = require('q');
 
-var serviceContext: ctxm.ServiceContext;
+var hostContext: ctxm.HostContext;
 var trace: tm.Tracing;
 
 function setVariables(job: agentifm.JobRequestMessage, config: cm.IConfiguration) {
@@ -84,12 +84,12 @@ export function run(msg, consoleOutput: boolean,
     var deferred = Q.defer();
     var config: cm.IConfiguration = msg.config;
     
-    serviceContext = new ctxm.ServiceContext(config, getWorkerDiagnosticWriter(config), true);
-    trace = new tm.Tracing(__filename, serviceContext);
+    hostContext = new ctxm.HostContext(config, getWorkerDiagnosticWriter(config), true);
+    trace = new tm.Tracing(__filename, hostContext);
     trace.enter('.onMessage');
     trace.state('message', msg);
 
-    serviceContext.info('worker::onMessage');
+    hostContext.info('worker::onMessage');
     if (msg.messageType === "job") {
         var job: agentifm.JobRequestMessage = msg.data;
         deserializeEnumValues(job);
@@ -105,7 +105,7 @@ export function run(msg, consoleOutput: boolean,
         }
         else {
             trace.write('using altcreds');
-            serviceContext.error('system connection token not supplied.  unsupported deployment.')
+            hostContext.error('system connection token not supplied.  unsupported deployment.')
         }
 
         // TODO: jobInfo should go away and we should just have JobContext
@@ -118,30 +118,30 @@ export function run(msg, consoleOutput: boolean,
             process.env['altpassword'] = msg.config.creds.password;
         }
 
-        serviceContext.status('Running job: ' + job.jobName);
-        serviceContext.info('message:');
+        hostContext.status('Running job: ' + job.jobName);
+        hostContext.info('message:');
         trace.state('msg:', msg);
 
-        var agentUrl = serviceContext.config.settings.serverUrl;
+        var agentUrl = hostContext.config.settings.serverUrl;
         var taskUrl = job.environment.variables[cm.sysVars.collectionUri]
 
-        var serviceChannel: cm.IFeedbackChannel = createFeedbackChannel(agentUrl, taskUrl, jobInfo, serviceContext);
+        var serviceChannel: cm.IFeedbackChannel = createFeedbackChannel(agentUrl, taskUrl, jobInfo, hostContext);
 
-        var ctx: ctxm.JobContext = new ctxm.JobContext(job, systemAuthHandler, serviceChannel, serviceContext);
+        var ctx: ctxm.JobContext = new ctxm.JobContext(job, systemAuthHandler, serviceChannel, hostContext);
         trace.write('created JobContext');
 
-        var jobRunner: jrm.JobRunner = new jrm.JobRunner(serviceContext, ctx);
+        var jobRunner: jrm.JobRunner = new jrm.JobRunner(hostContext, ctx);
         trace.write('created jobRunner');
 
         // guard to ensure we only "finish" once 
         var finishingJob: boolean = false;
         
-        serviceContext.on(fm.Events.JobAbandoned, () => {
+        hostContext.on(fm.Events.JobAbandoned, () => {
             // if finishingJob is true here, then the jobRunner finished
             // ctx.finishJob will take care of draining the service channel
             if (!finishingJob) {
                 finishingJob = true;
-                serviceContext.error("Job abandoned by the server.");
+                hostContext.error("Job abandoned by the server.");
                 // nothing much to do if drain rejects...
                 serviceChannel.drain().fin(() => {
                     trace.write("Service channel drained");
@@ -153,9 +153,9 @@ export function run(msg, consoleOutput: boolean,
         jobRunner.run((err: any, result: agentifm.TaskResult) => {
             trace.callback('job.run');
 
-            serviceContext.status('Job Completed: ' + job.jobName);
+            hostContext.status('Job Completed: ' + job.jobName);
             if (err) {
-                serviceContext.error('Error: ' + err.message);
+                hostContext.error('Error: ' + err.message);
             }
 
             // if finishingJob is true here, then the lock renewer got a 404, which means the server abandoned the job
@@ -165,10 +165,10 @@ export function run(msg, consoleOutput: boolean,
                 ctx.finishJob(result).fin(() => {
                     // trace and status no matter what. if finishJob failed, the fail handler below will be called
                     trace.callback('ctx.finishJob');
-                    serviceContext.status('Job Finished: ' + job.jobName);
+                    hostContext.status('Job Finished: ' + job.jobName);
                 }).fail((err: any) => {
                     if (err) {
-                        serviceContext.error('Error: ' + err.message);
+                        hostContext.error('Error: ' + err.message);
                     }
                 }).fin(() => {
                     deferred.resolve(null);
@@ -186,8 +186,8 @@ export function run(msg, consoleOutput: boolean,
 
 process.on('message', function (msg) {
     if (msg === fm.Events.JobAbandoned) {
-        if (serviceContext) {
-            serviceContext.emit(fm.Events.JobAbandoned);
+        if (hostContext) {
+            hostContext.emit(fm.Events.JobAbandoned);
         }
         return;
     }
@@ -204,17 +204,17 @@ process.on('uncaughtException', function (err) {
     console.error('unhandled:' + err.message);
     console.error(err.stack);
 
-    if (serviceContext) {
-        serviceContext.error('worker unhandled: ' + err.message);
-        serviceContext.error(err.stack);
+    if (hostContext) {
+        hostContext.error('worker unhandled: ' + err.message);
+        hostContext.error(err.stack);
     }
 
     process.exit();
 });
 
 process.on('SIGINT', function () {
-    if (serviceContext) {
-        serviceContext.info("\nShutting down agent.");
+    if (hostContext) {
+        hostContext.info("\nShutting down agent.");
     }
 
     process.exit();

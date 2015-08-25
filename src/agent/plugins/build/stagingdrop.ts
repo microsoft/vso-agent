@@ -27,7 +27,7 @@ var dropOptionId: string = "e8b30f6f-039d-4d34-969c-449bbe9c3b9e";
 var _trace: tm.Tracing;
 
 function _ensureTracing(ctx: ctxm.ExecutionContext, area: string) {
-    _trace = new tm.Tracing(__filename, ctx.serviceContext);
+    _trace = new tm.Tracing(__filename, ctx.hostContext);
     _trace.enter(area);
 }
 

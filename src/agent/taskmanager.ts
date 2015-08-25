@@ -15,11 +15,11 @@ import agentm = require('vso-node-api/TaskAgentApi');
 import webapi = require('vso-node-api/WebApi');
 
 export class TaskManager {
-    constructor(serviceContext: ctxm.ServiceContext, authHandler: baseifm.IRequestHandler) {
-        this.context = serviceContext;
-        this.taskApi = new webapi.WebApi(serviceContext.config.settings.serverUrl, 
+    constructor(hostContext: ctxm.HostContext, authHandler: baseifm.IRequestHandler) {
+        this.context = hostContext;
+        this.taskApi = new webapi.WebApi(hostContext.config.settings.serverUrl, 
                                       authHandler).getTaskAgentApi();
-        this.taskFolder = path.resolve(serviceContext.workFolder, 'tasks');
+        this.taskFolder = path.resolve(hostContext.workFolder, 'tasks');
     }
 
     public ensureTaskExists(task: agentifm.TaskInstance): Q.IPromise<any> {
@@ -138,7 +138,7 @@ export class TaskManager {
         return <agentifm.TaskInstance>{'id':task.id, 'name': task.name, 'version': cm.versionStringFromTaskDef(task)}
     }
 
-    private context: ctxm.ServiceContext;
+    private context: ctxm.HostContext;
     private taskApi: agentm.ITaskAgentApi;
     private taskFolder: string;
 }

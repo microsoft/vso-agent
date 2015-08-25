@@ -36,12 +36,12 @@ if (process.getuid() == 0 && !process.env['VSO_AGENT_RUNASROOT']) {
     process.exit(1);
 }
 
-var serviceContext: ctxm.ServiceContext;
+var hostContext: ctxm.HostContext;
 var trace: tm.Tracing;
 var cfgr: cfgm.Configurator = new cfgm.Configurator();
 var messageListener: listener.MessageListener;
 
-var runWorker = function(sc: ctxm.ServiceContext, agentApi: agentm.ITaskAgentApi, workerMsg: any) {
+var runWorker = function(sc: ctxm.HostContext, agentApi: agentm.ITaskAgentApi, workerMsg: any) {
 
     var worker: childProcess.ChildProcess = childProcess.fork(path.join(__dirname, 'vsoworker'), [], {
         env: process.env,
@@ -126,19 +126,19 @@ cm.readBasicCreds()
     }
 
     var agent: agentifm.TaskAgent = config.agent;
-    serviceContext = new ctxm.ServiceContext(config, getAgentDiagnosticWriter(config), true);
-    trace = new tm.Tracing(__filename, serviceContext);
+    hostContext = new ctxm.HostContext(config, getAgentDiagnosticWriter(config), true);
+    trace = new tm.Tracing(__filename, hostContext);
     trace.callback('initAgent');
 
-    serviceContext.status('Agent Started.');
+    hostContext.status('Agent Started.');
       
     var queueName = agent.name;
-    serviceContext.info('Listening for agent: ' + queueName);
+    hostContext.info('Listening for agent: ' + queueName);
 
     var agentApi: agentm.ITaskAgentApi = new webapim.WebApi(settings.serverUrl, cm.basicHandlerFromCreds(_creds)).getTaskAgentApi();
     messageListener = new listener.MessageListener(agentApi, agent, config.poolId);
     trace.write('created message listener');
-    serviceContext.info('starting listener...');
+    hostContext.info('starting listener...');
 
     heartbeat.write();
     
@@ -147,19 +147,19 @@ cm.readBasicCreds()
     });
 
     messageListener.on('info', (message: string) => {
-        serviceContext.info('messenger: ' + message);
+        hostContext.info('messenger: ' + message);
     });
 
     messageListener.on('sessionUnavailable', () => {
-        serviceContext.error('Could not create a session with the server.');
+        hostContext.error('Could not create a session with the server.');
         gracefulShutdown(0);
     });
 
     messageListener.start((message: agentifm.TaskAgentMessage) => {
         trace.callback('listener.start');
         
-        serviceContext.info('Message received');
-        serviceContext.info('Message Type: ' + message.messageType);
+        hostContext.info('Message received');
+        hostContext.info('Message Type: ' + message.messageType);
 
         trace.state('message', message);
 
@@ -167,11 +167,11 @@ cm.readBasicCreds()
         try  {
             messageBody = JSON.parse(message.body);
         } catch (e) {
-            serviceContext.error(e);
+            hostContext.error(e);
             return;
         }
 
-        serviceContext.verbose(JSON.stringify(messageBody, null, 2));
+        hostContext.verbose(JSON.stringify(messageBody, null, 2));
         
         if (message.messageType === 'JobRequest') {
             var workerMsg = { 
@@ -180,35 +180,35 @@ cm.readBasicCreds()
                 data: messageBody
             }
 
-            runWorker(serviceContext, agentApi, workerMsg);
+            runWorker(hostContext, agentApi, workerMsg);
         }
         else {
-            serviceContext.error('Unknown Message Type: ' + message.messageType);
+            hostContext.error('Unknown Message Type: ' + message.messageType);
         }
     },
     (err: any) => {
         if (!err || !err.hasOwnProperty('message')) {
-            serviceContext.error("Unknown error occurred while connecting to the message queue.");
+            hostContext.error("Unknown error occurred while connecting to the message queue.");
         } else {
-            serviceContext.error('Message Queue Error:');
-            serviceContext.error(err.message);
+            hostContext.error('Message Queue Error:');
+            hostContext.error(err.message);
         }
     });
 })
 .fail(function(err) {
     console.error('Error starting the agent');
     console.error(err.message);
-    if (serviceContext) {
-        serviceContext.error(err.stack);
+    if (hostContext) {
+        hostContext.error(err.stack);
     }
 
     gracefulShutdown(0);
 })
 
 process.on('uncaughtException', function (err) {
-    if (serviceContext) {
-        serviceContext.error('agent unhandled:')
-        serviceContext.error(err.stack);
+    if (hostContext) {
+        hostContext.error('agent unhandled:')
+        hostContext.error(err.stack);
     }
     else {
         console.error(err.stack);
@@ -237,8 +237,8 @@ var gracefulShutdown = function(code: number) {
     if (messageListener) {
         messageListener.stop((err) => {
             if (err) {
-                serviceContext.error('Error deleting agent session:');
-                serviceContext.error(err.message);
+                hostContext.error('Error deleting agent session:');
+                hostContext.error(err.message);
             }
             heartbeat.stop();
             process.exit(code);

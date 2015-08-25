@@ -25,7 +25,7 @@ export interface IPlugin {
     afterJob(pluginContext: ctxm.PluginContext, callback: (err?: any) => void): void;
 }
 
-export function load(pluginType, ctx: ctxm.ServiceContext, jobContext: ctxm.JobContext, callback) {
+export function load(pluginType, ctx: ctxm.HostContext, jobContext: ctxm.JobContext, callback) {
     var plugins = {};
     plugins['beforeJob'] = [];
     plugins['afterJob'] = [];
@@ -77,13 +77,13 @@ export function load(pluginType, ctx: ctxm.ServiceContext, jobContext: ctxm.JobC
     })
 }
 
-export function beforeJob(plugins, ctx: ctxm.JobContext, serviceContext: ctxm.ServiceContext, callback: (err: any, success: boolean) => void): void {
-    trace = new tm.Tracing(__filename, serviceContext);
+export function beforeJob(plugins, ctx: ctxm.JobContext, hostContext: ctxm.HostContext, callback: (err: any, success: boolean) => void): void {
+    trace = new tm.Tracing(__filename, hostContext);
     trace.enter('beforeJob plugins');
 
     async.forEachSeries(plugins['beforeJob'],
         function (plugin, done) {
-            serviceContext.info('Running beforeJob for : ' + plugin.pluginName() + ', ' + plugin.beforeId);
+            hostContext.info('Running beforeJob for : ' + plugin.pluginName() + ', ' + plugin.beforeId);
 
             ctx.writeConsoleSection('Running ' + plugin.pluginName());
 
@@ -92,7 +92,7 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, serviceContext: ctxm.Se
                 ctx.authHandler,
                 plugin.beforeId,
                 ctx.service,
-                serviceContext);
+                hostContext);
 
             pluginCtx.on('message', function (message) {
                 ctx.service.queueConsoleLine(message);
@@ -111,7 +111,7 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, serviceContext: ctxm.Se
                 }
 
                 ctx.setTaskResult(plugin.beforeId, plugin.pluginName(), agentifm.TaskResult.Succeeded);
-                serviceContext.info('Done beforeJob for : ' + plugin.pluginName());
+                hostContext.info('Done beforeJob for : ' + plugin.pluginName());
                 pluginCtx.end();
                 done(null);
             });
@@ -121,8 +121,8 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, serviceContext: ctxm.Se
         });
 }
 
-export function afterJob(plugins, ctx: ctxm.JobContext, serviceContext: ctxm.ServiceContext, jobSuccess: Boolean, callback: (err: any, success: boolean) => void): void {
-    trace = new tm.Tracing(__filename, serviceContext);
+export function afterJob(plugins, ctx: ctxm.JobContext, hostContext: ctxm.HostContext, jobSuccess: Boolean, callback: (err: any, success: boolean) => void): void {
+    trace = new tm.Tracing(__filename, hostContext);
     trace.enter('afterJob plugins');
 
     async.forEachSeries(plugins['afterJob'],
@@ -135,7 +135,7 @@ export function afterJob(plugins, ctx: ctxm.JobContext, serviceContext: ctxm.Ser
                 return;
             }
 
-            serviceContext.info('Running afterJob for : ' + plugin.pluginName());
+            hostContext.info('Running afterJob for : ' + plugin.pluginName());
 
             ctx.writeConsoleSection('Running ' + plugin.pluginName());
             var logDescr = 'Plugin afterJob:' + plugin.pluginName();
@@ -143,7 +143,7 @@ export function afterJob(plugins, ctx: ctxm.JobContext, serviceContext: ctxm.Ser
                 ctx.authHandler,
                 plugin.afterId,
                 ctx.service,
-                serviceContext);
+                hostContext);
             pluginCtx.on('message', function (message) {
                 ctx.service.queueConsoleLine(message);
             });
@@ -160,7 +160,7 @@ export function afterJob(plugins, ctx: ctxm.JobContext, serviceContext: ctxm.Ser
                 }
 
                 ctx.setTaskResult(plugin.afterId, plugin.pluginName(), agentifm.TaskResult.Succeeded);
-                serviceContext.info('Done afterJob for : ' + plugin.pluginName());
+                hostContext.info('Done afterJob for : ' + plugin.pluginName());
                 pluginCtx.end();
                 done(null);
             });

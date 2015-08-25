@@ -143,7 +143,7 @@ export class Context extends events.EventEmitter {
     }
 }
 
-export class ServiceContext extends Context implements cm.ITraceWriter {
+export class HostContext extends Context implements cm.ITraceWriter {
     private _fileWriter: cm.IDiagnosticWriter;
     
     public config: cm.IConfiguration;
@@ -176,9 +176,9 @@ export class ExecutionContext extends Context {
         authHandler: baseifm.IRequestHandler,
         recordId: string,
         service: cm.IFeedbackChannel,
-        serviceCtx: ServiceContext) {
+        hostContext: HostContext) {
 
-        ensureTrace(serviceCtx);
+        ensureTrace(hostContext);
         trace.enter('ExecutionContext');
 
         this.jobInfo = jobInfo;
@@ -186,9 +186,9 @@ export class ExecutionContext extends Context {
 
         this.variables = jobInfo.variables;
         this.recordId = recordId;
-        this.serviceContext = serviceCtx;
+        this.hostContext = hostContext;
         this.service = service;
-        this.config = serviceCtx.config;
+        this.config = hostContext.config;
 
         this.buildDirectory = this.variables[cm.agentVars.buildDirectory];
         this.workingDirectory = this.variables[cm.agentVars.workingDirectory];
@@ -216,7 +216,7 @@ export class ExecutionContext extends Context {
     }
 
     public debugOutput: boolean;
-    public serviceContext: ServiceContext;
+    public hostContext: HostContext;
     public jobInfo: cm.IJobInfo;
     public authHandler: baseifm.IRequestHandler;
     public variables: { [key: string]: string };
@@ -266,7 +266,7 @@ export class JobContext extends ExecutionContext {
     constructor(job: agentifm.JobRequestMessage,
         authHandler: baseifm.IRequestHandler,
         service: cm.IFeedbackChannel,
-        serviceCtx: ServiceContext) {
+        serviceCtx: HostContext) {
 
         ensureTrace(serviceCtx);
         trace.enter('JobContext');
@@ -381,7 +381,7 @@ export class PluginContext extends ExecutionContext {
         authHandler: baseifm.IRequestHandler,
         recordId: string,
         feedback: cm.IFeedbackChannel,
-        serviceCtx: ServiceContext) {
+        serviceCtx: HostContext) {
 
         this.job = job;
         var jobInfo: cm.IJobInfo = cm.jobInfoFromJob(job, authHandler);
@@ -407,7 +407,7 @@ export class TaskContext extends ExecutionContext {
         authHandler: baseifm.IRequestHandler,
         recordId: string,
         feedback: cm.IFeedbackChannel,
-        serviceCtx: ServiceContext) {
+        serviceCtx: HostContext) {
         this.result = agentifm.TaskResult.Succeeded;
         this.resultMessage = '';
         this.webapi = wapim;
