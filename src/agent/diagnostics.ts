@@ -151,7 +151,7 @@ export class RollingDiagnosticFileWriter implements cm.IDiagnosticWriter {
                 // these files should not be huge. if they become huge, and we need to stream them, we'll need to refactor
                 var mostRecentFile = this._fileQueue[this._fileQueue.length - 1]; 
                 var existingContents = fs.readFileSync(mostRecentFile).toString();
-                var lineCount = existingContents.split('\n').length;
+                var lineCount = existingContents.split(os.EOL).length;
                 if (lineCount < this._maxLinesPerFile) {
                     // if the file isn't full, use it. if it is, we'll create a new one the next time _getFileDescriptor() is called
                     this._lineCount = lineCount;
@@ -185,4 +185,12 @@ export class DiagnosticConsoleWriter implements cm.IDiagnosticWriter {
     public end(): void {
         
     }       
+}
+
+export function getDefaultDiagnosticWriter(config: cm.IConfiguration, folder: string, prefix: string) {
+    // default writer is verbose. it's rolling, so it shouldn't take up too much space
+    return new RollingDiagnosticFileWriter(cm.DiagnosticLevel.Verbose,
+        folder,
+        prefix,
+        config.settings.logSettings);
 }
