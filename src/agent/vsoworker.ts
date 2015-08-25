@@ -189,6 +189,7 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
     return deferred.promise;
 }
 
+var processingMessage: boolean = false;
 process.on('message', function (msg: cm.IWorkerMessage) {
     var serviceChannelFactory = function (agentUrl, taskUrl, jobInfo, ag) {
         return new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, ag);
@@ -197,10 +198,10 @@ process.on('message', function (msg: cm.IWorkerMessage) {
     // process the message
     var runPromise = run(msg, true, serviceChannelFactory);
     
-    // if the message is a job message, we want to exit when it's done
-    // if a job is running and we get another message - abandoned, for example - we want to process it, but exit when the job is finished
-    // so we ignore the result of the promise unless it's a job message
-    if (msg.messageType === cm.WorkerMessageTypes.Job) {
+    // if this is the first message we've seen, set up a finally handler to exit when it's done
+    // subsequent messages are probably "cancel" or "abandoned", so just process them and let the original message finish gracefully
+    if (!processingMessage) {
+        processingMessage = true;
         runPromise.fin(() => {
             process.exit();
         });   
