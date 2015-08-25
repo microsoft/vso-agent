@@ -143,80 +143,31 @@ export class Context extends events.EventEmitter {
     }
 }
 
-function getDefaultDiagnosticWriter(config: cm.IConfiguration, folder: string, prefix: string) {
-    // default writer is verbose. it's rolling, so it shouldn't take up too much space
-    return new dm.RollingDiagnosticFileWriter(cm.DiagnosticLevel.Verbose,
-        folder,
-        prefix,
-        config.settings.logSettings);
-}
-
-export class AgentContext extends Context implements cm.ITraceWriter {
-    constructor(config: cm.IConfiguration, consoleOutput: boolean) {
-        ensureTrace(this);
-        this.config = config;
-
-        this.agentPath = __dirname;
-        var rootAgentDir = path.join(__dirname, '..');
-
-        // Set full path for work folder, as it is used by others - config can have a relative path (./work)
-        this.diagFolder = path.join(rootAgentDir, '_diag');
-        
-        this.fileWriter = config.createDiagnosticWriter ? config.createDiagnosticWriter() : getDefaultDiagnosticWriter(config, this.diagFolder, 'agent');
-
-        var writers: cm.IDiagnosticWriter[] = [this.fileWriter];
-
-        if (consoleOutput) {
-            writers.push(new dm.DiagnosticConsoleWriter(cm.DiagnosticLevel.Status));
-        }
-        
-        super(writers);
-    }
-
-    public agentPath: string;
-    public diagFolder: string;
-    private fileWriter: cm.IDiagnosticWriter;
-
-    // ITraceWriter
-    public trace(message: string) {
-        this.fileWriter.write(message);
-    }
-}
-
-export class WorkerContext extends Context implements cm.ITraceWriter {
-    constructor(config: cm.IConfiguration, consoleOutput: boolean) {
-        
-        this.config = config;
-
-        var rootAgentDir = path.join(__dirname, '..');
-
-        ensureTrace(this);
-
-        // Set full path for work folder, as it is used by others - config can have a relative path (./work)
-        this.workFolder = cm.getWorkPath(config); 
-        this.config.settings.workFolder = this.workFolder;
-        this.diagFolder = cm.getWorkerDiagPath(config);
-        process.env[cm.envWorkerDiagPath] = this.diagFolder;
-        
-        this.fileWriter = config.createDiagnosticWriter ? config.createDiagnosticWriter() : getDefaultDiagnosticWriter(config, this.diagFolder, 'worker');
-        
-        var writers: cm.IDiagnosticWriter[] = [this.fileWriter];
-
-        if (consoleOutput) {
-            writers.push(new dm.DiagnosticConsoleWriter(cm.DiagnosticLevel.Status));
-        }
-        
-        super(writers);
-    }
-
-    public service: cm.IFeedbackChannel;
+export class HostContext extends Context implements cm.ITraceWriter {
+    private _fileWriter: cm.IDiagnosticWriter;
+    
+    public config: cm.IConfiguration;
     public workFolder: string;
-    public diagFolder: string;
-    private fileWriter: cm.IDiagnosticWriter;
-
-    // ITraceWriter
+    
+    constructor(config: cm.IConfiguration, fileWriter: cm.IDiagnosticWriter, consoleOutput: boolean) {
+        this.config = config;
+        this.workFolder = cm.getWorkPath(config);
+        
+        ensureTrace(this);
+        
+        this._fileWriter = fileWriter;
+        
+        var writers: cm.IDiagnosticWriter[] = [this._fileWriter];
+        
+        if (consoleOutput) {
+            writers.push(new dm.DiagnosticConsoleWriter(cm.DiagnosticLevel.Status));
+        }
+        
+        super(writers);
+    }
+    
     public trace(message: string) {
-        this.fileWriter.write(message);
+        this._fileWriter.write(message);
     }
 }
 
@@ -225,9 +176,9 @@ export class ExecutionContext extends Context {
         authHandler: baseifm.IRequestHandler,
         recordId: string,
         service: cm.IFeedbackChannel,
-        workerCtx: WorkerContext) {
+        hostContext: HostContext) {
 
-        ensureTrace(workerCtx);
+        ensureTrace(hostContext);
         trace.enter('ExecutionContext');
 
         this.jobInfo = jobInfo;
@@ -235,9 +186,9 @@ export class ExecutionContext extends Context {
 
         this.variables = jobInfo.variables;
         this.recordId = recordId;
-        this.workerCtx = workerCtx;
+        this.hostContext = hostContext;
         this.service = service;
-        this.config = workerCtx.config;
+        this.config = hostContext.config;
 
         this.buildDirectory = this.variables[cm.agentVars.buildDirectory];
         this.workingDirectory = this.variables[cm.agentVars.workingDirectory];
@@ -265,7 +216,7 @@ export class ExecutionContext extends Context {
     }
 
     public debugOutput: boolean;
-    public workerCtx: WorkerContext;
+    public hostContext: HostContext;
     public jobInfo: cm.IJobInfo;
     public authHandler: baseifm.IRequestHandler;
     public variables: { [key: string]: string };
@@ -315,9 +266,9 @@ export class JobContext extends ExecutionContext {
     constructor(job: agentifm.JobRequestMessage,
         authHandler: baseifm.IRequestHandler,
         service: cm.IFeedbackChannel,
-        workerCtx: WorkerContext) {
+        serviceCtx: HostContext) {
 
-        ensureTrace(workerCtx);
+        ensureTrace(serviceCtx);
         trace.enter('JobContext');
 
         this.job = job;
@@ -328,10 +279,10 @@ export class JobContext extends ExecutionContext {
         trace.state('this.jobInfo', this.jobInfo);
         this.authHandler = authHandler;
         this.service = service;
-        this.config = workerCtx.config;
+        this.config = serviceCtx.config;
         trace.state('this.config', this.config);
 
-        super(info, authHandler, job.jobId, service, workerCtx);
+        super(info, authHandler, job.jobId, service, serviceCtx);
     }
 
     public job: agentifm.JobRequestMessage;
@@ -430,12 +381,12 @@ export class PluginContext extends ExecutionContext {
         authHandler: baseifm.IRequestHandler,
         recordId: string,
         feedback: cm.IFeedbackChannel,
-        workerCtx: WorkerContext) {
+        serviceCtx: HostContext) {
 
         this.job = job;
         var jobInfo: cm.IJobInfo = cm.jobInfoFromJob(job, authHandler);
 
-        super(jobInfo, authHandler, recordId, feedback, workerCtx);
+        super(jobInfo, authHandler, recordId, feedback, serviceCtx);
     }
 
     public job: agentifm.JobRequestMessage;
@@ -456,11 +407,11 @@ export class TaskContext extends ExecutionContext {
         authHandler: baseifm.IRequestHandler,
         recordId: string,
         feedback: cm.IFeedbackChannel,
-        workerCtx: WorkerContext) {
+        serviceCtx: HostContext) {
         this.result = agentifm.TaskResult.Succeeded;
         this.resultMessage = '';
         this.webapi = wapim;
-        super(jobInfo, authHandler, recordId, feedback, workerCtx);
+        super(jobInfo, authHandler, recordId, feedback, serviceCtx);
     }
 
     public result: agentifm.TaskResult;

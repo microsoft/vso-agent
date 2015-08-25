@@ -88,6 +88,11 @@ export var CMD_PREFIX: string = '##vso[';
 export var DEFAULT_LOG_LINESPERFILE = 5000;
 export var DEFAULT_LOG_MAXFILES = 5;
 
+export class WorkerMessageTypes {
+     static Abandoned = "abandoned";
+     static Job = "job";
+}
+
 //-----------------------------------------------------------
 // Interfaces
 //-----------------------------------------------------------
@@ -142,7 +147,7 @@ export interface IFeedbackChannel extends NodeJS.EventEmitter {
     queueLogPage(page: ILogPageInfo): void;
     queueConsoleLine(line: string): void;
     queueConsoleSection(line: string): void;
-    createAsyncCommandQueue(workerCtx: any): IAsyncCommandQueue;
+    createAsyncCommandQueue(serviceCtx: any): IAsyncCommandQueue;
 
     // timelines
     addError(recordId: string, category: string, message: string, data: any): void;
@@ -234,6 +239,11 @@ export interface ILogPageInfo {
     logInfo: ILogMetadata;
     pagePath: string;
     pageNumber: number;
+}
+
+export interface IWorkerMessage {
+    type: string;
+    data: any;
 }
 
 //-----------------------------------------------------------
