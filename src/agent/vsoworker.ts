@@ -80,8 +80,8 @@ function getWorkerDiagnosticWriter(config: cm.IConfiguration): cm.IDiagnosticWri
 // Worker process waits for a job message, processes and then exits
 //
 export function run(msg: cm.IWorkerMessage, consoleOutput: boolean, 
-                    createFeedbackChannel: (agentUrl, taskUrl, jobInfo, ag) => cm.IFeedbackChannel): Q.Promise<any> {
-    var deferred = Q.defer();
+                    createFeedbackChannel: (agentUrl, taskUrl, jobInfo, ag) => cm.IFeedbackChannel): Q.Promise<boolean> {
+    var deferred = Q.defer<boolean>();
     var config: cm.IConfiguration = msg.config;
     
     hostContext = new ctxm.HostContext(config, getWorkerDiagnosticWriter(config), true);
@@ -92,6 +92,7 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
     hostContext.info('worker::onMessage');
     if (msg.messageType === cm.WorkerMessageTypes.Abandoned) {
         hostContext.emit(fm.Events.Abandoned);
+        deferred.resolve(true);
     }
     else if (msg.messageType === cm.WorkerMessageTypes.Job) {
         var job: agentifm.JobRequestMessage = msg.data;
@@ -149,7 +150,7 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
                 // nothing much to do if drain rejects...
                 serviceChannel.drain().fin(() => {
                     trace.write("Service channel drained");
-                    deferred.resolve(null);
+                    deferred.resolve(true);
                 });
             }
         });
@@ -175,26 +176,35 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
                         hostContext.error('Error: ' + err.message);
                     }
                 }).fin(() => {
-                    deferred.resolve(null);
+                    deferred.resolve(true);
                 });
             }
         });
     }
     else {
         // don't know what to do with this message
-        deferred.resolve(null);
+        deferred.resolve(false);
     }
     
     return deferred.promise;
 }
 
 process.on('message', function (msg: cm.IWorkerMessage) {
-    run(msg, true,
-        function (agentUrl, taskUrl, jobInfo, ag) {
-            return new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, ag);
-        }).fin(() => {
+    var serviceChannelFactory = function (agentUrl, taskUrl, jobInfo, ag) {
+        return new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, ag);
+    };
+    
+    // process the message
+    var runPromise = run(msg, true, serviceChannelFactory);
+    
+    // if the message is a job message, we want to exit when it's done
+    // if a job is running and we get another message - abandoned, for example - we want to process it, but exit when the job is finished
+    // so we ignore the result of the promise unless it's a job message
+    if (msg.messageType === cm.WorkerMessageTypes.Job) {
+        runPromise.fin(() => {
             process.exit();
-        });
+        });   
+    }
 });
 
 process.on('uncaughtException', function (err) {
