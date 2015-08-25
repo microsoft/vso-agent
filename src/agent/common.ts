@@ -252,6 +252,19 @@ export interface IWorkerMessage {
 // Helpers
 //-----------------------------------------------------------
 
+export function execAll(func: (item: any, state: any) => any, items: any[], state: any): Q.IPromise<any> {
+	var initialState = state;
+    var current = Q(null);
+
+	items.forEach((item) => {
+		current = current.then(function(state) {
+			return func(item, state || initialState);
+		});	
+	});
+
+	return current;
+}
+
 //
 // during config, there's no context, working directory or logs.  So, if tracing enabled, we should go to console.
 //
