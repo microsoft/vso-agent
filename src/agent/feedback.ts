@@ -115,7 +115,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         this._buildApi = webapi.QBuildApi(collectionUrl, jobInfo.systemAuthHandler);
 
         this._totalWaitTime = 0;
-        this._lockRenewer = new LockRenewer(jobInfo, workerCtx.config.poolId, this._agentApi);
+        this._lockRenewer = new LockRenewer(jobInfo, workerCtx.config.poolId);
 
         // pass the jobAbandoned event up to the owner
         this._lockRenewer.on(Events.JobAbandoned, () => {
@@ -230,23 +230,14 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         trace.write('poolId: ' + poolId);
         trace.write('lockToken: ' + lockToken);
         
-        var deferred = Q.defer();
-        this._agentApi.updateJobRequest(poolId, lockToken, jobRequest, (err, status, jobRequest) => {
-            trace.write('err: ' + err);
-            trace.write('status: ' + status);
-            if (status === 404) {
-                // job not found, probably because the server abandoned it. stop the lock renewer
-                this.emit(Events.JobAbandoned);
-                this._lockRenewer.end();
-            }
-            if (err) {
-                deferred.reject(err);
-            }
-            else {
-                deferred.resolve(null);
-            }
+        process.send({
+            messageType: 'updateJobRequest',
+            poolId: poolId,
+            lockToken: lockToken,
+            jobRequest: jobRequest
         });
-        return deferred.promise;
+        
+        return Q.resolve(null);
     }
     
     public finishJobRequest(poolId: number, lockToken: string, jobRequest: ifm.TaskAgentJobRequest): Q.Promise<any> {
@@ -684,7 +675,7 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
 
 // Job Renewal
 export class LockRenewer extends TimedWorker {
-    constructor(jobInfo: cm.IJobInfo, poolId: number, agentApi: ifm.IAgentApi) {
+    constructor(jobInfo: cm.IJobInfo, poolId: number) {
         trace.enter('LockRenewer');
 
         // finished is initially a resolved promise, because a renewal is not in progress
@@ -692,7 +683,6 @@ export class LockRenewer extends TimedWorker {
         
         this._jobInfo = jobInfo;
         trace.state('_jobInfo', this._jobInfo);
-        this._agentApi = agentApi;
         this._poolId = poolId;
         trace.write('_poolId: ' + this._poolId);
 
@@ -720,21 +710,14 @@ export class LockRenewer extends TimedWorker {
         var deferred: Q.Deferred<any> = Q.defer();
         this.finished = deferred.promise;
         
-        // lock token is ignored by newer servers
-        this._agentApi.updateJobRequest(this._poolId, this._jobInfo.lockToken, jobRequest, (err, status, jobRequest) => {
-            if (status === 404) {
-                // job not found. stop this loop.
-                this.emit(Events.JobAbandoned);
-                this.end();
-            }
-            if (err) {
-                deferred.reject(err);
-            }
-            else {
-                deferred.resolve(null);
-            }
+        process.send({
+            messageType: 'updateJobRequest',
+            poolId: this._poolId,
+            lockToken: this._jobInfo.lockToken,
+            jobRequest: jobRequest
         });
         
+        deferred.resolve(null);
         return deferred.promise;
     }
 }

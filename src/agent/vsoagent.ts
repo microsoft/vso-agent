@@ -17,6 +17,7 @@ import tm = require('./tracing');
 import taskm = require('./taskmanager');
 import webapi = require('./api/webapi');
 import heartbeat = require('./heartbeat');
+import fm = require('./feedback');
 import Q = require('q');
 
 var inDebugger = (typeof global.v8debug === 'object');
@@ -38,15 +39,15 @@ var trace: tm.Tracing;
 var cfgr: cfgm.Configurator = new cfgm.Configurator();
 var messageListener: listener.MessageListener;
 
-var runWorker = function(ag: ctxm.AgentContext, workerMsg) {
+var runWorker = function(ag: ctxm.AgentContext, agentApi: ifm.IAgentApi, workerMsg: any) {
 
     var worker: childProcess.ChildProcess = childProcess.fork(path.join(__dirname, 'vsoworker'), [], {
         env: process.env,
         execArgv: []
     });
-
+    
     // worker ipc callbacks
-    worker.on('message', function(msg){
+    worker.on('message', function(msg) {
         try {
             if (msg.messageType === 'log') {
                 // log data event - need to send to server
@@ -54,6 +55,19 @@ var runWorker = function(ag: ctxm.AgentContext, workerMsg) {
             }
             else if (msg.messageType === 'status') {
                 // consoleWriter.writeStatus(msg.data);
+            }
+            else if (msg.messageType === 'updateJobRequest') {
+                var poolId: number = msg.poolId;
+                var lockToken: string = msg.lockToken;
+                var jobRequest: ifm.TaskAgentJobRequest = msg.jobRequest;
+                
+                agentApi.updateJobRequest(poolId, lockToken, jobRequest, (err, status, jobRequest) => {
+                    trace.write('err: ' + err);
+                    trace.write('status: ' + status);
+                    if (status === 404) {
+                        worker.send(fm.Events.JobAbandoned);
+                    } 
+                });
             }
         }
         catch (err) {
@@ -164,7 +178,7 @@ cm.readBasicCreds()
                 data: messageBody
             }
 
-            runWorker(ag, workerMsg);
+            runWorker(ag, agentApi, workerMsg);
         }
         else {
             ag.error('Unknown Message Type: ' + message.messageType);
