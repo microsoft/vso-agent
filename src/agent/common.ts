@@ -214,6 +214,7 @@ export interface IAsyncCommand {
 export interface IJobInfo {
     description: string;
     jobId: string;
+    jobMessage: agentifm.JobRequestMessage;
     planId: string;
     timelineId: string;
     requestId: number;
@@ -386,10 +387,15 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
     }
 }
 
+//
+// TODO: JobInfo is going away soon.  We should just offer the task context the full job message.
+//       Until then, we're making the full job message available
+//       
 export function jobInfoFromJob(job: agentifm.JobRequestMessage, systemAuthHandler: baseifm.IRequestHandler): IJobInfo {
     var info: IJobInfo = {
         description: job.jobName,
         jobId: job.jobId,
+        jobMessage: job,
         planId: job.plan.planId,
         timelineId: job.timeline.id,
         requestId: job.requestId,

@@ -5,6 +5,7 @@ import path = require('path');
 import shell = require('shelljs');
 import tm = require('../tracing');
 import cmdm = require('../commands/command');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 
 var vsotask = require('vso-task-lib');
 
@@ -61,6 +62,8 @@ export function run(scriptEngine: string, scriptPath: string, taskCtx:ctxm.TaskC
     _cmdQueue = taskCtx.service.createAsyncCommandQueue(taskCtx);
     _cmdQueue.startProcessing();
 
+    var jobMessage: agentifm.JobRequestMessage = taskCtx.jobInfo.jobMessage;
+
     // TODO: only send all vars for trusted tasks
     var env = process.env;
     _trace.write('setting inputs as environment variables');
@@ -68,6 +71,19 @@ export function run(scriptEngine: string, scriptPath: string, taskCtx:ctxm.TaskC
         var envVarName = 'INPUT_' + key.replace(' ', '_').toUpperCase();
         env[envVarName] = taskCtx.inputs[key];
         _trace.write(envVarName + '=' + env[envVarName]);
+    }
+
+    var endpoints = jobMessage.environment.endpoints;
+    if (endpoints) {
+        for (var i=0; i < endpoints.length; i++) {
+            var endpoint = endpoints[i];
+            console.log(JSON.stringify(endpoint, null, 2));
+
+            if (endpoint.id && endpoint.url && endpoint.authorization) {
+                env['ENDPOINT_URL_' + endpoint.id] = endpoint.url;
+                env['ENDPOINT_AUTH_' + endpoint.id] = JSON.stringify(endpoint.authorization);
+            }
+        }
     }
 
     var ops = {
