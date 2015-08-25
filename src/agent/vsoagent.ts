@@ -41,7 +41,7 @@ var trace: tm.Tracing;
 var cfgr: cfgm.Configurator = new cfgm.Configurator();
 var messageListener: listener.MessageListener;
 
-var runWorker = function(ag: ctxm.ServiceContext, agentApi: ifm.IAgentApi, workerMsg: any) {
+var runWorker = function(sc: ctxm.ServiceContext, agentApi: agentm.ITaskAgentApi, workerMsg: any) {
 
     var worker: childProcess.ChildProcess = childProcess.fork(path.join(__dirname, 'vsoworker'), [], {
         env: process.env,
@@ -61,9 +61,9 @@ var runWorker = function(ag: ctxm.ServiceContext, agentApi: ifm.IAgentApi, worke
             else if (msg.messageType === 'updateJobRequest') {
                 var poolId: number = msg.poolId;
                 var lockToken: string = msg.lockToken;
-                var jobRequest: ifm.TaskAgentJobRequest = msg.jobRequest;
+                var jobRequest: agentifm.TaskAgentJobRequest = msg.jobRequest;
                 
-                agentApi.updateJobRequest(poolId, lockToken, jobRequest, (err, status, jobRequest) => {
+                agentApi.updateRequest(jobRequest, poolId, jobRequest.requestId, lockToken, (err, status, jobRequest) => {
                     trace.write('err: ' + err);
                     trace.write('status: ' + status);
                     if (status === 404) {
