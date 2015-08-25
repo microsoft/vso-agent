@@ -79,7 +79,7 @@ function getWorkerDiagnosticWriter(config: cm.IConfiguration): cm.IDiagnosticWri
 //
 // Worker process waits for a job message, processes and then exits
 //
-export function run(msg, consoleOutput: boolean, 
+export function run(msg: cm.IWorkerMessage, consoleOutput: boolean, 
                     createFeedbackChannel: (agentUrl, taskUrl, jobInfo, ag) => cm.IFeedbackChannel): Q.Promise<any> {
     var deferred = Q.defer();
     var config: cm.IConfiguration = msg.config;
@@ -90,7 +90,10 @@ export function run(msg, consoleOutput: boolean,
     trace.state('message', msg);
 
     hostContext.info('worker::onMessage');
-    if (msg.messageType === "job") {
+    if (msg.messageType === cm.WorkerMessageTypes.Abandoned) {
+        hostContext.emit(fm.Events.Abandoned);
+    }
+    else if (msg.messageType === cm.WorkerMessageTypes.Job) {
         var job: agentifm.JobRequestMessage = msg.data;
         deserializeEnumValues(job);
         setVariables(job, config);
@@ -113,9 +116,10 @@ export function run(msg, consoleOutput: boolean,
 
         // TODO: on output from context --> diag
         // TODO: these should be set beforePrepare and cleared postPrepare after we add agent ext
-        if (msg.config && msg.config.creds) {
-            process.env['altusername'] = msg.config.creds.username;
-            process.env['altpassword'] = msg.config.creds.password;
+        if (msg.config && (<any>msg.config).creds) {
+            var altCreds = (<any>msg.config).creds;
+            process.env['altusername'] = altCreds.username;
+            process.env['altpassword'] = altCreds.password;
         }
 
         hostContext.status('Running job: ' + job.jobName);
@@ -185,19 +189,12 @@ export function run(msg, consoleOutput: boolean,
 }
 
 process.on('message', function (msg: cm.IWorkerMessage) {
-    if (msg.type === cm.WorkerMessageTypes.Abandoned) {
-        if (hostContext) {
-            hostContext.emit(fm.Events.Abandoned);
-        }
-    }
-    else if (msg.type === cm.WorkerMessageTypes.Job) {
-        run(msg.data, true,
-            function (agentUrl, taskUrl, jobInfo, ag) {
-                return new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, ag);
-            }).fin(() => {
-                process.exit();
-            });
-    }
+    run(msg, true,
+        function (agentUrl, taskUrl, jobInfo, ag) {
+            return new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, ag);
+        }).fin(() => {
+            process.exit();
+        });
 });
 
 process.on('uncaughtException', function (err) {

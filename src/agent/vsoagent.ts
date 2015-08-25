@@ -71,7 +71,7 @@ var runWorker = function(sc: ctxm.HostContext, agentApi: agentm.ITaskAgentApi, w
                     if (status === 404) {
                         abandoned = true;
                         worker.send({
-                            type: cm.WorkerMessageTypes.Abandoned
+                            messageType: cm.WorkerMessageTypes.Abandoned
                         });
                     } 
                 });
@@ -83,10 +83,7 @@ var runWorker = function(sc: ctxm.HostContext, agentApi: agentm.ITaskAgentApi, w
     });
 
     sc.verbose('host::workerSend');
-    worker.send({
-        type: cm.WorkerMessageTypes.Job,
-        data: workerMsg
-    });
+    worker.send(workerMsg);
 }
 
 var INIT_RETRY_DELAY = 15000;
