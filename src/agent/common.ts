@@ -243,7 +243,8 @@ export interface ILogPageInfo {
 }
 
 export interface IWorkerMessage {
-    type: string;
+    messageType: string;
+    config: IConfiguration;
     data: any;
 }
 
