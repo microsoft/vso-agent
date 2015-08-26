@@ -21,7 +21,8 @@ export interface TfvcWorkspace {
 }
 
 export interface ITfvcConnOptions {
-    oauthToken: string;
+    username: string;
+    password: string;
     collection: string;
 }
 
@@ -111,7 +112,7 @@ export class TfvcWrapper extends events.EventEmitter {
     private _getQuotedArgsWithDefaults(args: string[]): string[] {
         // default connection related args
         var collectionArg = '-collection:' + this.connOptions.collection;
-        var loginArg = '-login:OAuth,' + this.connOptions.oauthToken;
+        var loginArg = '-login:' + this.connOptions.username + ',' + this.connOptions.password;
 
         var quotedArg = function(arg) {
             var quote = '"';
@@ -124,10 +125,10 @@ export class TfvcWrapper extends events.EventEmitter {
         return args.concat([collectionArg, loginArg]).map((a) => quotedArg(a));
     }
 
-    private _scrubOauthToken(msg: string): string {
+    private _scrubCredential(msg: string): string {
         if (msg && typeof msg.replace === 'function' 
-                    && this.connOptions.oauthToken) {
-            return msg.replace(this.connOptions.oauthToken, "******************");
+                    && this.connOptions.password) {
+            return msg.replace(this.connOptions.password, "******************");
         }
 
         return msg;
@@ -142,15 +143,15 @@ export class TfvcWrapper extends events.EventEmitter {
         tf.silent = true;
 
         tf.on('debug', (message) => {
-            this.emit('stdout', '[debug]' + this._scrubOauthToken(message));
+            this.emit('stdout', '[debug]' + this._scrubCredential(message));
         })
 
         tf.on('stdout', (data) => {
-            this.emit('stdout', this._scrubOauthToken(data));
+            this.emit('stdout', this._scrubCredential(data));
         })
 
         tf.on('stderr', (data) => {
-            this.emit('stderr', this._scrubOauthToken(data));
+            this.emit('stderr', this._scrubCredential(data));
         })
 
         // cmd

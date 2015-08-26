@@ -29,7 +29,8 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
     }
 
     public tfvcw: tfvcwm.TfvcWrapper;
-    public token: string;
+    public username: string;
+    public password: string;
     public endpoint: agentifm.ServiceEndpoint;
     public workspaceName: string;
     public version: string;
@@ -48,7 +49,8 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
 
             switch (scheme) {
                 case 'OAuth':
-                    this.token= this.getAuthParameter(endpoint, 'AccessToken') || 'not supplied';
+                    this.username = process.env['VSO_TFVC_USERNAME'] || 'OAuth';
+                    this.password = process.env['VSO_TFVC_PASSWORD'] || this.getAuthParameter(endpoint, 'AccessToken') || 'not supplied';
                     break;
 
                 default:
@@ -62,7 +64,8 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
         }
 
         this.tfvcw.setTfvcConnOptions(<tfvcwm.ITfvcConnOptions> {
-            oauthToken: this.token,
+            username: this.username,
+            password: this.password,
             collection: collectionUri
         });
 
@@ -283,7 +286,8 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
 
     private _getWorkspaceName(): string {
         var hash = path.basename(this.ctx.buildDirectory).slice(0, 8);
-        var workspaceName = "ws_" + hash;
+        var agentId = this.ctx.config.agent.id;
+        var workspaceName = ("ws_" + hash + "_" + agentId).slice(0,60);
         this.ctx.info("workspace name: " + workspaceName);
 
         return workspaceName;
