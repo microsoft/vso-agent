@@ -286,7 +286,8 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
 
     private _getWorkspaceName(): string {
         var hash = path.basename(this.ctx.buildDirectory).slice(0, 8);
-        var workspaceName = "ws_" + hash;
+        var agentId = this.ctx.config.agent.id;
+        var workspaceName = ("ws_" + hash + "_" + agentId).slice(0,60);
         this.ctx.info("workspace name: " + workspaceName);
 
         return workspaceName;
