@@ -308,8 +308,42 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
         return path;
     }
 
-    private _createLocalPath(serverPath: string): string {
-        var rootedServerPath = this._rootingWildcardPath(serverPath);
+    private _getCommonPath(commonPath: string, serverPath: string): string {
+        var commonPathSegments = commonPath.split('/');
+        var pathSegments = serverPath.split('/');
+
+        var commonSegments: string[] = [];
+        var idx = 0;
+        while (idx < commonPathSegments.length && idx < pathSegments.length 
+                && commonPathSegments[idx] === pathSegments[idx]) {
+           commonSegments = commonSegments.concat(commonPathSegments[idx]); 
+           idx++;
+        }
+
+        return path.join.apply(null, commonSegments);
+    }
+
+    private _getCommonRootPath(definitionMappings): string {
+        var serverPaths: string[] = definitionMappings.map((mapping) => {
+            return this._rootingWildcardPath(mapping["serverPath"])
+        });
+
+        var commonPath = serverPaths[0];
+
+        serverPaths.forEach((serverPath) => {
+            commonPath = this._getCommonPath(path.normalize(commonPath), path.normalize(serverPath));
+
+            if (!commonPath) {
+                return false; 
+            }
+        })
+
+        return commonPath;
+    }
+
+    private _createLocalPath(mapping: string, commonPath: string): string {
+        var serverPath = mapping["serverPath"];
+        var rootedServerPath = this._rootingWildcardPath(serverPath.slice(commonPath.length));
         var localPath = path.join(this.targetPath, rootedServerPath); 
 
         this._ensurePathExist(localPath);
@@ -321,12 +355,14 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
         if (endpoint && endpoint.data && endpoint.data['tfvcWorkspaceMapping']) {
             var tfvcMappings = JSON.parse(endpoint.data['tfvcWorkspaceMapping']);
             if (tfvcMappings && tfvcMappings.mappings) {
+                var commonRootPath = this._getCommonRootPath(tfvcMappings.mappings);
+                this.ctx.info('common path for mapping: ' + commonRootPath);
                 return tfvcMappings.mappings.map((buildDefMap) => {
                     var serverPath = buildDefMap["serverPath"];
                     return <tfvcwm.TfvcMapping>{
                         type: buildDefMap["mappingType"],
                         serverPath: serverPath,
-                        localPath: this._createLocalPath(serverPath)
+                        localPath: this._createLocalPath(buildDefMap, commonRootPath)
                     }
                 });
             }
