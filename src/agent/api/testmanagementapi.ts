@@ -23,18 +23,18 @@ export class TestManagementApi implements ifm.ITestManagementApi {
     }
     
     public createTestRun(testRun: ifm.TestRun, onResult: (err: any, statusCode: number, publishedTestRun: ifm.TestRun) => void): void {
-        this.restClient.create('/_apis/test/runs', "3.0-preview.1", testRun, null, onResult);
+        this.restClient.create('/_apis/test/runs', "3.0-preview.1", testRun, null, null, onResult);
     }
 
     public endTestRun(testRunId: number, onResult: (err: any, statusCode: number, publishedTestRun: ifm.TestRun) => void): void {
         var testRun: ifm.TestRun = <ifm.TestRun> {
             state: "Completed",
         };
-        this.restClient.update('/_apis/test/runs/' + testRunId, "3.0-preview.1", testRun, null, onResult);
+        this.restClient.update('/_apis/test/runs/' + testRunId, "3.0-preview.1", testRun, null, null, onResult);
     }
 
     public createTestRunResult(testRunId: number, testRunResults: ifm.TestRunResult[], onResult: (err: any, statusCode: number, createdTestRunResults: ifm.TestRunResult[]) => void): void {
-        this.restClient.create('/_apis/test/runs/' + testRunId + '/results', "3.0-preview.1", testRunResults, null, onResult);
+        this.restClient.create('/_apis/test/runs/' + testRunId + '/results', "3.0-preview.1", testRunResults, null, null, onResult);
     }
 
     public createTestRunAttachment(testRunId: number, fileName: string, contents: string, onResult: (err: any, statusCode: number, obj: any) => void): void {
@@ -44,7 +44,7 @@ export class TestManagementApi implements ifm.ITestManagementApi {
             FileName: fileName,
             Stream: contents
         };
-        this.restClient.create('/_apis/test/runs/' + testRunId + '/Attachments', "3.0-preview.1", attachmentData, null, onResult);
+        this.restClient.create('/_apis/test/runs/' + testRunId + '/Attachments', "3.0-preview.1", attachmentData, null, null, onResult);
     }
 
 }
