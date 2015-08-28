@@ -101,6 +101,9 @@ export class ResultReader {
         else if(this.type == "nunit") {
             return this.parseNUnitXml(res, runContext);
         }
+        else if (this.type == "xunit") {
+            return this.parseXUnitXml(res, runContext);
+        }
         else {
             return null;
         }
@@ -232,13 +235,24 @@ export class ResultReader {
             //testcase outcome
             var outcome = "Passed";
             var errorMessage = "";
+            var stackTrace = "";
             if(testCaseNode.failure) {
                 outcome = "Failed";
-                errorMessage = testCaseNode.failure.text();
+                if (testCaseNode.failure.text) {
+                    stackTrace = testCaseNode.failure.text();
+                }
+                if (testCaseNode.failure.attributes().message) {
+                    errorMessage = testCaseNode.failure.attributes().message;
+                }
             }
             else if(testCaseNode.error) {
                 outcome = "Failed";
-                errorMessage = testCaseNode.error.text();
+                if (testCaseNode.error.text) {
+                    stackTrace = testCaseNode.error.text();
+                }
+                if (testCaseNode.error.attributes().message) {
+                    errorMessage = testCaseNode.error.attributes().message;
+                }
             }
 
             var testResult : ifm.TestRunResult = <ifm.TestRunResult> {
@@ -261,7 +275,8 @@ export class ResultReader {
                 testCaseRevision: 0,
                 outcome: outcome,
                 errorMessage: errorMessage,
-                durationInMs: Math.round(testCaseDuration * 1000) //convert to milliseconds and round to nearest whole number since server can't handle decimals for test case duration
+                durationInMs: Math.round(testCaseDuration * 1000), //convert to milliseconds and round to nearest whole number since server can't handle decimals for test case duration
+                stackTrace: stackTrace
             };
                 
             testResults.push(testResult);
@@ -401,12 +416,16 @@ export class ResultReader {
                 //testcase outcome
                 var outcome = "Passed";
                 var errorMessage = "";
+                var stackTrace = "";
                 if(testCaseNode.failure) {
                     outcome = "Failed";
-                    if(testCaseNode.failure.message) {
+                    if(testCaseNode.failure.message && testCaseNode.failure.message.text) {
                         errorMessage = testCaseNode.failure.message.text();
                     }
-                }       
+                    if(testCaseNode.failure["stack-trace"] && testCaseNode.failure["stack-trace"].text) {
+                        stackTrace = testCaseNode.failure["stack-trace"].text();
+                    }
+                }      
                 
                 var testResult : ifm.TestRunResult = <ifm.TestRunResult> {
                     state: "Completed",
@@ -429,6 +448,7 @@ export class ResultReader {
                     outcome: outcome,
                     errorMessage: errorMessage,
                     durationInMs: Math.round(testCaseDuration * 1000), //convert to milliseconds
+                    stackTrace: stackTrace
                 };
 
                 foundTestResults.push(testResult);
@@ -441,6 +461,145 @@ export class ResultReader {
             }
         }                      
         
+        return foundTestResults;
+    }
+
+    private parseXUnitXml(res, runContext) {
+        var testRun2: ifm.TestRun2;
+
+        var buildId, buildRequestedFor, platform, config;
+
+        if (runContext) {
+            //Build ID, run user.
+            buildId = runContext.buildId;
+            buildRequestedFor = runContext.requestedFor;              
+
+            //Run environment - platform, config, host name.
+            platform = runContext.platform;
+            config = runContext.config;
+        }
+
+        var runName = "XUnit Test Run";
+        var runStartTime = new Date();
+        var totalRunDuration = 0;
+        var hostName = "";
+
+        var rootNode = res["assemblies"].at(0);
+        var testResults = [];
+
+        //Get all test cases.
+        for (var t = 0; t < rootNode["assembly"].count(); t++) {
+            var assemblyNode = rootNode["assembly"].at(t);
+            testResults = testResults.concat(this.FindXUnitTestCaseNodes(assemblyNode, hostName, buildRequestedFor, assemblyNode.attributes().name));
+            if (assemblyNode["collection"] && assemblyNode["collection"].attributes().time) {
+                totalRunDuration += parseFloat(assemblyNode["collection"].attributes().time);
+            }
+        }
+
+        var completedDate = runStartTime;
+        completedDate.setSeconds(runStartTime.getSeconds() + totalRunDuration);
+
+        //create test run data.
+        var testRun: ifm.TestRun = <ifm.TestRun> {
+            name: runName,
+            state: "InProgress",
+            automated: true,
+            buildPlatform: platform,
+            buildFlavor: config,
+            startDate: runStartTime,
+            completeDate: completedDate,
+            build: { id: buildId }
+        };
+
+        testRun2 = <ifm.TestRun2>{
+            testRun: testRun,
+            testResults: testResults,
+        };
+
+        return testRun2;
+    }
+
+    private FindXUnitTestCaseNodes(startNode, hostName: string, buildRequestedFor: string, assemblyName: string) {
+
+        var foundTestResults = [];
+        var testStorage = assemblyName;
+        
+        //If test node(s) exist, read test case information.
+        if (startNode.collection["test"]) {
+
+            for (var i = 0; i < startNode.collection["test"].count(); i++) {
+                var testNode = startNode.collection["test"].at(i);
+                
+                //Testcase name.
+                var testName = "";
+                if (testNode.attributes().name) {
+                    testName = testNode.attributes().name;
+                }                                                               
+
+                //Fully qualified test name.
+                var fullTestName = "";
+                if (testNode.attributes().method) {
+                    fullTestName = testNode.attributes().method;
+                } 
+
+                //Testcase duration in seconds.
+                var testCaseDuration = 0;
+                if (testNode.attributes().time) {
+                    testCaseDuration = parseFloat(testNode.attributes().time);
+                }                            
+
+                //Testcase outcome, error message, stack trace.
+                var outcome = "Passed";
+                var errorMessage = "";
+                var stackTrace = "";
+                if (testNode.failure) {
+                    outcome = "Failed";
+                    if (testNode.failure.message && testNode.failure.message.text) {
+                        errorMessage = testNode.failure.message.text();
+                    }
+                    if (testNode.failure["stack-trace"] && testNode.failure["stack-trace"].text) {
+                        stackTrace = testNode.failure["stack-trace"].text();
+                    }
+                }
+                else if (testNode.attributes().result && testNode.attributes().result == "Skip") {
+                    outcome = "NotExecuted";
+                }
+                
+                //Priority and owner traits.
+                var priority;
+                var owner;
+                if (testNode.traits) {
+                    for (var i = 0; i < testNode.traits["trait"].count(); i++) {
+                        var traitNode = testNode.traits["trait"].at(i);
+                        if (traitNode.attributes().name == "priority") {
+                            priority = traitNode.attributes().value;
+                        }
+                        if (traitNode.attributes().name == "owner") {
+                            owner = traitNode.attributes().value;
+                        }
+                    }
+                }
+
+                var testResult: ifm.TestRunResult = <ifm.TestRunResult> {
+                    state: "Completed",
+                    computerName: hostName,
+                    testCasePriority: priority,
+                    automatedTestName: fullTestName,
+                    automatedTestStorage: testStorage,
+                    owner: owner,
+                    runBy: buildRequestedFor,
+                    testCaseTitle: testName,
+                    revision: 0,
+                    outcome: outcome,
+                    errorMessage: errorMessage,
+                    durationInMs: Math.round(testCaseDuration * 1000), //Convert to milliseconds.
+                    stackTrace: stackTrace
+                };
+
+                foundTestResults.push(testResult);
+            }
+        }
+
         return foundTestResults;
     }
 }
