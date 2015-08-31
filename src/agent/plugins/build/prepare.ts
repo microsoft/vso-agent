@@ -30,7 +30,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     executionContext.info('preparing Workspace');
     executionContext.info('cwd: ' + process.cwd());
 
-    var job: agentifm.JobRequestMessage = ctx.jobInfo.jobMessage;
+    var job: agentifm.JobRequestMessage = executionContext.jobInfo.jobMessage;
 
     //------------------------------------------------------------
     // Get Code from Repos
@@ -77,9 +77,9 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     var hash = hashProvider.digest('hex');
     var workingFolder = variables[cm.agentVars.workingDirectory];
     var buildDirectory = path.join(workingFolder, sys, hash);
-    ctx.info('using build directory: ' + buildDirectory);
+    executionContext.info('using build directory: ' + buildDirectory);
 
-    ctx.job.environment.variables['agent.buildDirectory'] = buildDirectory;
+    job.environment.variables['agent.buildDirectory'] = buildDirectory;
     shell.mkdir('-p', buildDirectory);
     shell.cd(buildDirectory);
 

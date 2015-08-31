@@ -227,6 +227,7 @@ export interface IExecutionContext extends IOutputChannel, ITraceWriter {
     variables: { [key: string]: string };
     
     // environment
+    config: IConfiguration;
     traceWriter: ITraceWriter;
     workingDirectory: string;
     scmPath: string;

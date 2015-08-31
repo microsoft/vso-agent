@@ -1,4 +1,3 @@
-import ctxm = require('../context');
 import cm = require('../common');
 
 export function createSyncCommand(command: cm.ITaskCommand) {
@@ -11,15 +10,15 @@ export class TaskSetVariableCommand implements cm.ISyncCommand {
     }
 
     public command: cm.ITaskCommand;
-    public runCommand(taskCtx: ctxm.TaskContext) {
+    public runCommand(executionContext: cm.IExecutionContext) {
         if (!this.command.properties || !this.command.properties['variable']) {
-            taskCtx.warning('command setvariable variable not set');
+            executionContext.warning('command setvariable variable not set');
             return;
         }
 
         var varName = this.command.properties['variable'];
         var varVal = this.command.message || '';
 
-        taskCtx.jobInfo.jobMessage.environment.variables[varName] = varVal;
+        executionContext.jobInfo.jobMessage.environment.variables[varName] = varVal;
     }
 }

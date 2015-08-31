@@ -3,7 +3,7 @@ import scmm = require('./lib/scmprovider');
 import gitwm = require('./lib/gitwrapper');
 import cm = require('../common');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
-import cm = require('../common');
+
 var path = require('path');
 var shell = require('shelljs');
 var url = require('url');

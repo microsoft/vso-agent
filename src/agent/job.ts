@@ -90,7 +90,7 @@ export class JobRunner {
         // which will get preserved and reset after each task executes.
         // for example, the build plugin sets the cwd as the repo root.
         //
-        shell.cd(jobCtx.workingDirectory);
+        shell.cd(executionContext.workingDirectory);
 
         trace.write('Setting job to in progress');
         executionContext.setJobInProgress();
