@@ -11,6 +11,7 @@ import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import gitrepo = require('./lib/gitrepo');
 import Q = require('q');
 import shell = require('shelljs');
+import crypto = require('crypto');
 import cm = require('../../common');
 
 // keep lower case, we do a lower case compare
@@ -28,6 +29,8 @@ export function pluginTitle() {
 export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     executionContext.info('preparing Workspace');
     executionContext.info('cwd: ' + process.cwd());
+
+    var job: agentifm.JobRequestMessage = ctx.jobInfo.jobMessage;
 
     //------------------------------------------------------------
     // Get Code from Repos
@@ -53,6 +56,33 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     // only support 1
     var endpoint: agentifm.ServiceEndpoint = endpoints[0];
 
+    var sys = variables[cm.sysVars.system];
+    var collId = variables[cm.sysVars.collectionId];
+
+    var defId = variables[cm.sysVars.definitionId];
+    var hashInput = collId + ':' + defId;
+
+    //
+    // Get the repo path under the working directory
+    //
+    var hashInput = collId + ':' + defId;
+    if (job.environment.endpoints) {
+        job.environment.endpoints.forEach(function (endpoint) {
+            hashInput = hashInput + ':' + endpoint.url;
+        });
+    }
+    // TODO: build dir should be defined in the build plugin - not in core agent
+    var hashProvider = crypto.createHash("sha256");
+    hashProvider.update(hashInput, 'utf8');
+    var hash = hashProvider.digest('hex');
+    var workingFolder = variables[cm.agentVars.workingDirectory];
+    var buildDirectory = path.join(workingFolder, sys, hash);
+    ctx.info('using build directory: ' + buildDirectory);
+
+    ctx.job.environment.variables['agent.buildDirectory'] = buildDirectory;
+    shell.mkdir('-p', buildDirectory);
+    shell.cd(buildDirectory);
+
     var repoPath = path.resolve('repo');
     jobMessage.environment.variables['build.sourceDirectory'] = repoPath;
     jobMessage.environment.variables['build.stagingdirectory'] = path.resolve("staging");
@@ -74,7 +104,8 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         return;        
     }
     
-    var scmProvider = scmm.getProvider(executionContext, repoPath);
+    var scmProvider: cm.IScmProvider = scmm.getProvider(executionContext, repoPath);
+    scmProvider.hash = hash;
     scmProvider.initialize(endpoint);
     scmProvider.debugOutput = executionContext.debugOutput;
 

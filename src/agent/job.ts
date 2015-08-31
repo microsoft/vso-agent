@@ -84,6 +84,14 @@ export class JobRunner {
         var _this: JobRunner = this;
         var executionContext: cm.IExecutionContext = this._executionContext;
 
+        //
+        // default directory is the working directory.
+        // plugins will have the opportunity to change the working directory
+        // which will get preserved and reset after each task executes.
+        // for example, the build plugin sets the cwd as the repo root.
+        //
+        shell.cd(jobCtx.workingDirectory);
+
         trace.write('Setting job to in progress');
         executionContext.setJobInProgress();
         executionContext.writeConsoleSection('Preparing tasks');
@@ -153,9 +161,6 @@ export class JobRunner {
                             }
                         });
 
-                        hostContext.info('buildDirectory: ' + executionContext.buildDirectory);
-                        shell.mkdir('-p', executionContext.buildDirectory);
-                        shell.cd(executionContext.buildDirectory);
                         trace.write(process.cwd());
 
                         var jobResult: agentifm.TaskResult = agentifm.TaskResult.Succeeded;
@@ -238,9 +243,14 @@ export class JobRunner {
         var _this: JobRunner = this;
 
         trace.state('tasks', job.tasks);
+        var cwd = process.cwd();
+        
         async.forEachSeries(job.tasks,
             function (item: agentifm.TaskInstance, done: (err: any) => void) {
-
+                // ensure we reset cwd after each task runs
+                shell.cd(cwd);
+                trace.write('cwd: ' + cwd);
+                        
                 executionContext.writeConsoleSection('Running ' + item.name);
                 var taskContext: ctxm.ExecutionContext = new ctxm.ExecutionContext(executionContext.jobInfo,
                     executionContext.authHandler,
@@ -252,10 +262,8 @@ export class JobRunner {
                     taskContext.service.queueConsoleLine(message);
                 });
 
-                shell.cd(taskContext.buildDirectory);
                 taskContext.setTaskStarted(item.name);
                 _this.runTask(item, taskContext, (err) => {
-
                     var taskResult: agentifm.TaskResult = taskContext.result;
                     if (err || taskResult == agentifm.TaskResult.Failed) {
                         if (item.continueOnError) {

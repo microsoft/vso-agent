@@ -28,31 +28,13 @@ function setVariables(job: agentifm.JobRequestMessage, config: cm.IConfiguration
     var workingFolder = cm.getWorkPath(config);
     var variables = job.environment.variables;
 
-    var sys = variables[cm.sysVars.system];
-    var collId = variables[cm.sysVars.collectionId];
-
     if (!variables[cm.sysVars.collectionUri]) {
         variables[cm.sysVars.collectionUri] =  job.environment.systemConnection.url;     
     }
 
-    var defId = variables[cm.sysVars.definitionId];
-    var hashInput = collId + ':' + defId;
-
-    if (job.environment.endpoints) {
-        job.environment.endpoints.forEach(function (endpoint) {
-            hashInput = hashInput + ':' + endpoint.url;
-        });
-    }
-
-    // TODO: build dir should be defined in the build plugin - not in core agent
-    var hashProvider = crypto.createHash("sha256");
-    hashProvider.update(hashInput, 'utf8');
-    var hash = hashProvider.digest('hex');
-    var buildDirectory = path.join(workingFolder, sys, hash);
     variables[cm.agentVars.workingDirectory] = workingFolder;
-    variables[cm.agentVars.buildDirectory] = buildDirectory;
 
-    var stagingFolder = path.join(buildDirectory, 'staging');
+    var stagingFolder = path.join(workingFolder, 'staging');
     job.environment.variables[cm.buildVars.stagingDirectory] = stagingFolder;
 
     trace.state('variables', job.environment.variables);

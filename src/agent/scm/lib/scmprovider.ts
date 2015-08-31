@@ -1,22 +1,17 @@
 import Q = require('q');
 import shell = require('shelljs');
+import ctxm = require('../../context');
 import cm = require('../../common');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 
-export interface IScmProvider {
-	// virtual - must override
-	initialize(endpoint: agentifm.ServiceEndpoint);
-	getCode(): Q.Promise<number>;
-	clean(): Q.Promise<number>;
-}
-
-export class ScmProvider implements IScmProvider {
+export class ScmProvider implements cm.IScmProvider {
 	constructor(ctx: cm.IExecutionContext, targetPath: string) {
 		this.targetPath = targetPath;
 		this.ctx = ctx;
 	}
 
 	public ctx: cm.IExecutionContext;
+	public hash: string;
 	public debugOutput: boolean;
 
 	// full path of final root of enlistment

@@ -99,7 +99,6 @@ export function beforeJob(plugins: IPlugin[], executionContext: cm.IExecutionCon
                 pluginContext.service.queueConsoleLine(message);
             });
 
-            shell.cd(pluginContext.buildDirectory);
             pluginContext.setTaskStarted(plugin.pluginName());
 
             plugin.beforeJob(pluginContext, function (err) {
@@ -148,7 +147,6 @@ export function afterJob(plugins: IPlugin[], executionContext: cm.IExecutionCont
                 pluginContext.service.queueConsoleLine(message);
             });
 
-            shell.cd(pluginContext.buildDirectory);
             pluginContext.setTaskStarted(plugin.pluginName());
             plugin.afterJob(pluginContext, function (err) {
                 if (err) {

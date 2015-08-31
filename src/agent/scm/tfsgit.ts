@@ -4,7 +4,7 @@ import gitm = require('./git');
 import cm = require('../common');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 
-export function getProvider(ctx: cm.IExecutionContext, targetPath: string): scmm.IScmProvider {
+export function getProvider(ctx: cm.IExecutionContext, targetPath: string): cm.IScmProvider {
 	return new GitTfsScmProvider(ctx, targetPath);
 }
 

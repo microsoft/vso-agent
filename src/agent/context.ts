@@ -191,7 +191,6 @@ export class ExecutionContext extends Context implements cm.IExecutionContext {
         this.service = service;
         this.config = hostContext.config;
 
-        this.buildDirectory = this.variables[cm.agentVars.buildDirectory];
         this.workingDirectory = this.variables[cm.agentVars.workingDirectory];
         var logFolder = path.join(this.workingDirectory, '_logs');
 
@@ -223,7 +222,6 @@ export class ExecutionContext extends Context implements cm.IExecutionContext {
     public authHandler: baseifm.IRequestHandler;
     public variables: { [key: string]: string };
     public recordId: string;
-    public buildDirectory: string;
     public scmPath: string;
     public workingDirectory: string;
     public service: cm.IServiceChannel;

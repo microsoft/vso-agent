@@ -64,20 +64,35 @@ export function run(scriptEngine: string, scriptPath: string, executionContext: 
 
     var jobMessage: agentifm.JobRequestMessage = executionContext.jobInfo.jobMessage;
 
-    // TODO: only send all vars for trusted tasks
+    //
+    // Inputs
+    //
     var env = process.env;
     _trace.write('setting inputs as environment variables');
     for (var key in executionContext.inputs){
         var envVarName = 'INPUT_' + key.replace(' ', '_').toUpperCase();
         env[envVarName] = executionContext.inputs[key];
-        _trace.write(envVarName + '=' + env[envVarName]);
+        _trace.write('INPUT VAR: ' + envVarName + '=' + env[envVarName]);
     }
 
+    //
+    // Variables
+    //
+    var vars = jobMessage.environment.variables;
+    for (var variable in vars) {
+        var envVarName: string = variable.replace(".", "_").toUpperCase();
+        process.env[envVarName] = vars[variable];
+        _trace.write('VAR VAL: ' + envVarName + '=' + vars[variable]);
+    }
+
+    //
+    // Endpoints
+    //
     var endpoints = jobMessage.environment.endpoints;
     if (endpoints) {
         for (var i=0; i < endpoints.length; i++) {
             var endpoint = endpoints[i];
-            console.log(JSON.stringify(endpoint, null, 2));
+            _trace.state('service endpoint', endpoint);
 
             if (endpoint.id && endpoint.url && endpoint.authorization) {
                 env['ENDPOINT_URL_' + endpoint.id] = endpoint.url;
