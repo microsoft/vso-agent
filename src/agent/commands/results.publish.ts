@@ -55,6 +55,9 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
         else if (resultType == "nunit") {
             reader = new trr.NUnitResultReader();
         }
+        else if (resultType == "xunit") {
+            reader = new trr.XUnitResultReader();
+        }
         else {
             this.command.warning("Test results of format '" + resultType + "'' are not supported by the VSO/TFS OSX and Linux build agent");
         }

@@ -27,6 +27,14 @@ export class NUnitResultReader implements trp.IResultReader {
 
 }
 
+export class XUnitResultReader implements trp.IResultReader {
+
+    public readResults(file: string, runContext: trp.TestRunContext): Q.Promise<ifm.TestRun2> {
+        return new ResultReader("xunit").readResults(file, runContext);
+    }
+
+}
+
 export class TestSuiteSummary {  
     name: string;
     host: string;
