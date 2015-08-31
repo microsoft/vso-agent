@@ -98,7 +98,6 @@ export function beforeJob(plugins, ctx: ctxm.JobContext, hostContext: ctxm.HostC
                 ctx.service.queueConsoleLine(message);
             });
 
-            shell.cd(pluginCtx.buildDirectory);
             ctx.setTaskStarted(plugin.beforeId, plugin.pluginName());
 
             plugin.beforeJob(pluginCtx, function (err) {
@@ -148,7 +147,6 @@ export function afterJob(plugins, ctx: ctxm.JobContext, hostContext: ctxm.HostCo
                 ctx.service.queueConsoleLine(message);
             });
 
-            shell.cd(pluginCtx.buildDirectory);
             ctx.setTaskStarted(plugin.afterId, plugin.pluginName());
             plugin.afterJob(pluginCtx, function (err) {
                 if (err) {

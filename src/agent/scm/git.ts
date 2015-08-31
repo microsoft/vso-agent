@@ -3,11 +3,12 @@ import scmm = require('./lib/scmprovider');
 import gitwm = require('./lib/gitwrapper');
 import ctxm = require('../context');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
+import cm = require('../common');
 var path = require('path');
 var shell = require('shelljs');
 var url = require('url');
 
-export function getProvider(ctx: ctxm.JobContext, targetPath: string): scmm.IScmProvider {
+export function getProvider(ctx: ctxm.JobContext, targetPath: string): cm.IScmProvider {
 	return new GitScmProvider(ctx, targetPath);
 }
 

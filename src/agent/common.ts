@@ -35,7 +35,6 @@ sysVars.debug = 'system.debug';
 
 export var agentVars = <any>{};
 agentVars.rootDirectory = 'agent.rootDirectory';
-agentVars.buildDirectory = 'agent.buildDirectory';
 agentVars.workingDirectory = 'agent.workingDirectory';
 
 // TODO: should be in build plugin
@@ -240,6 +239,16 @@ export interface ILogPageInfo {
     logInfo: ILogMetadata;
     pagePath: string;
     pageNumber: number;
+}
+
+export interface IScmProvider {
+    hash: string;
+    debugOutput: boolean;
+    
+    // virtual - must override
+    initialize(endpoint: agentifm.ServiceEndpoint);
+    getCode(): Q.Promise<number>;
+    clean(): Q.Promise<number>;
 }
 
 export interface IWorkerMessage {

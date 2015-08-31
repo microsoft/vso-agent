@@ -84,6 +84,14 @@ export class JobRunner {
         var _this: JobRunner = this;
         var jobCtx: ctxm.JobContext = this._jobContext;
 
+        //
+        // default directory is the working directory.
+        // plugins will have the opportunity to change the working directory
+        // which will get preserved and reset after each task executes.
+        // for example, the build plugin sets the cwd as the repo root.
+        //
+        shell.cd(jobCtx.workingDirectory);
+
         trace.write('Setting job to in progress');
         jobCtx.setJobInProgress();
         jobCtx.writeConsoleSection('Preparing tasks');
@@ -153,9 +161,6 @@ export class JobRunner {
                             }
                         });
 
-                        hostContext.info('buildDirectory: ' + jobCtx.buildDirectory);
-                        shell.mkdir('-p', jobCtx.buildDirectory);
-                        shell.cd(jobCtx.buildDirectory);
                         trace.write(process.cwd());
 
                         var jobResult: agentifm.TaskResult = agentifm.TaskResult.Succeeded;
@@ -238,9 +243,15 @@ export class JobRunner {
         var _this: JobRunner = this;
 
         trace.state('tasks', job.tasks);
+        var cwd = process.cwd();
+        
         async.forEachSeries(job.tasks,
             function (item: agentifm.TaskInstance, done: (err: any) => void) {
 
+                // ensure we reset cwd after each task runs
+                shell.cd(cwd);
+                trace.write('cwd: ' + cwd);
+                        
                 jobCtx.writeConsoleSection('Running ' + item.name);
                 var taskCtx: ctxm.TaskContext = new ctxm.TaskContext(jobCtx.jobInfo,
                     jobCtx.authHandler,
@@ -252,7 +263,6 @@ export class JobRunner {
                     jobCtx.service.queueConsoleLine(message);
                 });
 
-                shell.cd(taskCtx.buildDirectory);
                 jobCtx.setTaskStarted(item.instanceId, item.name);
                 _this.runTask(item, taskCtx, (err) => {
 

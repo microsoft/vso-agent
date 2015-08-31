@@ -4,13 +4,14 @@ import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import tfvcwm = require('./lib/tfvcwrapper');
 import ctxm = require('../context');
 import utilm = require('../utilities');
+import cm = require('../common');
 
 var shell = require('shelljs');
 var path = require('path');
 var tl = require('vso-task-lib');
 
 
-export function getProvider(ctx: ctxm.JobContext, targetPath: string): scmm.IScmProvider {
+export function getProvider(ctx: ctxm.JobContext, targetPath: string): cm.IScmProvider {
     return new TfsvcScmProvider(ctx, targetPath);
 }
 
@@ -285,9 +286,8 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
     }
 
     private _getWorkspaceName(): string {
-        var hash = path.basename(this.ctx.buildDirectory).slice(0, 8);
         var agentId = this.ctx.config.agent.id;
-        var workspaceName = ("ws_" + hash + "_" + agentId).slice(0,60);
+        var workspaceName = ("ws_" + this.hash + "_" + agentId).slice(0,60);
         this.ctx.info("workspace name: " + workspaceName);
 
         return workspaceName;
