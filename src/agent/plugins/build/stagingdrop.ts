@@ -26,8 +26,8 @@ var dropOptionId: string = "e8b30f6f-039d-4d34-969c-449bbe9c3b9e";
 
 var _trace: tm.Tracing;
 
-function _ensureTracing(ctx: ctxm.ExecutionContext, area: string) {
-    _trace = new tm.Tracing(__filename, ctx.hostContext);
+function _ensureTracing(ctx: cm.IExecutionContext, area: string) {
+    _trace = new tm.Tracing(__filename, ctx.traceWriter);
     _trace.enter(area);
 }
 
@@ -39,19 +39,20 @@ exports.pluginTitle = function () {
     return "Build Drop"
 }
 
-exports.afterJobPlugins = function (ctx: ctxm.JobContext) {
+exports.afterJobPlugins = function (executionContext: cm.IExecutionContext) {
     /**
      * this plugin handles both the "copy to staging folder" and "create drop" build options
      * this way we can ensure that they happen in the correct order
      */
     var afterJobPlugins: plugins.IPlugin[] = [];
-    if (ctx.job.environment.options) {
-        var stagingOption: agentifm.JobOption = ctx.job.environment.options[stagingOptionId];
+    var options = executionContext.jobInfo.jobMessage.environment.options;
+    if (options) {
+        var stagingOption: agentifm.JobOption = options[stagingOptionId];
         if (stagingOption) {
             afterJobPlugins.push(new CopyToStagingFolder(stagingOption));
         }
 
-        var dropOption: agentifm.JobOption = ctx.job.environment.options[dropOptionId];
+        var dropOption: agentifm.JobOption = options[dropOptionId];
         if (dropOption) {
             afterJobPlugins.push(new CreateDrop(stagingOption, dropOption));
         }
@@ -76,13 +77,13 @@ class CopyToStagingFolder implements plugins.IPlugin {
         return "Copy to staging folder";
     }
 
-    public shouldRun(jobSuccess: boolean, ctx: ctxm.JobContext) {
-        _ensureTracing(ctx, 'shouldRun');
+    public shouldRun(jobSuccess: boolean, executionContext: cm.IExecutionContext) {
+        _ensureTracing(executionContext, 'shouldRun');
         _trace.write('shouldRun: ' + jobSuccess);
         return jobSuccess;
     }
 
-    public afterJob(pluginContext: ctxm.PluginContext, callback: (err?: any) => void) {
+    public afterJob(pluginContext: cm.IExecutionContext, callback: (err?: any) => void) {
         _ensureTracing(pluginContext, 'afterJob');
         this._copyToStagingFolder(pluginContext)
             .then(() => callback())
@@ -91,12 +92,13 @@ class CopyToStagingFolder implements plugins.IPlugin {
             });
     }
 
-    private _copyToStagingFolder(ctx: ctxm.PluginContext): Q.Promise<any> {
+    private _copyToStagingFolder(ctx: cm.IExecutionContext): Q.Promise<any> {
         // determine root: $(build.sourcesdirectory)
         _ensureTracing(ctx, 'copyToStagingFolder');
 
         ctx.info("looking for source in " + ctxm.WellKnownVariables.sourceFolder);
-        var sourcesRoot: string = ctx.job.environment.variables[ctxm.WellKnownVariables.sourceFolder].replaceVars(ctx.job.environment.variables);
+        var environment = ctx.jobInfo.jobMessage.environment;
+        var sourcesRoot: string = environment.variables[ctxm.WellKnownVariables.sourceFolder].replaceVars(environment.variables);
         _trace.state('sourcesRoot', sourcesRoot);
 
         var stagingFolder = getStagingFolder(ctx, this._stagingOption);
@@ -104,7 +106,7 @@ class CopyToStagingFolder implements plugins.IPlugin {
         var searchPattern = this._stagingOption.data["pattern"];
         if (searchPattern) {
             // root the search pattern
-            searchPattern = searchPattern.replaceVars(ctx.job.environment.variables);
+            searchPattern = searchPattern.replaceVars(environment.variables);
             
             // fix semicolons
             searchPattern = searchPattern.replace(";;", "\0");
@@ -206,13 +208,13 @@ class CreateDrop implements plugins.IPlugin {
         return "Create drop";
     }
 
-    public shouldRun(jobSuccess: boolean, ctx: ctxm.JobContext) {
+    public shouldRun(jobSuccess: boolean, ctx: cm.IExecutionContext) {
         _ensureTracing(ctx, 'shouldRun');
         _trace.write('shouldRun: ' + jobSuccess);
         return jobSuccess;
     }
 
-    public afterJob(pluginContext: ctxm.PluginContext, callback: (err?: any) => void) {
+    public afterJob(pluginContext: cm.IExecutionContext, callback: (err?: any) => void) {
         _ensureTracing(pluginContext, 'afterJob');
         this._createDrop(pluginContext)
             .then(() => callback())
@@ -221,18 +223,19 @@ class CreateDrop implements plugins.IPlugin {
             });
     }
 
-    private _createDrop(ctx: ctxm.PluginContext): Q.Promise<any> {
+    private _createDrop(ctx: cm.IExecutionContext): Q.Promise<any> {
         _ensureTracing(ctx, 'createDrop');
 
         var location = this._dropOption.data["location"];
         var path = this._dropOption.data["path"];
         var stagingFolder = getStagingFolder(ctx, this._stagingOption);
+        var environment = ctx.jobInfo.jobMessage.environment;
 
         if (location) {
-            location = location.replaceVars(ctx.job.environment.variables);
+            location = location.replaceVars(environment.variables);
         }
         if (path) {
-            path = path.replaceVars(ctx.job.environment.variables);
+            path = path.replaceVars(environment.variables);
         }
 
         ctx.info("drop location = " + location);
@@ -254,8 +257,8 @@ class CreateDrop implements plugins.IPlugin {
 
         return dropPromise.then((artifactLocation: string) => {
             if (artifactLocation) {
-                var serverUrl = ctx.job.environment.systemConnection.url;
-                var accessToken = ctx.job.environment.systemConnection.authorization.parameters['AccessToken'];
+                var serverUrl = environment.systemConnection.url;
+                var accessToken = environment.systemConnection.authorization.parameters['AccessToken'];
                 var token = webapim.getBearerHandler(accessToken);
                 var buildClient = new webapim.WebApi(serverUrl, webapim.getBearerHandler(accessToken)).getQBuildApi();
 
@@ -275,7 +278,7 @@ class CreateDrop implements plugins.IPlugin {
         });
     }
 
-    private _copyToFileContainer(ctx: ctxm.PluginContext, stagingFolder: string, fileContainerPath: string): Q.Promise<string> {
+    private _copyToFileContainer(ctx: cm.IExecutionContext, stagingFolder: string, fileContainerPath: string): Q.Promise<string> {
         _ensureTracing(ctx, 'copyToFileContainer');
 
         var fileContainerRegExp = /^#\/(\d+)(\/.*)$/;
@@ -339,7 +342,7 @@ class CreateDrop implements plugins.IPlugin {
             });
     }
 
-    private _copyToUncPath(ctx: ctxm.PluginContext, stagingFolder: string, uncPath: string): Q.Promise<string> {
+    private _copyToUncPath(ctx: cm.IExecutionContext, stagingFolder: string, uncPath: string): Q.Promise<string> {
         ctx.info("Copying all files from " + stagingFolder + " to " + uncPath);
 
         shelljs.cp("-Rf", path.join(stagingFolder, "*"), uncPath);
@@ -348,15 +351,16 @@ class CreateDrop implements plugins.IPlugin {
     }
 }
 
-function getStagingFolder(ctx: ctxm.PluginContext, stagingOption: agentifm.JobOption): string {
+function getStagingFolder(ctx: cm.IExecutionContext, stagingOption: agentifm.JobOption): string {
     // determine staging folder: $(build.stagingdirectory)[/{stagingfolder}]
+    var environment = ctx.jobInfo.jobMessage.environment;
     ctx.info("looking for staging folder in " + ctxm.WellKnownVariables.stagingFolder);
-    var stagingFolder = ctx.job.environment.variables[ctxm.WellKnownVariables.stagingFolder].replaceVars(ctx.job.environment.variables)
+    var stagingFolder = environment.variables[ctxm.WellKnownVariables.stagingFolder].replaceVars(environment.variables)
 
     if (stagingOption) {
         var relativeStagingPath = stagingOption.data["stagingfolder"];
         if (relativeStagingPath) {
-            stagingFolder = path.join(stagingFolder, relativeStagingPath.replaceVars(ctx.job.environment.variables));
+            stagingFolder = path.join(stagingFolder, relativeStagingPath.replaceVars(environment.variables));
         }
     }
 
@@ -435,7 +439,7 @@ function getFolderDepth(fullPath: string): number {
     return count;
 }
 
-function findMatchingFiles(ctx: ctxm.PluginContext, rootFolder: string, pattern: string, includeFiles: boolean, includeFolders: boolean): Q.IPromise<string[]> {
+function findMatchingFiles(ctx: cm.IExecutionContext, rootFolder: string, pattern: string, includeFiles: boolean, includeFolders: boolean): Q.IPromise<string[]> {
     pattern = pattern.replace(';;', '\0');
     var patterns = pattern.split(';');
 
@@ -474,7 +478,7 @@ function findMatchingFiles(ctx: ctxm.PluginContext, rootFolder: string, pattern:
     return getMatchingItems(ctx, includePatterns, excludePatterns, includeFiles, includeFolders);
 }
 
-function getMatchingItems(ctx: ctxm.PluginContext, includePatterns: string[], excludePatterns: RegExp[], includeFiles: boolean, includeFolders: boolean): Q.IPromise<string[]> {
+function getMatchingItems(ctx: cm.IExecutionContext, includePatterns: string[], excludePatterns: RegExp[], includeFiles: boolean, includeFolders: boolean): Q.IPromise<string[]> {
     var fileMap: any = {};
 
     var funcs = includePatterns.map((includePattern: string, index: number) => {
@@ -514,7 +518,7 @@ function getMatchingItems(ctx: ctxm.PluginContext, includePatterns: string[], ex
     return funcs.reduce(Q.when, Q([]));
 }
 
-function readDirectory(ctx: ctxm.PluginContext, directory: string, includeFiles: boolean, includeFolders: boolean): Q.Promise<string[]> {
+function readDirectory(ctx: cm.IExecutionContext, directory: string, includeFiles: boolean, includeFolders: boolean): Q.Promise<string[]> {
     var results: string[] = [];
     var deferred = Q.defer<string[]>();
 

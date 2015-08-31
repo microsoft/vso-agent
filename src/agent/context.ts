@@ -143,7 +143,7 @@ export class Context extends events.EventEmitter {
     }
 }
 
-export class HostContext extends Context implements cm.ITraceWriter {
+export class HostContext extends Context implements cm.ITraceWriter, cm.IOutputChannel {
     private _fileWriter: cm.IDiagnosticWriter;
     
     public config: cm.IConfiguration;
@@ -166,16 +166,16 @@ export class HostContext extends Context implements cm.ITraceWriter {
         super(writers);
     }
     
-    public trace(message: string) {
+    public trace(message: string): void {
         this._fileWriter.write(message);
     }
 }
 
-export class ExecutionContext extends Context {
+export class ExecutionContext extends Context implements cm.IExecutionContext {
     constructor(jobInfo: cm.IJobInfo,
         authHandler: baseifm.IRequestHandler,
         recordId: string,
-        service: cm.IFeedbackChannel,
+        service: cm.IServiceChannel,
         hostContext: HostContext) {
 
         ensureTrace(hostContext);
@@ -183,6 +183,7 @@ export class ExecutionContext extends Context {
 
         this.jobInfo = jobInfo;
         this.authHandler = authHandler;
+        this.traceWriter = hostContext;
 
         this.variables = jobInfo.variables;
         this.recordId = recordId;
@@ -215,6 +216,7 @@ export class ExecutionContext extends Context {
         super([logger]);
     }
 
+    public traceWriter: cm.ITraceWriter;
     public debugOutput: boolean;
     public hostContext: HostContext;
     public jobInfo: cm.IJobInfo;
@@ -224,8 +226,23 @@ export class ExecutionContext extends Context {
     public buildDirectory: string;
     public scmPath: string;
     public workingDirectory: string;
-    public service: cm.IFeedbackChannel;
+    public service: cm.IServiceChannel;
     public util: um.Utilities;
+    public inputs: ifm.TaskInputs;
+    public result: agentifm.TaskResult;
+    public resultMessage: string;
+
+    public getWebApi(): wapim.WebApi {
+        return this.service.getWebApi();
+    }
+
+    public writeConsoleSection(message: string) {
+        this.service.queueConsoleSection(message);
+    }
+    
+    public trace(message: string): void {
+        this.hostContext.trace(message);
+    }
 
     public error(message: string): void {
         var obj = <any>message;
@@ -241,67 +258,61 @@ export class ExecutionContext extends Context {
         this.service.addWarning(this.recordId, "Console", message, null);
         super.warning(message);
     }
-}
+    
+    public setTaskStarted(name: string): void {
+        trace.enter('setTaskStarted');
+        // set the job operation
+        this.service.setCurrentOperation(this.jobInfo.jobId, 'Starting ' + name);
 
-
-//=================================================================================================
-//
-// JobContext 
-//
-//  - used by the infrastructure during the workers executions of a job
-//  - has full access to the full job data including credentials etc...
-//  - Job is renewed every minute
-//
-//  - Feedback
-//    - PRINCIPLE: by lazy - only send/create if there's data to be written
-//    - logs are sent up latent in pages (even fine if continues after job is complete)
-//    - Live Web Console Feed lines are sent on independent time - sub second.  Later, sockets up
-//    - Timeline status updated - sub second.  Independent queue.
-//
-//=================================================================================================
-
-var LOCK_RENEWAL_MS = 60 * 1000;
-
-export class JobContext extends ExecutionContext {
-    constructor(job: agentifm.JobRequestMessage,
-        authHandler: baseifm.IRequestHandler,
-        service: cm.IFeedbackChannel,
-        serviceCtx: HostContext) {
-
-        ensureTrace(serviceCtx);
-        trace.enter('JobContext');
-
-        this.job = job;
-
-        var info: cm.IJobInfo = cm.jobInfoFromJob(job, authHandler);
-
-        this.jobInfo = info;
-        trace.state('this.jobInfo', this.jobInfo);
-        this.authHandler = authHandler;
-        this.service = service;
-        this.config = serviceCtx.config;
-        trace.state('this.config', this.config);
-
-        super(info, authHandler, job.jobId, service, serviceCtx);
+        // update the task
+        this.service.setCurrentOperation(this.recordId, "Starting " + name);
+        this.service.setStartTime(this.recordId, new Date());
+        this.service.setState(this.recordId, agentifm.TimelineRecordState.InProgress);
+        this.service.setType(this.recordId, "Task");
+        this.service.setName(this.recordId, name);
     }
-
-    public job: agentifm.JobRequestMessage;
-    public jobInfo: cm.IJobInfo;
-    public service: cm.IFeedbackChannel;
-    public authHandler: baseifm.IRequestHandler;
-    public scmPath: string;
-
-    //------------------------------------------------------------------------------------
-    // Job/Task Status
-    //------------------------------------------------------------------------------------
+    
+    public setTaskResult(name: string, result: agentifm.TaskResult): void {
+        trace.enter('setTaskResult');
+        this.service.setCurrentOperation(this.recordId, "Completed " + name);
+        this.service.setState(this.recordId, agentifm.TimelineRecordState.Completed);
+        this.service.setFinishTime(this.recordId, new Date());
+        this.service.setResult(this.recordId, result);
+        this.service.setType(this.recordId, "Task");
+        this.service.setName(this.recordId, name);
+    }
+    
+    public registerPendingTask(id: string, name: string, order: number): void {
+        trace.enter('registerPendingTask');
+        this.service.setCurrentOperation(id, "Initializing");
+        this.service.setParentId(id, this.jobInfo.jobId);
+        this.service.setName(id, name);
+        this.service.setState(id, agentifm.TimelineRecordState.Pending);
+        this.service.setType(id, "Task");
+        this.service.setWorkerName(id, this.config.settings.agentName);
+        this.service.setOrder(id, order);
+    }
+    
+    public setJobInProgress(): void {
+        trace.enter('setJobInProgress');
+        
+        // job
+        this.service.setCurrentOperation(this.recordId, "Starting");
+        this.service.setName(this.recordId, this.jobInfo.jobMessage.jobName);
+        this.service.setStartTime(this.recordId, new Date());
+        this.service.setState(this.recordId, agentifm.TimelineRecordState.InProgress);
+        this.service.setType(this.recordId, "Job");
+        this.service.setWorkerName(this.recordId, this.config.settings.agentName);
+    }
+    
     public finishJob(result: agentifm.TaskResult): Q.Promise<any> {
         trace.enter('finishJob');
         trace.state('result', agentifm.TaskResult[result]);
 
-        this.setTaskResult(this.job.jobId, this.job.jobName, result);
+        this.setTaskResult(this.jobInfo.jobMessage.jobName, result);
 
         var jobRequest: agentifm.TaskAgentJobRequest = <agentifm.TaskAgentJobRequest>{};
-        jobRequest.requestId = this.job.requestId;
+        jobRequest.requestId = this.jobInfo.requestId;
         jobRequest.finishTime = new Date();
         jobRequest.result = result;
 
@@ -309,113 +320,9 @@ export class JobContext extends ExecutionContext {
         trace.state('this.config', this.config);
 
         // stop the lock renewal timer, mark the job complete and then drain so the next worker can start
-        return this.service.finishJobRequest(this.config.poolId, this.job.lockToken, jobRequest).fin(() => {
+        return this.service.finishJobRequest(this.config.poolId, this.jobInfo.lockToken, jobRequest).fin(() => {
             trace.write('draining feedback');
             return this.service.drain();
         });
     }
-
-    public writeConsoleSection(message: string) {
-        this.service.queueConsoleSection(message);
-    }
-
-    public setJobInProgress(): void {
-        trace.enter('setJobInProgress');
-        var jobId = this.job.jobId;
-
-        // job
-        this.service.setCurrentOperation(jobId, "Starting");
-        this.service.setName(jobId, this.job.jobName);
-        this.service.setStartTime(jobId, new Date());
-        this.service.setState(jobId, agentifm.TimelineRecordState.InProgress);
-        this.service.setType(jobId, "Job");
-        this.service.setWorkerName(jobId, this.config.settings.agentName);
-    }
-
-    public registerPendingTask(id: string, name: string, order: number): void {
-        trace.enter('registerPendingTask');
-        this.service.setCurrentOperation(id, "Initializing");
-        this.service.setParentId(id, this.job.jobId);
-        this.service.setName(id, name);
-        this.service.setState(id, agentifm.TimelineRecordState.Pending);
-        this.service.setType(id, "Task");
-        this.service.setWorkerName(id, this.config.settings.agentName);
-        this.service.setOrder(id, order);
-    }
-
-    public setTaskStarted(id: string, name: string): void {
-        trace.enter('setTaskStarted');
-        // set the job operation
-        this.service.setCurrentOperation(this.job.jobId, 'Starting ' + name);
-
-        // update the task
-        this.service.setCurrentOperation(id, "Starting " + name);
-        this.service.setStartTime(id, new Date());
-        this.service.setState(id, agentifm.TimelineRecordState.InProgress);
-        this.service.setType(id, "Task");
-        this.service.setName(id, name);
-    }
-
-    public setTaskResult(id: string, name: string, result: agentifm.TaskResult): void {
-        trace.enter('setTaskResult');
-        this.service.setCurrentOperation(id, "Completed " + name);
-        this.service.setState(id, agentifm.TimelineRecordState.Completed);
-        this.service.setFinishTime(id, new Date());
-        this.service.setResult(id, result);
-        this.service.setType(id, "Task");
-        this.service.setName(id, name);
-    }
-}
-
-//=================================================================================================
-//
-// PluginContext 
-//
-//  - used by plugin authors 
-//  - has full access to the full job data including credentials etc...
-//
-//=================================================================================================
-
-export class PluginContext extends ExecutionContext {
-    constructor(job: agentifm.JobRequestMessage,
-        authHandler: baseifm.IRequestHandler,
-        recordId: string,
-        feedback: cm.IFeedbackChannel,
-        serviceCtx: HostContext) {
-
-        this.job = job;
-        var jobInfo: cm.IJobInfo = cm.jobInfoFromJob(job, authHandler);
-
-        super(jobInfo, authHandler, recordId, feedback, serviceCtx);
-    }
-
-    public job: agentifm.JobRequestMessage;
-}
-
-//=================================================================================================
-//
-// TaskContext 
-//
-//  - pass to the task - available to custom task authors
-//  - DOES NOT have access to the full job data including credentials etc...
-//  - provided access to a set of task util libraries (ctx.util)
-//
-//=================================================================================================
-
-export class TaskContext extends ExecutionContext {
-    constructor(jobInfo: cm.IJobInfo,
-        authHandler: baseifm.IRequestHandler,
-        recordId: string,
-        feedback: cm.IFeedbackChannel,
-        serviceCtx: HostContext) {
-        this.result = agentifm.TaskResult.Succeeded;
-        this.resultMessage = '';
-        this.webapi = wapim;
-        super(jobInfo, authHandler, recordId, feedback, serviceCtx);
-    }
-
-    public result: agentifm.TaskResult;
-    public resultMessage: string;
-    public inputs: ifm.TaskInputs;
-    public webapi: any;
 }

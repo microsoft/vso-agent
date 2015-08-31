@@ -15,19 +15,19 @@ import tm = require('../../../tracing');
 var uuid = require('node-uuid');
 
 var _temp: string;
-var _ctx: ctxm.ExecutionContext;
+var _ctx: cm.IExecutionContext;
 var _containerId: number;
 var _stagingFolder: string;
 var _containerRoot: string;
 
 var _trace: tm.Tracing;
 
-function _ensureTracing(ctx: ctxm.ExecutionContext, area: string) {
-    _trace = new tm.Tracing(__filename, ctx.hostContext);
+function _ensureTracing(ctx: cm.IExecutionContext, area: string) {
+    _trace = new tm.Tracing(__filename, ctx.traceWriter);
     _trace.enter(area);
 }
 
-export function uploadFiles(ctx: ctxm.ExecutionContext, 
+export function uploadFiles(ctx: cm.IExecutionContext, 
 	                        stagingFolder:string, 
 	                        containerId: number, 
 	                        containerRoot: string,

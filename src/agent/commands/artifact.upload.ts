@@ -8,20 +8,20 @@ import webapim = require('vso-node-api/WebApi');
 import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 import fc = require('../filecontainerhelper');
 
-export function createAsyncCommand(taskCtx: ctxm.TaskContext, command: cm.ITaskCommand) {
-	return new ArtifactUploadCommand(taskCtx, command);
+export function createAsyncCommand(executionContext: cm.IExecutionContext, command: cm.ITaskCommand) {
+	return new ArtifactUploadCommand(executionContext, command);
 }
 
 export class ArtifactUploadCommand implements cm.IAsyncCommand {
-	constructor(taskCtx: ctxm.TaskContext, command: cm.ITaskCommand) {
+	constructor(executionContext: cm.IExecutionContext, command: cm.ITaskCommand) {
 		this.command = command;
-		this.taskCtx = taskCtx;
+		this.executionContext = executionContext;
 		this.description = "Upload a build artifact";
 	}
 
 	public command: cm.ITaskCommand;
 	public description: string;
-	public taskCtx: ctxm.TaskContext;
+	public executionContext: cm.IExecutionContext;
 
     public runCommandAsync() {
 		var artifactName = this.command.properties["artifactname"];
@@ -35,7 +35,7 @@ export class ArtifactUploadCommand implements cm.IAsyncCommand {
         }
 
 		var localPath = this.command.properties["localpath"];
-		var containerId = parseInt(this.taskCtx.variables[ctxm.WellKnownVariables.containerId]);
+		var containerId = parseInt(this.executionContext.variables[ctxm.WellKnownVariables.containerId]);
 
 		this.command.info('artifactName: ' + artifactName);
 		this.command.info('containerFolder: ' + containerFolder);
@@ -43,10 +43,10 @@ export class ArtifactUploadCommand implements cm.IAsyncCommand {
 
 		this.command.info('Uploading contents...');
 		this.command.info(<any>fc.copyToFileContainer);
-        return fc.copyToFileContainer(this.taskCtx, localPath, containerId, containerFolder).then((artifactLocation: string) => {
+        return fc.copyToFileContainer(this.executionContext, localPath, containerId, containerFolder).then((artifactLocation: string) => {
 			this.command.info('Associating artifact ' + artifactLocation + ' ...');
 		
-			var buildId: number = parseInt(this.taskCtx.variables[ctxm.WellKnownVariables.buildId]);
+			var buildId: number = parseInt(this.executionContext.variables[ctxm.WellKnownVariables.buildId]);
 			var artifact: buildifm.BuildArtifact = <buildifm.BuildArtifact>{
 				name: artifactName,
 				resource: {
@@ -55,9 +55,9 @@ export class ArtifactUploadCommand implements cm.IAsyncCommand {
 				}
 			};
 			
-			var webapi = new webapi(this.taskCtx.service.collectionUrl, this.taskCtx.authHandler);
-			var buildClient = webapi.getQBuildApi(this.taskCtx.service.collectionUrl, this.taskCtx.authHandler);
-			return buildClient.postArtifact(this.taskCtx.variables[ctxm.WellKnownVariables.projectId], buildId, artifact);
+			var webapi = this.executionContext.getWebApi();
+			var buildClient = webapi.getQBuildApi();
+			return buildClient.createArtifact(artifact, buildId, this.executionContext.variables[ctxm.WellKnownVariables.projectId]);
 		});
 	}
 }

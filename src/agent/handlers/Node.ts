@@ -4,7 +4,7 @@
 var runner = require('./scriptrunner');
 var path = require('path');
 
-import ctxm = require('../context');
+import cm = require('../common');
 
 //--------------------------------------------------------------------------------
 // Handle Task authored in node javascript 
@@ -12,6 +12,6 @@ import ctxm = require('../context');
 //      scriptPath: abs path to script in tasks folder (infra figures that out)
 ///-------------------------------------------------------------------------------
 
-export function runTask(scriptPath: string, ctx: ctxm.TaskContext, callback): void {
+export function runTask(scriptPath: string, ctx: cm.IExecutionContext, callback): void {
     runner.run('node', scriptPath, ctx, callback);
 }

@@ -1,6 +1,6 @@
 /// <reference path="./definitions/Q.d.ts" />
 /// <reference path="./definitions/node.d.ts"/>
-
+/*
 import events = require('events');
 import cm = require('./common');
 import Q = require('q');
@@ -125,4 +125,4 @@ export class StepRunner extends events.EventEmitter {
 			state.emit('stepDone', step);			
 		});
 	}	
-}
+}*/

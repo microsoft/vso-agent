@@ -11,9 +11,9 @@ export class TaskDebugCommand implements cm.ISyncCommand {
 	}
 
 	public command: cm.ITaskCommand;
-	public runCommand(taskCtx: ctxm.TaskContext) {
+	public runCommand(executionContext: cm.IExecutionContext) {
 	    if (this.command.message) {
-	        taskCtx.verbose(this.command.message);    
+	        executionContext.verbose(this.command.message);    
 	    }
 	}
 }

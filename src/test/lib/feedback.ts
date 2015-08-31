@@ -9,6 +9,7 @@ import ifm = require('../../agent/api/interfaces');
 import taskm = require('vso-node-api/TaskApi');
 import Q = require('q');
 import events = require('events');
+import webapi = require('vso-node-api/WebApi');
 
 export class TestCmdQueue implements cm.IAsyncCommandQueue {
 	constructor() {
@@ -38,7 +39,7 @@ export class TestCmdQueue implements cm.IAsyncCommandQueue {
     public errorMessage: string;
 }
 
-export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeedbackChannel {
+export class TestFeedbackChannel extends events.EventEmitter implements cm.IServiceChannel {
 	public agentUrl: string;
 	public collectionUrl: string;
 	public taskApi: taskm.ITaskApi;
@@ -56,6 +57,9 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
 		this._logPages = {};
 	}
 
+	public getWebApi(): webapi.WebApi {
+		return null;
+	}
 
 	public drain(): Q.Promise<any> {
 		return Q(null);
@@ -77,7 +81,7 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IFeed
 		this._webConsole.push('[section] ' + line);
 	}
 
-    public createAsyncCommandQueue(taskCtx: ctxm.TaskContext): cm.IAsyncCommandQueue {
+    public createAsyncCommandQueue(taskCtx: cm.IExecutionContext): cm.IAsyncCommandQueue {
         return new TestCmdQueue();
     }	
 

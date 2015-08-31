@@ -1,10 +1,10 @@
 
 import scmm = require('./lib/scmprovider');
 import gitm = require('./git');
-import ctxm = require('../context');
+import cm = require('../common');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 
-export function getProvider(ctx: ctxm.JobContext, targetPath: string): scmm.IScmProvider {
+export function getProvider(ctx: cm.IExecutionContext, targetPath: string): scmm.IScmProvider {
 	return new GitTfsScmProvider(ctx, targetPath);
 }
 

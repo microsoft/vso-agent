@@ -15,16 +15,16 @@ var _trace: tm.Tracing;
 
 var _cmdQueue: cm.IAsyncCommandQueue;
 
-function _processLine(line: string, taskCtx:ctxm.TaskContext): void {
+function _processLine(line: string, executionContext: cm.IExecutionContext): void {
 	if (line.startsWith(cm.CMD_PREFIX)) {
-        _handleCommand(line, taskCtx);
+        _handleCommand(line, executionContext);
 	}
     else {
-        taskCtx.info(line);
+        executionContext.info(line);
     }
 }
 
-function _handleCommand(commandLine: string, taskCtx: ctxm.TaskContext) {
+function _handleCommand(commandLine: string, taskCtx: cm.IExecutionContext) {
     var cmd: cm.ITaskCommand;
 
     try {
@@ -57,19 +57,19 @@ function _handleCommand(commandLine: string, taskCtx: ctxm.TaskContext) {
     }   
 }
 
-export function run(scriptEngine: string, scriptPath: string, taskCtx:ctxm.TaskContext, callback) {
-    _trace = new tm.Tracing(__filename, taskCtx.hostContext);
-    _cmdQueue = taskCtx.service.createAsyncCommandQueue(taskCtx);
+export function run(scriptEngine: string, scriptPath: string, executionContext: cm.IExecutionContext, callback) {
+    _trace = new tm.Tracing(__filename, executionContext);
+    _cmdQueue = executionContext.service.createAsyncCommandQueue(executionContext);
     _cmdQueue.startProcessing();
 
-    var jobMessage: agentifm.JobRequestMessage = taskCtx.jobInfo.jobMessage;
+    var jobMessage: agentifm.JobRequestMessage = executionContext.jobInfo.jobMessage;
 
     // TODO: only send all vars for trusted tasks
     var env = process.env;
     _trace.write('setting inputs as environment variables');
-    for (var key in taskCtx.inputs){
+    for (var key in executionContext.inputs){
         var envVarName = 'INPUT_' + key.replace(' ', '_').toUpperCase();
-        env[envVarName] = taskCtx.inputs[key];
+        env[envVarName] = executionContext.inputs[key];
         _trace.write(envVarName + '=' + env[envVarName]);
     }
 
@@ -91,7 +91,7 @@ export function run(scriptEngine: string, scriptPath: string, taskCtx:ctxm.TaskC
         env: env
     };
 
-    taskCtx.verbose('cwd: ' + ops.cwd);
+    executionContext.verbose('cwd: ' + ops.cwd);
 
     var cp = require('child_process').spawn;
 
@@ -127,7 +127,7 @@ export function run(scriptEngine: string, scriptPath: string, taskCtx:ctxm.TaskC
 
     var _flushErrorBuffer = function() {
         if (_errBuffer.length > 0) {
-            taskCtx.error(_errBuffer);
+            executionContext.error(_errBuffer);
             _errBuffer = '';
         }
     }
@@ -137,7 +137,7 @@ export function run(scriptEngine: string, scriptPath: string, taskCtx:ctxm.TaskC
     runCP.stdout.on('data', function(data) {
         _flushErrorBuffer();
         _handleData(data, _outBuffer, (line: string) => {
-            _processLine(line, taskCtx);    
+            _processLine(line, executionContext);    
         });
     });
 
@@ -153,7 +153,7 @@ export function run(scriptEngine: string, scriptPath: string, taskCtx:ctxm.TaskC
 
         // drain buffers
         if (_outBuffer.length > 0) {
-            taskCtx.info(_outBuffer);
+            executionContext.info(_outBuffer);
         }
 
         _flushErrorBuffer();
@@ -171,7 +171,7 @@ export function run(scriptEngine: string, scriptPath: string, taskCtx:ctxm.TaskC
                 }
             } else {
                 var msg = 'Return code: ' + code;
-                taskCtx.error(msg);
+                executionContext.error(msg);
 
                 callback(new Error(msg), code);
             }

@@ -11,6 +11,7 @@ import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import gitrepo = require('./lib/gitrepo');
 import Q = require('q');
 import shell = require('shelljs');
+import cm = require('../../common');
 
 // keep lower case, we do a lower case compare
 var supported: string[] = ['tfsgit', 'git', 'github', 'tfsversioncontrol'];
@@ -24,17 +25,18 @@ export function pluginTitle() {
     return "Preparing Workspace"
 }
 
-export function beforeJob(ctx: ctxm.JobContext, callback) {
-    ctx.info('preparing Workspace');
-    ctx.info('cwd: ' + process.cwd());
+export function beforeJob(executionContext: cm.IExecutionContext, callback) {
+    executionContext.info('preparing Workspace');
+    executionContext.info('cwd: ' + process.cwd());
 
     //------------------------------------------------------------
     // Get Code from Repos
     //------------------------------------------------------------
 
-    var endpoints: agentifm.ServiceEndpoint[] = ctx.job.environment.endpoints;
+    var jobMessage = executionContext.jobInfo.jobMessage;
+    var endpoints: agentifm.ServiceEndpoint[] = jobMessage.environment.endpoints;
 
-    var variables = ctx.job.environment.variables;    
+    var variables = jobMessage.environment.variables;    
 
     var srcendpoints = endpoints.filter(function (endpoint: agentifm.ServiceEndpoint) {
         if (!endpoint.type) {
@@ -52,19 +54,19 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     var endpoint: agentifm.ServiceEndpoint = endpoints[0];
 
     var repoPath = path.resolve('repo');
-    ctx.job.environment.variables['build.sourceDirectory'] = repoPath;
-    ctx.job.environment.variables['build.stagingdirectory'] = path.resolve("staging");
+    jobMessage.environment.variables['build.sourceDirectory'] = repoPath;
+    jobMessage.environment.variables['build.stagingdirectory'] = path.resolve("staging");
 
     // TODO: remove compat variable
-    ctx.job.environment.variables['sys.sourcesFolder'] = repoPath;
+    jobMessage.environment.variables['sys.sourcesFolder'] = repoPath;
 
     var scmm;
     var providerType = endpoint.type.toLowerCase();
-    ctx.info('using source provider: ' + providerType);
+    executionContext.info('using source provider: ' + providerType);
 
     try {
-        var provPath = path.join(ctx.scmPath, providerType);
-        ctx.info('loading: ' + provPath);
+        var provPath = path.join(executionContext.scmPath, providerType);
+        executionContext.info('loading: ' + provPath);
         scmm = require(provPath);    
     }
     catch(err) {
@@ -72,21 +74,21 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
         return;        
     }
     
-    var scmProvider = scmm.getProvider(ctx, repoPath);
+    var scmProvider = scmm.getProvider(executionContext, repoPath);
     scmProvider.initialize(endpoint);
-    scmProvider.debugOutput = ctx.debugOutput;
+    scmProvider.debugOutput = executionContext.debugOutput;
 
     return Q(null)
     .then(() => {
         if (endpoint.data['clean'] === "true") {
-            var behavior = ctx.job.environment.variables['build.clean'];
+            var behavior = jobMessage.environment.variables['build.clean'];
             if (behavior && behavior.toLowerCase() === 'delete') {
-                ctx.info('deleting ' + repoPath);
+                executionContext.info('deleting ' + repoPath);
                 shell.rm('-rf', repoPath);
                 return 0;
             }
             else {
-                ctx.info('running clean');
+                executionContext.info('running clean');
                 return scmProvider.clean();                
             }
         }
@@ -95,7 +97,7 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
         }
     })
     .then((code: number) => {
-        ctx.info('getting code');
+        executionContext.info('getting code');
         return scmProvider.getCode();
     })
     .then((code: number) => {

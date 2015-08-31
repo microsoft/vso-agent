@@ -1,13 +1,13 @@
 import Q = require('q');
 import scmm = require('./lib/scmprovider');
 import gitwm = require('./lib/gitwrapper');
-import ctxm = require('../context');
+import cm = require('../common');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 var path = require('path');
 var shell = require('shelljs');
 var url = require('url');
 
-export function getProvider(ctx: ctxm.JobContext, targetPath: string): scmm.IScmProvider {
+export function getProvider(ctx: cm.IExecutionContext, targetPath: string): scmm.IScmProvider {
 	return new GitScmProvider(ctx, targetPath);
 }
 
@@ -23,7 +23,7 @@ function _translateRef(ref) {
 // TODO: take options with stdout and stderr streams for testing?
 
 export class GitScmProvider extends scmm.ScmProvider {
-	constructor(ctx: ctxm.JobContext, targetPath: string) {
+	constructor(ctx: cm.IExecutionContext, targetPath: string) {
 		this.gitw = new gitwm.GitWrapper();
 		this.gitw.on('stdout', (data) => {
 			ctx.info(data.toString());
@@ -82,8 +82,8 @@ export class GitScmProvider extends scmm.ScmProvider {
         var folder = path.basename(this.targetPath);
 
         // figure out ref
-	    var srcVersion = this.ctx.job.environment.variables['build.sourceVersion'];
-	    var srcBranch = this.ctx.job.environment.variables['build.sourceBranch'];
+	    var srcVersion = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceVersion'];
+	    var srcBranch = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceBranch'];
 	    this.ctx.info('srcVersion: ' + srcVersion);
 	    this.ctx.info('srcBranch: ' + srcBranch);
 

@@ -4,14 +4,14 @@
 var shell = require('shelljs');
 var path = require('path');
 
-import ctxm = require('../context');
+import cm = require('../common');
 
 //--------------------------------------------------------------------------------
 // Handle Task authored in JavaScript (exec ends with js)
 //
 //    scriptPath: abs path to script in tasks folder (infra figures that out)
 ///-------------------------------------------------------------------------------
-export function runTask(scriptPath: string, ctx: ctxm.TaskContext, callback): void {
+export function runTask(scriptPath: string, ctx: cm.IExecutionContext, callback): void {
   var mod = require(scriptPath);
 
   try {
