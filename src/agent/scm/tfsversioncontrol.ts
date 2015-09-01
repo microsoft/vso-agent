@@ -2,21 +2,19 @@ import Q = require('q');
 import scmm = require('./lib/scmprovider');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import tfvcwm = require('./lib/tfvcwrapper');
-import ctxm = require('../context');
-import utilm = require('../utilities');
 import cm = require('../common');
+import utilm = require('../utilities');
 
 var shell = require('shelljs');
 var path = require('path');
 var tl = require('vso-task-lib');
 
-
-export function getProvider(ctx: ctxm.JobContext, targetPath: string): cm.IScmProvider {
+export function getProvider(ctx: cm.IExecutionContext, targetPath: string): cm.IScmProvider {
     return new TfsvcScmProvider(ctx, targetPath);
 }
 
 export class TfsvcScmProvider extends scmm.ScmProvider {
-    constructor(ctx: ctxm.JobContext, targetPath: string) {
+    constructor(ctx: cm.IExecutionContext, targetPath: string) {
         this.tfvcw = new tfvcwm.TfvcWrapper();
         this.tfvcw.on('stdout', (data) => {
             ctx.info(data.toString());
@@ -72,8 +70,8 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
 
         this.workspaceName = this._getWorkspaceName();
 
-        this.version = this.ctx.job.environment.variables['build.sourceVersion'];
-        this.shelveset = this.ctx.job.environment.variables['build.sourceTfvcShelveset'];
+        this.version = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceVersion'];
+        this.shelveset = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceTfvcShelveset'];
     }
 
     public getCode(): Q.Promise<number> {

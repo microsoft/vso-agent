@@ -2,34 +2,32 @@ import ctxm = require('../context');
 import cm = require('../common');
 import trp = require('../testrunpublisher');
 import trr = require('../testresultreader');
-
-var Q = require('q');
-var xmlreader = require('xmlreader');
+import Q = require('q');
 
 //-----------------------------------------------------
 // Publishes results from a specified file to TFS server 
 // - CMD_PREFIX + "results.publish type=junit]" + testResultsFile
 //-----------------------------------------------------
 
-export function createAsyncCommand(taskCtx: ctxm.TaskContext, command: cm.ITaskCommand) {
-    return new ResultsPublishCommand(taskCtx, command);
+export function createAsyncCommand(executionContext: cm.IExecutionContext, command: cm.ITaskCommand) {
+    return new ResultsPublishCommand(executionContext, command);
 }
 
 export class ResultsPublishCommand implements cm.IAsyncCommand {
-    constructor(taskCtx: ctxm.TaskContext, command: cm.ITaskCommand) {
+    constructor(executionContext: cm.IExecutionContext, command: cm.ITaskCommand) {
         this.command = command;
-        this.taskCtx = taskCtx;
+        this.executionContext = executionContext;
         this.description = "Results.Publish async Command";
     }
 
     public command: cm.ITaskCommand;
-    public taskCtx: ctxm.TaskContext;
+    public executionContext: cm.IExecutionContext;
     public description: string;
 
     public runCommandAsync() {
         var defer = Q.defer();
 
-        var teamProject = this.taskCtx.variables["system.teamProject"];
+        var teamProject = this.executionContext.variables["system.teamProject"];
         var resultFilePath: string = this.command.message;
         
         var resultType: string = this.command.properties['type'];
@@ -42,8 +40,8 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
         var command = this.command;
         
         var testRunContext: trp.TestRunContext = {
-            requestedFor: this.taskCtx.variables["build.requestedFor"],
-            buildId: this.taskCtx.variables["build.buildId"],
+            requestedFor: this.executionContext.variables["build.requestedFor"],
+            buildId: this.executionContext.variables["build.buildId"],
             platform: platform,
             config: config
         };
@@ -60,7 +58,7 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
         }
 
         if (reader != null) {
-            var testRunPublisher = new trp.TestRunPublisher(this.taskCtx.service, command, teamProject, testRunContext, reader);
+            var testRunPublisher = new trp.TestRunPublisher(this.executionContext.service, command, teamProject, testRunContext, reader);
 
             testRunPublisher.publishTestRun(resultFilePath).then(function (createdTestRun) {
                 defer.resolve(null);

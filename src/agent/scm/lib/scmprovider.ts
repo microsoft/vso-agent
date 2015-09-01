@@ -5,13 +5,13 @@ import cm = require('../../common');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 
 export class ScmProvider implements cm.IScmProvider {
-	constructor(ctx: ctxm.JobContext, targetPath: string) {
+	constructor(ctx: cm.IExecutionContext, targetPath: string) {
 		this.targetPath = targetPath;
 		this.ctx = ctx;
 	}
 
+	public ctx: cm.IExecutionContext;
 	public hash: string;
-	public ctx: ctxm.JobContext;
 	public debugOutput: boolean;
 
 	// full path of final root of enlistment

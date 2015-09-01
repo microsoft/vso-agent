@@ -11,23 +11,23 @@ export class TaskIssueCommand implements cm.ISyncCommand {
 	}
 
 	public command: cm.ITaskCommand;
-	public runCommand(taskCtx: ctxm.TaskContext) {
+	public runCommand(executionContext: cm.IExecutionContext) {
 		if (!this.command.properties || !this.command.properties['type']) {
-			taskCtx.warning('command issue type not set');
+			executionContext.warning('command issue type not set');
 			return;
 		}
 
 		switch (this.command.properties['type'].toLowerCase()) {
 			case "error":
-				taskCtx.error(this.command.message);
+				executionContext.error(this.command.message);
 				break;
 			
 			case "warning":
-				taskCtx.warning(this.command.message);
+				executionContext.warning(this.command.message);
 				break;
 
 			default:
-				taskCtx.warning('Invalid command issue type: ' + this.command.properties['type']);
+				executionContext.warning('Invalid command issue type: ' + this.command.properties['type']);
 				break;
 		}
 	}

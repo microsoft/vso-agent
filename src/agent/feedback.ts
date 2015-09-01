@@ -99,34 +99,34 @@ function ensureTrace(writer: cm.ITraceWriter) {
     }
 }
 
-export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackChannel {
+export class ServiceChannel extends events.EventEmitter implements cm.IServiceChannel {
     constructor(agentUrl: string,
                 collectionUrl: string,
                 jobInfo: cm.IJobInfo,
-                serviceCtx: ctxm.HostContext) {
+                hostContext: ctxm.HostContext) {
         super();
 
-        ensureTrace(serviceCtx);
+        ensureTrace(hostContext);
         trace.enter('ServiceChannel');
 
         this.agentUrl = agentUrl;
         this.collectionUrl = collectionUrl;
 
         this.jobInfo = jobInfo;
-        this.serviceCtx = serviceCtx;
+        this.hostContext = hostContext;
 
         this._recordCount = 0;
         this._issues = {};
 
         // service apis
-        var webapi: webapim.WebApi = new webapim.WebApi(collectionUrl, jobInfo.systemAuthHandler);
+        var webapi: webapim.WebApi = this.getWebApi();
         this._agentApi = webapi.getTaskAgentApi(agentUrl);
         this.taskApi = webapi.getTaskApi();
         this._fileContainerApi = webapi.getQFileContainerApi();
         this._buildApi = webapi.getQBuildApi();
 
         this._totalWaitTime = 0;
-        this._lockRenewer = new LockRenewer(jobInfo, serviceCtx.config.poolId);
+        this._lockRenewer = new LockRenewer(jobInfo, hostContext.config.poolId);
 
         // pass the Abandoned event up to the owner
         this._lockRenewer.on(Events.Abandoned, () => {
@@ -162,10 +162,10 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
             TIMELINE_DELAY);
 
         // console lines
-        this._consoleQueue = new WebConsoleQueue(this, this.serviceCtx, CONSOLE_DELAY);
+        this._consoleQueue = new WebConsoleQueue(this, this.hostContext, CONSOLE_DELAY);
 
         // log pages
-        this._logPageQueue = new LogPageQueue(this, this.serviceCtx, LOG_DELAY);
+        this._logPageQueue = new LogPageQueue(this, this.hostContext, LOG_DELAY);
 
         this._timelineRecordQueue.startProcessing();
         this._consoleQueue.startProcessing();
@@ -176,7 +176,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
     public agentUrl: string;
     public collectionUrl: string;
     
-    public serviceCtx: ctxm.HostContext;
+    public hostContext: ctxm.HostContext;
     public jobInfo: cm.IJobInfo;
 
     private _totalWaitTime: number;
@@ -197,6 +197,10 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
     private _timelineRecordQueue: cq.ConcurrentBatch<agentifm.TimelineRecord>;
     private _consoleQueue: WebConsoleQueue;
     private _logPageQueue: LogPageQueue;
+
+    public getWebApi(): webapim.WebApi {
+        return new webapim.WebApi(this.collectionUrl, this.jobInfo.systemAuthHandler);
+    }
 
     // wait till all the queues are empty and not processing.
     public drain(): Q.Promise<any> {
@@ -272,8 +276,8 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
 
     // Factory for scriptrunner to create a queue per task script execution
     // This also allows agent tests to create a queue that doesn't process to a real server (just print out work it would do)
-    public createAsyncCommandQueue(taskCtx: ctxm.TaskContext): cm.IAsyncCommandQueue {
-        return new AsyncCommandQueue(taskCtx, 1000);
+    public createAsyncCommandQueue(executionContext: cm.IExecutionContext): cm.IAsyncCommandQueue {
+        return new AsyncCommandQueue(executionContext, 1000);
     }
 
     //------------------------------------------------------------------
@@ -443,11 +447,11 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
 //------------------------------------------------------------------------------------
 export class BaseQueue<T> {
     private _queue: cq.ConcurrentArray<T>;
-    private _ctx: ctxm.Context;
+    private _outputChannel: cm.IOutputChannel;
     private _msDelay: number;
 
-    constructor(context: ctxm.Context, msDelay: number) {
-        this._ctx = context;
+    constructor(outputChannel: cm.IOutputChannel, msDelay: number) {
+        this._outputChannel = outputChannel;
         this._msDelay = msDelay;
     }
 
@@ -470,7 +474,7 @@ export class BaseQueue<T> {
                     this._processQueue(values, callback);
                 },
                 (err: any) => {
-                    this._ctx.error(err);
+                    this._outputChannel.error(err);
                 },
                 this._msDelay);
             this._queue.startProcessing();
@@ -486,10 +490,10 @@ export class WebConsoleQueue extends BaseQueue<string> {
     private _jobInfo: cm.IJobInfo;
     private _taskApi: taskm.ITaskApi;
 
-    constructor(feedback: cm.IFeedbackChannel, serviceCtx: ctxm.HostContext, msDelay: number) {
-        super(serviceCtx, msDelay);
+    constructor(feedback: cm.IServiceChannel, hostContext: ctxm.HostContext, msDelay: number) {
+        super(hostContext, msDelay);
         this._jobInfo = feedback.jobInfo;
-        this._taskApi = feedback.taskApi;
+        this._taskApi = feedback.getWebApi().getTaskApi();
     }
 
     public section(line: string): void {
@@ -525,15 +529,14 @@ export class WebConsoleQueue extends BaseQueue<string> {
 }
 
 export class AsyncCommandQueue extends BaseQueue<cm.IAsyncCommand> implements cm.IAsyncCommandQueue {
-
-    constructor(taskCtx: ctxm.TaskContext, msDelay: number) {
-        super(taskCtx, msDelay);
+    constructor(executionContext: cm.IExecutionContext, msDelay: number) {
+        super(executionContext, msDelay);
         this.failed = false;
     }
 
     public failed: boolean;
     public errorMessage: string;
-    private _service: cm.IFeedbackChannel;
+    private _service: cm.IServiceChannel;
 
     public _processQueue(commands: cm.IAsyncCommand[], callback: (err: any) => void) {
         if (commands.length === 0) {
@@ -548,30 +551,30 @@ export class AsyncCommandQueue extends BaseQueue<cm.IAsyncCommand> implements cm
                     return;
                 }
 
-                var outputLines = function(asyncCmd) {
-                        asyncCmd.taskCtx.info(' ');
-                        asyncCmd.taskCtx.info('Start: ' + asyncCmd.description);
-                        asyncCmd.command.lines.forEach(function (line) {
-                            asyncCmd.taskCtx.info(line);
-                        });
-                        asyncCmd.taskCtx.info('End: ' + asyncCmd.description);
-                        asyncCmd.taskCtx.info(' ');
+                var outputLines = function (asyncCmd: cm.IAsyncCommand) {
+                    asyncCmd.executionContext.info(' ');
+                    asyncCmd.executionContext.info('Start: ' + asyncCmd.description);
+                    asyncCmd.command.lines.forEach(function (line) {
+                        asyncCmd.executionContext.info(line);
+                    });
+                    asyncCmd.executionContext.info('End: ' + asyncCmd.description);
+                    asyncCmd.executionContext.info(' ');
                 }
 
                 asyncCmd.runCommandAsync()
-                .then(() => {
-                    outputLines(asyncCmd);
-                })
-                .fail((err) => {  
-                    this.failed = true;
-                    this.errorMessage = err.message;
-                    outputLines(asyncCmd);
-                    asyncCmd.taskCtx.error(this.errorMessage);
-                    asyncCmd.taskCtx.info('Failing task since command failed.')                    
-                })
-                .fin(function() {
-                    done(null);
-                })
+                    .then(() => {
+                        outputLines(asyncCmd);
+                    })
+                    .fail((err) => {  
+                        this.failed = true;
+                        this.errorMessage = err.message;
+                        outputLines(asyncCmd);
+                        asyncCmd.executionContext.error(this.errorMessage);
+                        asyncCmd.executionContext.info('Failing task since command failed.')                    
+                    })
+                    .fin(function() {
+                        done(null);
+                    })
 
             }, (err: any) => {
                 // queue never fails - we simply don't process items once one has failed.
@@ -585,15 +588,15 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
     private _recordToLogIdMap: { [recordId: string]: number } = {};
     private _jobInfo: cm.IJobInfo;
     private _taskApi: taskm.ITaskApi;
-    private _workerCtx: ctxm.HostContext;
-    private _service: cm.IFeedbackChannel;
+    private _hostContext: ctxm.HostContext;
+    private _service: cm.IServiceChannel;
 
-    constructor(service: cm.IFeedbackChannel, serviceCtx: ctxm.HostContext, msDelay: number) {
-        super(serviceCtx, msDelay);
+    constructor(service: cm.IServiceChannel, hostContext: ctxm.HostContext, msDelay: number) {
+        super(hostContext, msDelay);
         this._service = service;
         this._jobInfo = service.jobInfo;
-        this._taskApi = service.taskApi;
-        this._workerCtx = serviceCtx;
+        this._taskApi = service.getWebApi().getTaskApi();
+        this._hostContext = hostContext;
     }
 
     public _processQueue(logPages: cm.ILogPageInfo[], callback: (err: any) => void): void {
@@ -687,7 +690,7 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                                     });
                                 }
                                 else {
-                                    this._workerCtx.error('Skipping log upload.  Log record does not exist.')
+                                    this._hostContext.error('Skipping log upload.  Log record does not exist.')
                                     doneStep(null);
                                 }
                             },
@@ -699,8 +702,8 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                             }
                         ], (err: any) => {
                             if (err) {
-                                this._workerCtx.error(err.message);
-                                this._workerCtx.error(JSON.stringify(logPageInfo));
+                                this._hostContext.error(err.message);
+                                this._hostContext.error(JSON.stringify(logPageInfo));
                             }
 
                             done(err);

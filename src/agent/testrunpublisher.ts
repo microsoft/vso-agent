@@ -19,7 +19,7 @@ export class TestRunPublisher {
     // - runContext: TestRunContext - for identifying context(buildId, platform, config, etc), which is needed while publishing
     // - reader: IResultReader - for reading different(junit, nunit) result files 
     //-----------------------------------------------------
-    constructor(service: cm.IFeedbackChannel, command: cm.ITaskCommand, teamProject: string, runContext: TestRunContext, reader: IResultReader) {
+    constructor(service: cm.IServiceChannel, command: cm.ITaskCommand, teamProject: string, runContext: TestRunContext, reader: IResultReader) {
         this.service = service;
         this.command = command;
         this.runContext = runContext;
@@ -28,7 +28,7 @@ export class TestRunPublisher {
     }
 
     // for routing the server calls to real or loopback 
-    private service: cm.IFeedbackChannel;
+    private service: cm.IServiceChannel;
 
     // used for logging warnings, errors  
     private command: cm.ITaskCommand;
