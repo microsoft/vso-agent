@@ -60,10 +60,11 @@ function getWorkerDiagnosticWriter(config: cm.IConfiguration): cm.IDiagnosticWri
 
 //
 // Worker process waits for a job message, processes and then exits
+// The promise will resolve to true if the message was understood, false if not
 //
 export function run(msg: cm.IWorkerMessage, consoleOutput: boolean, 
-                    createFeedbackChannel: (agentUrl, taskUrl, jobInfo, ag) => cm.IFeedbackChannel): Q.Promise<any> {
-    var deferred = Q.defer();
+                    createFeedbackChannel: (agentUrl: string, taskUrl: string, jobInfo: cm.IJobInfo, hostContext: ctxm.HostContext) => cm.IServiceChannel): Q.Promise<boolean> {
+    var deferred = Q.defer<boolean>();
     var config: cm.IConfiguration = msg.config;
     
     hostContext = new ctxm.HostContext(config, getWorkerDiagnosticWriter(config), true);
@@ -74,6 +75,7 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
     hostContext.info('worker::onMessage');
     if (msg.messageType === cm.WorkerMessageTypes.Abandoned) {
         hostContext.emit(fm.Events.Abandoned);
+        deferred.resolve(true);
     }
     else if (msg.messageType === cm.WorkerMessageTypes.Job) {
         var job: agentifm.JobRequestMessage = msg.data;
@@ -93,9 +95,6 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
             hostContext.error('system connection token not supplied.  unsupported deployment.')
         }
 
-        // TODO: jobInfo should go away and we should just have JobContext
-        var jobInfo: cm.IJobInfo = cm.jobInfoFromJob(job, systemAuthHandler);
-
         // TODO: on output from context --> diag
         // TODO: these should be set beforePrepare and cleared postPrepare after we add agent ext
         if (msg.config && (<any>msg.config).creds) {
@@ -110,13 +109,14 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
 
         var agentUrl = hostContext.config.settings.serverUrl;
         var taskUrl = job.environment.variables[cm.sysVars.collectionUri]
-
-        var serviceChannel: cm.IFeedbackChannel = createFeedbackChannel(agentUrl, taskUrl, jobInfo, hostContext);
-
-        var ctx: ctxm.JobContext = new ctxm.JobContext(job, systemAuthHandler, serviceChannel, hostContext);
+        
+        var jobInfo = cm.jobInfoFromJob(job, systemAuthHandler);
+        var serviceChannel: cm.IServiceChannel = createFeedbackChannel(agentUrl, taskUrl, jobInfo, hostContext);
+        
+        var jobContext: cm.IExecutionContext = new ctxm.ExecutionContext(jobInfo, systemAuthHandler, job.jobId, serviceChannel, hostContext);
         trace.write('created JobContext');
 
-        var jobRunner: jrm.JobRunner = new jrm.JobRunner(hostContext, ctx);
+        var jobRunner: jrm.JobRunner = new jrm.JobRunner(hostContext, jobContext);
         trace.write('created jobRunner');
 
         // guard to ensure we only "finish" once 
@@ -131,7 +131,7 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
                 // nothing much to do if drain rejects...
                 serviceChannel.drain().fin(() => {
                     trace.write("Service channel drained");
-                    deferred.resolve(null);
+                    deferred.resolve(true);
                 });
             }
         });
@@ -148,7 +148,7 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
             // it's already calling serviceChannel.drain() and it's going to call finished()
             if (!finishingJob) {
                 finishingJob = true;
-                ctx.finishJob(result).fin(() => {
+                jobContext.finishJob(result).fin(() => {
                     // trace and status no matter what. if finishJob failed, the fail handler below will be called
                     trace.callback('ctx.finishJob');
                     hostContext.status('Job Finished: ' + job.jobName);
@@ -157,26 +157,36 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
                         hostContext.error('Error: ' + err.message);
                     }
                 }).fin(() => {
-                    deferred.resolve(null);
+                    deferred.resolve(true);
                 });
             }
         });
     }
     else {
         // don't know what to do with this message
-        deferred.resolve(null);
+        deferred.resolve(false);
     }
     
     return deferred.promise;
 }
 
+var processingMessage: boolean = false;
 process.on('message', function (msg: cm.IWorkerMessage) {
-    run(msg, true,
-        function (agentUrl, taskUrl, jobInfo, ag) {
-            return new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, ag);
-        }).fin(() => {
+    var serviceChannelFactory = function (agentUrl: string, taskUrl: string, jobInfo: cm.IJobInfo, hostContext: ctxm.HostContext): cm.IServiceChannel {
+        return new fm.ServiceChannel(agentUrl, taskUrl, jobInfo, hostContext);
+    };
+    
+    // process the message
+    var runPromise = run(msg, true, serviceChannelFactory);
+    
+    // if this is the first message we've seen, set up a finally handler to exit when it's done
+    // subsequent messages are probably "cancel" or "abandoned", so just process them and let the original message finish gracefully
+    if (!processingMessage) {
+        processingMessage = true;
+        runPromise.fin(() => {
             process.exit();
-        });
+        });   
+    }
 });
 
 process.on('uncaughtException', function (err) {

@@ -41,7 +41,7 @@ var trace: tm.Tracing;
 var cfgr: cfgm.Configurator = new cfgm.Configurator();
 var messageListener: listener.MessageListener;
 
-var runWorker = function(sc: ctxm.HostContext, agentApi: agentm.ITaskAgentApi, workerMsg: any) {
+var runWorker = function(hostContext: ctxm.HostContext, agentApi: agentm.ITaskAgentApi, workerMsg: cm.IWorkerMessage) {
 
     var worker: childProcess.ChildProcess = childProcess.fork(path.join(__dirname, 'vsoworker'), [], {
         env: process.env,
@@ -78,11 +78,11 @@ var runWorker = function(sc: ctxm.HostContext, agentApi: agentm.ITaskAgentApi, w
             }
         }
         catch (err) {
-            sc.error("host" + err);
+            hostContext.error("host" + err);
         }
     });
 
-    sc.verbose('host::workerSend');
+    hostContext.verbose('host::workerSend');
     worker.send(workerMsg);
 }
 
@@ -180,7 +180,7 @@ cm.readBasicCreds()
         
         if (message.messageType === 'JobRequest') {
             var workerMsg = { 
-                messageType:"job",
+                messageType: cm.WorkerMessageTypes.Job,
                 config: config,
                 data: messageBody
             }

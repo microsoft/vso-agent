@@ -132,12 +132,13 @@ export interface IConfiguration {
     agent: agentifm.TaskAgent;
 }
 
-export interface IFeedbackChannel extends NodeJS.EventEmitter {
+export interface IServiceChannel extends NodeJS.EventEmitter {
     agentUrl: string;
     collectionUrl: string;
-    taskApi: taskm.ITaskApi;
     jobInfo: IJobInfo;
     enabled: boolean;
+    
+    getWebApi(): webapi.WebApi;
 
     // lifetime
     drain(): Q.Promise<any>;
@@ -206,15 +207,55 @@ export interface ISyncCommand {
     runCommand(ctx: any);
 }
 
+export interface IOutputChannel {
+    debug(message: string): void;
+    error(message: string): void;
+    info(message: string): void;
+    verbose(message: string): void;
+    warning(message: string): void;
+}
+
+export interface IExecutionContext extends IOutputChannel, ITraceWriter {
+    // communication
+    service: IServiceChannel;
+    authHandler: baseifm.IRequestHandler;
+    getWebApi(): webapi.WebApi;
+    
+    // inputs
+    jobInfo: IJobInfo;
+    inputs: ifm.TaskInputs;
+    variables: { [key: string]: string };
+    
+    // environment
+    config: IConfiguration;
+    traceWriter: ITraceWriter;
+    workingDirectory: string;
+    scmPath: string;
+    debugOutput: boolean;
+    
+    // results
+    result: agentifm.TaskResult;
+    resultMessage: string;
+    
+    // output
+    writeConsoleSection(message: string): void;
+    
+    // status
+    setTaskStarted(name: string): void;
+    setTaskResult(name: string, result: agentifm.TaskResult): void;
+    registerPendingTask(id: string, name: string, order: number): void
+    setJobInProgress(): void;
+    finishJob(result: agentifm.TaskResult): Q.Promise<any>
+}
+
 export interface IAsyncCommand {
     command: ITaskCommand;
     description: string;
-    taskCtx: any;
+    executionContext: IExecutionContext;
 
     runCommandAsync(): Q.Promise<any>;
 }
 
-// high level ids for job to avoid passing full job to lower priviledged code
 export interface IJobInfo {
     description: string;
     jobId: string;
@@ -260,6 +301,19 @@ export interface IWorkerMessage {
 //-----------------------------------------------------------
 // Helpers
 //-----------------------------------------------------------
+
+export function execAll(func: (item: any, state: any) => any, items: any[], state: any): Q.IPromise<any> {
+	var initialState = state;
+    var current = Q(null);
+
+	items.forEach((item) => {
+		current = current.then(function(state) {
+			return func(item, state || initialState);
+		});	
+	});
+
+	return current;
+}
 
 //
 // during config, there's no context, working directory or logs.  So, if tracing enabled, we should go to console.

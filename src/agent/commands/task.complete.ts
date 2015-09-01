@@ -14,20 +14,20 @@ export class TaskCompleteCommand implements cm.ISyncCommand {
 	}
 
 	public command: cm.ITaskCommand;
-	public runCommand(taskCtx: ctxm.TaskContext) {
+	public runCommand(executionContext: cm.IExecutionContext) {
 		if (this.command.message) {
-			taskCtx.resultMessage = this.command.message;
+			executionContext.resultMessage = this.command.message;
 		}
 
 		var result = this.command.properties['result'];
 
 		switch (result.toLowerCase()) {			
 			case "failed":
-				taskCtx.result = agentifm.TaskResult.Failed;
+				executionContext.result = agentifm.TaskResult.Failed;
 				break;
 
 			default:
-				taskCtx.result = agentifm.TaskResult.Succeeded;
+				executionContext.result = agentifm.TaskResult.Succeeded;
 				break;
 		}
 	}

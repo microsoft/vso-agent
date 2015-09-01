@@ -7,10 +7,11 @@ import ctxm = require('context');
 import zlib = require('zlib');
 import fcifm = require('vso-node-api/interfaces/FileContainerInterfaces');
 import ifm = require('./api/interfaces');
+import cm = require('./common');
 var uuid = require('node-uuid');
 
-export function copyToFileContainer(taskCtx: ctxm.TaskContext, localPath: string, containerId: number, containerFolder: string): Q.Promise<string> {
-	var fc = new FileContainerHelper(taskCtx);
+export function copyToFileContainer(executionContext: cm.IExecutionContext, localPath: string, containerId: number, containerFolder: string): Q.Promise<string> {
+	var fc = new FileContainerHelper(executionContext);
 	return fc.copyToFileContainer(localPath, containerId, containerFolder);
 }
 
@@ -38,18 +39,18 @@ export function getUploadHeaders(isGzipped: boolean,
 }
 
 export class FileContainerHelper {	
-	private _taskCtx: ctxm.TaskContext;
+	private _executionContext: cm.IExecutionContext;
 	private _tempFolder: string;
 	
-	constructor(taskCtx: ctxm.TaskContext) {
-		this._taskCtx = taskCtx;
+	constructor(executionContext: cm.IExecutionContext) {
+		this._executionContext = executionContext;
 	}
 	
 	public copyToFileContainer(localPath: string, containerId: number, containerFolder: string): Q.Promise<string> {
-		this._taskCtx.verbose("copyToFileContainer(" + localPath + ", " + containerId + ", " + containerFolder + ")");
+		this._executionContext.verbose("copyToFileContainer(" + localPath + ", " + containerId + ", " + containerFolder + ")");
         return utils.readDirectory(localPath, true, false)
             .then((files: string[]) => {
-				this._taskCtx.verbose("found " + files.length + " files");
+				this._executionContext.verbose("found " + files.length + " files");
                 return this._uploadFiles(localPath, containerId, containerFolder, files);
             })
             .then(() => {
@@ -58,7 +59,7 @@ export class FileContainerHelper {
     }
 	
 	private _uploadFiles(localPath: string, containerId: number, containerRoot: string, filePaths: string[]): Q.Promise<any> {
-		var tempFolder = this._ensureTemp(this._taskCtx.workingDirectory);
+		var tempFolder = this._ensureTemp(this._executionContext.workingDirectory);
 		
 		var fileUploadPromise = Q(null); // empty promise
 		filePaths.forEach((filePath: string) => {
@@ -83,7 +84,7 @@ export class FileContainerHelper {
 	}
 	
 	private _getFileSize(filePath: string): Q.Promise<number> {
-		this._taskCtx.verbose('fileSize for: ' + filePath);
+		this._executionContext.verbose('fileSize for: ' + filePath);
 	
 	    var defer = Q.defer<number>();
 	
@@ -98,12 +99,12 @@ export class FileContainerHelper {
 	    });
 	
 	    rs.on('end', () => {
-	    	this._taskCtx.verbose('end size: ' + l);
+	    	this._executionContext.verbose('end size: ' + l);
 	        defer.resolve(l);       
 	    });
 	
 	    rs.on('error', (err) => {
-	    	this._taskCtx.error('_getFileSize error! - ' + filePath);
+	    	this._executionContext.error('_getFileSize error! - ' + filePath);
 	        defer.reject(err);        
 	    });
 	
@@ -113,7 +114,7 @@ export class FileContainerHelper {
 	private _uploadFile(filePath: string, rootFolder: string, tempFolder: string, containerId: number, containerRoot: string): Q.Promise<any> {
 		var info = <any>{};
 		var containerPath = path.join(containerRoot, filePath.substring(rootFolder.length + 1));
-		this._taskCtx.verbose('containerPath = ' + containerPath);
+		this._executionContext.verbose('containerPath = ' + containerPath);
 	
 		return this._getFileSize(filePath).then((size) => {
 			info.originalSize = size;
@@ -132,7 +133,7 @@ export class FileContainerHelper {
 					}
 			    };
 	
-				return this._taskCtx.service.uploadFileToContainer(containerId, item);			
+				return this._executionContext.service.uploadFileToContainer(containerId, item);			
 			}
 		})
 	}
@@ -149,7 +150,7 @@ export class FileContainerHelper {
 			var inputStream = fs.createReadStream(filePath);
 			var zipDest = path.join(tempFolder, uuid.v1() + '.gz');
 			var ws = fs.createWriteStream(zipDest);
-			this._taskCtx.verbose('ws for: ' + zipDest);
+			this._executionContext.verbose('ws for: ' + zipDest);
 	
 	        gzip.on('end', () => {
 	            defer.resolve(zipDest);
@@ -185,7 +186,7 @@ export class FileContainerHelper {
 			return this._getFileSize(zipPath);
 		})
 		.then((zipSize) => {
-			this._taskCtx.verbose(info.zipPath + ':' + zipSize);
+			this._executionContext.verbose(info.zipPath + ':' + zipSize);
 	
 			var item: ifm.FileContainerItemInfo =  <ifm.FileContainerItemInfo>{
 	            fullPath: info.zipPath,
@@ -197,7 +198,7 @@ export class FileContainerHelper {
 				}
 		    };
 		    
-			return this._taskCtx.service.uploadFileToContainer(containerId, item);
+			return this._executionContext.service.uploadFileToContainer(containerId, item);
 		})
 	}
 }

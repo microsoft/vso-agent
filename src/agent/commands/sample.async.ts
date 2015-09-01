@@ -14,20 +14,20 @@ import cmdm = require('./command');
 // Output from this should call the output(line) callback.  Outback is buffered and written to the task log
 // as one chunk so this output is not interleaved with other tool output.
 //
-export function createAsyncCommand(taskCtx: ctxm.TaskContext, command: cm.ITaskCommand) {
-	return new SampleAsyncCommand(taskCtx, command);
+export function createAsyncCommand(executionContext: cm.IExecutionContext, command: cm.ITaskCommand) {
+	return new SampleAsyncCommand(executionContext, command);
 }
 
 export class SampleAsyncCommand implements cm.IAsyncCommand {
-	constructor(taskCtx: ctxm.TaskContext, command: cm.ITaskCommand) {
+	constructor(executionContext: cm.IExecutionContext, command: cm.ITaskCommand) {
 		this.command = command;
-		this.taskCtx = taskCtx;
+		this.executionContext = executionContext;
 		this.description = "Sample Async Command";
 	}
 
 	public command: cm.ITaskCommand;
 	public description: string;
-	public taskCtx: ctxm.TaskContext;
+	public executionContext: cm.IExecutionContext;
 
 	public runCommandAsync() {
         var defer = Q.defer();
