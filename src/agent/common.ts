@@ -36,7 +36,6 @@ sysVars.debug = 'system.debug';
 
 export var agentVars = <any>{};
 agentVars.rootDirectory = 'agent.rootDirectory';
-agentVars.buildDirectory = 'agent.buildDirectory';
 agentVars.workingDirectory = 'agent.workingDirectory';
 
 // TODO: should be in build plugin
@@ -88,6 +87,11 @@ export function throwAgentError(errorCode: AgentError, message: string) {
 export var CMD_PREFIX: string = '##vso[';
 export var DEFAULT_LOG_LINESPERFILE = 5000;
 export var DEFAULT_LOG_MAXFILES = 5;
+
+export class WorkerMessageTypes {
+     static Abandoned = "abandoned";
+     static Job = "job";
+}
 
 //-----------------------------------------------------------
 // Interfaces
@@ -143,7 +147,7 @@ export interface IFeedbackChannel extends NodeJS.EventEmitter {
     queueLogPage(page: ILogPageInfo): void;
     queueConsoleLine(line: string): void;
     queueConsoleSection(line: string): void;
-    createAsyncCommandQueue(workerCtx: any): IAsyncCommandQueue;
+    createAsyncCommandQueue(serviceCtx: any): IAsyncCommandQueue;
 
     // timelines
     addError(recordId: string, category: string, message: string, data: any): void;
@@ -215,6 +219,7 @@ export interface IAsyncCommand {
 export interface IJobInfo {
     description: string;
     jobId: string;
+    jobMessage: agentifm.JobRequestMessage;
     planId: string;
     timelineId: string;
     requestId: number;
@@ -235,6 +240,22 @@ export interface ILogPageInfo {
     logInfo: ILogMetadata;
     pagePath: string;
     pageNumber: number;
+}
+
+export interface IScmProvider {
+    hash: string;
+    debugOutput: boolean;
+    
+    // virtual - must override
+    initialize(endpoint: agentifm.ServiceEndpoint);
+    getCode(): Q.Promise<number>;
+    clean(): Q.Promise<number>;
+}
+
+export interface IWorkerMessage {
+    messageType: string;
+    config: IConfiguration;
+    data: any;
 }
 
 //-----------------------------------------------------------
@@ -387,10 +408,15 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
     }
 }
 
+//
+// TODO: JobInfo is going away soon.  We should just offer the task context the full job message.
+//       Until then, we're making the full job message available
+//       
 export function jobInfoFromJob(job: agentifm.JobRequestMessage, systemAuthHandler: baseifm.IRequestHandler): IJobInfo {
     var info: IJobInfo = {
         description: job.jobName,
         jobId: job.jobId,
+        jobMessage: job,
         planId: job.plan.planId,
         timelineId: job.timeline.id,
         requestId: job.requestId,

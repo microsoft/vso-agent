@@ -5,6 +5,7 @@ import path = require('path');
 import shell = require('shelljs');
 import tm = require('../tracing');
 import cmdm = require('../commands/command');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 
 var vsotask = require('vso-task-lib');
 
@@ -57,17 +58,47 @@ function _handleCommand(commandLine: string, taskCtx: ctxm.TaskContext) {
 }
 
 export function run(scriptEngine: string, scriptPath: string, taskCtx:ctxm.TaskContext, callback) {
-    _trace = new tm.Tracing(__filename, taskCtx.workerCtx);
+    _trace = new tm.Tracing(__filename, taskCtx.hostContext);
     _cmdQueue = taskCtx.service.createAsyncCommandQueue(taskCtx);
     _cmdQueue.startProcessing();
 
-    // TODO: only send all vars for trusted tasks
+    var jobMessage: agentifm.JobRequestMessage = taskCtx.jobInfo.jobMessage;
+
+    //
+    // Inputs
+    //
     var env = process.env;
     _trace.write('setting inputs as environment variables');
     for (var key in taskCtx.inputs){
         var envVarName = 'INPUT_' + key.replace(' ', '_').toUpperCase();
         env[envVarName] = taskCtx.inputs[key];
-        _trace.write(envVarName + '=' + env[envVarName]);
+        _trace.write('INPUT VAR: ' + envVarName + '=' + env[envVarName]);
+    }
+
+    //
+    // Variables
+    //
+    var vars = jobMessage.environment.variables;
+    for (var variable in vars) {
+        var envVarName: string = variable.replace(".", "_").toUpperCase();
+        process.env[envVarName] = vars[variable];
+        _trace.write('VAR VAL: ' + envVarName + '=' + vars[variable]);
+    }
+
+    //
+    // Endpoints
+    //
+    var endpoints = jobMessage.environment.endpoints;
+    if (endpoints) {
+        for (var i=0; i < endpoints.length; i++) {
+            var endpoint = endpoints[i];
+            _trace.state('service endpoint', endpoint);
+
+            if (endpoint.id && endpoint.url && endpoint.authorization) {
+                env['ENDPOINT_URL_' + endpoint.id] = endpoint.url;
+                env['ENDPOINT_AUTH_' + endpoint.id] = JSON.stringify(endpoint.authorization);
+            }
+        }
     }
 
     var ops = {

@@ -10,23 +10,23 @@ import async = require('async');
 import fs = require('fs');
 import path = require('path');
 import shell = require('shelljs');
+import Q = require('q');
 import agentm = require('vso-node-api/TaskAgentApi');
 import webapi = require('vso-node-api/WebApi');
 
 export class TaskManager {
-
-    constructor(workerContext: ctxm.WorkerContext, authHandler: baseifm.IRequestHandler) {
-        this.context = workerContext;
-        this.agentApi = new webapi.WebApi(workerContext.config.settings.serverUrl, 
+    constructor(hostContext: ctxm.HostContext, authHandler: baseifm.IRequestHandler) {
+        this.context = hostContext;
+        this.taskApi = new webapi.WebApi(hostContext.config.settings.serverUrl, 
                                       authHandler).getTaskAgentApi();
-        this.taskFolder = path.resolve(workerContext.config.settings.workFolder, 'tasks');
+        this.taskFolder = path.resolve(hostContext.workFolder, 'tasks');
     }
 
-    public ensureTaskExists(task: agentifm.TaskInstance, callback) : void {
+    public ensureTaskExists(task: agentifm.TaskInstance): Q.IPromise<any> {
         if (!this.hasTask(task)) {
-            this.downloadTask(task, callback);
+            return this.downloadTask(task);
         } else {
-            callback(null);
+            return Q.resolve(null);
         }
     }
 
@@ -38,7 +38,7 @@ export class TaskManager {
         }
     }
 
-    public ensureTasksExist(tasks: agentifm.TaskInstance[], callback: (err: any) => void) : void {
+    public ensureTasksExist(tasks: agentifm.TaskInstance[]): Q.IPromise<any> {
         // Check only once for each id/version combo
         var alreadyAdded = {};
         var uniqueTasks = [];
@@ -51,18 +51,20 @@ export class TaskManager {
             }
         }
         
-        var _this: TaskManager = this;
-        async.forEach(tasks, function(task, callreturn) {
-            _this.ensureTaskExists(task, callreturn);
-        }, callback);
+        var promises = tasks.map((task: agentifm.TaskInstance) => {
+            return this.ensureTaskExists(task);
+        });
+        
+        return Q.all(promises);
     }
 
-    public ensureLatestExist(callback: (err: any) => void) : void {
+    public ensureLatestExist(): Q.IPromise<any> {
+        var deferred = Q.defer();
+        
         // Get all tasks
-        this.agentApi.getTaskDefinitions(null, null, null, null, (err, status, tasks) => {
+        this.taskApi.getTaskDefinitions(null, null, null, null, (err, status, tasks) => {
             if (err) {
-                callback(err);
-                return;
+                deferred.reject(err);
             }
 
             // Sort out only latest versions
@@ -82,22 +84,30 @@ export class TaskManager {
             }
 
             // Call ensureTasksExist for those
-            this.ensureTasksExist(latestTasks, callback);
+            this.ensureTasksExist(latestTasks).then(() => {
+                deferred.resolve(null);
+            }, (err: any) => {
+                deferred.reject(err);
+            });
         });
+        
+        return deferred.promise;
     }
 
-    private downloadTask(task: agentifm.TaskInstance, callback: (err: any) => void): void {
+    private downloadTask(task: agentifm.TaskInstance): Q.IPromise<any> {
         var taskPath = this.getTaskPath(task);
         var filePath = taskPath + '.zip';
         if (fs.existsSync(filePath)) {
-            callback(new Error('File ' + filePath + ' already exists.'));
-            return;
+            return Q.reject(new Error('File ' + filePath + ' already exists.'));
         }
+        
+        var deferred = Q.defer();
         shell.mkdir('-p', taskPath);
-        this.agentApi.getTaskContentZip(task.id, task.version, null, null, (err, statusCode, res) => {
+
+        this.context.trace("Downloading task " + task.id + " v" + task.version + " to " + taskPath);
+        this.taskApi.getTaskContentZip(task.id, task.version, null, null, (err, statusCode, res) => {
             if (err) {
-                callback(err);
-                return;
+                deferred.reject(err);
             }
 
             var fileStream: NodeJS.WritableStream = fs.createWriteStream(filePath);
@@ -107,14 +117,17 @@ export class TaskManager {
                 cm.extractFile(filePath, taskPath, (err) => {
                     if (err) {
                         shell.rm('-rf', taskPath);
+                        deferred.reject(err);
                     }
 
                     shell.rm('-rf', filePath);
                     fileStream.end();
-                    callback(err);
+                    deferred.resolve(null);
                 });
             });
         });
+        
+        return deferred.promise;
     }
 
     private getTaskPath(task: agentifm.TaskInstance) : string {
@@ -125,7 +138,7 @@ export class TaskManager {
         return <agentifm.TaskInstance>{'id':task.id, 'name': task.name, 'version': cm.versionStringFromTaskDef(task)}
     }
 
-    private context: ctxm.WorkerContext;
-    private agentApi: agentm.ITaskAgentApi;
+    private context: ctxm.HostContext;
+    private taskApi: agentm.ITaskAgentApi;
     private taskFolder: string;
 }

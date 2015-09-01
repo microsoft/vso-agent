@@ -124,11 +124,11 @@ export class Configurator {
         })
         .then((config: cm.IConfiguration) => {
             configuration = config;
-            console.log('Creating work folder ...');
+            console.log('Creating work folder ' + settings.workFolder + ' ...');
             return utilm.ensurePathExists(settings.workFolder);
         })
         .then(() => {
-            console.log('Creating env file ...');
+            console.log('Creating env file ' + envPath + '...');
             return env.ensureEnvFile(envPath);
         })
         .then(() => {

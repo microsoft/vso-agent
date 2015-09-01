@@ -32,7 +32,7 @@ var CHECK_INTERVAL = 1000;
 var MAX_DRAIN_WAIT = 60 * 1000; // 1 min
 
 export class Events {
-    static JobAbandoned = "jobAbandoned";
+    static Abandoned = "abandoned";
 }
 
 export class TimedWorker extends events.EventEmitter {
@@ -103,17 +103,17 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
     constructor(agentUrl: string,
                 collectionUrl: string,
                 jobInfo: cm.IJobInfo,
-                workerCtx: ctxm.WorkerContext) {
+                serviceCtx: ctxm.HostContext) {
         super();
 
-        ensureTrace(workerCtx);
+        ensureTrace(serviceCtx);
         trace.enter('ServiceChannel');
 
         this.agentUrl = agentUrl;
         this.collectionUrl = collectionUrl;
 
         this.jobInfo = jobInfo;
-        this.workerCtx = workerCtx;
+        this.serviceCtx = serviceCtx;
 
         this._recordCount = 0;
         this._issues = {};
@@ -126,11 +126,11 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         this._buildApi = webapi.getQBuildApi();
 
         this._totalWaitTime = 0;
-        this._lockRenewer = new LockRenewer(jobInfo, workerCtx.config.poolId, this._agentApi);
+        this._lockRenewer = new LockRenewer(jobInfo, serviceCtx.config.poolId);
 
-        // pass the jobAbandoned event up to the owner
-        this._lockRenewer.on(Events.JobAbandoned, () => {
-            this.emit(Events.JobAbandoned);
+        // pass the Abandoned event up to the owner
+        this._lockRenewer.on(Events.Abandoned, () => {
+            this.emit(Events.Abandoned);
         });
 
         // timelines
@@ -162,10 +162,10 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
             TIMELINE_DELAY);
 
         // console lines
-        this._consoleQueue = new WebConsoleQueue(this, this.workerCtx, CONSOLE_DELAY);
+        this._consoleQueue = new WebConsoleQueue(this, this.serviceCtx, CONSOLE_DELAY);
 
         // log pages
-        this._logPageQueue = new LogPageQueue(this, this.workerCtx, LOG_DELAY);
+        this._logPageQueue = new LogPageQueue(this, this.serviceCtx, LOG_DELAY);
 
         this._timelineRecordQueue.startProcessing();
         this._consoleQueue.startProcessing();
@@ -176,7 +176,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
     public agentUrl: string;
     public collectionUrl: string;
     
-    public workerCtx: ctxm.WorkerContext;
+    public serviceCtx: ctxm.HostContext;
     public jobInfo: cm.IJobInfo;
 
     private _totalWaitTime: number;
@@ -246,23 +246,14 @@ export class ServiceChannel extends events.EventEmitter implements cm.IFeedbackC
         trace.write('poolId: ' + poolId);
         trace.write('lockToken: ' + lockToken);
         
-        var deferred = Q.defer();
-        this._agentApi.updateRequest(jobRequest, poolId, jobRequest.requestId, lockToken, (err, status, jobRequest) => {
-            trace.write('err: ' + err);
-            trace.write('status: ' + status);
-            if (status === 404) {
-                // job not found, probably because the server abandoned it. stop the lock renewer
-                this.emit(Events.JobAbandoned);
-                this._lockRenewer.end();
-            }
-            if (err) {
-                deferred.reject(err);
-            }
-            else {
-                deferred.resolve(null);
-            }
+        process.send({
+            messageType: 'updateJobRequest',
+            poolId: poolId,
+            lockToken: lockToken,
+            jobRequest: jobRequest
         });
-        return deferred.promise;
+        
+        return Q.resolve(null);
     }
     
     public finishJobRequest(poolId: number, lockToken: string, jobRequest: agentifm.TaskAgentJobRequest): Q.Promise<any> {
@@ -495,8 +486,8 @@ export class WebConsoleQueue extends BaseQueue<string> {
     private _jobInfo: cm.IJobInfo;
     private _taskApi: taskm.ITaskApi;
 
-    constructor(feedback: cm.IFeedbackChannel, workerCtx: ctxm.WorkerContext, msDelay: number) {
-        super(workerCtx, msDelay);
+    constructor(feedback: cm.IFeedbackChannel, serviceCtx: ctxm.HostContext, msDelay: number) {
+        super(serviceCtx, msDelay);
         this._jobInfo = feedback.jobInfo;
         this._taskApi = feedback.taskApi;
     }
@@ -594,15 +585,15 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
     private _recordToLogIdMap: { [recordId: string]: number } = {};
     private _jobInfo: cm.IJobInfo;
     private _taskApi: taskm.ITaskApi;
-    private _workerCtx: ctxm.WorkerContext;
+    private _workerCtx: ctxm.HostContext;
     private _service: cm.IFeedbackChannel;
 
-    constructor(service: cm.IFeedbackChannel, workerCtx: ctxm.WorkerContext, msDelay: number) {
-        super(workerCtx, msDelay);
+    constructor(service: cm.IFeedbackChannel, serviceCtx: ctxm.HostContext, msDelay: number) {
+        super(serviceCtx, msDelay);
         this._service = service;
         this._jobInfo = service.jobInfo;
         this._taskApi = service.taskApi;
-        this._workerCtx = workerCtx;
+        this._workerCtx = serviceCtx;
     }
 
     public _processQueue(logPages: cm.ILogPageInfo[], callback: (err: any) => void): void {
@@ -724,7 +715,7 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
 
 // Job Renewal
 export class LockRenewer extends TimedWorker {
-    constructor(jobInfo: cm.IJobInfo, poolId: number, agentApi: agentm.ITaskAgentApi) {
+    constructor(jobInfo: cm.IJobInfo, poolId: number) {
         trace.enter('LockRenewer');
 
         // finished is initially a resolved promise, because a renewal is not in progress
@@ -732,7 +723,6 @@ export class LockRenewer extends TimedWorker {
         
         this._jobInfo = jobInfo;
         trace.state('_jobInfo', this._jobInfo);
-        this._agentApi = agentApi;
         this._poolId = poolId;
         trace.write('_poolId: ' + this._poolId);
 
@@ -760,21 +750,14 @@ export class LockRenewer extends TimedWorker {
         var deferred: Q.Deferred<any> = Q.defer();
         this.finished = deferred.promise;
         
-        // lock token is ignored by newer servers
-        this._agentApi.updateRequest(jobRequest, this._poolId, jobRequest.requestId, this._jobInfo.lockToken, (err, status, jobRequest) => {
-            if (status === 404) {
-                // job not found. stop this loop.
-                this.emit(Events.JobAbandoned);
-                this.end();
-            }
-            if (err) {
-                deferred.reject(err);
-            }
-            else {
-                deferred.resolve(null);
-            }
+        process.send({
+            messageType: 'updateJobRequest',
+            poolId: this._poolId,
+            lockToken: this._jobInfo.lockToken,
+            jobRequest: jobRequest
         });
         
+        deferred.resolve(null);
         return deferred.promise;
     }
 }
