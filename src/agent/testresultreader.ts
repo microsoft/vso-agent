@@ -240,6 +240,9 @@ export class ResultReader {
                 outcome = "Failed";
                 errorMessage = testCaseNode.error.text();
             }
+            else if (testCaseNode.skipped) {
+                outcome = 'NotExecuted';
+            }
 
             var testResult : ifm.TestRunResult = <ifm.TestRunResult> {
                 state: "Completed",
