@@ -241,7 +241,8 @@ export class ResultReader {
                 errorMessage = testCaseNode.error.text();
             }
             else if (testCaseNode.skipped) {
-                outcome = 'NotExecuted';
+                outcome = "NotExecuted";
+                errorMessage = testCaseNode.skipped.text();
             }
 
             var testResult : ifm.TestRunResult = <ifm.TestRunResult> {
