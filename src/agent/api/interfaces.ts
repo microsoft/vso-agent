@@ -86,6 +86,7 @@ export interface TestRunResult {
     startedDate: Date;
     completedDate: Date;
     durationInMs: number;
+    stackTrace: string;
 }
 
 export interface TestRun2 {
