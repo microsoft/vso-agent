@@ -67,7 +67,7 @@ export class TestRunPublisher {
 
         var _this = this;
         
-        _this.service.createTestRun(testRun).then(function (createdTestRun) { 
+        _this.service.createTestRun(testRun).then(function (createdTestRun) {
             utilities.readFileContents(resultFilePath, "ascii").then(function (res) {
                 var contents = new Buffer(res).toString('base64');
                 _this.service.createTestRunAttachment(createdTestRun.id, path.basename(resultFilePath), contents).then(
@@ -76,11 +76,12 @@ export class TestRunPublisher {
                     },
                     function (err) {
                         // We can skip attachment publishing if it fails to upload
-                        if (_this.command)
+                        if (_this.command) {
                             _this.command.warning("Skipping attachment : " + resultFilePath + ". " + err.statusCode + " - " + err.message);
+                        }
 
                         defer.resolve(createdTestRun);
-                    });                
+                    });
             },
             function (err) {
                 defer.reject(err);
