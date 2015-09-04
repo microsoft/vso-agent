@@ -24,7 +24,7 @@ function _processLine(line: string, executionContext: cm.IExecutionContext): voi
     }
 }
 
-function _handleCommand(commandLine: string, taskCtx: cm.IExecutionContext) {
+function _handleCommand(commandLine: string, executionContext: cm.IExecutionContext) {
     var cmd: cm.ITaskCommand;
 
     try {
@@ -32,13 +32,13 @@ function _handleCommand(commandLine: string, taskCtx: cm.IExecutionContext) {
         cmd = new cmdm.TaskCommand(temp.command, temp.properties, temp.message);
     }
     catch(err) {
-        taskCtx.warning(err.message + ': ' + commandLine);
+        executionContext.warning(err.message + ': ' + commandLine);
         return;
     }
 
     var cmdModulePath = path.join(__dirname, '..', 'commands', cmd.command + '.js');
     if (!shell.test('-f', cmdModulePath)) {
-        taskCtx.warning('command module does not exist: ' + cmd.command);
+        executionContext.warning('command module does not exist: ' + cmd.command);
         return;
     }
 
@@ -46,14 +46,14 @@ function _handleCommand(commandLine: string, taskCtx: cm.IExecutionContext) {
 
     if (cmdPlugin.createSyncCommand) {
         var syncCmd = cmdPlugin.createSyncCommand(cmd);
-        syncCmd.runCommand(taskCtx);    
+        syncCmd.runCommand(executionContext);    
     }
     else if (cmdPlugin.createAsyncCommand) {
-        var asyncCmd = cmdPlugin.createAsyncCommand(taskCtx, cmd);
+        var asyncCmd = cmdPlugin.createAsyncCommand(executionContext, cmd);
         _cmdQueue.push(asyncCmd);
     }
     else {
-        taskCtx.warning('Command does not implement runCommand or runCommandAsync: ' + cmd.command);
+        executionContext.warning('Command does not implement runCommand or runCommandAsync: ' + cmd.command);
     }   
 }
 
