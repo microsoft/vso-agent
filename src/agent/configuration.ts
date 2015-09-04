@@ -8,7 +8,6 @@
 import Q = require('q');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
-import ifm = require('./api/interfaces');
 import cm = require('./common');
 import env = require('./environment');
 import inputs = require('./inputs');

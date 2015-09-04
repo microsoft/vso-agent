@@ -109,6 +109,9 @@ declare module 'vso-node-api/interfaces/common/VsoBaseInterfaces' {
 	     */
 	    routeTemplate: string;
 	}
+	export interface IHeaders {
+	    [key: string]: any;
+	}
 	export interface IBasicCredentials {
 	    username: string;
 	    password: string;
@@ -117,7 +120,7 @@ declare module 'vso-node-api/interfaces/common/VsoBaseInterfaces' {
 	    prepareRequest(options: any): void;
 	}
 	export interface IHttpResponse {
-	    statusCode: number;
+	    statusCode?: number;
 	    headers: any;
 	}
 	export interface IQCoreApi {
@@ -134,16 +137,13 @@ declare module 'vso-node-api/interfaces/common/VsoBaseInterfaces' {
 	export interface IRestClient {
 	    baseUrl: string;
 	    httpClient: IHttpClient;
-	    getJson(relativeUrl: string, apiVersion: string, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    getJsonWrappedArray(relativeUrl: string, apiVersion: string, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    getJson(relativeUrl: string, apiVersion: string, customHeaders: IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
 	    options(requestUrl: string, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    create(relativeUrl: string, apiVersion: string, resources: any, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    createJsonWrappedArray(relativeUrl: string, apiVersion: string, resources: any[], serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    update(relativeUrl: string, apiVersion: string, resources: any, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    updateJsonWrappedArray(relativeUrl: string, apiVersion: string, resources: any[], serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    uploadFile(verb: string, relativeUrl: string, apiVersion: string, filePath: string, customHeaders: any, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    uploadStream(verb: string, relativeUrl: string, apiVersion: string, contentStream: NodeJS.ReadableStream, customHeaders: any, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    replace(relativeUrl: string, apiVersion: string, resources: any, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    create(relativeUrl: string, apiVersion: string, resources: any, customHeaders: IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    update(relativeUrl: string, apiVersion: string, resources: any, customHeaders: IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    uploadFile(verb: string, relativeUrl: string, apiVersion: string, filePath: string, customHeaders: IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    uploadStream(verb: string, relativeUrl: string, apiVersion: string, contentStream: NodeJS.ReadableStream, customHeaders: IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    replace(relativeUrl: string, apiVersion: string, resources: any, customHeaders: IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
 	}
 
 }
@@ -156,9 +156,9 @@ declare module 'vso-node-api/HttpClient' {
 	    handlers: ifm.IRequestHandler[];
 	    socketTimeout: number;
 	    constructor(userAgent: string, handlers?: ifm.IRequestHandler[], socketTimeout?: number);
-	    get(verb: string, requestUrl: string, headers: any, onResult: (err: any, res: http.ClientResponse, contents: string) => void): void;
-	    send(verb: string, requestUrl: string, objs: any, headers: any, onResult: (err: any, res: http.ClientResponse, contents: string) => void): void;
-	    sendFile(verb: string, requestUrl: string, content: NodeJS.ReadableStream, headers: any, onResult: (err: any, res: http.ClientResponse, contents: string) => void): void;
+	    get(verb: string, requestUrl: string, headers: ifm.IHeaders, onResult: (err: any, res: http.ClientResponse, contents: string) => void): void;
+	    send(verb: string, requestUrl: string, objs: any, headers: ifm.IHeaders, onResult: (err: any, res: http.ClientResponse, contents: string) => void): void;
+	    sendFile(verb: string, requestUrl: string, content: NodeJS.ReadableStream, headers: ifm.IHeaders, onResult: (err: any, res: http.ClientResponse, contents: string) => void): void;
 	    getStream(requestUrl: string, apiVersion: string, type: string, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
 	    makeAcceptHeader(type: string, apiVersion: string): string;
 	    _getOptions(method: string, requestUrl: string, headers: any): any;
@@ -177,20 +177,20 @@ declare module 'vso-node-api/RestClient' {
 	    basePath: string;
 	    httpClient: ifm.IHttpClient;
 	    constructor(httpClient: ifm.IHttpClient);
-	    getJson(url: string, apiVersion: string, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    getJsonWrappedArray(url: string, apiVersion: string, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    getJson(url: string, apiVersion: string, customHeaders: ifm.IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    getJsonWrappedArray(url: string, apiVersion: string, customHeaders: ifm.IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
 	    options(url: string, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    delete(url: string, apiVersion: string, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    create(url: string, apiVersion: string, resources: any, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    createJsonWrappedArray(url: string, apiVersion: string, resources: any[], serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, resources: any[]) => void): void;
-	    update(url: string, apiVersion: string, resources: any, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    updateJsonWrappedArray(url: string, apiVersion: string, resources: any[], serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, resources: any[]) => void): void;
-	    uploadFile(verb: string, url: string, apiVersion: string, filePath: string, customHeaders: any, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    uploadStream(verb: string, url: string, apiVersion: string, contentStream: NodeJS.ReadableStream, customHeaders: any, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    replace(url: string, apiVersion: string, resources: any, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    _sendWrappedJson(verb: string, url: string, apiVersion: string, resources: any[], serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, resources: any[]) => void): void;
-	    _getJson(verb: string, url: string, apiVersion: string, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    _sendJson(verb: string, url: string, apiVersion: string, data: any, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    delete(url: string, apiVersion: string, customHeaders: ifm.IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    create(url: string, apiVersion: string, resources: any, customHeaders: ifm.IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    createJsonWrappedArray(url: string, apiVersion: string, resources: any[], customHeaders: ifm.IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, resources: any[]) => void): void;
+	    update(url: string, apiVersion: string, resources: any, customHeaders: ifm.IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    updateJsonWrappedArray(url: string, apiVersion: string, resources: any[], customHeaders: ifm.IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, resources: any[]) => void): void;
+	    uploadFile(verb: string, url: string, apiVersion: string, filePath: string, customHeaders: ifm.IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    uploadStream(verb: string, url: string, apiVersion: string, contentStream: NodeJS.ReadableStream, customHeaders: ifm.IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    replace(url: string, apiVersion: string, resources: any, customHeaders: ifm.IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    _sendWrappedJson(verb: string, url: string, apiVersion: string, resources: any[], customHeaders: ifm.IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, resources: any[]) => void): void;
+	    _getJson(verb: string, url: string, apiVersion: string, customHeaders: ifm.IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    _sendJson(verb: string, url: string, apiVersion: string, data: any, customHeaders: ifm.IHeaders, serializationData: Serialization.SerializationData, onResult: (err: any, statusCode: number, obj: any) => void): void;
 	}
 
 }
@@ -1453,6 +1453,7 @@ declare module 'vso-node-api/interfaces/BuildInterfaces' {
 	    branches: string[];
 	    daysToKeep: number;
 	    deleteBuildRecord: boolean;
+	    deleteTestResults: boolean;
 	}
 	export interface Schedule {
 	    branchFilters: string[];
@@ -2140,45 +2141,45 @@ declare module 'vso-node-api/BuildApi' {
 	    createArtifact(artifact: BuildInterfaces.BuildArtifact, buildId: number, project: string, onResult: (err: any, statusCode: number, artifact: BuildInterfaces.BuildArtifact) => void): void;
 	    getArtifact(buildId: number, artifactName: string, project: string, onResult: (err: any, statusCode: number, artifact: BuildInterfaces.BuildArtifact) => void): void;
 	    getArtifactContentZip(buildId: number, artifactName: string, project: string, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
-	    getArtifacts(buildId: number, project: string, onResult: (err: any, statusCode: number, artifacts: BuildInterfaces.BuildArtifact[]) => void): void;
+	    getArtifacts(buildId: number, project: string, onResult: (err: any, statusCode: number, artifact: BuildInterfaces.BuildArtifact[]) => void): void;
 	    getBadge(project: string, definitionId: number, branchName: string, onResult: (err: any, statusCode: number, badge: string) => void): void;
 	    deleteBuild(buildId: number, project: string, onResult: (err: any, statusCode: number) => void): void;
 	    getBuild(buildId: number, project: string, propertyFilters: string, onResult: (err: any, statusCode: number, build: BuildInterfaces.Build) => void): void;
-	    getBuilds(project: string, definitions: number[], queues: number[], buildNumber: string, minFinishTime: Date, maxFinishTime: Date, requestedFor: string, reasonFilter: BuildInterfaces.BuildReason, statusFilter: BuildInterfaces.BuildStatus, resultFilter: BuildInterfaces.BuildResult, tagFilters: string[], properties: string[], type: BuildInterfaces.DefinitionType, top: number, continuationToken: string, maxBuildsPerDefinition: number, deletedFilter: BuildInterfaces.QueryDeletedOption, queryOrder: BuildInterfaces.BuildQueryOrder, onResult: (err: any, statusCode: number, builds: BuildInterfaces.Build[]) => void): void;
+	    getBuilds(project: string, definitions: number[], queues: number[], buildNumber: string, minFinishTime: Date, maxFinishTime: Date, requestedFor: string, reasonFilter: BuildInterfaces.BuildReason, statusFilter: BuildInterfaces.BuildStatus, resultFilter: BuildInterfaces.BuildResult, tagFilters: string[], properties: string[], type: BuildInterfaces.DefinitionType, top: number, continuationToken: string, maxBuildsPerDefinition: number, deletedFilter: BuildInterfaces.QueryDeletedOption, queryOrder: BuildInterfaces.BuildQueryOrder, onResult: (err: any, statusCode: number, build: BuildInterfaces.Build[]) => void): void;
 	    queueBuild(build: BuildInterfaces.Build, project: string, ignoreWarnings: boolean, onResult: (err: any, statusCode: number, build: BuildInterfaces.Build) => void): void;
 	    updateBuild(build: BuildInterfaces.Build, buildId: number, project: string, onResult: (err: any, statusCode: number, build: BuildInterfaces.Build) => void): void;
-	    getBuildCommits(project: string, buildId: number, top: number, onResult: (err: any, statusCode: number, changes: BuildInterfaces.Change[]) => void): void;
+	    getBuildCommits(project: string, buildId: number, top: number, onResult: (err: any, statusCode: number, change: BuildInterfaces.Change[]) => void): void;
 	    getBuildController(controllerId: number, onResult: (err: any, statusCode: number, Controller: BuildInterfaces.BuildController) => void): void;
-	    getBuildControllers(name: string, onResult: (err: any, statusCode: number, Controllers: BuildInterfaces.BuildController[]) => void): void;
+	    getBuildControllers(name: string, onResult: (err: any, statusCode: number, Controller: BuildInterfaces.BuildController[]) => void): void;
 	    createDefinition(definition: BuildInterfaces.BuildDefinition, project: string, definitionToCloneId: number, definitionToCloneRevision: number, onResult: (err: any, statusCode: number, definition: BuildInterfaces.BuildDefinition) => void): void;
 	    deleteDefinition(definitionId: number, project: string, onResult: (err: any, statusCode: number) => void): void;
 	    getDefinition(definitionId: number, project: string, revision: number, propertyFilters: string[], onResult: (err: any, statusCode: number, definition: BuildInterfaces.DefinitionReference) => void): void;
-	    getDefinitions(project: string, name: string, type: BuildInterfaces.DefinitionType, onResult: (err: any, statusCode: number, definitions: BuildInterfaces.DefinitionReference[]) => void): void;
+	    getDefinitions(project: string, name: string, type: BuildInterfaces.DefinitionType, onResult: (err: any, statusCode: number, definition: BuildInterfaces.DefinitionReference[]) => void): void;
 	    updateDefinition(definition: BuildInterfaces.BuildDefinition, definitionId: number, project: string, secretsSourceDefinitionId: number, secretsSourceDefinitionRevision: number, onResult: (err: any, statusCode: number, definition: BuildInterfaces.BuildDefinition) => void): void;
-	    getBuildDeployments(project: string, buildId: number, onResult: (err: any, statusCode: number, deployments: BuildInterfaces.Deployment[]) => void): void;
+	    getBuildDeployments(project: string, buildId: number, onResult: (err: any, statusCode: number, deployment: BuildInterfaces.Deployment[]) => void): void;
 	    getBuildLog(project: string, buildId: number, logId: number, startLine: number, endLine: number, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
-	    getBuildLogs(project: string, buildId: number, onResult: (err: any, statusCode: number, logs: BuildInterfaces.BuildLog[]) => void): void;
+	    getBuildLogs(project: string, buildId: number, onResult: (err: any, statusCode: number, log: BuildInterfaces.BuildLog[]) => void): void;
 	    getBuildLogsZip(project: string, buildId: number, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
-	    getBuildOptionDefinitions(onResult: (err: any, statusCode: number, options: BuildInterfaces.BuildOptionDefinition[]) => void): void;
+	    getBuildOptionDefinitions(onResult: (err: any, statusCode: number, option: BuildInterfaces.BuildOptionDefinition[]) => void): void;
 	    createQueue(queue: BuildInterfaces.AgentPoolQueue, onResult: (err: any, statusCode: number, queue: BuildInterfaces.AgentPoolQueue) => void): void;
 	    deleteQueue(id: number, onResult: (err: any, statusCode: number) => void): void;
 	    getAgentPoolQueue(controllerId: number, onResult: (err: any, statusCode: number, queue: BuildInterfaces.AgentPoolQueue) => void): void;
-	    getQueues(name: string, onResult: (err: any, statusCode: number, queues: BuildInterfaces.AgentPoolQueue[]) => void): void;
-	    getDefinitionRevisions(project: string, definitionId: number, onResult: (err: any, statusCode: number, revisions: BuildInterfaces.BuildDefinitionRevision[]) => void): void;
+	    getQueues(name: string, onResult: (err: any, statusCode: number, queue: BuildInterfaces.AgentPoolQueue[]) => void): void;
+	    getDefinitionRevisions(project: string, definitionId: number, onResult: (err: any, statusCode: number, revision: BuildInterfaces.BuildDefinitionRevision[]) => void): void;
 	    getBuildSettings(onResult: (err: any, statusCode: number, setting: BuildInterfaces.BuildSettings) => void): void;
 	    updateBuildSettings(settings: BuildInterfaces.BuildSettings, onResult: (err: any, statusCode: number, setting: BuildInterfaces.BuildSettings) => void): void;
-	    addBuildTag(project: string, buildId: number, tag: string, onResult: (err: any, statusCode: number, tags: string[]) => void): void;
-	    addBuildTags(tags: string[], project: string, buildId: number, onResult: (err: any, statusCode: number, tags: string[]) => void): void;
-	    deleteBuildTag(project: string, buildId: number, tag: string, onResult: (err: any, statusCode: number, tags: string[]) => void): void;
-	    getBuildTags(project: string, buildId: number, onResult: (err: any, statusCode: number, tags: string[]) => void): void;
-	    getTags(project: string, onResult: (err: any, statusCode: number, tags: string[]) => void): void;
+	    addBuildTag(project: string, buildId: number, tag: string, onResult: (err: any, statusCode: number, tag: string[]) => void): void;
+	    addBuildTags(tags: string[], project: string, buildId: number, onResult: (err: any, statusCode: number, tag: string[]) => void): void;
+	    deleteBuildTag(project: string, buildId: number, tag: string, onResult: (err: any, statusCode: number, tag: string[]) => void): void;
+	    getBuildTags(project: string, buildId: number, onResult: (err: any, statusCode: number, tag: string[]) => void): void;
+	    getTags(project: string, onResult: (err: any, statusCode: number, tag: string[]) => void): void;
 	    deleteTemplate(project: string, templateId: string, onResult: (err: any, statusCode: number) => void): void;
 	    getTemplate(project: string, templateId: string, onResult: (err: any, statusCode: number, template: BuildInterfaces.BuildDefinitionTemplate) => void): void;
-	    getTemplates(project: string, onResult: (err: any, statusCode: number, templates: BuildInterfaces.BuildDefinitionTemplate[]) => void): void;
+	    getTemplates(project: string, onResult: (err: any, statusCode: number, template: BuildInterfaces.BuildDefinitionTemplate[]) => void): void;
 	    saveTemplate(template: BuildInterfaces.BuildDefinitionTemplate, project: string, templateId: string, onResult: (err: any, statusCode: number, template: BuildInterfaces.BuildDefinitionTemplate) => void): void;
 	    getBuildTimeline(project: string, buildId: number, timelineId: string, changeId: number, onResult: (err: any, statusCode: number, Timeline: BuildInterfaces.Timeline) => void): void;
-	    getBuildWorkItemsRefs(project: string, buildId: number, top: number, onResult: (err: any, statusCode: number, workitems: VSSInterfaces.ResourceRef[]) => void): void;
-	    getBuildWorkItemsRefsFromCommits(commitIds: string[], project: string, buildId: number, top: number, onResult: (err: any, statusCode: number, workitems: VSSInterfaces.ResourceRef[]) => void): void;
+	    getBuildWorkItemsRefs(project: string, buildId: number, top: number, onResult: (err: any, statusCode: number, workitem: VSSInterfaces.ResourceRef[]) => void): void;
+	    getBuildWorkItemsRefsFromCommits(commitIds: string[], project: string, buildId: number, top: number, onResult: (err: any, statusCode: number, workitem: VSSInterfaces.ResourceRef[]) => void): void;
 	}
 	export interface IQBuildApi extends basem.QClientApiBase {
 	    createArtifact(artifact: BuildInterfaces.BuildArtifact, buildId: number, project?: string): Q.Promise<BuildInterfaces.BuildArtifact>;
@@ -2253,7 +2254,7 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {string} project - Project ID or project name
 	     * @param onResult callback function with the resulting BuildInterfaces.BuildArtifact[]
 	     */
-	    getArtifacts(buildId: number, project: string, onResult: (err: any, statusCode: number, artifacts: BuildInterfaces.BuildArtifact[]) => void): void;
+	    getArtifacts(buildId: number, project: string, onResult: (err: any, statusCode: number, artifact: BuildInterfaces.BuildArtifact[]) => void): void;
 	    /**
 	     * @param {string} project
 	     * @param {number} definitionId
@@ -2301,7 +2302,7 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {BuildInterfaces.BuildQueryOrder} queryOrder
 	     * @param onResult callback function with the resulting BuildInterfaces.Build[]
 	     */
-	    getBuilds(project: string, definitions: number[], queues: number[], buildNumber: string, minFinishTime: Date, maxFinishTime: Date, requestedFor: string, reasonFilter: BuildInterfaces.BuildReason, statusFilter: BuildInterfaces.BuildStatus, resultFilter: BuildInterfaces.BuildResult, tagFilters: string[], properties: string[], type: BuildInterfaces.DefinitionType, top: number, continuationToken: string, maxBuildsPerDefinition: number, deletedFilter: BuildInterfaces.QueryDeletedOption, queryOrder: BuildInterfaces.BuildQueryOrder, onResult: (err: any, statusCode: number, builds: BuildInterfaces.Build[]) => void): void;
+	    getBuilds(project: string, definitions: number[], queues: number[], buildNumber: string, minFinishTime: Date, maxFinishTime: Date, requestedFor: string, reasonFilter: BuildInterfaces.BuildReason, statusFilter: BuildInterfaces.BuildStatus, resultFilter: BuildInterfaces.BuildResult, tagFilters: string[], properties: string[], type: BuildInterfaces.DefinitionType, top: number, continuationToken: string, maxBuildsPerDefinition: number, deletedFilter: BuildInterfaces.QueryDeletedOption, queryOrder: BuildInterfaces.BuildQueryOrder, onResult: (err: any, statusCode: number, build: BuildInterfaces.Build[]) => void): void;
 	    /**
 	     * Queues a build
 	     *
@@ -2328,7 +2329,7 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {number} top - The maximum number of changes to return
 	     * @param onResult callback function with the resulting BuildInterfaces.Change[]
 	     */
-	    getBuildCommits(project: string, buildId: number, top: number, onResult: (err: any, statusCode: number, changes: BuildInterfaces.Change[]) => void): void;
+	    getBuildCommits(project: string, buildId: number, top: number, onResult: (err: any, statusCode: number, change: BuildInterfaces.Change[]) => void): void;
 	    /**
 	     * Gets a controller
 	     *
@@ -2342,7 +2343,7 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {string} name
 	     * @param onResult callback function with the resulting BuildInterfaces.BuildController[]
 	     */
-	    getBuildControllers(name: string, onResult: (err: any, statusCode: number, Controllers: BuildInterfaces.BuildController[]) => void): void;
+	    getBuildControllers(name: string, onResult: (err: any, statusCode: number, Controller: BuildInterfaces.BuildController[]) => void): void;
 	    /**
 	     * Creates a new definition
 	     *
@@ -2379,7 +2380,7 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {BuildInterfaces.DefinitionType} type
 	     * @param onResult callback function with the resulting BuildInterfaces.DefinitionReference[]
 	     */
-	    getDefinitions(project: string, name: string, type: BuildInterfaces.DefinitionType, onResult: (err: any, statusCode: number, definitions: BuildInterfaces.DefinitionReference[]) => void): void;
+	    getDefinitions(project: string, name: string, type: BuildInterfaces.DefinitionType, onResult: (err: any, statusCode: number, definition: BuildInterfaces.DefinitionReference[]) => void): void;
 	    /**
 	     * Updates an existing definition
 	     *
@@ -2398,7 +2399,7 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {number} buildId
 	     * @param onResult callback function with the resulting BuildInterfaces.Deployment[]
 	     */
-	    getBuildDeployments(project: string, buildId: number, onResult: (err: any, statusCode: number, deployments: BuildInterfaces.Deployment[]) => void): void;
+	    getBuildDeployments(project: string, buildId: number, onResult: (err: any, statusCode: number, deployment: BuildInterfaces.Deployment[]) => void): void;
 	    /**
 	     * Gets a log
 	     *
@@ -2417,7 +2418,7 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {number} buildId
 	     * @param onResult callback function with the resulting BuildInterfaces.BuildLog[]
 	     */
-	    getBuildLogs(project: string, buildId: number, onResult: (err: any, statusCode: number, logs: BuildInterfaces.BuildLog[]) => void): void;
+	    getBuildLogs(project: string, buildId: number, onResult: (err: any, statusCode: number, log: BuildInterfaces.BuildLog[]) => void): void;
 	    /**
 	     * Gets logs for a build
 	     *
@@ -2429,7 +2430,7 @@ declare module 'vso-node-api/BuildApi' {
 	    /**
 	     * @param onResult callback function with the resulting BuildInterfaces.BuildOptionDefinition[]
 	     */
-	    getBuildOptionDefinitions(onResult: (err: any, statusCode: number, options: BuildInterfaces.BuildOptionDefinition[]) => void): void;
+	    getBuildOptionDefinitions(onResult: (err: any, statusCode: number, option: BuildInterfaces.BuildOptionDefinition[]) => void): void;
 	    /**
 	     * Creates a build queue
 	     *
@@ -2457,7 +2458,7 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {string} name
 	     * @param onResult callback function with the resulting BuildInterfaces.AgentPoolQueue[]
 	     */
-	    getQueues(name: string, onResult: (err: any, statusCode: number, queues: BuildInterfaces.AgentPoolQueue[]) => void): void;
+	    getQueues(name: string, onResult: (err: any, statusCode: number, queue: BuildInterfaces.AgentPoolQueue[]) => void): void;
 	    /**
 	     * Gets revisions of a definition
 	     *
@@ -2465,7 +2466,7 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {number} definitionId
 	     * @param onResult callback function with the resulting BuildInterfaces.BuildDefinitionRevision[]
 	     */
-	    getDefinitionRevisions(project: string, definitionId: number, onResult: (err: any, statusCode: number, revisions: BuildInterfaces.BuildDefinitionRevision[]) => void): void;
+	    getDefinitionRevisions(project: string, definitionId: number, onResult: (err: any, statusCode: number, revision: BuildInterfaces.BuildDefinitionRevision[]) => void): void;
 	    /**
 	     * @param onResult callback function with the resulting BuildInterfaces.BuildSettings
 	     */
@@ -2485,7 +2486,7 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {string} tag
 	     * @param onResult callback function with the resulting string[]
 	     */
-	    addBuildTag(project: string, buildId: number, tag: string, onResult: (err: any, statusCode: number, tags: string[]) => void): void;
+	    addBuildTag(project: string, buildId: number, tag: string, onResult: (err: any, statusCode: number, tag: string[]) => void): void;
 	    /**
 	     * Adds tag to a build
 	     *
@@ -2494,7 +2495,7 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {number} buildId
 	     * @param onResult callback function with the resulting string[]
 	     */
-	    addBuildTags(tags: string[], project: string, buildId: number, onResult: (err: any, statusCode: number, tags: string[]) => void): void;
+	    addBuildTags(tags: string[], project: string, buildId: number, onResult: (err: any, statusCode: number, tag: string[]) => void): void;
 	    /**
 	     * Deletes a tag from a build
 	     *
@@ -2503,7 +2504,7 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {string} tag
 	     * @param onResult callback function with the resulting string[]
 	     */
-	    deleteBuildTag(project: string, buildId: number, tag: string, onResult: (err: any, statusCode: number, tags: string[]) => void): void;
+	    deleteBuildTag(project: string, buildId: number, tag: string, onResult: (err: any, statusCode: number, tag: string[]) => void): void;
 	    /**
 	     * Gets the tags for a build
 	     *
@@ -2511,12 +2512,12 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {number} buildId
 	     * @param onResult callback function with the resulting string[]
 	     */
-	    getBuildTags(project: string, buildId: number, onResult: (err: any, statusCode: number, tags: string[]) => void): void;
+	    getBuildTags(project: string, buildId: number, onResult: (err: any, statusCode: number, tag: string[]) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param onResult callback function with the resulting string[]
 	     */
-	    getTags(project: string, onResult: (err: any, statusCode: number, tags: string[]) => void): void;
+	    getTags(project: string, onResult: (err: any, statusCode: number, tag: string[]) => void): void;
 	    /**
 	     * Deletes a definition template
 	     *
@@ -2537,7 +2538,7 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {string} project - Project ID or project name
 	     * @param onResult callback function with the resulting BuildInterfaces.BuildDefinitionTemplate[]
 	     */
-	    getTemplates(project: string, onResult: (err: any, statusCode: number, templates: BuildInterfaces.BuildDefinitionTemplate[]) => void): void;
+	    getTemplates(project: string, onResult: (err: any, statusCode: number, template: BuildInterfaces.BuildDefinitionTemplate[]) => void): void;
 	    /**
 	     * Saves a definition template
 	     *
@@ -2565,7 +2566,7 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {number} top - The maximum number of workitems to return
 	     * @param onResult callback function with the resulting VSSInterfaces.ResourceRef[]
 	     */
-	    getBuildWorkItemsRefs(project: string, buildId: number, top: number, onResult: (err: any, statusCode: number, workitems: VSSInterfaces.ResourceRef[]) => void): void;
+	    getBuildWorkItemsRefs(project: string, buildId: number, top: number, onResult: (err: any, statusCode: number, workitem: VSSInterfaces.ResourceRef[]) => void): void;
 	    /**
 	     * Gets the work item ids associated with build commits
 	     *
@@ -2575,7 +2576,7 @@ declare module 'vso-node-api/BuildApi' {
 	     * @param {number} top - The maximum number of workitems to return, also number of commits to consider if commitids are not sent
 	     * @param onResult callback function with the resulting VSSInterfaces.ResourceRef[]
 	     */
-	    getBuildWorkItemsRefsFromCommits(commitIds: string[], project: string, buildId: number, top: number, onResult: (err: any, statusCode: number, workitems: VSSInterfaces.ResourceRef[]) => void): void;
+	    getBuildWorkItemsRefsFromCommits(commitIds: string[], project: string, buildId: number, top: number, onResult: (err: any, statusCode: number, workitem: VSSInterfaces.ResourceRef[]) => void): void;
 	}
 	export class QBuildApi extends basem.QClientApiBase implements IQBuildApi {
 	    api: BuildApi;
@@ -3337,21 +3338,21 @@ declare module 'vso-node-api/CoreApi' {
 	export interface ICoreApi extends basem.ClientApiBase {
 	    createConnectedService(connectedServiceCreationData: CoreInterfaces.WebApiConnectedServiceDetails, projectId: string, onResult: (err: any, statusCode: number, connectedService: CoreInterfaces.WebApiConnectedService) => void): void;
 	    getConnectedServiceDetails(projectId: string, name: string, onResult: (err: any, statusCode: number, connectedService: CoreInterfaces.WebApiConnectedServiceDetails) => void): void;
-	    getConnectedServices(projectId: string, kind: CoreInterfaces.ConnectedServiceKind, onResult: (err: any, statusCode: number, connectedServices: CoreInterfaces.WebApiConnectedService[]) => void): void;
+	    getConnectedServices(projectId: string, kind: CoreInterfaces.ConnectedServiceKind, onResult: (err: any, statusCode: number, connectedService: CoreInterfaces.WebApiConnectedService[]) => void): void;
 	    createIdentityMru(mruData: CoreInterfaces.IdentityData, mruName: string, onResult: (err: any, statusCode: number) => void): void;
 	    deleteIdentityMru(mruData: CoreInterfaces.IdentityData, mruName: string, onResult: (err: any, statusCode: number) => void): void;
 	    getIdentityMru(mruName: string, onResult: (err: any, statusCode: number, identityMru: VSSInterfaces.IdentityRef[]) => void): void;
 	    updateIdentityMru(mruData: CoreInterfaces.IdentityData, mruName: string, onResult: (err: any, statusCode: number) => void): void;
-	    getTeamMembers(projectId: string, teamId: string, top: number, skip: number, onResult: (err: any, statusCode: number, members: VSSInterfaces.IdentityRef[]) => void): void;
+	    getTeamMembers(projectId: string, teamId: string, top: number, skip: number, onResult: (err: any, statusCode: number, member: VSSInterfaces.IdentityRef[]) => void): void;
 	    getProjectCollection(collectionId: string, onResult: (err: any, statusCode: number, projectCollection: CoreInterfaces.TeamProjectCollection) => void): void;
-	    getProjectCollections(top: number, skip: number, onResult: (err: any, statusCode: number, projectCollections: CoreInterfaces.TeamProjectCollectionReference[]) => void): void;
+	    getProjectCollections(top: number, skip: number, onResult: (err: any, statusCode: number, projectCollection: CoreInterfaces.TeamProjectCollectionReference[]) => void): void;
 	    getProjectHistory(minRevision: number, onResult: (err: any, statusCode: number, projectHistory: CoreInterfaces.TeamProjectReference[]) => void): void;
 	    getProject(projectId: string, includeCapabilities: boolean, includeHistory: boolean, onResult: (err: any, statusCode: number, project: CoreInterfaces.TeamProject) => void): void;
-	    getProjects(stateFilter: any, top: number, skip: number, onResult: (err: any, statusCode: number, projects: CoreInterfaces.TeamProjectReference[]) => void): void;
+	    getProjects(stateFilter: any, top: number, skip: number, onResult: (err: any, statusCode: number, project: CoreInterfaces.TeamProjectReference[]) => void): void;
 	    queueCreateProject(projectToCreate: CoreInterfaces.TeamProject, onResult: (err: any, statusCode: number, project: OperationsInterfaces.OperationReference) => void): void;
 	    queueDeleteProject(projectId: string, onResult: (err: any, statusCode: number, project: OperationsInterfaces.OperationReference) => void): void;
 	    updateProject(projectUpdate: CoreInterfaces.TeamProject, projectId: string, onResult: (err: any, statusCode: number, project: OperationsInterfaces.OperationReference) => void): void;
-	    getProxies(proxyUrl: string, onResult: (err: any, statusCode: number, proxies: CoreInterfaces.Proxy[]) => void): void;
+	    getProxies(proxyUrl: string, onResult: (err: any, statusCode: number, proxie: CoreInterfaces.Proxy[]) => void): void;
 	    getTeams(projectId: string, teamId: string, top: number, skip: number, onResult: (err: any, statusCode: number, team: CoreInterfaces.WebApiTeam) => void): void;
 	}
 	export interface IQCoreApi extends basem.QClientApiBase {
@@ -3390,7 +3391,7 @@ declare module 'vso-node-api/CoreApi' {
 	     * @param {CoreInterfaces.ConnectedServiceKind} kind
 	     * @param onResult callback function with the resulting CoreInterfaces.WebApiConnectedService[]
 	     */
-	    getConnectedServices(projectId: string, kind: CoreInterfaces.ConnectedServiceKind, onResult: (err: any, statusCode: number, connectedServices: CoreInterfaces.WebApiConnectedService[]) => void): void;
+	    getConnectedServices(projectId: string, kind: CoreInterfaces.ConnectedServiceKind, onResult: (err: any, statusCode: number, connectedService: CoreInterfaces.WebApiConnectedService[]) => void): void;
 	    /**
 	     * @param {CoreInterfaces.IdentityData} mruData
 	     * @param {string} mruName
@@ -3421,7 +3422,7 @@ declare module 'vso-node-api/CoreApi' {
 	     * @param {number} skip
 	     * @param onResult callback function with the resulting VSSInterfaces.IdentityRef[]
 	     */
-	    getTeamMembers(projectId: string, teamId: string, top: number, skip: number, onResult: (err: any, statusCode: number, members: VSSInterfaces.IdentityRef[]) => void): void;
+	    getTeamMembers(projectId: string, teamId: string, top: number, skip: number, onResult: (err: any, statusCode: number, member: VSSInterfaces.IdentityRef[]) => void): void;
 	    /**
 	     * Get project collection with the specified id or name.
 	     *
@@ -3436,7 +3437,7 @@ declare module 'vso-node-api/CoreApi' {
 	     * @param {number} skip
 	     * @param onResult callback function with the resulting CoreInterfaces.TeamProjectCollectionReference[]
 	     */
-	    getProjectCollections(top: number, skip: number, onResult: (err: any, statusCode: number, projectCollections: CoreInterfaces.TeamProjectCollectionReference[]) => void): void;
+	    getProjectCollections(top: number, skip: number, onResult: (err: any, statusCode: number, projectCollection: CoreInterfaces.TeamProjectCollectionReference[]) => void): void;
 	    /**
 	     * @param {number} minRevision
 	     * @param onResult callback function with the resulting CoreInterfaces.TeamProjectReference[]
@@ -3459,7 +3460,7 @@ declare module 'vso-node-api/CoreApi' {
 	     * @param {number} skip
 	     * @param onResult callback function with the resulting CoreInterfaces.TeamProjectReference[]
 	     */
-	    getProjects(stateFilter: any, top: number, skip: number, onResult: (err: any, statusCode: number, projects: CoreInterfaces.TeamProjectReference[]) => void): void;
+	    getProjects(stateFilter: any, top: number, skip: number, onResult: (err: any, statusCode: number, project: CoreInterfaces.TeamProjectReference[]) => void): void;
 	    /**
 	     * Queue a project creation.
 	     *
@@ -3486,7 +3487,7 @@ declare module 'vso-node-api/CoreApi' {
 	     * @param {string} proxyUrl
 	     * @param onResult callback function with the resulting CoreInterfaces.Proxy[]
 	     */
-	    getProxies(proxyUrl: string, onResult: (err: any, statusCode: number, proxies: CoreInterfaces.Proxy[]) => void): void;
+	    getProxies(proxyUrl: string, onResult: (err: any, statusCode: number, proxie: CoreInterfaces.Proxy[]) => void): void;
 	    /**
 	     * @param {string} projectId
 	     * @param {string} teamId
@@ -3780,8 +3781,8 @@ declare module 'vso-node-api/FileContainerApi' {
 	    createItem(customHeaders: any, contentStream: NodeJS.ReadableStream, containerId: number, itemPath: string, scope: string, onResult: (err: any, statusCode: number, Container: FileContainerInterfaces.FileContainerItem) => void): void;
 	    createItems(items: VSSInterfaces.VssJsonCollectionWrapperV<FileContainerInterfaces.FileContainerItem[]>, containerId: number, scope: string, onResult: (err: any, statusCode: number, Container: FileContainerInterfaces.FileContainerItem[]) => void): void;
 	    deleteItem(containerId: number, itemPath: string, scope: string, onResult: (err: any, statusCode: number) => void): void;
-	    getContainers(scope: string, artifactUris: string, onResult: (err: any, statusCode: number, Containers: FileContainerInterfaces.FileContainer[]) => void): void;
-	    getItems(containerId: number, scope: string, itemPath: string, metadata: boolean, format: string, downloadFileName: string, includeDownloadTickets: boolean, onResult: (err: any, statusCode: number, Containers: FileContainerInterfaces.FileContainerItem[]) => void): void;
+	    getContainers(scope: string, artifactUris: string, onResult: (err: any, statusCode: number, Container: FileContainerInterfaces.FileContainer[]) => void): void;
+	    getItems(containerId: number, scope: string, itemPath: string, metadata: boolean, format: string, downloadFileName: string, includeDownloadTickets: boolean, onResult: (err: any, statusCode: number, Container: FileContainerInterfaces.FileContainerItem[]) => void): void;
 	}
 	export interface IQFileContainerApi extends basem.QClientApiBase {
 	    createItem(customHeaders: any, contentStream: NodeJS.ReadableStream, containerId: number, itemPath: string, scope?: string): Q.Promise<FileContainerInterfaces.FileContainerItem>;
@@ -3800,7 +3801,7 @@ declare module 'vso-node-api/FileContainerApi' {
 	     * @param {string} scope - A guid representing the scope of the container. This is often the project id.
 	     * @param onResult callback function with the resulting FileContainerInterfaces.FileContainerItem
 	     */
-	    createItem(customHeaders: any, contentStream: NodeJS.ReadableStream, containerId: number, itemPath: string, scope: string, onResult: (err: any, statusCode: number, Container: FileContainerInterfaces.FileContainerItem) => void): void;
+	    createItem(customHeaders: VsoBaseInterfaces.IHeaders, contentStream: NodeJS.ReadableStream, containerId: number, itemPath: string, scope: string, onResult: (err: any, statusCode: number, Container: FileContainerInterfaces.FileContainerItem) => void): void;
 	    /**
 	     * Creates the specified items in in the referenced container.
 	     *
@@ -3826,7 +3827,7 @@ declare module 'vso-node-api/FileContainerApi' {
 	     * @param {string} artifactUris
 	     * @param onResult callback function with the resulting FileContainerInterfaces.FileContainer[]
 	     */
-	    getContainers(scope: string, artifactUris: string, onResult: (err: any, statusCode: number, Containers: FileContainerInterfaces.FileContainer[]) => void): void;
+	    getContainers(scope: string, artifactUris: string, onResult: (err: any, statusCode: number, Container: FileContainerInterfaces.FileContainer[]) => void): void;
 	    /**
 	     * Gets the specified file container object in a format dependent upon the given parameters or HTTP Accept request header
 	     *
@@ -3839,7 +3840,7 @@ declare module 'vso-node-api/FileContainerApi' {
 	     * @param {boolean} includeDownloadTickets
 	     * @param onResult callback function with the resulting FileContainerInterfaces.FileContainerItem[]
 	     */
-	    getItems(containerId: number, scope: string, itemPath: string, metadata: boolean, format: string, downloadFileName: string, includeDownloadTickets: boolean, onResult: (err: any, statusCode: number, Containers: FileContainerInterfaces.FileContainerItem[]) => void): void;
+	    getItems(containerId: number, scope: string, itemPath: string, metadata: boolean, format: string, downloadFileName: string, includeDownloadTickets: boolean, onResult: (err: any, statusCode: number, Container: FileContainerInterfaces.FileContainerItem[]) => void): void;
 	}
 	export class QFileContainerApi extends basem.QClientApiBase implements IQFileContainerApi {
 	    api: FileContainerApi;
@@ -3880,6 +3881,759 @@ declare module 'vso-node-api/FileContainerApi' {
 	    * @param {boolean} includeDownloadTickets
 	    */
 	    getItems(containerId: number, scope?: string, itemPath?: string, metadata?: boolean, format?: string, downloadFileName?: string, includeDownloadTickets?: boolean): Q.Promise<FileContainerInterfaces.FileContainerItem[]>;
+	}
+
+}
+declare module 'vso-node-api/interfaces/GalleryInterfaces' {
+	export interface ExtensionAccount {
+	    accountId: string;
+	    accountName: string;
+	}
+	export interface ExtensionFile {
+	    assetType: string;
+	    contentType: string;
+	    fileId: number;
+	    shortDescription: string;
+	    version: string;
+	}
+	/**
+	 * The FilterResult is the set of extensions that matched a particular query filter.
+	 */
+	export interface ExtensionFilterResult {
+	    /**
+	     * This is the set of appplications that matched the query filter supplied.
+	     */
+	    extensions: PublishedExtension[];
+	    /**
+	     * The PagingToken is returned from a request when more records exist that match the result than were requested or could be returned. A follow-up query with this paging token can be used to retrieve more results.
+	     */
+	    pagingToken: string;
+	}
+	/**
+	 * Package that will be used to create or update a published extension
+	 */
+	export interface ExtensionPackage {
+	    /**
+	     * Base 64 encoded extension package
+	     */
+	    extensionManifest: string;
+	}
+	/**
+	 * An ExtensionQuery is used to search the gallery for a set of extensions that match one of many filter values.
+	 */
+	export interface ExtensionQuery {
+	    /**
+	     * Each filter is a unique query and will have matching set of extensions returned from the request. Each result will have the same index in the resulting array that the filter had in the incoming query.
+	     */
+	    filters: QueryFilter[];
+	    /**
+	     * The Flags are used to deterine which set of information the caller would like returned for the matched extensions.
+	     */
+	    flags: ExtensionQueryFlags;
+	}
+	export enum ExtensionQueryFilterType {
+	    /**
+	     * The values are used as tags. All tags are treated as "OR" conditions with each other. There may be some value put on the number of matched tags from the query.
+	     */
+	    Tag = 1,
+	    /**
+	     * The Values are an ExtensionName or fragment that is used to match other extension names.
+	     */
+	    DisplayName = 2,
+	    /**
+	     * The Filter is one or more tokens that define what scope to return private extensions for.
+	     */
+	    Private = 3,
+	    /**
+	     * Retrieve a set of extensions based on their id's. The values should be the extension id's encoded as strings.
+	     */
+	    Id = 4,
+	    /**
+	     * The catgeory is unlike other filters. It is AND'd with the other filters instead of being a seperate query.
+	     */
+	    Category = 5,
+	    /**
+	     * Certain contribution types may be indexed to allow for query by type. User defined types can't be indexed at the moment.
+	     */
+	    ContributionType = 6,
+	}
+	export enum ExtensionQueryFlags {
+	    /**
+	     * None is used to retrieve only the basic extension details.
+	     */
+	    None = 0,
+	    /**
+	     * IncludeVersions will return version information for extensions returned
+	     */
+	    IncludeVersions = 1,
+	    /**
+	     * IncludeFiles will return information about which files were found within the extension that were stored independant of the manifest. When asking for files, versions will be included as well since files are returned as a property of the versions.  These files can be retrieved using the path to the file without requiring the entire manifest be downloaded.
+	     */
+	    IncludeFiles = 2,
+	    /**
+	     * Include the Categories and Tags that were added to the extension definition.
+	     */
+	    IncludeCategoryAndTags = 4,
+	    /**
+	     * Include the details about which accounts the extension has been shared with if the extesion is a private extension.
+	     */
+	    IncludeSharedAccounts = 8,
+	    /**
+	     * Include properties associated with versions of the extension
+	     */
+	    IncludeVersionProperties = 16,
+	    /**
+	     * Excluding non-validated extensions will remove any extension versions that either are in the process of being validated or have failed validation.
+	     */
+	    ExcludeNonValidated = 32,
+	    /**
+	     * AllAttributes is designed to be a mask that defines all sub-elements of the extension should be returned.
+	     */
+	    AllAttributes = 31,
+	}
+	/**
+	 * This is the set of extensions that matched a supplied query through the filters given.
+	 */
+	export interface ExtensionQueryResult {
+	    /**
+	     * For each filter supplied in the query, a filter result will be returned in the query result.
+	     */
+	    results: ExtensionFilterResult[];
+	}
+	export interface ExtensionVersion {
+	    files: ExtensionFile[];
+	    flags: ExtensionVersionFlags;
+	    lastUpdated: Date;
+	    properties: {
+	        key: string;
+	        value: string;
+	    }[];
+	    validationResultMessage: string;
+	    version: string;
+	    versionDescription: string;
+	}
+	export enum ExtensionVersionFlags {
+	    /**
+	     * No flags exist for this version.
+	     */
+	    None = 0,
+	    /**
+	     * The Validated flag for a version means the extension version has passed validation and can be used..
+	     */
+	    Validated = 1,
+	}
+	/**
+	 * One condition in a QueryFilter.
+	 */
+	export interface FilterCriteria {
+	    filterType: number;
+	    /**
+	     * The value used in the match based on the filter type.
+	     */
+	    value: string;
+	}
+	export enum PagingDirection {
+	    /**
+	     * Backward will return results from earlier in the resultset.
+	     */
+	    Backward = 1,
+	    /**
+	     * Forward will return results from later in the resultset.
+	     */
+	    Forward = 2,
+	}
+	export interface PublishedExtension {
+	    allowedAccounts: ExtensionAccount[];
+	    categories: string[];
+	    displayName: string;
+	    extensionId: string;
+	    extensionName: string;
+	    flags: PublishedExtensionFlags;
+	    lastUpdated: Date;
+	    longDescription: string;
+	    publisher: PublisherFacts;
+	    shortDescription: string;
+	    tags: string[];
+	    versions: ExtensionVersion[];
+	}
+	export enum PublishedExtensionFlags {
+	    /**
+	     * This should never be returned, it is used to represent a extension who's flags havent changed during update calls.
+	     */
+	    UnChanged = 1073741824,
+	    /**
+	     * No flags exist for this extension.
+	     */
+	    None = 0,
+	    /**
+	     * The Disabled flag for an extension means the extension can't be changed and won't be used by consumers. The disabled flag is managed by the service and can't be supplied by the Extension Developers.
+	     */
+	    Disabled = 1,
+	    /**
+	     * BuiltIn Extension are available to all Tenants. An explicit registration is not required. This attribute is reserved and can't be supplied by Extension Developers.  BuiltIn extensions are by definition Public. There is no need to set the public flag for extensions marked BuiltIn.
+	     */
+	    BuiltIn = 2,
+	    /**
+	     * This extension has been validated by the service. The extension meets the requirements specified. This attribute is reserved and can't be supplied by the Extension Developers. Validation is a process that ensures that all contributions are well formed. They meet the requirements defined by the contribution type they are extending. Note this attribute will be updated asynchronously as the extension is validated by the developer of the contribution type. There will be restricted access to the extension while this process is performed.
+	     */
+	    Validated = 4,
+	    /**
+	     * This extension registration is public, making its visibilty open to the public. This means all tenants have the ability to install this extension. Without this flag the extension will be private and will need to be shared with the tenants that can install it.
+	     */
+	    Public = 256,
+	    /**
+	     * This extension has multiple versions active at one time and version discovery should be done usig the defined "Version Discovery" protocol to determine the version available to a specific user or tenant.  @TODO: Link to Version Discovery Protocol.
+	     */
+	    MultiVersion = 512,
+	    /**
+	     * The system flag is reserved, and cant be used by publishers.
+	     */
+	    System = 1024,
+	    /**
+	     * This is the set of flags that can't be supplied by the developer and is managed by the service itself.
+	     */
+	    ServiceFlags = 1029,
+	}
+	export interface Publisher {
+	    displayName: string;
+	    extensions: PublishedExtension[];
+	    flags: PublisherFlags;
+	    lastUpdated: Date;
+	    longDescription: string;
+	    publisherId: string;
+	    publisherName: string;
+	    shortDescription: string;
+	}
+	/**
+	 * High-level information about the publisher, like id's and names
+	 */
+	export interface PublisherFacts {
+	    displayName: string;
+	    publisherId: string;
+	    publisherName: string;
+	}
+	/**
+	 * The FilterResult is the set of publishers that matched a particular query filter.
+	 */
+	export interface PublisherFilterResult {
+	    /**
+	     * This is the set of appplications that matched the query filter supplied.
+	     */
+	    publishers: Publisher[];
+	}
+	export enum PublisherFlags {
+	    /**
+	     * This should never be returned, it is used to represent a publisher who's flags havent changed during update calls.
+	     */
+	    UnChanged = 1073741824,
+	    /**
+	     * No flags exist for this publisher.
+	     */
+	    None = 0,
+	    /**
+	     * The Disabled flag for a publisher means the publisher can't be changed and won't be used by consumers, this extends to extensions owned by the publisher as well. The disabled flag is managed by the service and can't be supplied by the Extension Developers.
+	     */
+	    Disabled = 1,
+	    /**
+	     * This is the set of flags that can't be supplied by the developer and is managed by the service itself.
+	     */
+	    ServiceFlags = 1,
+	}
+	export enum PublisherPermissions {
+	    /**
+	     * This gives the bearer the rights to read Publishers and Extensions.
+	     */
+	    Read = 1,
+	    /**
+	     * This gives the bearer the rights to update Publishers and Extensions (but not the ability to Create them).
+	     */
+	    Write = 2,
+	    /**
+	     * This gives the bearer the rights to create new Publishers at the root of the namespace.
+	     */
+	    Create = 4,
+	    /**
+	     * This gives the bearer the rights to create new Extensions within a publisher.
+	     */
+	    Publish = 8,
+	    /**
+	     * Admin gives the bearer the rights to manage restricted attributes of Publishers and Extensions.
+	     */
+	    Admin = 16,
+	    /**
+	     * TrustedPartner gives the bearer the rights to publish a extensions with restricted capabilities.
+	     */
+	    TrustedPartner = 32,
+	    /**
+	     * PrivateRead is another form of read designed to allow higher privilege accessors the ability to read private extensions.
+	     */
+	    PrivateRead = 64,
+	}
+	/**
+	 * An PublisherQuery is used to search the gallery for a set of publishers that match one of many filter values.
+	 */
+	export interface PublisherQuery {
+	    /**
+	     * Each filter is a unique query and will have matching set of publishers returned from the request. Each result will have the same index in the resulting array that the filter had in the incoming query.
+	     */
+	    filters: QueryFilter[];
+	    /**
+	     * The Flags are used to deterine which set of information the caller would like returned for the matched publishers.
+	     */
+	    flags: PublisherQueryFlags;
+	}
+	export enum PublisherQueryFilterType {
+	    /**
+	     * The values are used as tags. All tags are treated as "OR" conditions with each other. There may be some value put on the number of matched tags from the query.
+	     */
+	    Tag = 1,
+	    /**
+	     * The Values are an PublisherName or fragment that is used to match other extension names.
+	     */
+	    DisplayName = 2,
+	    /**
+	     * The My Query filter is used to retrieve the set of publishers that I have access to publish extesions into. All Values are ignored and the calling user is used as the filter in this case.
+	     */
+	    My = 3,
+	}
+	export enum PublisherQueryFlags {
+	    /**
+	     * None is used to retrieve only the basic publisher details.
+	     */
+	    None = 0,
+	    /**
+	     * Is used to include a list of basic extension details for all extensions published by the requested publisher.
+	     */
+	    IncludeExtensions = 1,
+	}
+	/**
+	 * This is the set of publishers that matched a supplied query through the filters given.
+	 */
+	export interface PublisherQueryResult {
+	    /**
+	     * For each filter supplied in the query, a filter result will be returned in the query result.
+	     */
+	    results: PublisherFilterResult[];
+	}
+	/**
+	 * A filter used to define a set of extensions to return during a query.
+	 */
+	export interface QueryFilter {
+	    /**
+	     * The filter values define the set of values in this query. They are applied based on the QueryFilterType.
+	     */
+	    criteria: FilterCriteria[];
+	    /**
+	     * The PagingDirection is applied to a paging token if one exists. If not the direction is ignored, and Forward from the start of the resultset is used. Direction should be left out of the request unless a paging token is used to help prevent future issues.
+	     */
+	    direction: PagingDirection;
+	    /**
+	     * The page size defines the number of results the caller wants for this filter. The count can't exceed the overall query size limits.
+	     */
+	    pageSize: number;
+	    /**
+	     * The paging token is a distinct type of filter and the other filter fields are ignored. The paging token represents the continuation of a previously executed query. The information about where in the result and what fields are being filtered are embeded in the token.
+	     */
+	    pagingToken: string;
+	}
+	export enum SigningKeyPermissions {
+	    Read = 1,
+	    Write = 2,
+	}
+	export var TypeInfo: {
+	    ExtensionAccount: {
+	        fields: any;
+	    };
+	    ExtensionFile: {
+	        fields: any;
+	    };
+	    ExtensionFilterResult: {
+	        fields: any;
+	    };
+	    ExtensionPackage: {
+	        fields: any;
+	    };
+	    ExtensionQuery: {
+	        fields: any;
+	    };
+	    ExtensionQueryFilterType: {
+	        enumValues: {
+	            "tag": number;
+	            "displayName": number;
+	            "private": number;
+	            "id": number;
+	            "category": number;
+	            "contributionType": number;
+	        };
+	    };
+	    ExtensionQueryFlags: {
+	        enumValues: {
+	            "none": number;
+	            "includeVersions": number;
+	            "includeFiles": number;
+	            "includeCategoryAndTags": number;
+	            "includeSharedAccounts": number;
+	            "includeVersionProperties": number;
+	            "excludeNonValidated": number;
+	            "allAttributes": number;
+	        };
+	    };
+	    ExtensionQueryResult: {
+	        fields: any;
+	    };
+	    ExtensionVersion: {
+	        fields: any;
+	    };
+	    ExtensionVersionFlags: {
+	        enumValues: {
+	            "none": number;
+	            "validated": number;
+	        };
+	    };
+	    FilterCriteria: {
+	        fields: any;
+	    };
+	    PagingDirection: {
+	        enumValues: {
+	            "backward": number;
+	            "forward": number;
+	        };
+	    };
+	    PublishedExtension: {
+	        fields: any;
+	    };
+	    PublishedExtensionFlags: {
+	        enumValues: {
+	            "unChanged": number;
+	            "none": number;
+	            "disabled": number;
+	            "builtIn": number;
+	            "validated": number;
+	            "public": number;
+	            "multiVersion": number;
+	            "system": number;
+	            "serviceFlags": number;
+	        };
+	    };
+	    Publisher: {
+	        fields: any;
+	    };
+	    PublisherFacts: {
+	        fields: any;
+	    };
+	    PublisherFilterResult: {
+	        fields: any;
+	    };
+	    PublisherFlags: {
+	        enumValues: {
+	            "unChanged": number;
+	            "none": number;
+	            "disabled": number;
+	            "serviceFlags": number;
+	        };
+	    };
+	    PublisherPermissions: {
+	        enumValues: {
+	            "read": number;
+	            "write": number;
+	            "create": number;
+	            "publish": number;
+	            "admin": number;
+	            "trustedPartner": number;
+	            "privateRead": number;
+	        };
+	    };
+	    PublisherQuery: {
+	        fields: any;
+	    };
+	    PublisherQueryFilterType: {
+	        enumValues: {
+	            "tag": number;
+	            "displayName": number;
+	            "my": number;
+	        };
+	    };
+	    PublisherQueryFlags: {
+	        enumValues: {
+	            "none": number;
+	            "includeExtensions": number;
+	        };
+	    };
+	    PublisherQueryResult: {
+	        fields: any;
+	    };
+	    QueryFilter: {
+	        fields: any;
+	    };
+	    SigningKeyPermissions: {
+	        enumValues: {
+	            "read": number;
+	            "write": number;
+	        };
+	    };
+	};
+
+}
+declare module 'vso-node-api/GalleryApi' {
+	/// <reference path="../node/node.d.ts" />
+	/// <reference path="../q/Q.d.ts" />
+	import Q = require('q');
+	import basem = require('vso-node-api/ClientApiBases');
+	import VsoBaseInterfaces = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
+	import GalleryInterfaces = require('vso-node-api/interfaces/GalleryInterfaces');
+	export interface IGalleryApi extends basem.ClientApiBase {
+	    shareExtensionById(extensionId: string, accountName: string, onResult: (err: any, statusCode: number) => void): void;
+	    unshareExtensionById(extensionId: string, accountName: string, onResult: (err: any, statusCode: number) => void): void;
+	    shareExtension(publisherName: string, extensionName: string, accountName: string, onResult: (err: any, statusCode: number) => void): void;
+	    unshareExtension(publisherName: string, extensionName: string, accountName: string, onResult: (err: any, statusCode: number) => void): void;
+	    getAsset(extensionId: string, version: string, assetType: string, accountToken: string, acceptDefault: boolean, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
+	    getCategories(languages: string, onResult: (err: any, statusCode: number, categorie: string[]) => void): void;
+	    getCertificate(publisherName: string, extensionName: string, version: string, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
+	    queryExtensions(extensionQuery: GalleryInterfaces.ExtensionQuery, accountToken: string, onResult: (err: any, statusCode: number, extensionquery: GalleryInterfaces.ExtensionQueryResult) => void): void;
+	    createExtension(extensionPackage: GalleryInterfaces.ExtensionPackage, onResult: (err: any, statusCode: number, extension: GalleryInterfaces.PublishedExtension) => void): void;
+	    deleteExtensionById(extensionId: string, version: string, onResult: (err: any, statusCode: number) => void): void;
+	    getExtensionById(extensionId: string, version: string, flags: GalleryInterfaces.ExtensionQueryFlags, onResult: (err: any, statusCode: number, extension: GalleryInterfaces.PublishedExtension) => void): void;
+	    updateExtensionById(extensionPackage: GalleryInterfaces.ExtensionPackage, extensionId: string, onResult: (err: any, statusCode: number, extension: GalleryInterfaces.PublishedExtension) => void): void;
+	    createExtensionWithPublisher(extensionPackage: GalleryInterfaces.ExtensionPackage, publisherName: string, onResult: (err: any, statusCode: number, extension: GalleryInterfaces.PublishedExtension) => void): void;
+	    deleteExtension(publisherName: string, extensionName: string, version: string, onResult: (err: any, statusCode: number) => void): void;
+	    getExtension(publisherName: string, extensionName: string, version: string, flags: GalleryInterfaces.ExtensionQueryFlags, onResult: (err: any, statusCode: number, extension: GalleryInterfaces.PublishedExtension) => void): void;
+	    updateExtension(extensionPackage: GalleryInterfaces.ExtensionPackage, publisherName: string, extensionName: string, onResult: (err: any, statusCode: number, extension: GalleryInterfaces.PublishedExtension) => void): void;
+	    queryPublishers(publisherQuery: GalleryInterfaces.PublisherQuery, onResult: (err: any, statusCode: number, publisherquery: GalleryInterfaces.PublisherQueryResult) => void): void;
+	    createPublisher(publisher: GalleryInterfaces.Publisher, onResult: (err: any, statusCode: number, publisher: GalleryInterfaces.Publisher) => void): void;
+	    deletePublisher(publisherName: string, onResult: (err: any, statusCode: number) => void): void;
+	    getPublisher(publisherName: string, flags: number, onResult: (err: any, statusCode: number, publisher: GalleryInterfaces.Publisher) => void): void;
+	    updatePublisher(publisher: GalleryInterfaces.Publisher, publisherName: string, onResult: (err: any, statusCode: number, publisher: GalleryInterfaces.Publisher) => void): void;
+	    generateKey(keyType: string, expireCurrentSeconds: number, onResult: (err: any, statusCode: number) => void): void;
+	    getSigningKey(keyType: string, onResult: (err: any, statusCode: number, signingkey: string) => void): void;
+	}
+	export interface IQGalleryApi extends basem.QClientApiBase {
+	    getCategories(languages?: string): Q.Promise<string[]>;
+	    queryExtensions(extensionQuery: GalleryInterfaces.ExtensionQuery, accountToken?: string): Q.Promise<GalleryInterfaces.ExtensionQueryResult>;
+	    createExtension(extensionPackage: GalleryInterfaces.ExtensionPackage): Q.Promise<GalleryInterfaces.PublishedExtension>;
+	    getExtensionById(extensionId: string, version?: string, flags?: GalleryInterfaces.ExtensionQueryFlags): Q.Promise<GalleryInterfaces.PublishedExtension>;
+	    updateExtensionById(extensionPackage: GalleryInterfaces.ExtensionPackage, extensionId: string): Q.Promise<GalleryInterfaces.PublishedExtension>;
+	    createExtensionWithPublisher(extensionPackage: GalleryInterfaces.ExtensionPackage, publisherName: string): Q.Promise<GalleryInterfaces.PublishedExtension>;
+	    getExtension(publisherName: string, extensionName: string, version?: string, flags?: GalleryInterfaces.ExtensionQueryFlags): Q.Promise<GalleryInterfaces.PublishedExtension>;
+	    updateExtension(extensionPackage: GalleryInterfaces.ExtensionPackage, publisherName: string, extensionName: string): Q.Promise<GalleryInterfaces.PublishedExtension>;
+	    queryPublishers(publisherQuery: GalleryInterfaces.PublisherQuery): Q.Promise<GalleryInterfaces.PublisherQueryResult>;
+	    createPublisher(publisher: GalleryInterfaces.Publisher): Q.Promise<GalleryInterfaces.Publisher>;
+	    getPublisher(publisherName: string, flags?: number): Q.Promise<GalleryInterfaces.Publisher>;
+	    updatePublisher(publisher: GalleryInterfaces.Publisher, publisherName: string): Q.Promise<GalleryInterfaces.Publisher>;
+	    getSigningKey(keyType: string): Q.Promise<string>;
+	}
+	export class GalleryApi extends basem.ClientApiBase implements IGalleryApi {
+	    constructor(baseUrl: string, handlers: VsoBaseInterfaces.IRequestHandler[]);
+	    /**
+	     * @param {string} extensionId
+	     * @param {string} accountName
+	     * @param onResult callback function
+	     */
+	    shareExtensionById(extensionId: string, accountName: string, onResult: (err: any, statusCode: number) => void): void;
+	    /**
+	     * @param {string} extensionId
+	     * @param {string} accountName
+	     * @param onResult callback function
+	     */
+	    unshareExtensionById(extensionId: string, accountName: string, onResult: (err: any, statusCode: number) => void): void;
+	    /**
+	     * @param {string} publisherName
+	     * @param {string} extensionName
+	     * @param {string} accountName
+	     * @param onResult callback function
+	     */
+	    shareExtension(publisherName: string, extensionName: string, accountName: string, onResult: (err: any, statusCode: number) => void): void;
+	    /**
+	     * @param {string} publisherName
+	     * @param {string} extensionName
+	     * @param {string} accountName
+	     * @param onResult callback function
+	     */
+	    unshareExtension(publisherName: string, extensionName: string, accountName: string, onResult: (err: any, statusCode: number) => void): void;
+	    /**
+	     * @param {string} extensionId
+	     * @param {string} version
+	     * @param {string} assetType
+	     * @param {string} accountToken
+	     * @param {boolean} acceptDefault
+	     * @param onResult callback function with the resulting ArrayBuffer
+	     */
+	    getAsset(extensionId: string, version: string, assetType: string, accountToken: string, acceptDefault: boolean, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
+	    /**
+	     * @param {string} languages
+	     * @param onResult callback function with the resulting string[]
+	     */
+	    getCategories(languages: string, onResult: (err: any, statusCode: number, categorie: string[]) => void): void;
+	    /**
+	     * @param {string} publisherName
+	     * @param {string} extensionName
+	     * @param {string} version
+	     * @param onResult callback function with the resulting ArrayBuffer
+	     */
+	    getCertificate(publisherName: string, extensionName: string, version: string, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
+	    /**
+	     * @param {GalleryInterfaces.ExtensionQuery} extensionQuery
+	     * @param {string} accountToken
+	     * @param onResult callback function with the resulting GalleryInterfaces.ExtensionQueryResult
+	     */
+	    queryExtensions(extensionQuery: GalleryInterfaces.ExtensionQuery, accountToken: string, onResult: (err: any, statusCode: number, extensionquery: GalleryInterfaces.ExtensionQueryResult) => void): void;
+	    /**
+	     * @param {GalleryInterfaces.ExtensionPackage} extensionPackage
+	     * @param onResult callback function with the resulting GalleryInterfaces.PublishedExtension
+	     */
+	    createExtension(extensionPackage: GalleryInterfaces.ExtensionPackage, onResult: (err: any, statusCode: number, extension: GalleryInterfaces.PublishedExtension) => void): void;
+	    /**
+	     * @param {string} extensionId
+	     * @param {string} version
+	     * @param onResult callback function
+	     */
+	    deleteExtensionById(extensionId: string, version: string, onResult: (err: any, statusCode: number) => void): void;
+	    /**
+	     * @param {string} extensionId
+	     * @param {string} version
+	     * @param {GalleryInterfaces.ExtensionQueryFlags} flags
+	     * @param onResult callback function with the resulting GalleryInterfaces.PublishedExtension
+	     */
+	    getExtensionById(extensionId: string, version: string, flags: GalleryInterfaces.ExtensionQueryFlags, onResult: (err: any, statusCode: number, extension: GalleryInterfaces.PublishedExtension) => void): void;
+	    /**
+	     * @param {GalleryInterfaces.ExtensionPackage} extensionPackage
+	     * @param {string} extensionId
+	     * @param onResult callback function with the resulting GalleryInterfaces.PublishedExtension
+	     */
+	    updateExtensionById(extensionPackage: GalleryInterfaces.ExtensionPackage, extensionId: string, onResult: (err: any, statusCode: number, extension: GalleryInterfaces.PublishedExtension) => void): void;
+	    /**
+	     * @param {GalleryInterfaces.ExtensionPackage} extensionPackage
+	     * @param {string} publisherName
+	     * @param onResult callback function with the resulting GalleryInterfaces.PublishedExtension
+	     */
+	    createExtensionWithPublisher(extensionPackage: GalleryInterfaces.ExtensionPackage, publisherName: string, onResult: (err: any, statusCode: number, extension: GalleryInterfaces.PublishedExtension) => void): void;
+	    /**
+	     * @param {string} publisherName
+	     * @param {string} extensionName
+	     * @param {string} version
+	     * @param onResult callback function
+	     */
+	    deleteExtension(publisherName: string, extensionName: string, version: string, onResult: (err: any, statusCode: number) => void): void;
+	    /**
+	     * @param {string} publisherName
+	     * @param {string} extensionName
+	     * @param {string} version
+	     * @param {GalleryInterfaces.ExtensionQueryFlags} flags
+	     * @param onResult callback function with the resulting GalleryInterfaces.PublishedExtension
+	     */
+	    getExtension(publisherName: string, extensionName: string, version: string, flags: GalleryInterfaces.ExtensionQueryFlags, onResult: (err: any, statusCode: number, extension: GalleryInterfaces.PublishedExtension) => void): void;
+	    /**
+	     * @param {GalleryInterfaces.ExtensionPackage} extensionPackage
+	     * @param {string} publisherName
+	     * @param {string} extensionName
+	     * @param onResult callback function with the resulting GalleryInterfaces.PublishedExtension
+	     */
+	    updateExtension(extensionPackage: GalleryInterfaces.ExtensionPackage, publisherName: string, extensionName: string, onResult: (err: any, statusCode: number, extension: GalleryInterfaces.PublishedExtension) => void): void;
+	    /**
+	     * @param {GalleryInterfaces.PublisherQuery} publisherQuery
+	     * @param onResult callback function with the resulting GalleryInterfaces.PublisherQueryResult
+	     */
+	    queryPublishers(publisherQuery: GalleryInterfaces.PublisherQuery, onResult: (err: any, statusCode: number, publisherquery: GalleryInterfaces.PublisherQueryResult) => void): void;
+	    /**
+	     * @param {GalleryInterfaces.Publisher} publisher
+	     * @param onResult callback function with the resulting GalleryInterfaces.Publisher
+	     */
+	    createPublisher(publisher: GalleryInterfaces.Publisher, onResult: (err: any, statusCode: number, publisher: GalleryInterfaces.Publisher) => void): void;
+	    /**
+	     * @param {string} publisherName
+	     * @param onResult callback function
+	     */
+	    deletePublisher(publisherName: string, onResult: (err: any, statusCode: number) => void): void;
+	    /**
+	     * @param {string} publisherName
+	     * @param {number} flags
+	     * @param onResult callback function with the resulting GalleryInterfaces.Publisher
+	     */
+	    getPublisher(publisherName: string, flags: number, onResult: (err: any, statusCode: number, publisher: GalleryInterfaces.Publisher) => void): void;
+	    /**
+	     * @param {GalleryInterfaces.Publisher} publisher
+	     * @param {string} publisherName
+	     * @param onResult callback function with the resulting GalleryInterfaces.Publisher
+	     */
+	    updatePublisher(publisher: GalleryInterfaces.Publisher, publisherName: string, onResult: (err: any, statusCode: number, publisher: GalleryInterfaces.Publisher) => void): void;
+	    /**
+	     * @param {string} keyType
+	     * @param {number} expireCurrentSeconds
+	     * @param onResult callback function
+	     */
+	    generateKey(keyType: string, expireCurrentSeconds: number, onResult: (err: any, statusCode: number) => void): void;
+	    /**
+	     * @param {string} keyType
+	     * @param onResult callback function with the resulting string
+	     */
+	    getSigningKey(keyType: string, onResult: (err: any, statusCode: number, signingkey: string) => void): void;
+	}
+	export class QGalleryApi extends basem.QClientApiBase implements IQGalleryApi {
+	    api: GalleryApi;
+	    constructor(baseUrl: string, handlers: VsoBaseInterfaces.IRequestHandler[]);
+	    /**
+	    * @param {string} languages
+	    */
+	    getCategories(languages?: string): Q.Promise<string[]>;
+	    /**
+	    * @param {GalleryInterfaces.ExtensionQuery} extensionQuery
+	    * @param {string} accountToken
+	    */
+	    queryExtensions(extensionQuery: GalleryInterfaces.ExtensionQuery, accountToken?: string): Q.Promise<GalleryInterfaces.ExtensionQueryResult>;
+	    /**
+	    * @param {GalleryInterfaces.ExtensionPackage} extensionPackage
+	    */
+	    createExtension(extensionPackage: GalleryInterfaces.ExtensionPackage): Q.Promise<GalleryInterfaces.PublishedExtension>;
+	    /**
+	    * @param {string} extensionId
+	    * @param {string} version
+	    * @param {GalleryInterfaces.ExtensionQueryFlags} flags
+	    */
+	    getExtensionById(extensionId: string, version?: string, flags?: GalleryInterfaces.ExtensionQueryFlags): Q.Promise<GalleryInterfaces.PublishedExtension>;
+	    /**
+	    * @param {GalleryInterfaces.ExtensionPackage} extensionPackage
+	    * @param {string} extensionId
+	    */
+	    updateExtensionById(extensionPackage: GalleryInterfaces.ExtensionPackage, extensionId: string): Q.Promise<GalleryInterfaces.PublishedExtension>;
+	    /**
+	    * @param {GalleryInterfaces.ExtensionPackage} extensionPackage
+	    * @param {string} publisherName
+	    */
+	    createExtensionWithPublisher(extensionPackage: GalleryInterfaces.ExtensionPackage, publisherName: string): Q.Promise<GalleryInterfaces.PublishedExtension>;
+	    /**
+	    * @param {string} publisherName
+	    * @param {string} extensionName
+	    * @param {string} version
+	    * @param {GalleryInterfaces.ExtensionQueryFlags} flags
+	    */
+	    getExtension(publisherName: string, extensionName: string, version?: string, flags?: GalleryInterfaces.ExtensionQueryFlags): Q.Promise<GalleryInterfaces.PublishedExtension>;
+	    /**
+	    * @param {GalleryInterfaces.ExtensionPackage} extensionPackage
+	    * @param {string} publisherName
+	    * @param {string} extensionName
+	    */
+	    updateExtension(extensionPackage: GalleryInterfaces.ExtensionPackage, publisherName: string, extensionName: string): Q.Promise<GalleryInterfaces.PublishedExtension>;
+	    /**
+	    * @param {GalleryInterfaces.PublisherQuery} publisherQuery
+	    */
+	    queryPublishers(publisherQuery: GalleryInterfaces.PublisherQuery): Q.Promise<GalleryInterfaces.PublisherQueryResult>;
+	    /**
+	    * @param {GalleryInterfaces.Publisher} publisher
+	    */
+	    createPublisher(publisher: GalleryInterfaces.Publisher): Q.Promise<GalleryInterfaces.Publisher>;
+	    /**
+	    * @param {string} publisherName
+	    * @param {number} flags
+	    */
+	    getPublisher(publisherName: string, flags?: number): Q.Promise<GalleryInterfaces.Publisher>;
+	    /**
+	    * @param {GalleryInterfaces.Publisher} publisher
+	    * @param {string} publisherName
+	    */
+	    updatePublisher(publisher: GalleryInterfaces.Publisher, publisherName: string): Q.Promise<GalleryInterfaces.Publisher>;
+	    /**
+	    * @param {string} keyType
+	    */
+	    getSigningKey(keyType: string): Q.Promise<string>;
 	}
 
 }
@@ -4688,6 +5442,7 @@ declare module 'vso-node-api/interfaces/GitInterfaces' {
 	    collectionId: string;
 	    hasMoreChanges: boolean;
 	    policyOverride: TfvcPolicyOverrideInfo;
+	    teamProjectIds: string[];
 	    workItems: AssociatedWorkItem[];
 	}
 	export interface TfvcChangesetRef {
@@ -5317,37 +6072,38 @@ declare module 'vso-node-api/GitApi' {
 	    getBlobsZip(blobIds: string[], repositoryId: string, project: string, filename: string, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
 	    getBlobZip(repositoryId: string, sha1: string, project: string, download: boolean, fileName: string, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
 	    getBranch(repositoryId: string, name: string, project: string, baseVersionDescriptor: GitInterfaces.GitVersionDescriptor, onResult: (err: any, statusCode: number, BranchStat: GitInterfaces.GitBranchStats) => void): void;
-	    getBranches(repositoryId: string, project: string, baseVersionDescriptor: GitInterfaces.GitVersionDescriptor, onResult: (err: any, statusCode: number, BranchStats: GitInterfaces.GitBranchStats[]) => void): void;
+	    getBranches(repositoryId: string, project: string, baseVersionDescriptor: GitInterfaces.GitVersionDescriptor, onResult: (err: any, statusCode: number, BranchStat: GitInterfaces.GitBranchStats[]) => void): void;
 	    getChanges(commitId: string, repositoryId: string, project: string, top: number, skip: number, onResult: (err: any, statusCode: number, Change: GitInterfaces.GitCommitChanges) => void): void;
 	    createCommit(repositoryId: string, project: string, onResult: (err: any, statusCode: number, Commit: GitInterfaces.GitCommit) => void): void;
 	    getCommit(commitId: string, repositoryId: string, project: string, changeCount: number, onResult: (err: any, statusCode: number, Commit: GitInterfaces.GitCommit) => void): void;
-	    getCommits(repositoryId: string, searchCriteria: GitInterfaces.GitQueryCommitsCriteria, project: string, skip: number, top: number, onResult: (err: any, statusCode: number, Commits: GitInterfaces.GitCommitRef[]) => void): void;
-	    getPushCommits(repositoryId: string, pushId: number, project: string, top: number, skip: number, includeLinks: boolean, onResult: (err: any, statusCode: number, Commits: GitInterfaces.GitCommitRef[]) => void): void;
+	    getCommits(repositoryId: string, searchCriteria: GitInterfaces.GitQueryCommitsCriteria, project: string, skip: number, top: number, onResult: (err: any, statusCode: number, Commit: GitInterfaces.GitCommitRef[]) => void): void;
+	    getPushCommits(repositoryId: string, pushId: number, project: string, top: number, skip: number, includeLinks: boolean, onResult: (err: any, statusCode: number, Commit: GitInterfaces.GitCommitRef[]) => void): void;
 	    getCommitsBatch(searchCriteria: GitInterfaces.GitQueryCommitsCriteria, repositoryId: string, project: string, skip: number, top: number, onResult: (err: any, statusCode: number, CommitsBatch: GitInterfaces.GitCommitRef[]) => void): void;
 	    getItem(repositoryId: string, path: string, project: string, scopePath: string, recursionLevel: GitInterfaces.VersionControlRecursionType, includeContentMetadata: boolean, latestProcessedChange: boolean, download: boolean, versionDescriptor: GitInterfaces.GitVersionDescriptor, onResult: (err: any, statusCode: number, Item: GitInterfaces.GitItem) => void): void;
 	    getItemContent(repositoryId: string, path: string, project: string, scopePath: string, recursionLevel: GitInterfaces.VersionControlRecursionType, includeContentMetadata: boolean, latestProcessedChange: boolean, download: boolean, versionDescriptor: GitInterfaces.GitVersionDescriptor, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
-	    getItems(repositoryId: string, project: string, scopePath: string, recursionLevel: GitInterfaces.VersionControlRecursionType, includeContentMetadata: boolean, latestProcessedChange: boolean, download: boolean, includeLinks: boolean, versionDescriptor: GitInterfaces.GitVersionDescriptor, onResult: (err: any, statusCode: number, Items: GitInterfaces.GitItem[]) => void): void;
+	    getItems(repositoryId: string, project: string, scopePath: string, recursionLevel: GitInterfaces.VersionControlRecursionType, includeContentMetadata: boolean, latestProcessedChange: boolean, download: boolean, includeLinks: boolean, versionDescriptor: GitInterfaces.GitVersionDescriptor, onResult: (err: any, statusCode: number, Item: GitInterfaces.GitItem[]) => void): void;
 	    getItemText(repositoryId: string, path: string, project: string, scopePath: string, recursionLevel: GitInterfaces.VersionControlRecursionType, includeContentMetadata: boolean, latestProcessedChange: boolean, download: boolean, versionDescriptor: GitInterfaces.GitVersionDescriptor, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
 	    getItemZip(repositoryId: string, path: string, project: string, scopePath: string, recursionLevel: GitInterfaces.VersionControlRecursionType, includeContentMetadata: boolean, latestProcessedChange: boolean, download: boolean, versionDescriptor: GitInterfaces.GitVersionDescriptor, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
 	    getItemsBatch(requestData: GitInterfaces.GitItemRequestData, repositoryId: string, project: string, onResult: (err: any, statusCode: number, ItemsBatch: GitInterfaces.GitItem[][]) => void): void;
 	    createPullRequestReviewer(reviewer: GitInterfaces.IdentityRefWithVote, repositoryId: string, pullRequestId: number, reviewerId: string, project: string, onResult: (err: any, statusCode: number, PullRequestReviewer: GitInterfaces.IdentityRefWithVote) => void): void;
-	    createPullRequestReviewers(reviewers: VSSInterfaces.IdentityRef[], repositoryId: string, pullRequestId: number, project: string, onResult: (err: any, statusCode: number, PullRequestReviewers: GitInterfaces.IdentityRefWithVote[]) => void): void;
+	    createPullRequestReviewers(reviewers: VSSInterfaces.IdentityRef[], repositoryId: string, pullRequestId: number, project: string, onResult: (err: any, statusCode: number, PullRequestReviewer: GitInterfaces.IdentityRefWithVote[]) => void): void;
 	    deletePullRequestReviewer(repositoryId: string, pullRequestId: number, reviewerId: string, project: string, onResult: (err: any, statusCode: number) => void): void;
 	    getPullRequestReviewer(repositoryId: string, pullRequestId: number, reviewerId: string, project: string, onResult: (err: any, statusCode: number, PullRequestReviewer: GitInterfaces.IdentityRefWithVote) => void): void;
-	    getPullRequestReviewers(repositoryId: string, pullRequestId: number, project: string, onResult: (err: any, statusCode: number, PullRequestReviewers: GitInterfaces.IdentityRefWithVote[]) => void): void;
+	    getPullRequestReviewers(repositoryId: string, pullRequestId: number, project: string, onResult: (err: any, statusCode: number, PullRequestReviewer: GitInterfaces.IdentityRefWithVote[]) => void): void;
+	    getPullRequestsByProject(project: string, searchCriteria: GitInterfaces.GitPullRequestSearchCriteria, maxCommentLength: number, skip: number, top: number, onResult: (err: any, statusCode: number, PullRequest: GitInterfaces.GitPullRequest[]) => void): void;
 	    createPullRequest(gitPullRequestToCreate: GitInterfaces.GitPullRequest, repositoryId: string, project: string, onResult: (err: any, statusCode: number, PullRequest: GitInterfaces.GitPullRequest) => void): void;
 	    getPullRequest(repositoryId: string, pullRequestId: number, project: string, maxCommentLength: number, skip: number, top: number, onResult: (err: any, statusCode: number, PullRequest: GitInterfaces.GitPullRequest) => void): void;
-	    getPullRequests(repositoryId: string, searchCriteria: GitInterfaces.GitPullRequestSearchCriteria, project: string, maxCommentLength: number, skip: number, top: number, onResult: (err: any, statusCode: number, PullRequests: GitInterfaces.GitPullRequest[]) => void): void;
+	    getPullRequests(repositoryId: string, searchCriteria: GitInterfaces.GitPullRequestSearchCriteria, project: string, maxCommentLength: number, skip: number, top: number, onResult: (err: any, statusCode: number, PullRequest: GitInterfaces.GitPullRequest[]) => void): void;
 	    updatePullRequest(gitPullRequestToUpdate: GitInterfaces.GitPullRequest, repositoryId: string, pullRequestId: number, project: string, onResult: (err: any, statusCode: number, PullRequest: GitInterfaces.GitPullRequest) => void): void;
-	    getPullRequestWorkItems(repositoryId: string, pullRequestId: number, project: string, commitsTop: number, commitsSkip: number, onResult: (err: any, statusCode: number, PullRequestWorkItems: GitInterfaces.AssociatedWorkItem[]) => void): void;
+	    getPullRequestWorkItems(repositoryId: string, pullRequestId: number, project: string, commitsTop: number, commitsSkip: number, onResult: (err: any, statusCode: number, PullRequestWorkItem: GitInterfaces.AssociatedWorkItem[]) => void): void;
 	    createPush(push: GitInterfaces.GitPush, repositoryId: string, project: string, onResult: (err: any, statusCode: number, pushe: GitInterfaces.GitPush) => void): void;
 	    getPush(repositoryId: string, pushId: number, project: string, includeCommits: number, includeRefUpdates: boolean, onResult: (err: any, statusCode: number, pushe: GitInterfaces.GitPush) => void): void;
-	    getPushes(repositoryId: string, project: string, skip: number, top: number, searchCriteria: GitInterfaces.GitPushSearchCriteria, onResult: (err: any, statusCode: number, pushes: GitInterfaces.GitPush[]) => void): void;
-	    getRefs(repositoryId: string, project: string, filter: string, includeLinks: boolean, onResult: (err: any, statusCode: number, refs: GitInterfaces.GitRef[]) => void): void;
-	    updateRefs(refUpdates: GitInterfaces.GitRefUpdate[], repositoryId: string, project: string, projectId: string, onResult: (err: any, statusCode: number, refs: GitInterfaces.GitRefUpdateResult[]) => void): void;
+	    getPushes(repositoryId: string, project: string, skip: number, top: number, searchCriteria: GitInterfaces.GitPushSearchCriteria, onResult: (err: any, statusCode: number, pushe: GitInterfaces.GitPush[]) => void): void;
+	    getRefs(repositoryId: string, project: string, filter: string, includeLinks: boolean, onResult: (err: any, statusCode: number, ref: GitInterfaces.GitRef[]) => void): void;
+	    updateRefs(refUpdates: GitInterfaces.GitRefUpdate[], repositoryId: string, project: string, projectId: string, onResult: (err: any, statusCode: number, ref: GitInterfaces.GitRefUpdateResult[]) => void): void;
 	    createRepository(gitRepositoryToCreate: GitInterfaces.GitRepository, project: string, onResult: (err: any, statusCode: number, Repositorie: GitInterfaces.GitRepository) => void): void;
 	    deleteRepository(repositoryId: string, project: string, onResult: (err: any, statusCode: number) => void): void;
-	    getRepositories(project: string, includeLinks: boolean, onResult: (err: any, statusCode: number, Repositories: GitInterfaces.GitRepository[]) => void): void;
+	    getRepositories(project: string, includeLinks: boolean, onResult: (err: any, statusCode: number, Repositorie: GitInterfaces.GitRepository[]) => void): void;
 	    getRepository(repositoryId: string, project: string, onResult: (err: any, statusCode: number, Repositorie: GitInterfaces.GitRepository) => void): void;
 	    updateRepository(newRepositoryInfo: GitInterfaces.GitRepository, repositoryId: string, project: string, onResult: (err: any, statusCode: number, Repositorie: GitInterfaces.GitRepository) => void): void;
 	    getTree(repositoryId: string, sha1: string, project: string, projectId: string, recursive: boolean, fileName: string, onResult: (err: any, statusCode: number, Tree: GitInterfaces.GitTreeRef) => void): void;
@@ -5370,6 +6126,7 @@ declare module 'vso-node-api/GitApi' {
 	    createPullRequestReviewers(reviewers: VSSInterfaces.IdentityRef[], repositoryId: string, pullRequestId: number, project?: string): Q.Promise<GitInterfaces.IdentityRefWithVote[]>;
 	    getPullRequestReviewer(repositoryId: string, pullRequestId: number, reviewerId: string, project?: string): Q.Promise<GitInterfaces.IdentityRefWithVote>;
 	    getPullRequestReviewers(repositoryId: string, pullRequestId: number, project?: string): Q.Promise<GitInterfaces.IdentityRefWithVote[]>;
+	    getPullRequestsByProject(project: string, searchCriteria: GitInterfaces.GitPullRequestSearchCriteria, maxCommentLength?: number, skip?: number, top?: number): Q.Promise<GitInterfaces.GitPullRequest[]>;
 	    createPullRequest(gitPullRequestToCreate: GitInterfaces.GitPullRequest, repositoryId: string, project?: string): Q.Promise<GitInterfaces.GitPullRequest>;
 	    getPullRequest(repositoryId: string, pullRequestId: number, project?: string, maxCommentLength?: number, skip?: number, top?: number): Q.Promise<GitInterfaces.GitPullRequest>;
 	    getPullRequests(repositoryId: string, searchCriteria: GitInterfaces.GitPullRequestSearchCriteria, project?: string, maxCommentLength?: number, skip?: number, top?: number): Q.Promise<GitInterfaces.GitPullRequest[]>;
@@ -5449,7 +6206,7 @@ declare module 'vso-node-api/GitApi' {
 	     * @param {GitInterfaces.GitVersionDescriptor} baseVersionDescriptor
 	     * @param onResult callback function with the resulting GitInterfaces.GitBranchStats[]
 	     */
-	    getBranches(repositoryId: string, project: string, baseVersionDescriptor: GitInterfaces.GitVersionDescriptor, onResult: (err: any, statusCode: number, BranchStats: GitInterfaces.GitBranchStats[]) => void): void;
+	    getBranches(repositoryId: string, project: string, baseVersionDescriptor: GitInterfaces.GitVersionDescriptor, onResult: (err: any, statusCode: number, BranchStat: GitInterfaces.GitBranchStats[]) => void): void;
 	    /**
 	     * Retrieve changes for a particular commit.
 	     *
@@ -5489,7 +6246,7 @@ declare module 'vso-node-api/GitApi' {
 	     * @param {number} top
 	     * @param onResult callback function with the resulting GitInterfaces.GitCommitRef[]
 	     */
-	    getCommits(repositoryId: string, searchCriteria: GitInterfaces.GitQueryCommitsCriteria, project: string, skip: number, top: number, onResult: (err: any, statusCode: number, Commits: GitInterfaces.GitCommitRef[]) => void): void;
+	    getCommits(repositoryId: string, searchCriteria: GitInterfaces.GitQueryCommitsCriteria, project: string, skip: number, top: number, onResult: (err: any, statusCode: number, Commit: GitInterfaces.GitCommitRef[]) => void): void;
 	    /**
 	     * Retrieve a list of commits associated with a particular push.
 	     *
@@ -5501,7 +6258,7 @@ declare module 'vso-node-api/GitApi' {
 	     * @param {boolean} includeLinks
 	     * @param onResult callback function with the resulting GitInterfaces.GitCommitRef[]
 	     */
-	    getPushCommits(repositoryId: string, pushId: number, project: string, top: number, skip: number, includeLinks: boolean, onResult: (err: any, statusCode: number, Commits: GitInterfaces.GitCommitRef[]) => void): void;
+	    getPushCommits(repositoryId: string, pushId: number, project: string, top: number, skip: number, includeLinks: boolean, onResult: (err: any, statusCode: number, Commit: GitInterfaces.GitCommitRef[]) => void): void;
 	    /**
 	     * Retrieve git commits for a project
 	     *
@@ -5557,7 +6314,7 @@ declare module 'vso-node-api/GitApi' {
 	     * @param {GitInterfaces.GitVersionDescriptor} versionDescriptor
 	     * @param onResult callback function with the resulting GitInterfaces.GitItem[]
 	     */
-	    getItems(repositoryId: string, project: string, scopePath: string, recursionLevel: GitInterfaces.VersionControlRecursionType, includeContentMetadata: boolean, latestProcessedChange: boolean, download: boolean, includeLinks: boolean, versionDescriptor: GitInterfaces.GitVersionDescriptor, onResult: (err: any, statusCode: number, Items: GitInterfaces.GitItem[]) => void): void;
+	    getItems(repositoryId: string, project: string, scopePath: string, recursionLevel: GitInterfaces.VersionControlRecursionType, includeContentMetadata: boolean, latestProcessedChange: boolean, download: boolean, includeLinks: boolean, versionDescriptor: GitInterfaces.GitVersionDescriptor, onResult: (err: any, statusCode: number, Item: GitInterfaces.GitItem[]) => void): void;
 	    /**
 	     * Get Item Metadata and/or Content for a single item. The download parameter is to indicate whether the content should be available as a download or just sent as a stream in the response. Doesn't apply to zipped content which is always returned as a download.
 	     *
@@ -5617,7 +6374,7 @@ declare module 'vso-node-api/GitApi' {
 	     * @param {string} project - Project ID or project name
 	     * @param onResult callback function with the resulting GitInterfaces.IdentityRefWithVote[]
 	     */
-	    createPullRequestReviewers(reviewers: VSSInterfaces.IdentityRef[], repositoryId: string, pullRequestId: number, project: string, onResult: (err: any, statusCode: number, PullRequestReviewers: GitInterfaces.IdentityRefWithVote[]) => void): void;
+	    createPullRequestReviewers(reviewers: VSSInterfaces.IdentityRef[], repositoryId: string, pullRequestId: number, project: string, onResult: (err: any, statusCode: number, PullRequestReviewer: GitInterfaces.IdentityRefWithVote[]) => void): void;
 	    /**
 	     * Adds reviewers to a git pull request
 	     *
@@ -5646,7 +6403,18 @@ declare module 'vso-node-api/GitApi' {
 	     * @param {string} project - Project ID or project name
 	     * @param onResult callback function with the resulting GitInterfaces.IdentityRefWithVote[]
 	     */
-	    getPullRequestReviewers(repositoryId: string, pullRequestId: number, project: string, onResult: (err: any, statusCode: number, PullRequestReviewers: GitInterfaces.IdentityRefWithVote[]) => void): void;
+	    getPullRequestReviewers(repositoryId: string, pullRequestId: number, project: string, onResult: (err: any, statusCode: number, PullRequestReviewer: GitInterfaces.IdentityRefWithVote[]) => void): void;
+	    /**
+	     * Query pull requests by project
+	     *
+	     * @param {string} project - Project ID or project name
+	     * @param {GitInterfaces.GitPullRequestSearchCriteria} searchCriteria
+	     * @param {number} maxCommentLength
+	     * @param {number} skip
+	     * @param {number} top
+	     * @param onResult callback function with the resulting GitInterfaces.GitPullRequest[]
+	     */
+	    getPullRequestsByProject(project: string, searchCriteria: GitInterfaces.GitPullRequestSearchCriteria, maxCommentLength: number, skip: number, top: number, onResult: (err: any, statusCode: number, PullRequest: GitInterfaces.GitPullRequest[]) => void): void;
 	    /**
 	     * Create a git pull request
 	     *
@@ -5679,7 +6447,7 @@ declare module 'vso-node-api/GitApi' {
 	     * @param {number} top
 	     * @param onResult callback function with the resulting GitInterfaces.GitPullRequest[]
 	     */
-	    getPullRequests(repositoryId: string, searchCriteria: GitInterfaces.GitPullRequestSearchCriteria, project: string, maxCommentLength: number, skip: number, top: number, onResult: (err: any, statusCode: number, PullRequests: GitInterfaces.GitPullRequest[]) => void): void;
+	    getPullRequests(repositoryId: string, searchCriteria: GitInterfaces.GitPullRequestSearchCriteria, project: string, maxCommentLength: number, skip: number, top: number, onResult: (err: any, statusCode: number, PullRequest: GitInterfaces.GitPullRequest[]) => void): void;
 	    /**
 	     * Updates a pull request
 	     *
@@ -5700,7 +6468,7 @@ declare module 'vso-node-api/GitApi' {
 	     * @param {number} commitsSkip
 	     * @param onResult callback function with the resulting GitInterfaces.AssociatedWorkItem[]
 	     */
-	    getPullRequestWorkItems(repositoryId: string, pullRequestId: number, project: string, commitsTop: number, commitsSkip: number, onResult: (err: any, statusCode: number, PullRequestWorkItems: GitInterfaces.AssociatedWorkItem[]) => void): void;
+	    getPullRequestWorkItems(repositoryId: string, pullRequestId: number, project: string, commitsTop: number, commitsSkip: number, onResult: (err: any, statusCode: number, PullRequestWorkItem: GitInterfaces.AssociatedWorkItem[]) => void): void;
 	    /**
 	     * Push changes to the repository.
 	     *
@@ -5731,7 +6499,7 @@ declare module 'vso-node-api/GitApi' {
 	     * @param {GitInterfaces.GitPushSearchCriteria} searchCriteria
 	     * @param onResult callback function with the resulting GitInterfaces.GitPush[]
 	     */
-	    getPushes(repositoryId: string, project: string, skip: number, top: number, searchCriteria: GitInterfaces.GitPushSearchCriteria, onResult: (err: any, statusCode: number, pushes: GitInterfaces.GitPush[]) => void): void;
+	    getPushes(repositoryId: string, project: string, skip: number, top: number, searchCriteria: GitInterfaces.GitPushSearchCriteria, onResult: (err: any, statusCode: number, pushe: GitInterfaces.GitPush[]) => void): void;
 	    /**
 	     * Queries the provided repository for its refs and returns them.
 	     *
@@ -5741,7 +6509,7 @@ declare module 'vso-node-api/GitApi' {
 	     * @param {boolean} includeLinks - [optional] Specifies if referenceLinks should be included in the result. default is false.
 	     * @param onResult callback function with the resulting GitInterfaces.GitRef[]
 	     */
-	    getRefs(repositoryId: string, project: string, filter: string, includeLinks: boolean, onResult: (err: any, statusCode: number, refs: GitInterfaces.GitRef[]) => void): void;
+	    getRefs(repositoryId: string, project: string, filter: string, includeLinks: boolean, onResult: (err: any, statusCode: number, ref: GitInterfaces.GitRef[]) => void): void;
 	    /**
 	     * Creates or updates refs with the given information
 	     *
@@ -5751,7 +6519,7 @@ declare module 'vso-node-api/GitApi' {
 	     * @param {string} projectId - The id of the project.
 	     * @param onResult callback function with the resulting GitInterfaces.GitRefUpdateResult[]
 	     */
-	    updateRefs(refUpdates: GitInterfaces.GitRefUpdate[], repositoryId: string, project: string, projectId: string, onResult: (err: any, statusCode: number, refs: GitInterfaces.GitRefUpdateResult[]) => void): void;
+	    updateRefs(refUpdates: GitInterfaces.GitRefUpdate[], repositoryId: string, project: string, projectId: string, onResult: (err: any, statusCode: number, ref: GitInterfaces.GitRefUpdateResult[]) => void): void;
 	    /**
 	     * Create a git repository
 	     *
@@ -5775,7 +6543,7 @@ declare module 'vso-node-api/GitApi' {
 	     * @param {boolean} includeLinks
 	     * @param onResult callback function with the resulting GitInterfaces.GitRepository[]
 	     */
-	    getRepositories(project: string, includeLinks: boolean, onResult: (err: any, statusCode: number, Repositories: GitInterfaces.GitRepository[]) => void): void;
+	    getRepositories(project: string, includeLinks: boolean, onResult: (err: any, statusCode: number, Repositorie: GitInterfaces.GitRepository[]) => void): void;
 	    /**
 	     * @param {string} repositoryId
 	     * @param {string} project - Project ID or project name
@@ -5971,6 +6739,16 @@ declare module 'vso-node-api/GitApi' {
 	    * @param {string} project - Project ID or project name
 	    */
 	    getPullRequestReviewers(repositoryId: string, pullRequestId: number, project?: string): Q.Promise<GitInterfaces.IdentityRefWithVote[]>;
+	    /**
+	    * Query pull requests by project
+	    *
+	    * @param {string} project - Project ID or project name
+	    * @param {GitInterfaces.GitPullRequestSearchCriteria} searchCriteria
+	    * @param {number} maxCommentLength
+	    * @param {number} skip
+	    * @param {number} top
+	    */
+	    getPullRequestsByProject(project: string, searchCriteria: GitInterfaces.GitPullRequestSearchCriteria, maxCommentLength?: number, skip?: number, top?: number): Q.Promise<GitInterfaces.GitPullRequest[]>;
 	    /**
 	    * Create a git pull request
 	    *
@@ -6399,6 +7177,8 @@ declare module 'vso-node-api/interfaces/TaskAgentInterfaces' {
 	    name: string;
 	    type: string;
 	}
+	export interface TaskChangeEvent {
+	}
 	export interface TaskDefinition {
 	    agentExecution: TaskExecution;
 	    author: string;
@@ -6803,6 +7583,9 @@ declare module 'vso-node-api/interfaces/TaskAgentInterfaces' {
 	    TaskAttachment: {
 	        fields: any;
 	    };
+	    TaskChangeEvent: {
+	        fields: any;
+	    };
 	    TaskDefinition: {
 	        fields: any;
 	    };
@@ -6920,7 +7703,7 @@ declare module 'vso-node-api/TaskAgentApi' {
 	    createAgent(agent: TaskAgentInterfaces.TaskAgent, poolId: number, onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent) => void): void;
 	    deleteAgent(poolId: number, agentId: number, onResult: (err: any, statusCode: number) => void): void;
 	    getAgent(poolId: number, agentId: number, includeCapabilities: boolean, propertyFilters: string, onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent) => void): void;
-	    getAgents(poolId: number, agentName: string, includeCapabilities: boolean, propertyFilters: string, demands: string, onResult: (err: any, statusCode: number, agents: TaskAgentInterfaces.TaskAgent[]) => void): void;
+	    getAgents(poolId: number, agentName: string, includeCapabilities: boolean, propertyFilters: string, demands: string, onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent[]) => void): void;
 	    replaceAgent(agent: TaskAgentInterfaces.TaskAgent, poolId: number, agentId: number, onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent) => void): void;
 	    updateAgent(agent: TaskAgentInterfaces.TaskAgent, poolId: number, agentId: number, onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent) => void): void;
 	    queryEndpoint(endpoint: TaskAgentInterfaces.TaskDefinitionEndpoint, onResult: (err: any, statusCode: number, endpoint: string[]) => void): void;
@@ -6936,23 +7719,22 @@ declare module 'vso-node-api/TaskAgentApi' {
 	    createPool(pool: TaskAgentInterfaces.TaskAgentPool, onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool) => void): void;
 	    deletePool(poolId: number, onResult: (err: any, statusCode: number) => void): void;
 	    getPool(poolId: number, properties: string, onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool) => void): void;
-	    getPools(poolName: string, properties: string, onResult: (err: any, statusCode: number, pools: TaskAgentInterfaces.TaskAgentPool[]) => void): void;
+	    getPools(poolName: string, properties: string, onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool[]) => void): void;
 	    updatePool(pool: TaskAgentInterfaces.TaskAgentPool, poolId: number, onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool) => void): void;
 	    createQueue(queue: TaskAgentInterfaces.TaskAgentQueue, onResult: (err: any, statusCode: number, queue: TaskAgentInterfaces.TaskAgentQueue) => void): void;
 	    deleteQueue(queueId: number, onResult: (err: any, statusCode: number) => void): void;
 	    getQueue(queueId: number, onResult: (err: any, statusCode: number, queue: TaskAgentInterfaces.TaskAgentQueue) => void): void;
-	    getQueues(queueName: string, onResult: (err: any, statusCode: number, queues: TaskAgentInterfaces.TaskAgentQueue[]) => void): void;
-	    getAgentPoolRoles(poolId: number, onResult: (err: any, statusCode: number, roles: VSSInterfaces.IdentityRef[]) => void): void;
+	    getQueues(queueName: string, onResult: (err: any, statusCode: number, queue: TaskAgentInterfaces.TaskAgentQueue[]) => void): void;
+	    getAgentPoolRoles(poolId: number, onResult: (err: any, statusCode: number, role: VSSInterfaces.IdentityRef[]) => void): void;
 	    createServiceEndpoint(endpoint: TaskAgentInterfaces.ServiceEndpoint, scopeIdentifier: string, endpointId: string, onResult: (err: any, statusCode: number, serviceendpoint: TaskAgentInterfaces.ServiceEndpoint) => void): void;
 	    deleteServiceEndpoint(scopeIdentifier: string, endpointId: string, onResult: (err: any, statusCode: number) => void): void;
 	    getServiceEndpointDetails(scopeIdentifier: string, endpointId: string, onResult: (err: any, statusCode: number, serviceendpoint: TaskAgentInterfaces.ServiceEndpoint) => void): void;
-	    getServiceEndpoints(scopeIdentifier: string, type: string, onResult: (err: any, statusCode: number, serviceendpoints: TaskAgentInterfaces.ServiceEndpoint[]) => void): void;
+	    getServiceEndpoints(scopeIdentifier: string, type: string, onResult: (err: any, statusCode: number, serviceendpoint: TaskAgentInterfaces.ServiceEndpoint[]) => void): void;
 	    createSession(session: TaskAgentInterfaces.TaskAgentSession, poolId: number, onResult: (err: any, statusCode: number, session: TaskAgentInterfaces.TaskAgentSession) => void): void;
 	    deleteSession(poolId: number, sessionId: string, onResult: (err: any, statusCode: number) => void): void;
 	    deleteTaskDefinition(taskId: string, onResult: (err: any, statusCode: number) => void): void;
-	    getTaskContent(taskId: string, versionString: string, onResult: (err: any, statusCode: number, tasks: TaskAgentInterfaces.TaskDefinition[]) => void): void;
-	    getTaskContentZip(taskId: string, versionString: string, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
-	    getTaskDefinitions(visibility: string[], onResult: (err: any, statusCode: number, tasks: TaskAgentInterfaces.TaskDefinition[]) => void): void;
+	    getTaskContentZip(taskId: string, versionString: string, visibility: string[], scopeLocal: boolean, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
+	    getTaskDefinitions(taskId: string, versionString: string, visibility: string[], scopeLocal: boolean, onResult: (err: any, statusCode: number, task: TaskAgentInterfaces.TaskDefinition[]) => void): void;
 	    uploadTaskDefinition(customHeaders: any, contentStream: NodeJS.ReadableStream, taskId: string, overwrite: boolean, onResult: (err: any, statusCode: number, obj: any) => void): void;
 	    updateUserCapabilities(userCapabilities: {
 	        [key: string]: string;
@@ -6981,8 +7763,7 @@ declare module 'vso-node-api/TaskAgentApi' {
 	    getServiceEndpointDetails(scopeIdentifier: string, endpointId: string): Q.Promise<TaskAgentInterfaces.ServiceEndpoint>;
 	    getServiceEndpoints(scopeIdentifier: string, type?: string): Q.Promise<TaskAgentInterfaces.ServiceEndpoint[]>;
 	    createSession(session: TaskAgentInterfaces.TaskAgentSession, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgentSession>;
-	    getTaskContent(taskId: string, versionString?: string): Q.Promise<TaskAgentInterfaces.TaskDefinition[]>;
-	    getTaskDefinitions(visibility: string[]): Q.Promise<TaskAgentInterfaces.TaskDefinition[]>;
+	    getTaskDefinitions(taskId?: string, versionString?: string, visibility?: string[], scopeLocal?: boolean): Q.Promise<TaskAgentInterfaces.TaskDefinition[]>;
 	    updateUserCapabilities(userCapabilities: {
 	        [key: string]: string;
 	    }, poolId: number, agentId: number): Q.Promise<TaskAgentInterfaces.TaskAgent>;
@@ -7017,7 +7798,7 @@ declare module 'vso-node-api/TaskAgentApi' {
 	     * @param {string} demands
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgent[]
 	     */
-	    getAgents(poolId: number, agentName: string, includeCapabilities: boolean, propertyFilters: string, demands: string, onResult: (err: any, statusCode: number, agents: TaskAgentInterfaces.TaskAgent[]) => void): void;
+	    getAgents(poolId: number, agentName: string, includeCapabilities: boolean, propertyFilters: string, demands: string, onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent[]) => void): void;
 	    /**
 	     * @param {TaskAgentInterfaces.TaskAgent} agent
 	     * @param {number} poolId
@@ -7119,7 +7900,7 @@ declare module 'vso-node-api/TaskAgentApi' {
 	     * @param {string} properties
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentPool[]
 	     */
-	    getPools(poolName: string, properties: string, onResult: (err: any, statusCode: number, pools: TaskAgentInterfaces.TaskAgentPool[]) => void): void;
+	    getPools(poolName: string, properties: string, onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool[]) => void): void;
 	    /**
 	     * @param {TaskAgentInterfaces.TaskAgentPool} pool
 	     * @param {number} poolId
@@ -7145,12 +7926,12 @@ declare module 'vso-node-api/TaskAgentApi' {
 	     * @param {string} queueName
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentQueue[]
 	     */
-	    getQueues(queueName: string, onResult: (err: any, statusCode: number, queues: TaskAgentInterfaces.TaskAgentQueue[]) => void): void;
+	    getQueues(queueName: string, onResult: (err: any, statusCode: number, queue: TaskAgentInterfaces.TaskAgentQueue[]) => void): void;
 	    /**
 	     * @param {number} poolId
 	     * @param onResult callback function with the resulting VSSInterfaces.IdentityRef[]
 	     */
-	    getAgentPoolRoles(poolId: number, onResult: (err: any, statusCode: number, roles: VSSInterfaces.IdentityRef[]) => void): void;
+	    getAgentPoolRoles(poolId: number, onResult: (err: any, statusCode: number, role: VSSInterfaces.IdentityRef[]) => void): void;
 	    /**
 	     * @param {TaskAgentInterfaces.ServiceEndpoint} endpoint
 	     * @param {string} scopeIdentifier - The project GUID to scope the request
@@ -7175,7 +7956,7 @@ declare module 'vso-node-api/TaskAgentApi' {
 	     * @param {string} type
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.ServiceEndpoint[]
 	     */
-	    getServiceEndpoints(scopeIdentifier: string, type: string, onResult: (err: any, statusCode: number, serviceendpoints: TaskAgentInterfaces.ServiceEndpoint[]) => void): void;
+	    getServiceEndpoints(scopeIdentifier: string, type: string, onResult: (err: any, statusCode: number, serviceendpoint: TaskAgentInterfaces.ServiceEndpoint[]) => void): void;
 	    /**
 	     * @param {TaskAgentInterfaces.TaskAgentSession} session
 	     * @param {number} poolId
@@ -7196,27 +7977,26 @@ declare module 'vso-node-api/TaskAgentApi' {
 	    /**
 	     * @param {string} taskId
 	     * @param {string} versionString
-	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskDefinition[]
+	     * @param {string[]} visibility
+	     * @param {boolean} scopeLocal
+	     * @param onResult callback function with the resulting ArrayBuffer
 	     */
-	    getTaskContent(taskId: string, versionString: string, onResult: (err: any, statusCode: number, tasks: TaskAgentInterfaces.TaskDefinition[]) => void): void;
+	    getTaskContentZip(taskId: string, versionString: string, visibility: string[], scopeLocal: boolean, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
 	    /**
 	     * @param {string} taskId
 	     * @param {string} versionString
-	     * @param onResult callback function with the resulting ArrayBuffer
-	     */
-	    getTaskContentZip(taskId: string, versionString: string, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
-	    /**
 	     * @param {string[]} visibility
+	     * @param {boolean} scopeLocal
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskDefinition[]
 	     */
-	    getTaskDefinitions(visibility: string[], onResult: (err: any, statusCode: number, tasks: TaskAgentInterfaces.TaskDefinition[]) => void): void;
+	    getTaskDefinitions(taskId: string, versionString: string, visibility: string[], scopeLocal: boolean, onResult: (err: any, statusCode: number, task: TaskAgentInterfaces.TaskDefinition[]) => void): void;
 	    /**
 	     * @param {NodeJS.ReadableStream} contentStream
 	     * @param {string} taskId
 	     * @param {boolean} overwrite
 	     * @param onResult callback function
 	     */
-	    uploadTaskDefinition(customHeaders: any, contentStream: NodeJS.ReadableStream, taskId: string, overwrite: boolean, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    uploadTaskDefinition(customHeaders: VsoBaseInterfaces.IHeaders, contentStream: NodeJS.ReadableStream, taskId: string, overwrite: boolean, onResult: (err: any, statusCode: number, obj: any) => void): void;
 	    /**
 	     * @param {{ [key: string] : string; }} userCapabilities
 	     * @param {number} poolId
@@ -7350,12 +8130,10 @@ declare module 'vso-node-api/TaskAgentApi' {
 	    /**
 	    * @param {string} taskId
 	    * @param {string} versionString
-	    */
-	    getTaskContent(taskId: string, versionString?: string): Q.Promise<TaskAgentInterfaces.TaskDefinition[]>;
-	    /**
 	    * @param {string[]} visibility
+	    * @param {boolean} scopeLocal
 	    */
-	    getTaskDefinitions(visibility: string[]): Q.Promise<TaskAgentInterfaces.TaskDefinition[]>;
+	    getTaskDefinitions(taskId?: string, versionString?: string, visibility?: string[], scopeLocal?: boolean): Q.Promise<TaskAgentInterfaces.TaskDefinition[]>;
 	    /**
 	    * @param {{ [key: string] : string; }} userCapabilities
 	    * @param {number} poolId
@@ -7376,22 +8154,22 @@ declare module 'vso-node-api/TaskApi' {
 	import TaskAgentInterfaces = require('vso-node-api/interfaces/TaskAgentInterfaces');
 	import VSSInterfaces = require('vso-node-api/interfaces/common/VSSInterfaces');
 	export interface ITaskApi extends basem.ClientApiBase {
-	    getPlanAttachments(scopeIdentifier: string, hubName: string, planId: string, type: string, onResult: (err: any, statusCode: number, attachments: TaskAgentInterfaces.TaskAttachment[]) => void): void;
+	    getPlanAttachments(scopeIdentifier: string, hubName: string, planId: string, type: string, onResult: (err: any, statusCode: number, attachment: TaskAgentInterfaces.TaskAttachment[]) => void): void;
 	    createAttachment(customHeaders: any, contentStream: NodeJS.ReadableStream, scopeIdentifier: string, hubName: string, planId: string, timelineId: string, recordId: string, type: string, name: string, onResult: (err: any, statusCode: number, attachment: TaskAgentInterfaces.TaskAttachment) => void): void;
-	    getAttachments(scopeIdentifier: string, hubName: string, planId: string, timelineId: string, recordId: string, type: string, onResult: (err: any, statusCode: number, attachments: TaskAgentInterfaces.TaskAttachment[]) => void): void;
+	    getAttachments(scopeIdentifier: string, hubName: string, planId: string, timelineId: string, recordId: string, type: string, onResult: (err: any, statusCode: number, attachment: TaskAgentInterfaces.TaskAttachment[]) => void): void;
 	    postEvent(eventData: TaskAgentInterfaces.JobEvent, scopeIdentifier: string, hubName: string, planId: string, onResult: (err: any, statusCode: number) => void): void;
 	    postLines(lines: VSSInterfaces.VssJsonCollectionWrapperV<string[]>, scopeIdentifier: string, hubName: string, planId: string, timelineId: string, recordId: string, onResult: (err: any, statusCode: number) => void): void;
 	    appendLog(customHeaders: any, contentStream: NodeJS.ReadableStream, scopeIdentifier: string, hubName: string, planId: string, logId: number, onResult: (err: any, statusCode: number, log: TaskAgentInterfaces.TaskLog) => void): void;
 	    createLog(log: TaskAgentInterfaces.TaskLog, scopeIdentifier: string, hubName: string, planId: string, onResult: (err: any, statusCode: number, log: TaskAgentInterfaces.TaskLog) => void): void;
-	    getLog(scopeIdentifier: string, hubName: string, planId: string, logId: number, startLine: number, endLine: number, onResult: (err: any, statusCode: number, logs: string[]) => void): void;
-	    getLogs(scopeIdentifier: string, hubName: string, planId: string, onResult: (err: any, statusCode: number, logs: TaskAgentInterfaces.TaskLog[]) => void): void;
+	    getLog(scopeIdentifier: string, hubName: string, planId: string, logId: number, startLine: number, endLine: number, onResult: (err: any, statusCode: number, log: string[]) => void): void;
+	    getLogs(scopeIdentifier: string, hubName: string, planId: string, onResult: (err: any, statusCode: number, log: TaskAgentInterfaces.TaskLog[]) => void): void;
 	    getPlan(scopeIdentifier: string, hubName: string, planId: string, onResult: (err: any, statusCode: number, plan: TaskAgentInterfaces.TaskOrchestrationPlan) => void): void;
-	    getRecords(scopeIdentifier: string, hubName: string, planId: string, timelineId: string, changeId: number, onResult: (err: any, statusCode: number, records: TaskAgentInterfaces.TimelineRecord[]) => void): void;
+	    getRecords(scopeIdentifier: string, hubName: string, planId: string, timelineId: string, changeId: number, onResult: (err: any, statusCode: number, record: TaskAgentInterfaces.TimelineRecord[]) => void): void;
 	    updateRecords(records: VSSInterfaces.VssJsonCollectionWrapperV<TaskAgentInterfaces.TimelineRecord[]>, scopeIdentifier: string, hubName: string, planId: string, timelineId: string, onResult: (err: any, statusCode: number, record: TaskAgentInterfaces.TimelineRecord[]) => void): void;
 	    createTimeline(timeline: TaskAgentInterfaces.Timeline, scopeIdentifier: string, hubName: string, planId: string, onResult: (err: any, statusCode: number, timeline: TaskAgentInterfaces.Timeline) => void): void;
 	    deleteTimeline(scopeIdentifier: string, hubName: string, planId: string, timelineId: string, onResult: (err: any, statusCode: number) => void): void;
 	    getTimeline(scopeIdentifier: string, hubName: string, planId: string, timelineId: string, changeId: number, includeRecords: boolean, onResult: (err: any, statusCode: number, timeline: TaskAgentInterfaces.Timeline) => void): void;
-	    getTimelines(scopeIdentifier: string, hubName: string, planId: string, onResult: (err: any, statusCode: number, timelines: TaskAgentInterfaces.Timeline[]) => void): void;
+	    getTimelines(scopeIdentifier: string, hubName: string, planId: string, onResult: (err: any, statusCode: number, timeline: TaskAgentInterfaces.Timeline[]) => void): void;
 	}
 	export interface IQTaskApi extends basem.QClientApiBase {
 	    getPlanAttachments(scopeIdentifier: string, hubName: string, planId: string, type: string): Q.Promise<TaskAgentInterfaces.TaskAttachment[]>;
@@ -7417,7 +8195,7 @@ declare module 'vso-node-api/TaskApi' {
 	     * @param {string} type
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAttachment[]
 	     */
-	    getPlanAttachments(scopeIdentifier: string, hubName: string, planId: string, type: string, onResult: (err: any, statusCode: number, attachments: TaskAgentInterfaces.TaskAttachment[]) => void): void;
+	    getPlanAttachments(scopeIdentifier: string, hubName: string, planId: string, type: string, onResult: (err: any, statusCode: number, attachment: TaskAgentInterfaces.TaskAttachment[]) => void): void;
 	    /**
 	     * @param {NodeJS.ReadableStream} contentStream
 	     * @param {string} scopeIdentifier - The project GUID to scope the request
@@ -7429,7 +8207,7 @@ declare module 'vso-node-api/TaskApi' {
 	     * @param {string} name
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAttachment
 	     */
-	    createAttachment(customHeaders: any, contentStream: NodeJS.ReadableStream, scopeIdentifier: string, hubName: string, planId: string, timelineId: string, recordId: string, type: string, name: string, onResult: (err: any, statusCode: number, attachment: TaskAgentInterfaces.TaskAttachment) => void): void;
+	    createAttachment(customHeaders: VsoBaseInterfaces.IHeaders, contentStream: NodeJS.ReadableStream, scopeIdentifier: string, hubName: string, planId: string, timelineId: string, recordId: string, type: string, name: string, onResult: (err: any, statusCode: number, attachment: TaskAgentInterfaces.TaskAttachment) => void): void;
 	    /**
 	     * @param {string} scopeIdentifier - The project GUID to scope the request
 	     * @param {string} hubName - The name of the server hub: "build" for the Build server or "rm" for the Release Management server
@@ -7439,7 +8217,7 @@ declare module 'vso-node-api/TaskApi' {
 	     * @param {string} type
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAttachment[]
 	     */
-	    getAttachments(scopeIdentifier: string, hubName: string, planId: string, timelineId: string, recordId: string, type: string, onResult: (err: any, statusCode: number, attachments: TaskAgentInterfaces.TaskAttachment[]) => void): void;
+	    getAttachments(scopeIdentifier: string, hubName: string, planId: string, timelineId: string, recordId: string, type: string, onResult: (err: any, statusCode: number, attachment: TaskAgentInterfaces.TaskAttachment[]) => void): void;
 	    /**
 	     * @param {TaskAgentInterfaces.JobEvent} eventData
 	     * @param {string} scopeIdentifier - The project GUID to scope the request
@@ -7466,7 +8244,7 @@ declare module 'vso-node-api/TaskApi' {
 	     * @param {number} logId
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskLog
 	     */
-	    appendLog(customHeaders: any, contentStream: NodeJS.ReadableStream, scopeIdentifier: string, hubName: string, planId: string, logId: number, onResult: (err: any, statusCode: number, log: TaskAgentInterfaces.TaskLog) => void): void;
+	    appendLog(customHeaders: VsoBaseInterfaces.IHeaders, contentStream: NodeJS.ReadableStream, scopeIdentifier: string, hubName: string, planId: string, logId: number, onResult: (err: any, statusCode: number, log: TaskAgentInterfaces.TaskLog) => void): void;
 	    /**
 	     * @param {TaskAgentInterfaces.TaskLog} log
 	     * @param {string} scopeIdentifier - The project GUID to scope the request
@@ -7484,14 +8262,14 @@ declare module 'vso-node-api/TaskApi' {
 	     * @param {number} endLine
 	     * @param onResult callback function with the resulting string[]
 	     */
-	    getLog(scopeIdentifier: string, hubName: string, planId: string, logId: number, startLine: number, endLine: number, onResult: (err: any, statusCode: number, logs: string[]) => void): void;
+	    getLog(scopeIdentifier: string, hubName: string, planId: string, logId: number, startLine: number, endLine: number, onResult: (err: any, statusCode: number, log: string[]) => void): void;
 	    /**
 	     * @param {string} scopeIdentifier - The project GUID to scope the request
 	     * @param {string} hubName - The name of the server hub: "build" for the Build server or "rm" for the Release Management server
 	     * @param {string} planId
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskLog[]
 	     */
-	    getLogs(scopeIdentifier: string, hubName: string, planId: string, onResult: (err: any, statusCode: number, logs: TaskAgentInterfaces.TaskLog[]) => void): void;
+	    getLogs(scopeIdentifier: string, hubName: string, planId: string, onResult: (err: any, statusCode: number, log: TaskAgentInterfaces.TaskLog[]) => void): void;
 	    /**
 	     * @param {string} scopeIdentifier - The project GUID to scope the request
 	     * @param {string} hubName - The name of the server hub: "build" for the Build server or "rm" for the Release Management server
@@ -7507,7 +8285,7 @@ declare module 'vso-node-api/TaskApi' {
 	     * @param {number} changeId
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TimelineRecord[]
 	     */
-	    getRecords(scopeIdentifier: string, hubName: string, planId: string, timelineId: string, changeId: number, onResult: (err: any, statusCode: number, records: TaskAgentInterfaces.TimelineRecord[]) => void): void;
+	    getRecords(scopeIdentifier: string, hubName: string, planId: string, timelineId: string, changeId: number, onResult: (err: any, statusCode: number, record: TaskAgentInterfaces.TimelineRecord[]) => void): void;
 	    /**
 	     * @param {VSSInterfaces.VssJsonCollectionWrapperV<TaskAgentInterfaces.TimelineRecord[]>} records
 	     * @param {string} scopeIdentifier - The project GUID to scope the request
@@ -7549,7 +8327,7 @@ declare module 'vso-node-api/TaskApi' {
 	     * @param {string} planId
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.Timeline[]
 	     */
-	    getTimelines(scopeIdentifier: string, hubName: string, planId: string, onResult: (err: any, statusCode: number, timelines: TaskAgentInterfaces.Timeline[]) => void): void;
+	    getTimelines(scopeIdentifier: string, hubName: string, planId: string, onResult: (err: any, statusCode: number, timeline: TaskAgentInterfaces.Timeline[]) => void): void;
 	}
 	export class QTaskApi extends basem.QClientApiBase implements IQTaskApi {
 	    api: TaskApi;
@@ -7658,195 +8436,16 @@ declare module 'vso-node-api/TaskApi' {
 	}
 
 }
-declare module 'vso-node-api/interfaces/common/SystemDataInterfaces' {
-	/**
-	 * Specifies SQL Server-specific data type of a field, property, for use in a System.Data.SqlClient.SqlParameter.
-	 */
-	export enum SqlDbType {
-	    /**
-	     * A 64-bit signed integer.
-	     */
-	    BigInt = 0,
-	    /**
-	     * Array of type Byte. A fixed-length stream of binary data ranging between 1 and 8,000 bytes.
-	     */
-	    Binary = 1,
-	    /**
-	     * Boolean. An unsigned numeric value that can be 0, 1, or null.
-	     */
-	    Bit = 2,
-	    /**
-	     * String. A fixed-length stream of non-Unicode characters ranging between 1 and 8,000 characters.
-	     */
-	    Char = 3,
-	    /**
-	     * DateTime. Date and time data ranging in value from January 1, 1753 to December 31, 9999 to an accuracy of 3.33 milliseconds.
-	     */
-	    DateTime = 4,
-	    /**
-	     * Decimal. A fixed precision and scale numeric value between -10 38 -1 and 10 38 -1.
-	     */
-	    Decimal = 5,
-	    /**
-	     * Double. A floating point number within the range of -1.79E +308 through 1.79E +308.
-	     */
-	    Float = 6,
-	    /**
-	     * Array of type Byte. A variable-length stream of binary data ranging from 0 to 2 31 -1 (or 2,147,483,647) bytes.
-	     */
-	    Image = 7,
-	    /**
-	     * Int32. A 32-bit signed integer.
-	     */
-	    Int = 8,
-	    /**
-	     * Decimal. A currency value ranging from -2 63 (or -9,223,372,036,854,775,808) to 2 63 -1 (or +9,223,372,036,854,775,807) with an accuracy to a ten-thousandth of a currency unit.
-	     */
-	    Money = 9,
-	    /**
-	     * String. A fixed-length stream of Unicode characters ranging between 1 and 4,000 characters.
-	     */
-	    NChar = 10,
-	    /**
-	     * String. A variable-length stream of Unicode data with a maximum length of 2 30 - 1 (or 1,073,741,823) characters.
-	     */
-	    NText = 11,
-	    /**
-	     * String. A variable-length stream of Unicode characters ranging between 1 and 4,000 characters. Implicit conversion fails if the string is greater than 4,000 characters. Explicitly set the object when working with strings longer than 4,000 characters. Use System.Data.SqlDbType.NVarChar when the database column is nvarchar(max).
-	     */
-	    NVarChar = 12,
-	    /**
-	     * Single. A floating point number within the range of -3.40E +38 through 3.40E +38.
-	     */
-	    Real = 13,
-	    /**
-	     * Guid. A globally unique identifier (or GUID).
-	     */
-	    UniqueIdentifier = 14,
-	    /**
-	     * DateTime. Date and time data ranging in value from January 1, 1900 to June 6, 2079 to an accuracy of one minute.
-	     */
-	    SmallDateTime = 15,
-	    /**
-	     * Int16. A 16-bit signed integer.
-	     */
-	    SmallInt = 16,
-	    /**
-	     * Decimal. A currency value ranging from -214,748.3648 to +214,748.3647 with an accuracy to a ten-thousandth of a currency unit.
-	     */
-	    SmallMoney = 17,
-	    /**
-	     * String. A variable-length stream of non-Unicode data with a maximum length of 2 31 -1 (or 2,147,483,647) characters.
-	     */
-	    Text = 18,
-	    /**
-	     * Array of type System.Byte. Automatically generated binary numbers, which are guaranteed to be unique within a database. timestamp is used typically as a mechanism for version-stamping table rows. The storage size is 8 bytes.
-	     */
-	    Timestamp = 19,
-	    /**
-	     * Byte. An 8-bit unsigned integer.
-	     */
-	    TinyInt = 20,
-	    /**
-	     * Array of type Byte. A variable-length stream of binary data ranging between 1 and 8,000 bytes. Implicit conversion fails if the byte array is greater than 8,000 bytes. Explicitly set the object when working with byte arrays larger than 8,000 bytes.
-	     */
-	    VarBinary = 21,
-	    /**
-	     * String. A variable-length stream of non-Unicode characters ranging between 1 and 8,000 characters. Use System.Data.SqlDbType.VarChar when the database column is varchar(max).
-	     */
-	    VarChar = 22,
-	    /**
-	     * Object. A special data type that can contain numeric, string, binary, or date data as well as the SQL Server values Empty and Null, which is assumed if no other type is declared.
-	     */
-	    Variant = 23,
-	    /**
-	     * An XML value. Obtain the XML as a string using the System.Data.SqlClient.SqlDataReader.GetValue(System.Int32) method or System.Data.SqlTypes.SqlXml.Value property, or as an System.Xml.XmlReader by calling the System.Data.SqlTypes.SqlXml.CreateReader method.
-	     */
-	    Xml = 25,
-	    /**
-	     * A SQL Server user-defined type (UDT).
-	     */
-	    Udt = 29,
-	    /**
-	     * A special data type for specifying structured data contained in table-valued parameters.
-	     */
-	    Structured = 30,
-	    /**
-	     * Date data ranging in value from January 1,1 AD through December 31, 9999 AD.
-	     */
-	    Date = 31,
-	    /**
-	     * Time data based on a 24-hour clock. Time value range is 00:00:00 through 23:59:59.9999999 with an accuracy of 100 nanoseconds. Corresponds to a SQL Server time value.
-	     */
-	    Time = 32,
-	    /**
-	     * Date and time data. Date value range is from January 1,1 AD through December 31, 9999 AD. Time value range is 00:00:00 through 23:59:59.9999999 with an accuracy of 100 nanoseconds.
-	     */
-	    DateTime2 = 33,
-	    /**
-	     * Date and time data with time zone awareness. Date value range is from January 1,1 AD through December 31, 9999 AD. Time value range is 00:00:00 through 23:59:59.9999999 with an accuracy of 100 nanoseconds. Time zone value range is -14:00 through +14:00.
-	     */
-	    DateTimeOffset = 34,
-	}
-	export var TypeInfo: {
-	    SqlDbType: {
-	        enumValues: {
-	            "BigInt": number;
-	            "Binary": number;
-	            "Bit": number;
-	            "Char": number;
-	            "DateTime": number;
-	            "Decimal": number;
-	            "Float": number;
-	            "Image": number;
-	            "Int": number;
-	            "Money": number;
-	            "NChar": number;
-	            "NText": number;
-	            "NVarChar": number;
-	            "Real": number;
-	            "UniqueIdentifier": number;
-	            "SmallDateTime": number;
-	            "SmallInt": number;
-	            "SmallMoney": number;
-	            "Text": number;
-	            "Timestamp": number;
-	            "TinyInt": number;
-	            "VarBinary": number;
-	            "VarChar": number;
-	            "Variant": number;
-	            "Xml": number;
-	            "Udt": number;
-	            "Structured": number;
-	            "Date": number;
-	            "Time": number;
-	            "DateTime2": number;
-	            "DateTimeOffset": number;
-	        };
-	    };
-	};
-
-}
 declare module 'vso-node-api/interfaces/TestInterfaces' {
-	import SystemData = require('vso-node-api/interfaces/common/SystemDataInterfaces');
 	import VSSInterfaces = require('vso-node-api/interfaces/common/VSSInterfaces');
-	export interface AdditionalTestField {
-	    fieldName: string;
-	    value: any;
-	}
-	export interface AddtionalTestFieldDefinition {
-	    fieldName: string;
-	    scope: TestExtensionFieldScope;
-	    value: SystemData.SqlDbType;
-	}
-	export interface AggregatedResultsByPivot {
+	export interface AggregatedResultsByOutcome {
 	    count: number;
 	    duration: any;
-	    pivot: string;
+	    outcome: TestOutcome;
 	}
 	export interface AggregatedTestResults {
 	    duration: any;
-	    resultsByPivot: AggregatedResultsByPivot[];
+	    resultsByOutcome: AggregatedResultsByOutcome[];
 	    self: ShallowReference;
 	    totalTests: number;
 	}
@@ -7869,10 +8468,15 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    status: string;
 	}
 	export interface BuildConfiguration {
+	    branchName: string;
+	    buildDefinitionId: number;
 	    flavor: string;
 	    id: number;
+	    number: string;
 	    platform: string;
 	    project: ShallowReference;
+	    repositoryId: number;
+	    sourceVersion: string;
 	    uri: string;
 	}
 	export interface BuildCoverage {
@@ -7881,6 +8485,12 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    lastError: string;
 	    modules: ModuleCoverage[];
 	    state: string;
+	}
+	export interface BuildReference {
+	    buildSystem: string;
+	    id: number;
+	    number: string;
+	    uri: string;
 	}
 	/**
 	 * Represents the build configuration (platform, flavor) and coverage data for the build
@@ -7912,10 +8522,6 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	     */
 	    delta: number;
 	    /**
-	     * Position of label
-	     */
-	    index: number;
-	    /**
 	     * Is delta valid
 	     */
 	    isDeltaAvailable: boolean;
@@ -7923,6 +8529,10 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	     * Label of coverage data ("Blocks", "Statements", "Modules", etc.)
 	     */
 	    label: string;
+	    /**
+	     * Position of label
+	     */
+	    position: number;
 	    /**
 	     * Total units
 	     */
@@ -7935,7 +8545,7 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    /**
 	     * Uri of build for which data is retrieved/published
 	     */
-	    buildUri: string;
+	    build: ShallowReference;
 	    /**
 	     * List of coverage data and details for the build
 	     */
@@ -7943,7 +8553,7 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    /**
 	     * Uri of build against which difference in coverage is computed
 	     */
-	    deltaBuildUri: string;
+	    deltaBuild: ShallowReference;
 	}
 	export enum CoverageQueryFlags {
 	    /**
@@ -7966,6 +8576,31 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    linesNotCovered: number;
 	    linesPartiallyCovered: number;
 	}
+	export interface CustomTestField {
+	    fieldName: string;
+	    value: any;
+	}
+	export interface CustomTestFieldDefinition {
+	    fieldId: number;
+	    fieldName: string;
+	    fieldType: CustomTestFieldType;
+	    scope: CustomTestFieldScope;
+	}
+	export enum CustomTestFieldScope {
+	    None = 0,
+	    TestRun = 1,
+	    TestResult = 2,
+	    System = 4,
+	    All = 7,
+	}
+	export enum CustomTestFieldType {
+	    Bit = 2,
+	    Int = 8,
+	    Float = 6,
+	    Guid = 14,
+	    DateTime = 4,
+	    String = 12,
+	}
 	/**
 	 * This is a temporary class to provide the details for the test run environment.
 	 */
@@ -7973,6 +8608,10 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    csmContent: string;
 	    csmParameters: string;
 	    subscriptionName: string;
+	}
+	export interface FailingSince {
+	    build: BuildReference;
+	    date: Date;
 	}
 	export interface FunctionCoverage {
 	    class: string;
@@ -8044,7 +8683,6 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    revision: number;
 	}
 	export interface RunCreateModel {
-	    additionalTestFields: AdditionalTestField[];
 	    automated: boolean;
 	    build: ShallowReference;
 	    buildDropLocation: string;
@@ -8054,6 +8692,7 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    completeDate: string;
 	    configurationIds: number[];
 	    controller: string;
+	    customTestFields: CustomTestField[];
 	    dtlAutEnvironment: ShallowReference;
 	    dtlTestEnvironment: ShallowReference;
 	    dueDate: string;
@@ -8068,6 +8707,7 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    releaseEnvironmentUri: string;
 	    releaseUri: string;
 	    runTimeout: any;
+	    sourceWorkflow: string;
 	    startDate: string;
 	    state: string;
 	    testConfigurationsMapping: string;
@@ -8160,7 +8800,6 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    stream: string;
 	}
 	export interface TestCaseResult {
-	    additionalFields: AdditionalTestField[];
 	    afnStripId: number;
 	    area: ShallowReference;
 	    associatedBugs: ShallowReference[];
@@ -8175,8 +8814,10 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    computerName: string;
 	    configuration: ShallowReference;
 	    createdDate: Date;
+	    customFields: CustomTestField[];
 	    durationInMs: number;
 	    errorMessage: string;
+	    failingSince: FailingSince;
 	    failureType: string;
 	    id: number;
 	    iterationDetails: TestIterationDetailsModel[];
@@ -8233,12 +8874,12 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	export interface TestCaseResultIdentifier {
 	}
 	export interface TestCaseResultUpdateModel {
-	    additionalFields: AdditionalTestField[];
 	    associatedWorkItems: number[];
 	    automatedTestTypeId: string;
 	    comment: string;
 	    completedDate: string;
 	    computerName: string;
+	    customFields: CustomTestField[];
 	    durationInMs: string;
 	    errorMessage: string;
 	    failureType: string;
@@ -8256,22 +8897,16 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    environmentId: string;
 	    environmentName: string;
 	}
-	export enum TestExtensionFieldScope {
-	    None = 0,
-	    TestRun = 1,
-	    TestResult = 2,
-	    System = 4,
-	}
-	export interface TestInsightDetails {
+	export interface TestFailureDetails {
 	    count: number;
-	    previousBuild: ShallowReference;
+	    previousBuild: BuildReference;
 	    self: ShallowReference;
 	    testResults: ShallowReference[];
 	}
-	export interface TestInsights {
-	    existingFailures: TestInsightDetails;
-	    fixedTests: TestInsightDetails;
-	    newFailures: TestInsightDetails;
+	export interface TestFailures {
+	    existingFailures: TestFailureDetails;
+	    fixedTests: TestFailureDetails;
+	    newFailures: TestFailureDetails;
 	    self: ShallowReference;
 	}
 	export interface TestIterationDetailsModel {
@@ -8303,6 +8938,65 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	     * Message of the resource
 	     */
 	    message: string;
+	}
+	export enum TestOutcome {
+	    /**
+	     * Only used during an update to preserve the existing value.
+	     */
+	    Unspecified = 0,
+	    /**
+	     * Test has not been completed, or the test type does not report pass/failure.
+	     */
+	    None = 1,
+	    /**
+	     * Test was executed w/o any issues.
+	     */
+	    Passed = 2,
+	    /**
+	     * Test was executed, but there were issues. Issues may involve exceptions or failed assertions.
+	     */
+	    Failed = 3,
+	    /**
+	     * Test has completed, but we can't say if it passed or failed. May be used for aborted tests...
+	     */
+	    Inconclusive = 4,
+	    /**
+	     * The test timed out
+	     */
+	    Timeout = 5,
+	    /**
+	     * Test was aborted. This was not caused by a user gesture, but rather by a framework decision.
+	     */
+	    Aborted = 6,
+	    /**
+	     * Test had it chance for been executed but was not, as ITestElement.IsRunnable == false.
+	     */
+	    Blocked = 7,
+	    /**
+	     * Test was not executed. This was caused by a user gesture - e.g. user hit stop button.
+	     */
+	    NotExecuted = 8,
+	    /**
+	     * To be used by Run level results. This is not a failure.
+	     */
+	    Warning = 9,
+	    /**
+	     * There was a system error while we were trying to execute a test.
+	     */
+	    Error = 10,
+	    /**
+	     * Test is Not Applicable for execution.
+	     */
+	    NotApplicable = 11,
+	    /**
+	     * Test is paused.
+	     */
+	    Paused = 12,
+	    /**
+	     * Test is currently executing. Added this for TCM charts
+	     */
+	    InProgress = 13,
+	    MaxValue = 13,
 	}
 	export interface TestPlan {
 	    area: ShallowReference;
@@ -8356,10 +9050,10 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	}
 	export interface TestReport {
 	    aggregatedResults: AggregatedTestResults;
-	    build: ShallowReference;
+	    build: BuildReference;
 	    self: ShallowReference;
 	    teamProject: ShallowReference;
-	    testInsights: TestInsights;
+	    testFailures: TestFailures;
 	}
 	export interface TestResolutionState {
 	    id: number;
@@ -8367,7 +9061,6 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    project: ShallowReference;
 	}
 	export interface TestResultCreateModel {
-	    additionalFields: AdditionalTestField[];
 	    area: ShallowReference;
 	    associatedWorkItems: number[];
 	    automatedTestId: string;
@@ -8379,6 +9072,7 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    completedDate: string;
 	    computerName: string;
 	    configuration: ShallowReference;
+	    customFields: CustomTestField[];
 	    durationInMs: string;
 	    errorMessage: string;
 	    failureType: string;
@@ -8410,13 +9104,13 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    value: string;
 	}
 	export interface TestRun {
-	    additionalFields: AdditionalTestField[];
 	    build: ShallowReference;
 	    buildConfiguration: BuildConfiguration;
 	    comment: string;
 	    completedDate: Date;
 	    controller: string;
 	    createdDate: Date;
+	    customFields: CustomTestField[];
 	    dropLocation: string;
 	    dtlAutEnvironment: ShallowReference;
 	    dtlEnvironment: ShallowReference;
@@ -8566,13 +9260,7 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    webUrl: string;
 	}
 	export var TypeInfo: {
-	    AdditionalTestField: {
-	        fields: any;
-	    };
-	    AddtionalTestFieldDefinition: {
-	        fields: any;
-	    };
-	    AggregatedResultsByPivot: {
+	    AggregatedResultsByOutcome: {
 	        fields: any;
 	    };
 	    AggregatedTestResults: {
@@ -8602,6 +9290,9 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    BuildCoverage: {
 	        fields: any;
 	    };
+	    BuildReference: {
+	        fields: any;
+	    };
 	    CodeCoverageData: {
 	        fields: any;
 	    };
@@ -8621,7 +9312,35 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    CoverageStatistics: {
 	        fields: any;
 	    };
+	    CustomTestField: {
+	        fields: any;
+	    };
+	    CustomTestFieldDefinition: {
+	        fields: any;
+	    };
+	    CustomTestFieldScope: {
+	        enumValues: {
+	            "none": number;
+	            "testRun": number;
+	            "testResult": number;
+	            "system": number;
+	            "all": number;
+	        };
+	    };
+	    CustomTestFieldType: {
+	        enumValues: {
+	            "bit": number;
+	            "int": number;
+	            "float": number;
+	            "guid": number;
+	            "dateTime": number;
+	            "string": number;
+	        };
+	    };
 	    DtlEnvironmentDetails: {
+	        fields: any;
+	    };
+	    FailingSince: {
 	        fields: any;
 	    };
 	    FunctionCoverage: {
@@ -8715,18 +9434,10 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    TestEnvironment: {
 	        fields: any;
 	    };
-	    TestExtensionFieldScope: {
-	        enumValues: {
-	            "none": number;
-	            "testRun": number;
-	            "testResult": number;
-	            "system": number;
-	        };
-	    };
-	    TestInsightDetails: {
+	    TestFailureDetails: {
 	        fields: any;
 	    };
-	    TestInsights: {
+	    TestFailures: {
 	        fields: any;
 	    };
 	    TestIterationDetailsModel: {
@@ -8734,6 +9445,25 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    };
 	    TestMessageLogDetails: {
 	        fields: any;
+	    };
+	    TestOutcome: {
+	        enumValues: {
+	            "unspecified": number;
+	            "none": number;
+	            "passed": number;
+	            "failed": number;
+	            "inconclusive": number;
+	            "timeout": number;
+	            "aborted": number;
+	            "blocked": number;
+	            "notExecuted": number;
+	            "warning": number;
+	            "error": number;
+	            "notApplicable": number;
+	            "paused": number;
+	            "inProgress": number;
+	            "maxValue": number;
+	        };
 	    };
 	    TestPlan: {
 	        fields: any;
@@ -8816,43 +9546,49 @@ declare module 'vso-node-api/TestApi' {
 	    createTestRunAttachment(attachmentRequestModel: TestInterfaces.TestAttachmentRequestModel, project: string, runId: number, onResult: (err: any, statusCode: number, Attachment: TestInterfaces.TestAttachmentReference) => void): void;
 	    getBuildCodeCoverage(project: string, buildId: number, flags: number, onResult: (err: any, statusCode: number, CodeCoverage: TestInterfaces.BuildCoverage[]) => void): void;
 	    getCodeCoverageSummary(project: string, buildId: number, deltaBuildId: number, onResult: (err: any, statusCode: number, CodeCoverage: TestInterfaces.CodeCoverageSummary) => void): void;
-	    updateCodeCoverageSummary(coverageData: TestInterfaces.CodeCoverageData, project: string, build: number, onResult: (err: any, statusCode: number) => void): void;
+	    updateCodeCoverageSummary(coverageData: TestInterfaces.CodeCoverageData, project: string, buildId: number, onResult: (err: any, statusCode: number) => void): void;
 	    getTestRunCodeCoverage(project: string, runId: number, flags: number, onResult: (err: any, statusCode: number, CodeCoverage: TestInterfaces.TestRunCoverage[]) => void): void;
-	    getTestRunLogs(project: string, runId: number, onResult: (err: any, statusCode: number, MessageLogs: TestInterfaces.TestMessageLogDetails[]) => void): void;
+	    addCustomFields(newFields: TestInterfaces.CustomTestFieldDefinition[], project: string, onResult: (err: any, statusCode: number, ExtensionField: TestInterfaces.CustomTestFieldDefinition[]) => void): void;
+	    queryCustomFields(project: string, scopeFilter: TestInterfaces.CustomTestFieldScope, onResult: (err: any, statusCode: number, ExtensionField: TestInterfaces.CustomTestFieldDefinition[]) => void): void;
+	    getTestRunLogs(project: string, runId: number, onResult: (err: any, statusCode: number, MessageLog: TestInterfaces.TestMessageLogDetails[]) => void): void;
 	    createTestPlan(testPlan: TestInterfaces.PlanUpdateModel, project: string, onResult: (err: any, statusCode: number, Plan: TestInterfaces.TestPlan) => void): void;
 	    getPlanById(project: string, planId: number, onResult: (err: any, statusCode: number, Plan: TestInterfaces.TestPlan) => void): void;
-	    getPlans(project: string, owner: string, skip: number, top: number, includePlanDetails: boolean, filterActivePlans: boolean, onResult: (err: any, statusCode: number, Plans: TestInterfaces.TestPlan[]) => void): void;
+	    getPlans(project: string, owner: string, skip: number, top: number, includePlanDetails: boolean, filterActivePlans: boolean, onResult: (err: any, statusCode: number, Plan: TestInterfaces.TestPlan[]) => void): void;
 	    updateTestPlan(planUpdateModel: TestInterfaces.PlanUpdateModel, project: string, planId: number, onResult: (err: any, statusCode: number, Plan: TestInterfaces.TestPlan) => void): void;
 	    getPoint(project: string, planId: number, suiteId: number, pointIds: number, witFields: string, onResult: (err: any, statusCode: number, Point: TestInterfaces.TestPoint) => void): void;
-	    getPoints(project: string, planId: number, suiteId: number, witFields: string, configurationId: string, testCaseId: string, testPointIds: string, includePointDetails: boolean, skip: number, top: number, onResult: (err: any, statusCode: number, Points: TestInterfaces.TestPoint[]) => void): void;
+	    getPoints(project: string, planId: number, suiteId: number, witFields: string, configurationId: string, testCaseId: string, testPointIds: string, includePointDetails: boolean, skip: number, top: number, onResult: (err: any, statusCode: number, Point: TestInterfaces.TestPoint[]) => void): void;
 	    updateTestPoints(pointUpdateModel: TestInterfaces.PointUpdateModel, project: string, planId: number, suiteId: number, pointIds: string, onResult: (err: any, statusCode: number, Point: TestInterfaces.TestPoint[]) => void): void;
+	    queryReportForBuild(build: TestInterfaces.BuildReference, project: string, sourceWorkflow: string, includeFailureDetails: boolean, buildToCompare: TestInterfaces.BuildReference, onResult: (err: any, statusCode: number, ReportForBuild: TestInterfaces.TestReport) => void): void;
+	    queryReportForTestRun(project: string, testRunId: number, includeFailureDetails: boolean, onResult: (err: any, statusCode: number, ReportForBuild: TestInterfaces.TestReport) => void): void;
 	    getTestIteration(project: string, runId: number, testCaseResultId: number, iterationId: number, includeActionResults: boolean, onResult: (err: any, statusCode: number, Result: TestInterfaces.TestIterationDetailsModel) => void): void;
-	    getTestIterations(project: string, runId: number, testCaseResultId: number, includeActionResults: boolean, onResult: (err: any, statusCode: number, Results: TestInterfaces.TestIterationDetailsModel[]) => void): void;
-	    addTestResultsToTestRun(resultCreateModels: TestInterfaces.TestResultCreateModel[], project: string, runId: number, onResult: (err: any, statusCode: number, Results: TestInterfaces.TestCaseResult[]) => void): void;
+	    getTestIterations(project: string, runId: number, testCaseResultId: number, includeActionResults: boolean, onResult: (err: any, statusCode: number, Result: TestInterfaces.TestIterationDetailsModel[]) => void): void;
+	    addTestResultsToTestRun(resultCreateModels: TestInterfaces.TestResultCreateModel[], project: string, runId: number, onResult: (err: any, statusCode: number, Result: TestInterfaces.TestCaseResult[]) => void): void;
 	    bulkUpdateTestResults(resultUpdateModel: TestInterfaces.TestCaseResultUpdateModel, project: string, runId: number, resultIds: number[], onResult: (err: any, statusCode: number, Result: TestInterfaces.TestCaseResult[]) => void): void;
 	    getTestCaseResultById(project: string, runId: number, testCaseResultId: number, includeIterationDetails: boolean, onResult: (err: any, statusCode: number, Result: TestInterfaces.TestCaseResult) => void): void;
-	    getTestCaseResults(project: string, runId: number, includeIterationDetails: boolean, onResult: (err: any, statusCode: number, Results: TestInterfaces.TestCaseResult[]) => void): void;
-	    updateTestResults(resultUpdateModels: TestInterfaces.TestCaseResultUpdateModel[], project: string, runId: number, onResult: (err: any, statusCode: number, Results: TestInterfaces.TestCaseResult[]) => void): void;
-	    getActionResults(project: string, runId: number, testCaseResultId: number, iterationId: number, actionPath: string, onResult: (err: any, statusCode: number, Results: TestInterfaces.TestActionResultModel[]) => void): void;
-	    getResultParameters(project: string, runId: number, testCaseResultId: number, iterationId: number, paramName: string, onResult: (err: any, statusCode: number, Results: TestInterfaces.TestResultParameterModel[]) => void): void;
+	    getTestCaseResults(project: string, runId: number, includeIterationDetails: boolean, onResult: (err: any, statusCode: number, Result: TestInterfaces.TestCaseResult[]) => void): void;
+	    updateTestResults(resultUpdateModels: TestInterfaces.TestCaseResultUpdateModel[], project: string, runId: number, onResult: (err: any, statusCode: number, Result: TestInterfaces.TestCaseResult[]) => void): void;
+	    getActionResults(project: string, runId: number, testCaseResultId: number, iterationId: number, actionPath: string, onResult: (err: any, statusCode: number, Result: TestInterfaces.TestActionResultModel[]) => void): void;
+	    getResultParameters(project: string, runId: number, testCaseResultId: number, iterationId: number, paramName: string, onResult: (err: any, statusCode: number, Result: TestInterfaces.TestResultParameterModel[]) => void): void;
 	    getTestResultsByQuery(query: TestInterfaces.QueryModel, project: string, includeResultDetails: boolean, includeIterationDetails: boolean, skip: number, top: number, onResult: (err: any, statusCode: number, Result: TestInterfaces.TestCaseResult[]) => void): void;
 	    getTestRunStatistics(project: string, runId: number, onResult: (err: any, statusCode: number, Run: TestInterfaces.TestRunStatistic) => void): void;
 	    getTestRunsByQuery(query: TestInterfaces.QueryModel, project: string, includeRunDetails: boolean, skip: number, top: number, onResult: (err: any, statusCode: number, Run: TestInterfaces.TestRun[]) => void): void;
 	    createTestRun(testRun: TestInterfaces.RunCreateModel, project: string, onResult: (err: any, statusCode: number, Run: TestInterfaces.TestRun) => void): void;
 	    deleteTestRun(project: string, runId: number, onResult: (err: any, statusCode: number) => void): void;
 	    getTestRunById(project: string, runId: number, onResult: (err: any, statusCode: number, Run: TestInterfaces.TestRun) => void): void;
-	    getTestRuns(project: string, buildUri: string, owner: string, tmiRunId: string, planId: number, includeRunDetails: boolean, automated: boolean, skip: number, top: number, onResult: (err: any, statusCode: number, Runs: TestInterfaces.TestRun[]) => void): void;
+	    getTestRuns(project: string, buildUri: string, owner: string, tmiRunId: string, planId: number, includeRunDetails: boolean, automated: boolean, skip: number, top: number, onResult: (err: any, statusCode: number, Run: TestInterfaces.TestRun[]) => void): void;
 	    updateTestRun(runUpdateModel: TestInterfaces.RunUpdateModel, project: string, runId: number, onResult: (err: any, statusCode: number, Run: TestInterfaces.TestRun) => void): void;
-	    addTestCasesToSuite(project: string, planId: number, suiteId: number, testCaseIds: string, onResult: (err: any, statusCode: number, Suites: TestInterfaces.SuiteTestCase[]) => void): void;
+	    addTestCasesToSuite(project: string, planId: number, suiteId: number, testCaseIds: string, onResult: (err: any, statusCode: number, Suite: TestInterfaces.SuiteTestCase[]) => void): void;
 	    getTestCaseById(project: string, planId: number, suiteId: number, testCaseIds: number, onResult: (err: any, statusCode: number, Suite: TestInterfaces.SuiteTestCase) => void): void;
-	    getTestCases(project: string, planId: number, suiteId: number, onResult: (err: any, statusCode: number, Suites: TestInterfaces.SuiteTestCase[]) => void): void;
+	    getTestCases(project: string, planId: number, suiteId: number, onResult: (err: any, statusCode: number, Suite: TestInterfaces.SuiteTestCase[]) => void): void;
 	    removeTestCasesFromSuiteUrl(project: string, planId: number, suiteId: number, testCaseIds: string, onResult: (err: any, statusCode: number) => void): void;
 	    createTestSuite(testSuite: TestInterfaces.SuiteCreateModel, project: string, planId: number, suiteId: number, onResult: (err: any, statusCode: number, Suite: TestInterfaces.TestSuite[]) => void): void;
 	    deleteTestSuite(project: string, planId: number, suiteId: number, onResult: (err: any, statusCode: number) => void): void;
 	    getTestSuiteById(project: string, planId: number, suiteId: number, includeChildSuites: boolean, onResult: (err: any, statusCode: number, Suite: TestInterfaces.TestSuite) => void): void;
-	    getTestSuitesForPlan(project: string, planId: number, includeSuites: boolean, skip: number, top: number, onResult: (err: any, statusCode: number, Suites: TestInterfaces.TestSuite[]) => void): void;
+	    getTestSuitesForPlan(project: string, planId: number, includeSuites: boolean, skip: number, top: number, onResult: (err: any, statusCode: number, Suite: TestInterfaces.TestSuite[]) => void): void;
 	    updateTestSuite(suiteUpdateModel: TestInterfaces.SuiteUpdateModel, project: string, planId: number, suiteId: number, onResult: (err: any, statusCode: number, Suite: TestInterfaces.TestSuite) => void): void;
-	    getSuitesByTestCaseId(testCaseId: number, onResult: (err: any, statusCode: number, Suites: TestInterfaces.TestSuite[]) => void): void;
+	    getSuitesByTestCaseId(testCaseId: number, onResult: (err: any, statusCode: number, Suite: TestInterfaces.TestSuite[]) => void): void;
+	    queryFailureDetailsForBuild(build: TestInterfaces.BuildReference, project: string, sourceWorkflow: string, buildToCompare: TestInterfaces.BuildReference, onResult: (err: any, statusCode: number, TestFailure: TestInterfaces.TestFailures) => void): void;
+	    queryFailureDetailsForTestRun(project: string, testRunId: number, onResult: (err: any, statusCode: number, TestFailure: TestInterfaces.TestFailures) => void): void;
 	    createTestSettings(testSettings: TestInterfaces.TestSettings, project: string, onResult: (err: any, statusCode: number, TestSetting: number) => void): void;
 	    deleteTestSettings(project: string, testSettingsId: number, onResult: (err: any, statusCode: number) => void): void;
 	    getTestSettingsById(project: string, testSettingsId: number, onResult: (err: any, statusCode: number, TestSetting: TestInterfaces.TestSettings) => void): void;
@@ -8863,6 +9599,8 @@ declare module 'vso-node-api/TestApi' {
 	    getBuildCodeCoverage(project: string, buildId: number, flags: number): Q.Promise<TestInterfaces.BuildCoverage[]>;
 	    getCodeCoverageSummary(project: string, buildId: number, deltaBuildId?: number): Q.Promise<TestInterfaces.CodeCoverageSummary>;
 	    getTestRunCodeCoverage(project: string, runId: number, flags: number): Q.Promise<TestInterfaces.TestRunCoverage[]>;
+	    addCustomFields(newFields: TestInterfaces.CustomTestFieldDefinition[], project: string): Q.Promise<TestInterfaces.CustomTestFieldDefinition[]>;
+	    queryCustomFields(project: string, scopeFilter: TestInterfaces.CustomTestFieldScope): Q.Promise<TestInterfaces.CustomTestFieldDefinition[]>;
 	    getTestRunLogs(project: string, runId: number): Q.Promise<TestInterfaces.TestMessageLogDetails[]>;
 	    createTestPlan(testPlan: TestInterfaces.PlanUpdateModel, project: string): Q.Promise<TestInterfaces.TestPlan>;
 	    getPlanById(project: string, planId: number): Q.Promise<TestInterfaces.TestPlan>;
@@ -8871,6 +9609,8 @@ declare module 'vso-node-api/TestApi' {
 	    getPoint(project: string, planId: number, suiteId: number, pointIds: number, witFields?: string): Q.Promise<TestInterfaces.TestPoint>;
 	    getPoints(project: string, planId: number, suiteId: number, witFields?: string, configurationId?: string, testCaseId?: string, testPointIds?: string, includePointDetails?: boolean, skip?: number, top?: number): Q.Promise<TestInterfaces.TestPoint[]>;
 	    updateTestPoints(pointUpdateModel: TestInterfaces.PointUpdateModel, project: string, planId: number, suiteId: number, pointIds: string): Q.Promise<TestInterfaces.TestPoint[]>;
+	    queryReportForBuild(build: TestInterfaces.BuildReference, project: string, sourceWorkflow: string, includeFailureDetails: boolean, buildToCompare: TestInterfaces.BuildReference): Q.Promise<TestInterfaces.TestReport>;
+	    queryReportForTestRun(project: string, testRunId: number, includeFailureDetails: boolean): Q.Promise<TestInterfaces.TestReport>;
 	    getTestIteration(project: string, runId: number, testCaseResultId: number, iterationId: number, includeActionResults?: boolean): Q.Promise<TestInterfaces.TestIterationDetailsModel>;
 	    getTestIterations(project: string, runId: number, testCaseResultId: number, includeActionResults?: boolean): Q.Promise<TestInterfaces.TestIterationDetailsModel[]>;
 	    addTestResultsToTestRun(resultCreateModels: TestInterfaces.TestResultCreateModel[], project: string, runId: number): Q.Promise<TestInterfaces.TestCaseResult[]>;
@@ -8895,6 +9635,8 @@ declare module 'vso-node-api/TestApi' {
 	    getTestSuitesForPlan(project: string, planId: number, includeSuites?: boolean, skip?: number, top?: number): Q.Promise<TestInterfaces.TestSuite[]>;
 	    updateTestSuite(suiteUpdateModel: TestInterfaces.SuiteUpdateModel, project: string, planId: number, suiteId: number): Q.Promise<TestInterfaces.TestSuite>;
 	    getSuitesByTestCaseId(testCaseId: number): Q.Promise<TestInterfaces.TestSuite[]>;
+	    queryFailureDetailsForBuild(build: TestInterfaces.BuildReference, project: string, sourceWorkflow: string, buildToCompare: TestInterfaces.BuildReference): Q.Promise<TestInterfaces.TestFailures>;
+	    queryFailureDetailsForTestRun(project: string, testRunId: number): Q.Promise<TestInterfaces.TestFailures>;
 	    createTestSettings(testSettings: TestInterfaces.TestSettings, project: string): Q.Promise<number>;
 	    getTestSettingsById(project: string, testSettingsId: number): Q.Promise<TestInterfaces.TestSettings>;
 	}
@@ -8930,14 +9672,14 @@ declare module 'vso-node-api/TestApi' {
 	     */
 	    getCodeCoverageSummary(project: string, buildId: number, deltaBuildId: number, onResult: (err: any, statusCode: number, CodeCoverage: TestInterfaces.CodeCoverageSummary) => void): void;
 	    /**
-	     * http://(tfsserver):8080/tfs/DefaultCollection/_apis/test/CodeCoverage?build=10 Request: Json of code coverage summary
+	     * http://(tfsserver):8080/tfs/DefaultCollection/_apis/test/CodeCoverage?buildId=10 Request: Json of code coverage summary
 	     *
 	     * @param {TestInterfaces.CodeCoverageData} coverageData
 	     * @param {string} project - Project ID or project name
-	     * @param {number} build
+	     * @param {number} buildId
 	     * @param onResult callback function
 	     */
-	    updateCodeCoverageSummary(coverageData: TestInterfaces.CodeCoverageData, project: string, build: number, onResult: (err: any, statusCode: number) => void): void;
+	    updateCodeCoverageSummary(coverageData: TestInterfaces.CodeCoverageData, project: string, buildId: number, onResult: (err: any, statusCode: number) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} runId
@@ -8946,11 +9688,23 @@ declare module 'vso-node-api/TestApi' {
 	     */
 	    getTestRunCodeCoverage(project: string, runId: number, flags: number, onResult: (err: any, statusCode: number, CodeCoverage: TestInterfaces.TestRunCoverage[]) => void): void;
 	    /**
+	     * @param {TestInterfaces.CustomTestFieldDefinition[]} newFields
+	     * @param {string} project - Project ID or project name
+	     * @param onResult callback function with the resulting TestInterfaces.CustomTestFieldDefinition[]
+	     */
+	    addCustomFields(newFields: TestInterfaces.CustomTestFieldDefinition[], project: string, onResult: (err: any, statusCode: number, ExtensionField: TestInterfaces.CustomTestFieldDefinition[]) => void): void;
+	    /**
+	     * @param {string} project - Project ID or project name
+	     * @param {TestInterfaces.CustomTestFieldScope} scopeFilter
+	     * @param onResult callback function with the resulting TestInterfaces.CustomTestFieldDefinition[]
+	     */
+	    queryCustomFields(project: string, scopeFilter: TestInterfaces.CustomTestFieldScope, onResult: (err: any, statusCode: number, ExtensionField: TestInterfaces.CustomTestFieldDefinition[]) => void): void;
+	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} runId
 	     * @param onResult callback function with the resulting TestInterfaces.TestMessageLogDetails[]
 	     */
-	    getTestRunLogs(project: string, runId: number, onResult: (err: any, statusCode: number, MessageLogs: TestInterfaces.TestMessageLogDetails[]) => void): void;
+	    getTestRunLogs(project: string, runId: number, onResult: (err: any, statusCode: number, MessageLog: TestInterfaces.TestMessageLogDetails[]) => void): void;
 	    /**
 	     * @param {TestInterfaces.PlanUpdateModel} testPlan
 	     * @param {string} project - Project ID or project name
@@ -8972,7 +9726,7 @@ declare module 'vso-node-api/TestApi' {
 	     * @param {boolean} filterActivePlans
 	     * @param onResult callback function with the resulting TestInterfaces.TestPlan[]
 	     */
-	    getPlans(project: string, owner: string, skip: number, top: number, includePlanDetails: boolean, filterActivePlans: boolean, onResult: (err: any, statusCode: number, Plans: TestInterfaces.TestPlan[]) => void): void;
+	    getPlans(project: string, owner: string, skip: number, top: number, includePlanDetails: boolean, filterActivePlans: boolean, onResult: (err: any, statusCode: number, Plan: TestInterfaces.TestPlan[]) => void): void;
 	    /**
 	     * @param {TestInterfaces.PlanUpdateModel} planUpdateModel
 	     * @param {string} project - Project ID or project name
@@ -9002,7 +9756,7 @@ declare module 'vso-node-api/TestApi' {
 	     * @param {number} top
 	     * @param onResult callback function with the resulting TestInterfaces.TestPoint[]
 	     */
-	    getPoints(project: string, planId: number, suiteId: number, witFields: string, configurationId: string, testCaseId: string, testPointIds: string, includePointDetails: boolean, skip: number, top: number, onResult: (err: any, statusCode: number, Points: TestInterfaces.TestPoint[]) => void): void;
+	    getPoints(project: string, planId: number, suiteId: number, witFields: string, configurationId: string, testCaseId: string, testPointIds: string, includePointDetails: boolean, skip: number, top: number, onResult: (err: any, statusCode: number, Point: TestInterfaces.TestPoint[]) => void): void;
 	    /**
 	     * @param {TestInterfaces.PointUpdateModel} pointUpdateModel
 	     * @param {string} project - Project ID or project name
@@ -9012,6 +9766,22 @@ declare module 'vso-node-api/TestApi' {
 	     * @param onResult callback function with the resulting TestInterfaces.TestPoint[]
 	     */
 	    updateTestPoints(pointUpdateModel: TestInterfaces.PointUpdateModel, project: string, planId: number, suiteId: number, pointIds: string, onResult: (err: any, statusCode: number, Point: TestInterfaces.TestPoint[]) => void): void;
+	    /**
+	     * @param {TestInterfaces.BuildReference} build
+	     * @param {string} project - Project ID or project name
+	     * @param {string} sourceWorkflow
+	     * @param {boolean} includeFailureDetails
+	     * @param {TestInterfaces.BuildReference} buildToCompare
+	     * @param onResult callback function with the resulting TestInterfaces.TestReport
+	     */
+	    queryReportForBuild(build: TestInterfaces.BuildReference, project: string, sourceWorkflow: string, includeFailureDetails: boolean, buildToCompare: TestInterfaces.BuildReference, onResult: (err: any, statusCode: number, ReportForBuild: TestInterfaces.TestReport) => void): void;
+	    /**
+	     * @param {string} project - Project ID or project name
+	     * @param {number} testRunId
+	     * @param {boolean} includeFailureDetails
+	     * @param onResult callback function with the resulting TestInterfaces.TestReport
+	     */
+	    queryReportForTestRun(project: string, testRunId: number, includeFailureDetails: boolean, onResult: (err: any, statusCode: number, ReportForBuild: TestInterfaces.TestReport) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} runId
@@ -9028,14 +9798,14 @@ declare module 'vso-node-api/TestApi' {
 	     * @param {boolean} includeActionResults
 	     * @param onResult callback function with the resulting TestInterfaces.TestIterationDetailsModel[]
 	     */
-	    getTestIterations(project: string, runId: number, testCaseResultId: number, includeActionResults: boolean, onResult: (err: any, statusCode: number, Results: TestInterfaces.TestIterationDetailsModel[]) => void): void;
+	    getTestIterations(project: string, runId: number, testCaseResultId: number, includeActionResults: boolean, onResult: (err: any, statusCode: number, Result: TestInterfaces.TestIterationDetailsModel[]) => void): void;
 	    /**
 	     * @param {TestInterfaces.TestResultCreateModel[]} resultCreateModels
 	     * @param {string} project - Project ID or project name
 	     * @param {number} runId
 	     * @param onResult callback function with the resulting TestInterfaces.TestCaseResult[]
 	     */
-	    addTestResultsToTestRun(resultCreateModels: TestInterfaces.TestResultCreateModel[], project: string, runId: number, onResult: (err: any, statusCode: number, Results: TestInterfaces.TestCaseResult[]) => void): void;
+	    addTestResultsToTestRun(resultCreateModels: TestInterfaces.TestResultCreateModel[], project: string, runId: number, onResult: (err: any, statusCode: number, Result: TestInterfaces.TestCaseResult[]) => void): void;
 	    /**
 	     * @param {TestInterfaces.TestCaseResultUpdateModel} resultUpdateModel
 	     * @param {string} project - Project ID or project name
@@ -9058,14 +9828,14 @@ declare module 'vso-node-api/TestApi' {
 	     * @param {boolean} includeIterationDetails
 	     * @param onResult callback function with the resulting TestInterfaces.TestCaseResult[]
 	     */
-	    getTestCaseResults(project: string, runId: number, includeIterationDetails: boolean, onResult: (err: any, statusCode: number, Results: TestInterfaces.TestCaseResult[]) => void): void;
+	    getTestCaseResults(project: string, runId: number, includeIterationDetails: boolean, onResult: (err: any, statusCode: number, Result: TestInterfaces.TestCaseResult[]) => void): void;
 	    /**
 	     * @param {TestInterfaces.TestCaseResultUpdateModel[]} resultUpdateModels
 	     * @param {string} project - Project ID or project name
 	     * @param {number} runId
 	     * @param onResult callback function with the resulting TestInterfaces.TestCaseResult[]
 	     */
-	    updateTestResults(resultUpdateModels: TestInterfaces.TestCaseResultUpdateModel[], project: string, runId: number, onResult: (err: any, statusCode: number, Results: TestInterfaces.TestCaseResult[]) => void): void;
+	    updateTestResults(resultUpdateModels: TestInterfaces.TestCaseResultUpdateModel[], project: string, runId: number, onResult: (err: any, statusCode: number, Result: TestInterfaces.TestCaseResult[]) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} runId
@@ -9074,7 +9844,7 @@ declare module 'vso-node-api/TestApi' {
 	     * @param {string} actionPath
 	     * @param onResult callback function with the resulting TestInterfaces.TestActionResultModel[]
 	     */
-	    getActionResults(project: string, runId: number, testCaseResultId: number, iterationId: number, actionPath: string, onResult: (err: any, statusCode: number, Results: TestInterfaces.TestActionResultModel[]) => void): void;
+	    getActionResults(project: string, runId: number, testCaseResultId: number, iterationId: number, actionPath: string, onResult: (err: any, statusCode: number, Result: TestInterfaces.TestActionResultModel[]) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} runId
@@ -9083,7 +9853,7 @@ declare module 'vso-node-api/TestApi' {
 	     * @param {string} paramName
 	     * @param onResult callback function with the resulting TestInterfaces.TestResultParameterModel[]
 	     */
-	    getResultParameters(project: string, runId: number, testCaseResultId: number, iterationId: number, paramName: string, onResult: (err: any, statusCode: number, Results: TestInterfaces.TestResultParameterModel[]) => void): void;
+	    getResultParameters(project: string, runId: number, testCaseResultId: number, iterationId: number, paramName: string, onResult: (err: any, statusCode: number, Result: TestInterfaces.TestResultParameterModel[]) => void): void;
 	    /**
 	     * @param {TestInterfaces.QueryModel} query
 	     * @param {string} project - Project ID or project name
@@ -9139,7 +9909,7 @@ declare module 'vso-node-api/TestApi' {
 	     * @param {number} top
 	     * @param onResult callback function with the resulting TestInterfaces.TestRun[]
 	     */
-	    getTestRuns(project: string, buildUri: string, owner: string, tmiRunId: string, planId: number, includeRunDetails: boolean, automated: boolean, skip: number, top: number, onResult: (err: any, statusCode: number, Runs: TestInterfaces.TestRun[]) => void): void;
+	    getTestRuns(project: string, buildUri: string, owner: string, tmiRunId: string, planId: number, includeRunDetails: boolean, automated: boolean, skip: number, top: number, onResult: (err: any, statusCode: number, Run: TestInterfaces.TestRun[]) => void): void;
 	    /**
 	     * @param {TestInterfaces.RunUpdateModel} runUpdateModel
 	     * @param {string} project - Project ID or project name
@@ -9154,7 +9924,7 @@ declare module 'vso-node-api/TestApi' {
 	     * @param {string} testCaseIds
 	     * @param onResult callback function with the resulting TestInterfaces.SuiteTestCase[]
 	     */
-	    addTestCasesToSuite(project: string, planId: number, suiteId: number, testCaseIds: string, onResult: (err: any, statusCode: number, Suites: TestInterfaces.SuiteTestCase[]) => void): void;
+	    addTestCasesToSuite(project: string, planId: number, suiteId: number, testCaseIds: string, onResult: (err: any, statusCode: number, Suite: TestInterfaces.SuiteTestCase[]) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} planId
@@ -9169,7 +9939,7 @@ declare module 'vso-node-api/TestApi' {
 	     * @param {number} suiteId
 	     * @param onResult callback function with the resulting TestInterfaces.SuiteTestCase[]
 	     */
-	    getTestCases(project: string, planId: number, suiteId: number, onResult: (err: any, statusCode: number, Suites: TestInterfaces.SuiteTestCase[]) => void): void;
+	    getTestCases(project: string, planId: number, suiteId: number, onResult: (err: any, statusCode: number, Suite: TestInterfaces.SuiteTestCase[]) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} planId
@@ -9209,7 +9979,7 @@ declare module 'vso-node-api/TestApi' {
 	     * @param {number} top
 	     * @param onResult callback function with the resulting TestInterfaces.TestSuite[]
 	     */
-	    getTestSuitesForPlan(project: string, planId: number, includeSuites: boolean, skip: number, top: number, onResult: (err: any, statusCode: number, Suites: TestInterfaces.TestSuite[]) => void): void;
+	    getTestSuitesForPlan(project: string, planId: number, includeSuites: boolean, skip: number, top: number, onResult: (err: any, statusCode: number, Suite: TestInterfaces.TestSuite[]) => void): void;
 	    /**
 	     * @param {TestInterfaces.SuiteUpdateModel} suiteUpdateModel
 	     * @param {string} project - Project ID or project name
@@ -9222,7 +9992,21 @@ declare module 'vso-node-api/TestApi' {
 	     * @param {number} testCaseId
 	     * @param onResult callback function with the resulting TestInterfaces.TestSuite[]
 	     */
-	    getSuitesByTestCaseId(testCaseId: number, onResult: (err: any, statusCode: number, Suites: TestInterfaces.TestSuite[]) => void): void;
+	    getSuitesByTestCaseId(testCaseId: number, onResult: (err: any, statusCode: number, Suite: TestInterfaces.TestSuite[]) => void): void;
+	    /**
+	     * @param {TestInterfaces.BuildReference} build
+	     * @param {string} project - Project ID or project name
+	     * @param {string} sourceWorkflow
+	     * @param {TestInterfaces.BuildReference} buildToCompare
+	     * @param onResult callback function with the resulting TestInterfaces.TestFailures
+	     */
+	    queryFailureDetailsForBuild(build: TestInterfaces.BuildReference, project: string, sourceWorkflow: string, buildToCompare: TestInterfaces.BuildReference, onResult: (err: any, statusCode: number, TestFailure: TestInterfaces.TestFailures) => void): void;
+	    /**
+	     * @param {string} project - Project ID or project name
+	     * @param {number} testRunId
+	     * @param onResult callback function with the resulting TestInterfaces.TestFailures
+	     */
+	    queryFailureDetailsForTestRun(project: string, testRunId: number, onResult: (err: any, statusCode: number, TestFailure: TestInterfaces.TestFailures) => void): void;
 	    /**
 	     * @param {TestInterfaces.TestSettings} testSettings
 	     * @param {string} project - Project ID or project name
@@ -9276,6 +10060,16 @@ declare module 'vso-node-api/TestApi' {
 	    * @param {number} flags
 	    */
 	    getTestRunCodeCoverage(project: string, runId: number, flags: number): Q.Promise<TestInterfaces.TestRunCoverage[]>;
+	    /**
+	    * @param {TestInterfaces.CustomTestFieldDefinition[]} newFields
+	    * @param {string} project - Project ID or project name
+	    */
+	    addCustomFields(newFields: TestInterfaces.CustomTestFieldDefinition[], project: string): Q.Promise<TestInterfaces.CustomTestFieldDefinition[]>;
+	    /**
+	    * @param {string} project - Project ID or project name
+	    * @param {TestInterfaces.CustomTestFieldScope} scopeFilter
+	    */
+	    queryCustomFields(project: string, scopeFilter: TestInterfaces.CustomTestFieldScope): Q.Promise<TestInterfaces.CustomTestFieldDefinition[]>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {number} runId
@@ -9335,6 +10129,20 @@ declare module 'vso-node-api/TestApi' {
 	    * @param {string} pointIds
 	    */
 	    updateTestPoints(pointUpdateModel: TestInterfaces.PointUpdateModel, project: string, planId: number, suiteId: number, pointIds: string): Q.Promise<TestInterfaces.TestPoint[]>;
+	    /**
+	    * @param {TestInterfaces.BuildReference} build
+	    * @param {string} project - Project ID or project name
+	    * @param {string} sourceWorkflow
+	    * @param {boolean} includeFailureDetails
+	    * @param {TestInterfaces.BuildReference} buildToCompare
+	    */
+	    queryReportForBuild(build: TestInterfaces.BuildReference, project: string, sourceWorkflow: string, includeFailureDetails: boolean, buildToCompare: TestInterfaces.BuildReference): Q.Promise<TestInterfaces.TestReport>;
+	    /**
+	    * @param {string} project - Project ID or project name
+	    * @param {number} testRunId
+	    * @param {boolean} includeFailureDetails
+	    */
+	    queryReportForTestRun(project: string, testRunId: number, includeFailureDetails: boolean): Q.Promise<TestInterfaces.TestReport>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {number} runId
@@ -9501,6 +10309,18 @@ declare module 'vso-node-api/TestApi' {
 	    * @param {number} testCaseId
 	    */
 	    getSuitesByTestCaseId(testCaseId: number): Q.Promise<TestInterfaces.TestSuite[]>;
+	    /**
+	    * @param {TestInterfaces.BuildReference} build
+	    * @param {string} project - Project ID or project name
+	    * @param {string} sourceWorkflow
+	    * @param {TestInterfaces.BuildReference} buildToCompare
+	    */
+	    queryFailureDetailsForBuild(build: TestInterfaces.BuildReference, project: string, sourceWorkflow: string, buildToCompare: TestInterfaces.BuildReference): Q.Promise<TestInterfaces.TestFailures>;
+	    /**
+	    * @param {string} project - Project ID or project name
+	    * @param {number} testRunId
+	    */
+	    queryFailureDetailsForTestRun(project: string, testRunId: number): Q.Promise<TestInterfaces.TestFailures>;
 	    /**
 	    * @param {TestInterfaces.TestSettings} testSettings
 	    * @param {string} project - Project ID or project name
@@ -10319,6 +11139,7 @@ declare module 'vso-node-api/interfaces/TfvcInterfaces' {
 	    collectionId: string;
 	    hasMoreChanges: boolean;
 	    policyOverride: TfvcPolicyOverrideInfo;
+	    teamProjectIds: string[];
 	    workItems: AssociatedWorkItem[];
 	}
 	export interface TfvcChangesetRef {
@@ -10943,29 +11764,29 @@ declare module 'vso-node-api/TfvcApi' {
 	import TfvcInterfaces = require('vso-node-api/interfaces/TfvcInterfaces');
 	export interface ITfvcApi extends basem.ClientApiBase {
 	    getBranch(path: string, project: string, includeParent: boolean, includeChildren: boolean, onResult: (err: any, statusCode: number, Branche: TfvcInterfaces.TfvcBranch) => void): void;
-	    getBranches(project: string, includeParent: boolean, includeChildren: boolean, includeDeleted: boolean, includeLinks: boolean, onResult: (err: any, statusCode: number, Branches: TfvcInterfaces.TfvcBranch[]) => void): void;
-	    getBranchRefs(scopePath: string, project: string, includeDeleted: boolean, includeLinks: boolean, onResult: (err: any, statusCode: number, Branches: TfvcInterfaces.TfvcBranchRef[]) => void): void;
-	    getChangesetChanges(id: number, skip: number, top: number, onResult: (err: any, statusCode: number, ChangesetChanges: TfvcInterfaces.TfvcChange[]) => void): void;
+	    getBranches(project: string, includeParent: boolean, includeChildren: boolean, includeDeleted: boolean, includeLinks: boolean, onResult: (err: any, statusCode: number, Branche: TfvcInterfaces.TfvcBranch[]) => void): void;
+	    getBranchRefs(scopePath: string, project: string, includeDeleted: boolean, includeLinks: boolean, onResult: (err: any, statusCode: number, Branche: TfvcInterfaces.TfvcBranchRef[]) => void): void;
+	    getChangesetChanges(id: number, skip: number, top: number, onResult: (err: any, statusCode: number, ChangesetChange: TfvcInterfaces.TfvcChange[]) => void): void;
 	    createChangeset(changeset: TfvcInterfaces.TfvcChangeset, project: string, onResult: (err: any, statusCode: number, Changeset: TfvcInterfaces.TfvcChangesetRef) => void): void;
 	    getChangeset(id: number, project: string, maxChangeCount: number, includeDetails: boolean, includeWorkItems: boolean, maxCommentLength: number, includeSourceRename: boolean, skip: number, top: number, orderby: string, searchCriteria: TfvcInterfaces.TfvcChangesetSearchCriteria, onResult: (err: any, statusCode: number, Changeset: TfvcInterfaces.TfvcChangeset) => void): void;
-	    getChangesets(project: string, maxChangeCount: number, includeDetails: boolean, includeWorkItems: boolean, maxCommentLength: number, includeSourceRename: boolean, skip: number, top: number, orderby: string, searchCriteria: TfvcInterfaces.TfvcChangesetSearchCriteria, onResult: (err: any, statusCode: number, Changesets: TfvcInterfaces.TfvcChangesetRef[]) => void): void;
+	    getChangesets(project: string, maxChangeCount: number, includeDetails: boolean, includeWorkItems: boolean, maxCommentLength: number, includeSourceRename: boolean, skip: number, top: number, orderby: string, searchCriteria: TfvcInterfaces.TfvcChangesetSearchCriteria, onResult: (err: any, statusCode: number, Changeset: TfvcInterfaces.TfvcChangesetRef[]) => void): void;
 	    getBatchedChangesets(changesetsRequestData: TfvcInterfaces.TfvcChangesetsRequestData, onResult: (err: any, statusCode: number, ChangesetsBatch: TfvcInterfaces.TfvcChangesetRef[]) => void): void;
-	    getChangesetWorkItems(id: number, onResult: (err: any, statusCode: number, ChangesetWorkItems: TfvcInterfaces.AssociatedWorkItem[]) => void): void;
+	    getChangesetWorkItems(id: number, onResult: (err: any, statusCode: number, ChangesetWorkItem: TfvcInterfaces.AssociatedWorkItem[]) => void): void;
 	    getItemsBatch(itemRequestData: TfvcInterfaces.TfvcItemRequestData, project: string, onResult: (err: any, statusCode: number, ItemBatch: TfvcInterfaces.TfvcItem[][]) => void): void;
 	    getItem(path: string, project: string, fileName: string, download: boolean, scopePath: string, recursionLevel: TfvcInterfaces.VersionControlRecursionType, versionDescriptor: TfvcInterfaces.TfvcVersionDescriptor, onResult: (err: any, statusCode: number, Item: TfvcInterfaces.TfvcItem) => void): void;
 	    getItemContent(path: string, project: string, fileName: string, download: boolean, scopePath: string, recursionLevel: TfvcInterfaces.VersionControlRecursionType, versionDescriptor: TfvcInterfaces.TfvcVersionDescriptor, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
-	    getItems(project: string, scopePath: string, recursionLevel: TfvcInterfaces.VersionControlRecursionType, includeLinks: boolean, versionDescriptor: TfvcInterfaces.TfvcVersionDescriptor, onResult: (err: any, statusCode: number, Items: TfvcInterfaces.TfvcItem[]) => void): void;
+	    getItems(project: string, scopePath: string, recursionLevel: TfvcInterfaces.VersionControlRecursionType, includeLinks: boolean, versionDescriptor: TfvcInterfaces.TfvcVersionDescriptor, onResult: (err: any, statusCode: number, Item: TfvcInterfaces.TfvcItem[]) => void): void;
 	    getItemText(path: string, project: string, fileName: string, download: boolean, scopePath: string, recursionLevel: TfvcInterfaces.VersionControlRecursionType, versionDescriptor: TfvcInterfaces.TfvcVersionDescriptor, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
 	    getItemZip(path: string, project: string, fileName: string, download: boolean, scopePath: string, recursionLevel: TfvcInterfaces.VersionControlRecursionType, versionDescriptor: TfvcInterfaces.TfvcVersionDescriptor, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
-	    getLabelItems(labelId: string, top: number, skip: number, onResult: (err: any, statusCode: number, LabelItems: TfvcInterfaces.TfvcItem[]) => void): void;
+	    getLabelItems(labelId: string, top: number, skip: number, onResult: (err: any, statusCode: number, LabelItem: TfvcInterfaces.TfvcItem[]) => void): void;
 	    getLabel(labelId: string, requestData: TfvcInterfaces.TfvcLabelRequestData, project: string, onResult: (err: any, statusCode: number, Label: TfvcInterfaces.TfvcLabel) => void): void;
-	    getLabels(requestData: TfvcInterfaces.TfvcLabelRequestData, project: string, top: number, skip: number, onResult: (err: any, statusCode: number, Labels: TfvcInterfaces.TfvcLabelRef[]) => void): void;
+	    getLabels(requestData: TfvcInterfaces.TfvcLabelRequestData, project: string, top: number, skip: number, onResult: (err: any, statusCode: number, Label: TfvcInterfaces.TfvcLabelRef[]) => void): void;
 	    getProjectInfo(projectId: string, project: string, onResult: (err: any, statusCode: number, ProjectInfo: TfvcInterfaces.VersionControlProjectInfo) => void): void;
 	    getProjectInfos(project: string, onResult: (err: any, statusCode: number, ProjectInfo: TfvcInterfaces.VersionControlProjectInfo[]) => void): void;
-	    getShelvesetChanges(shelvesetId: string, top: number, skip: number, onResult: (err: any, statusCode: number, ShelvesetChanges: TfvcInterfaces.TfvcChange[]) => void): void;
+	    getShelvesetChanges(shelvesetId: string, top: number, skip: number, onResult: (err: any, statusCode: number, ShelvesetChange: TfvcInterfaces.TfvcChange[]) => void): void;
 	    getShelveset(shelvesetId: string, requestData: TfvcInterfaces.TfvcShelvesetRequestData, onResult: (err: any, statusCode: number, Shelveset: TfvcInterfaces.TfvcShelveset) => void): void;
-	    getShelvesets(requestData: TfvcInterfaces.TfvcShelvesetRequestData, top: number, skip: number, onResult: (err: any, statusCode: number, Shelvesets: TfvcInterfaces.TfvcShelvesetRef[]) => void): void;
-	    getShelvesetWorkItems(shelvesetId: string, onResult: (err: any, statusCode: number, ShelvesetWorkItems: TfvcInterfaces.AssociatedWorkItem[]) => void): void;
+	    getShelvesets(requestData: TfvcInterfaces.TfvcShelvesetRequestData, top: number, skip: number, onResult: (err: any, statusCode: number, Shelveset: TfvcInterfaces.TfvcShelvesetRef[]) => void): void;
+	    getShelvesetWorkItems(shelvesetId: string, onResult: (err: any, statusCode: number, ShelvesetWorkItem: TfvcInterfaces.AssociatedWorkItem[]) => void): void;
 	}
 	export interface IQTfvcApi extends basem.QClientApiBase {
 	    getBranch(path: string, project?: string, includeParent?: boolean, includeChildren?: boolean): Q.Promise<TfvcInterfaces.TfvcBranch>;
@@ -11012,7 +11833,7 @@ declare module 'vso-node-api/TfvcApi' {
 	     * @param {boolean} includeLinks
 	     * @param onResult callback function with the resulting TfvcInterfaces.TfvcBranch[]
 	     */
-	    getBranches(project: string, includeParent: boolean, includeChildren: boolean, includeDeleted: boolean, includeLinks: boolean, onResult: (err: any, statusCode: number, Branches: TfvcInterfaces.TfvcBranch[]) => void): void;
+	    getBranches(project: string, includeParent: boolean, includeChildren: boolean, includeDeleted: boolean, includeLinks: boolean, onResult: (err: any, statusCode: number, Branche: TfvcInterfaces.TfvcBranch[]) => void): void;
 	    /**
 	     * Get branch hierarchies below the specified scopePath
 	     *
@@ -11022,7 +11843,7 @@ declare module 'vso-node-api/TfvcApi' {
 	     * @param {boolean} includeLinks
 	     * @param onResult callback function with the resulting TfvcInterfaces.TfvcBranchRef[]
 	     */
-	    getBranchRefs(scopePath: string, project: string, includeDeleted: boolean, includeLinks: boolean, onResult: (err: any, statusCode: number, Branches: TfvcInterfaces.TfvcBranchRef[]) => void): void;
+	    getBranchRefs(scopePath: string, project: string, includeDeleted: boolean, includeLinks: boolean, onResult: (err: any, statusCode: number, Branche: TfvcInterfaces.TfvcBranchRef[]) => void): void;
 	    /**
 	     * Retrieve Tfvc changes for a given changeset
 	     *
@@ -11031,7 +11852,7 @@ declare module 'vso-node-api/TfvcApi' {
 	     * @param {number} top
 	     * @param onResult callback function with the resulting TfvcInterfaces.TfvcChange[]
 	     */
-	    getChangesetChanges(id: number, skip: number, top: number, onResult: (err: any, statusCode: number, ChangesetChanges: TfvcInterfaces.TfvcChange[]) => void): void;
+	    getChangesetChanges(id: number, skip: number, top: number, onResult: (err: any, statusCode: number, ChangesetChange: TfvcInterfaces.TfvcChange[]) => void): void;
 	    /**
 	     * @param {TfvcInterfaces.TfvcChangeset} changeset
 	     * @param {string} project - Project ID or project name
@@ -11070,7 +11891,7 @@ declare module 'vso-node-api/TfvcApi' {
 	     * @param {TfvcInterfaces.TfvcChangesetSearchCriteria} searchCriteria
 	     * @param onResult callback function with the resulting TfvcInterfaces.TfvcChangesetRef[]
 	     */
-	    getChangesets(project: string, maxChangeCount: number, includeDetails: boolean, includeWorkItems: boolean, maxCommentLength: number, includeSourceRename: boolean, skip: number, top: number, orderby: string, searchCriteria: TfvcInterfaces.TfvcChangesetSearchCriteria, onResult: (err: any, statusCode: number, Changesets: TfvcInterfaces.TfvcChangesetRef[]) => void): void;
+	    getChangesets(project: string, maxChangeCount: number, includeDetails: boolean, includeWorkItems: boolean, maxCommentLength: number, includeSourceRename: boolean, skip: number, top: number, orderby: string, searchCriteria: TfvcInterfaces.TfvcChangesetSearchCriteria, onResult: (err: any, statusCode: number, Changeset: TfvcInterfaces.TfvcChangesetRef[]) => void): void;
 	    /**
 	     * @param {TfvcInterfaces.TfvcChangesetsRequestData} changesetsRequestData
 	     * @param onResult callback function with the resulting TfvcInterfaces.TfvcChangesetRef[]
@@ -11080,7 +11901,7 @@ declare module 'vso-node-api/TfvcApi' {
 	     * @param {number} id
 	     * @param onResult callback function with the resulting TfvcInterfaces.AssociatedWorkItem[]
 	     */
-	    getChangesetWorkItems(id: number, onResult: (err: any, statusCode: number, ChangesetWorkItems: TfvcInterfaces.AssociatedWorkItem[]) => void): void;
+	    getChangesetWorkItems(id: number, onResult: (err: any, statusCode: number, ChangesetWorkItem: TfvcInterfaces.AssociatedWorkItem[]) => void): void;
 	    /**
 	     * Post for retrieving a set of items given a list of paths or a long path. Allows for specifying the recursionLevel and version descriptors for each path.
 	     *
@@ -11125,7 +11946,7 @@ declare module 'vso-node-api/TfvcApi' {
 	     * @param {TfvcInterfaces.TfvcVersionDescriptor} versionDescriptor
 	     * @param onResult callback function with the resulting TfvcInterfaces.TfvcItem[]
 	     */
-	    getItems(project: string, scopePath: string, recursionLevel: TfvcInterfaces.VersionControlRecursionType, includeLinks: boolean, versionDescriptor: TfvcInterfaces.TfvcVersionDescriptor, onResult: (err: any, statusCode: number, Items: TfvcInterfaces.TfvcItem[]) => void): void;
+	    getItems(project: string, scopePath: string, recursionLevel: TfvcInterfaces.VersionControlRecursionType, includeLinks: boolean, versionDescriptor: TfvcInterfaces.TfvcVersionDescriptor, onResult: (err: any, statusCode: number, Item: TfvcInterfaces.TfvcItem[]) => void): void;
 	    /**
 	     * Get Item Metadata and/or Content. The download parameter is to indicate whether the content should be available as a download or just sent as a stream in the response. Doesn't apply to zipped content which is always returned as a download.
 	     *
@@ -11160,7 +11981,7 @@ declare module 'vso-node-api/TfvcApi' {
 	     * @param {number} skip - Number of items to skip
 	     * @param onResult callback function with the resulting TfvcInterfaces.TfvcItem[]
 	     */
-	    getLabelItems(labelId: string, top: number, skip: number, onResult: (err: any, statusCode: number, LabelItems: TfvcInterfaces.TfvcItem[]) => void): void;
+	    getLabelItems(labelId: string, top: number, skip: number, onResult: (err: any, statusCode: number, LabelItem: TfvcInterfaces.TfvcItem[]) => void): void;
 	    /**
 	     * Get a single deep label.
 	     *
@@ -11179,7 +12000,7 @@ declare module 'vso-node-api/TfvcApi' {
 	     * @param {number} skip - Number of labels to skip
 	     * @param onResult callback function with the resulting TfvcInterfaces.TfvcLabelRef[]
 	     */
-	    getLabels(requestData: TfvcInterfaces.TfvcLabelRequestData, project: string, top: number, skip: number, onResult: (err: any, statusCode: number, Labels: TfvcInterfaces.TfvcLabelRef[]) => void): void;
+	    getLabels(requestData: TfvcInterfaces.TfvcLabelRequestData, project: string, top: number, skip: number, onResult: (err: any, statusCode: number, Label: TfvcInterfaces.TfvcLabelRef[]) => void): void;
 	    /**
 	     * Retrieve the version control information for a given Team Project
 	     *
@@ -11201,7 +12022,7 @@ declare module 'vso-node-api/TfvcApi' {
 	     * @param {number} skip - Number of changes to skip
 	     * @param onResult callback function with the resulting TfvcInterfaces.TfvcChange[]
 	     */
-	    getShelvesetChanges(shelvesetId: string, top: number, skip: number, onResult: (err: any, statusCode: number, ShelvesetChanges: TfvcInterfaces.TfvcChange[]) => void): void;
+	    getShelvesetChanges(shelvesetId: string, top: number, skip: number, onResult: (err: any, statusCode: number, ShelvesetChange: TfvcInterfaces.TfvcChange[]) => void): void;
 	    /**
 	     * Get a single deep shelveset.
 	     *
@@ -11218,14 +12039,14 @@ declare module 'vso-node-api/TfvcApi' {
 	     * @param {number} skip - Number of shelvesets to skip
 	     * @param onResult callback function with the resulting TfvcInterfaces.TfvcShelvesetRef[]
 	     */
-	    getShelvesets(requestData: TfvcInterfaces.TfvcShelvesetRequestData, top: number, skip: number, onResult: (err: any, statusCode: number, Shelvesets: TfvcInterfaces.TfvcShelvesetRef[]) => void): void;
+	    getShelvesets(requestData: TfvcInterfaces.TfvcShelvesetRequestData, top: number, skip: number, onResult: (err: any, statusCode: number, Shelveset: TfvcInterfaces.TfvcShelvesetRef[]) => void): void;
 	    /**
 	     * Get work items associated with a shelveset.
 	     *
 	     * @param {string} shelvesetId - Shelveset's unique ID
 	     * @param onResult callback function with the resulting TfvcInterfaces.AssociatedWorkItem[]
 	     */
-	    getShelvesetWorkItems(shelvesetId: string, onResult: (err: any, statusCode: number, ShelvesetWorkItems: TfvcInterfaces.AssociatedWorkItem[]) => void): void;
+	    getShelvesetWorkItems(shelvesetId: string, onResult: (err: any, statusCode: number, ShelvesetWorkItem: TfvcInterfaces.AssociatedWorkItem[]) => void): void;
 	}
 	export class QTfvcApi extends basem.QClientApiBase implements IQTfvcApi {
 	    api: TfvcApi;
@@ -11531,6 +12352,7 @@ declare module 'vso-node-api/interfaces/WorkItemTrackingInterfaces' {
 	}
 	export interface ReportingWorkItemRevisionsFilter {
 	    fields: string[];
+	    includeIdentityRef: boolean;
 	    types: string[];
 	}
 	export interface StreamedBatch<T> {
@@ -11927,41 +12749,41 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	    createAttachment(customHeaders: any, contentStream: NodeJS.ReadableStream, fileName: string, uploadType: string, onResult: (err: any, statusCode: number, attachment: WorkItemTrackingInterfaces.AttachmentReference) => void): void;
 	    getAttachmentContent(id: string, fileName: string, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
 	    getAttachmentZip(id: string, fileName: string, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
-	    getRootNodes(project: string, depth: number, onResult: (err: any, statusCode: number, classificationNodes: WorkItemTrackingInterfaces.WorkItemClassificationNode[]) => void): void;
+	    getRootNodes(project: string, depth: number, onResult: (err: any, statusCode: number, classificationNode: WorkItemTrackingInterfaces.WorkItemClassificationNode[]) => void): void;
 	    createOrUpdateClassificationNode(postedNode: WorkItemTrackingInterfaces.WorkItemClassificationNode, project: string, structureGroup: WorkItemTrackingInterfaces.TreeStructureGroup, path: string, onResult: (err: any, statusCode: number, classificationNode: WorkItemTrackingInterfaces.WorkItemClassificationNode) => void): void;
 	    deleteClassificationNode(project: string, structureGroup: WorkItemTrackingInterfaces.TreeStructureGroup, path: string, reclassifyId: number, onResult: (err: any, statusCode: number) => void): void;
 	    getClassificationNode(project: string, structureGroup: WorkItemTrackingInterfaces.TreeStructureGroup, path: string, depth: number, onResult: (err: any, statusCode: number, classificationNode: WorkItemTrackingInterfaces.WorkItemClassificationNode) => void): void;
 	    updateClassificationNode(postedNode: WorkItemTrackingInterfaces.WorkItemClassificationNode, project: string, structureGroup: WorkItemTrackingInterfaces.TreeStructureGroup, path: string, onResult: (err: any, statusCode: number, classificationNode: WorkItemTrackingInterfaces.WorkItemClassificationNode) => void): void;
 	    getField(field: string, onResult: (err: any, statusCode: number, field: WorkItemTrackingInterfaces.WorkItemField) => void): void;
-	    getFields(onResult: (err: any, statusCode: number, fields: WorkItemTrackingInterfaces.WorkItemField[]) => void): void;
+	    getFields(onResult: (err: any, statusCode: number, field: WorkItemTrackingInterfaces.WorkItemField[]) => void): void;
 	    getHistory(id: number, top: number, skip: number, onResult: (err: any, statusCode: number, history: WorkItemTrackingInterfaces.WorkItemHistory[]) => void): void;
 	    getHistoryById(id: number, revisionNumber: number, onResult: (err: any, statusCode: number, history: WorkItemTrackingInterfaces.WorkItemHistory) => void): void;
 	    createQuery(postedQuery: WorkItemTrackingInterfaces.QueryHierarchyItem, project: string, query: string, onResult: (err: any, statusCode: number, querie: WorkItemTrackingInterfaces.QueryHierarchyItem) => void): void;
 	    deleteQuery(project: string, query: string, onResult: (err: any, statusCode: number) => void): void;
-	    getQueries(project: string, expand: WorkItemTrackingInterfaces.QueryExpand, depth: number, includeDeleted: boolean, onResult: (err: any, statusCode: number, queries: WorkItemTrackingInterfaces.QueryHierarchyItem[]) => void): void;
+	    getQueries(project: string, expand: WorkItemTrackingInterfaces.QueryExpand, depth: number, includeDeleted: boolean, onResult: (err: any, statusCode: number, querie: WorkItemTrackingInterfaces.QueryHierarchyItem[]) => void): void;
 	    getQuery(project: string, query: string, expand: WorkItemTrackingInterfaces.QueryExpand, depth: number, includeDeleted: boolean, onResult: (err: any, statusCode: number, querie: WorkItemTrackingInterfaces.QueryHierarchyItem) => void): void;
 	    updateQuery(queryUpdate: WorkItemTrackingInterfaces.QueryHierarchyItem, project: string, query: string, undeleteDescendants: boolean, onResult: (err: any, statusCode: number, querie: WorkItemTrackingInterfaces.QueryHierarchyItem) => void): void;
 	    getRevision(id: number, revisionNumber: number, expand: WorkItemTrackingInterfaces.WorkItemExpand, onResult: (err: any, statusCode: number, revision: WorkItemTrackingInterfaces.WorkItem) => void): void;
-	    getRevisions(id: number, top: number, skip: number, expand: WorkItemTrackingInterfaces.WorkItemExpand, onResult: (err: any, statusCode: number, revisions: WorkItemTrackingInterfaces.WorkItem[]) => void): void;
+	    getRevisions(id: number, top: number, skip: number, expand: WorkItemTrackingInterfaces.WorkItemExpand, onResult: (err: any, statusCode: number, revision: WorkItemTrackingInterfaces.WorkItem[]) => void): void;
 	    evaluateRulesOnField(ruleEngineInput: WorkItemTrackingInterfaces.FieldsToEvaluate, onResult: (err: any, statusCode: number) => void): void;
 	    getUpdate(id: number, updateNumber: number, onResult: (err: any, statusCode: number, update: WorkItemTrackingInterfaces.WorkItemUpdate) => void): void;
-	    getUpdates(id: number, top: number, skip: number, onResult: (err: any, statusCode: number, updates: WorkItemTrackingInterfaces.WorkItemUpdate[]) => void): void;
+	    getUpdates(id: number, top: number, skip: number, onResult: (err: any, statusCode: number, update: WorkItemTrackingInterfaces.WorkItemUpdate[]) => void): void;
 	    queryByWiql(wiql: WorkItemTrackingInterfaces.Wiql, project: string, onResult: (err: any, statusCode: number, wiql: WorkItemTrackingInterfaces.WorkItemQueryResult) => void): void;
 	    queryById(id: string, project: string, onResult: (err: any, statusCode: number, wiql: WorkItemTrackingInterfaces.WorkItemQueryResult) => void): void;
 	    getReportingLinks(project: string, types: string[], watermark: number, onResult: (err: any, statusCode: number, workItemLink: WorkItemTrackingInterfaces.ReportingWorkItemLinksBatch) => void): void;
 	    getRelationType(relation: string, onResult: (err: any, statusCode: number, workItemRelationType: WorkItemTrackingInterfaces.WorkItemRelationType) => void): void;
-	    getRelationTypes(onResult: (err: any, statusCode: number, workItemRelationTypes: WorkItemTrackingInterfaces.WorkItemRelationType[]) => void): void;
-	    readReportingRevisionsGet(project: string, fields: string[], types: string[], watermark: number, onResult: (err: any, statusCode: number, workItemRevision: WorkItemTrackingInterfaces.ReportingWorkItemRevisionsBatch) => void): void;
+	    getRelationTypes(onResult: (err: any, statusCode: number, workItemRelationType: WorkItemTrackingInterfaces.WorkItemRelationType[]) => void): void;
+	    readReportingRevisionsGet(project: string, fields: string[], types: string[], watermark: number, includeIdentityRef: boolean, onResult: (err: any, statusCode: number, workItemRevision: WorkItemTrackingInterfaces.ReportingWorkItemRevisionsBatch) => void): void;
 	    readReportingRevisionsPost(filter: WorkItemTrackingInterfaces.ReportingWorkItemRevisionsFilter, project: string, watermark: number, onResult: (err: any, statusCode: number, workItemRevision: WorkItemTrackingInterfaces.ReportingWorkItemRevisionsBatch) => void): void;
 	    getWorkItem(id: number, fields: string[], asOf: Date, expand: WorkItemTrackingInterfaces.WorkItemExpand, onResult: (err: any, statusCode: number, workItem: WorkItemTrackingInterfaces.WorkItem) => void): void;
-	    getWorkItems(ids: number[], fields: string[], asOf: Date, expand: WorkItemTrackingInterfaces.WorkItemExpand, onResult: (err: any, statusCode: number, workItems: WorkItemTrackingInterfaces.WorkItem[]) => void): void;
+	    getWorkItems(ids: number[], fields: string[], asOf: Date, expand: WorkItemTrackingInterfaces.WorkItemExpand, onResult: (err: any, statusCode: number, workItem: WorkItemTrackingInterfaces.WorkItem[]) => void): void;
 	    updateWorkItem(customHeaders: any, document: VSSInterfaces.JsonPatchDocument, id: number, validateOnly: boolean, bypassRules: boolean, onResult: (err: any, statusCode: number, workItem: WorkItemTrackingInterfaces.WorkItem) => void): void;
 	    getWorkItemTemplate(project: string, type: string, fields: string, asOf: Date, expand: WorkItemTrackingInterfaces.WorkItemExpand, onResult: (err: any, statusCode: number, workItem: WorkItemTrackingInterfaces.WorkItem) => void): void;
 	    updateWorkItemTemplate(customHeaders: any, document: VSSInterfaces.JsonPatchDocument, project: string, type: string, validateOnly: boolean, bypassRules: boolean, onResult: (err: any, statusCode: number, workItem: WorkItemTrackingInterfaces.WorkItem) => void): void;
-	    getWorkItemTypeCategories(project: string, onResult: (err: any, statusCode: number, workItemTypeCategories: WorkItemTrackingInterfaces.WorkItemTypeCategory[]) => void): void;
+	    getWorkItemTypeCategories(project: string, onResult: (err: any, statusCode: number, workItemTypeCategorie: WorkItemTrackingInterfaces.WorkItemTypeCategory[]) => void): void;
 	    getWorkItemTypeCategory(project: string, category: string, onResult: (err: any, statusCode: number, workItemTypeCategorie: WorkItemTrackingInterfaces.WorkItemTypeCategory) => void): void;
 	    getWorkItemType(project: string, type: string, onResult: (err: any, statusCode: number, workItemType: WorkItemTrackingInterfaces.WorkItemType) => void): void;
-	    getWorkItemTypes(project: string, onResult: (err: any, statusCode: number, workItemTypes: WorkItemTrackingInterfaces.WorkItemType[]) => void): void;
+	    getWorkItemTypes(project: string, onResult: (err: any, statusCode: number, workItemType: WorkItemTrackingInterfaces.WorkItemType[]) => void): void;
 	    getDependentFields(project: string, type: string, field: string, onResult: (err: any, statusCode: number, workItemTypesField: WorkItemTrackingInterfaces.FieldDependentRule) => void): void;
 	    exportWorkItemTypeDefinition(project: string, type: string, exportGlobalLists: boolean, onResult: (err: any, statusCode: number, workItemTypeTemplate: WorkItemTrackingInterfaces.WorkItemTypeTemplate) => void): void;
 	    updateWorkItemTypeDefinition(updateModel: WorkItemTrackingInterfaces.WorkItemTypeTemplateUpdateModel, project: string, onResult: (err: any, statusCode: number, workItemTypeTemplate: WorkItemTrackingInterfaces.ProvisioningResult) => void): void;
@@ -11989,7 +12811,7 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	    getReportingLinks(project?: string, types?: string[], watermark?: number): Q.Promise<WorkItemTrackingInterfaces.ReportingWorkItemLinksBatch>;
 	    getRelationType(relation: string): Q.Promise<WorkItemTrackingInterfaces.WorkItemRelationType>;
 	    getRelationTypes(): Q.Promise<WorkItemTrackingInterfaces.WorkItemRelationType[]>;
-	    readReportingRevisionsGet(project?: string, fields?: string[], types?: string[], watermark?: number): Q.Promise<WorkItemTrackingInterfaces.ReportingWorkItemRevisionsBatch>;
+	    readReportingRevisionsGet(project?: string, fields?: string[], types?: string[], watermark?: number, includeIdentityRef?: boolean): Q.Promise<WorkItemTrackingInterfaces.ReportingWorkItemRevisionsBatch>;
 	    readReportingRevisionsPost(filter: WorkItemTrackingInterfaces.ReportingWorkItemRevisionsFilter, project?: string, watermark?: number): Q.Promise<WorkItemTrackingInterfaces.ReportingWorkItemRevisionsBatch>;
 	    getWorkItem(id: number, fields?: string[], asOf?: Date, expand?: WorkItemTrackingInterfaces.WorkItemExpand): Q.Promise<WorkItemTrackingInterfaces.WorkItem>;
 	    getWorkItems(ids: number[], fields?: string[], asOf?: Date, expand?: WorkItemTrackingInterfaces.WorkItemExpand): Q.Promise<WorkItemTrackingInterfaces.WorkItem[]>;
@@ -12014,7 +12836,7 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	     * @param {string} uploadType
 	     * @param onResult callback function with the resulting WorkItemTrackingInterfaces.AttachmentReference
 	     */
-	    createAttachment(customHeaders: any, contentStream: NodeJS.ReadableStream, fileName: string, uploadType: string, onResult: (err: any, statusCode: number, attachment: WorkItemTrackingInterfaces.AttachmentReference) => void): void;
+	    createAttachment(customHeaders: VsoBaseInterfaces.IHeaders, contentStream: NodeJS.ReadableStream, fileName: string, uploadType: string, onResult: (err: any, statusCode: number, attachment: WorkItemTrackingInterfaces.AttachmentReference) => void): void;
 	    /**
 	     * Returns an attachment
 	     *
@@ -12036,7 +12858,7 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	     * @param {number} depth
 	     * @param onResult callback function with the resulting WorkItemTrackingInterfaces.WorkItemClassificationNode[]
 	     */
-	    getRootNodes(project: string, depth: number, onResult: (err: any, statusCode: number, classificationNodes: WorkItemTrackingInterfaces.WorkItemClassificationNode[]) => void): void;
+	    getRootNodes(project: string, depth: number, onResult: (err: any, statusCode: number, classificationNode: WorkItemTrackingInterfaces.WorkItemClassificationNode[]) => void): void;
 	    /**
 	     * @param {WorkItemTrackingInterfaces.WorkItemClassificationNode} postedNode
 	     * @param {string} project - Project ID or project name
@@ -12077,7 +12899,7 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	    /**
 	     * @param onResult callback function with the resulting WorkItemTrackingInterfaces.WorkItemField[]
 	     */
-	    getFields(onResult: (err: any, statusCode: number, fields: WorkItemTrackingInterfaces.WorkItemField[]) => void): void;
+	    getFields(onResult: (err: any, statusCode: number, field: WorkItemTrackingInterfaces.WorkItemField[]) => void): void;
 	    /**
 	     * Returns history of all revision for a given work item ID
 	     *
@@ -12119,7 +12941,7 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	     * @param {boolean} includeDeleted
 	     * @param onResult callback function with the resulting WorkItemTrackingInterfaces.QueryHierarchyItem[]
 	     */
-	    getQueries(project: string, expand: WorkItemTrackingInterfaces.QueryExpand, depth: number, includeDeleted: boolean, onResult: (err: any, statusCode: number, queries: WorkItemTrackingInterfaces.QueryHierarchyItem[]) => void): void;
+	    getQueries(project: string, expand: WorkItemTrackingInterfaces.QueryExpand, depth: number, includeDeleted: boolean, onResult: (err: any, statusCode: number, querie: WorkItemTrackingInterfaces.QueryHierarchyItem[]) => void): void;
 	    /**
 	     * Retrieves a single query by project and either id or path
 	     *
@@ -12157,7 +12979,7 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	     * @param {WorkItemTrackingInterfaces.WorkItemExpand} expand
 	     * @param onResult callback function with the resulting WorkItemTrackingInterfaces.WorkItem[]
 	     */
-	    getRevisions(id: number, top: number, skip: number, expand: WorkItemTrackingInterfaces.WorkItemExpand, onResult: (err: any, statusCode: number, revisions: WorkItemTrackingInterfaces.WorkItem[]) => void): void;
+	    getRevisions(id: number, top: number, skip: number, expand: WorkItemTrackingInterfaces.WorkItemExpand, onResult: (err: any, statusCode: number, revision: WorkItemTrackingInterfaces.WorkItem[]) => void): void;
 	    /**
 	     * Validates the fields values.
 	     *
@@ -12181,7 +13003,7 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	     * @param {number} skip
 	     * @param onResult callback function with the resulting WorkItemTrackingInterfaces.WorkItemUpdate[]
 	     */
-	    getUpdates(id: number, top: number, skip: number, onResult: (err: any, statusCode: number, updates: WorkItemTrackingInterfaces.WorkItemUpdate[]) => void): void;
+	    getUpdates(id: number, top: number, skip: number, onResult: (err: any, statusCode: number, update: WorkItemTrackingInterfaces.WorkItemUpdate[]) => void): void;
 	    /**
 	     * Gets the results of the query.
 	     *
@@ -12215,15 +13037,16 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	    /**
 	     * @param onResult callback function with the resulting WorkItemTrackingInterfaces.WorkItemRelationType[]
 	     */
-	    getRelationTypes(onResult: (err: any, statusCode: number, workItemRelationTypes: WorkItemTrackingInterfaces.WorkItemRelationType[]) => void): void;
+	    getRelationTypes(onResult: (err: any, statusCode: number, workItemRelationType: WorkItemTrackingInterfaces.WorkItemRelationType[]) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {string[]} fields
 	     * @param {string[]} types
 	     * @param {number} watermark
+	     * @param {boolean} includeIdentityRef
 	     * @param onResult callback function with the resulting WorkItemTrackingInterfaces.ReportingWorkItemRevisionsBatch
 	     */
-	    readReportingRevisionsGet(project: string, fields: string[], types: string[], watermark: number, onResult: (err: any, statusCode: number, workItemRevision: WorkItemTrackingInterfaces.ReportingWorkItemRevisionsBatch) => void): void;
+	    readReportingRevisionsGet(project: string, fields: string[], types: string[], watermark: number, includeIdentityRef: boolean, onResult: (err: any, statusCode: number, workItemRevision: WorkItemTrackingInterfaces.ReportingWorkItemRevisionsBatch) => void): void;
 	    /**
 	     * @param {WorkItemTrackingInterfaces.ReportingWorkItemRevisionsFilter} filter
 	     * @param {string} project - Project ID or project name
@@ -12250,7 +13073,7 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	     * @param {WorkItemTrackingInterfaces.WorkItemExpand} expand
 	     * @param onResult callback function with the resulting WorkItemTrackingInterfaces.WorkItem[]
 	     */
-	    getWorkItems(ids: number[], fields: string[], asOf: Date, expand: WorkItemTrackingInterfaces.WorkItemExpand, onResult: (err: any, statusCode: number, workItems: WorkItemTrackingInterfaces.WorkItem[]) => void): void;
+	    getWorkItems(ids: number[], fields: string[], asOf: Date, expand: WorkItemTrackingInterfaces.WorkItemExpand, onResult: (err: any, statusCode: number, workItem: WorkItemTrackingInterfaces.WorkItem[]) => void): void;
 	    /**
 	     * @param {VSSInterfaces.JsonPatchDocument} document
 	     * @param {number} id
@@ -12258,7 +13081,7 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	     * @param {boolean} bypassRules
 	     * @param onResult callback function with the resulting WorkItemTrackingInterfaces.WorkItem
 	     */
-	    updateWorkItem(customHeaders: any, document: VSSInterfaces.JsonPatchDocument, id: number, validateOnly: boolean, bypassRules: boolean, onResult: (err: any, statusCode: number, workItem: WorkItemTrackingInterfaces.WorkItem) => void): void;
+	    updateWorkItem(customHeaders: VsoBaseInterfaces.IHeaders, document: VSSInterfaces.JsonPatchDocument, id: number, validateOnly: boolean, bypassRules: boolean, onResult: (err: any, statusCode: number, workItem: WorkItemTrackingInterfaces.WorkItem) => void): void;
 	    /**
 	     * Returns a single work item from a template
 	     *
@@ -12278,12 +13101,12 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	     * @param {boolean} bypassRules
 	     * @param onResult callback function with the resulting WorkItemTrackingInterfaces.WorkItem
 	     */
-	    updateWorkItemTemplate(customHeaders: any, document: VSSInterfaces.JsonPatchDocument, project: string, type: string, validateOnly: boolean, bypassRules: boolean, onResult: (err: any, statusCode: number, workItem: WorkItemTrackingInterfaces.WorkItem) => void): void;
+	    updateWorkItemTemplate(customHeaders: VsoBaseInterfaces.IHeaders, document: VSSInterfaces.JsonPatchDocument, project: string, type: string, validateOnly: boolean, bypassRules: boolean, onResult: (err: any, statusCode: number, workItem: WorkItemTrackingInterfaces.WorkItem) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param onResult callback function with the resulting WorkItemTrackingInterfaces.WorkItemTypeCategory[]
 	     */
-	    getWorkItemTypeCategories(project: string, onResult: (err: any, statusCode: number, workItemTypeCategories: WorkItemTrackingInterfaces.WorkItemTypeCategory[]) => void): void;
+	    getWorkItemTypeCategories(project: string, onResult: (err: any, statusCode: number, workItemTypeCategorie: WorkItemTrackingInterfaces.WorkItemTypeCategory[]) => void): void;
 	    /**
 	     * Returns a the deltas between work item revisions
 	     *
@@ -12304,7 +13127,7 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	     * @param {string} project - Project ID or project name
 	     * @param onResult callback function with the resulting WorkItemTrackingInterfaces.WorkItemType[]
 	     */
-	    getWorkItemTypes(project: string, onResult: (err: any, statusCode: number, workItemTypes: WorkItemTrackingInterfaces.WorkItemType[]) => void): void;
+	    getWorkItemTypes(project: string, onResult: (err: any, statusCode: number, workItemType: WorkItemTrackingInterfaces.WorkItemType[]) => void): void;
 	    /**
 	     * Returns the dependent fields for the corresponding workitem type and fieldname
 	     *
@@ -12491,8 +13314,9 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	    * @param {string[]} fields
 	    * @param {string[]} types
 	    * @param {number} watermark
+	    * @param {boolean} includeIdentityRef
 	    */
-	    readReportingRevisionsGet(project?: string, fields?: string[], types?: string[], watermark?: number): Q.Promise<WorkItemTrackingInterfaces.ReportingWorkItemRevisionsBatch>;
+	    readReportingRevisionsGet(project?: string, fields?: string[], types?: string[], watermark?: number, includeIdentityRef?: boolean): Q.Promise<WorkItemTrackingInterfaces.ReportingWorkItemRevisionsBatch>;
 	    /**
 	    * @param {WorkItemTrackingInterfaces.ReportingWorkItemRevisionsFilter} filter
 	    * @param {string} project - Project ID or project name
@@ -12626,6 +13450,7 @@ declare module 'vso-node-api/WebApi' {
 	import buildm = require('vso-node-api/BuildApi');
 	import corem = require('vso-node-api/CoreApi');
 	import filecontainerm = require('vso-node-api/FileContainerApi');
+	import gallerym = require('vso-node-api/GalleryApi');
 	import gitm = require('vso-node-api/GitApi');
 	import taskagentm = require('vso-node-api/TaskAgentApi');
 	import taskm = require('vso-node-api/TaskApi');
@@ -12658,6 +13483,8 @@ declare module 'vso-node-api/WebApi' {
 	    getQCoreApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): corem.IQCoreApi;
 	    getFileContainerApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): filecontainerm.IFileContainerApi;
 	    getQFileContainerApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): filecontainerm.IQFileContainerApi;
+	    getGalleryApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): gallerym.IGalleryApi;
+	    getQGalleryApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): gallerym.IQGalleryApi;
 	    getGitApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): gitm.IGitApi;
 	    getQGitApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): gitm.IQGitApi;
 	    getTaskApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): taskm.ITaskApi;

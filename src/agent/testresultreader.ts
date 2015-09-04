@@ -1,4 +1,5 @@
-import ifm = require('./api/interfaces');
+import ifm = require('./interfaces');
+import testifm = require('vso-node-api/interfaces/TestInterfaces');
 import trp = require('./testrunpublisher');
 import utilities = require('./utilities');
 
@@ -9,7 +10,7 @@ var Q = require('q');
 
 export class JUnitResultReader implements trp.IResultReader {
 
-    public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRun2> {
+    public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRunWithResults> {
         return new ResultReader("junit").readResults(file, runContext);
     }
           
@@ -21,7 +22,7 @@ export class JUnitResultReader implements trp.IResultReader {
 //-----------------------------------------------------
 export class NUnitResultReader implements trp.IResultReader {
     
-    public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRun2> {
+    public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRunWithResults> {
         return  new ResultReader("nunit").readResults(file, runContext);
     }    
 
@@ -29,7 +30,7 @@ export class NUnitResultReader implements trp.IResultReader {
 
 export class XUnitResultReader implements trp.IResultReader {
 
-    public readResults(file: string, runContext: trp.TestRunContext): Q.Promise<ifm.TestRun2> {
+    public readResults(file: string, runContext: trp.TestRunContext): Q.Promise<ifm.TestRunWithResults> {
         return new ResultReader("xunit").readResults(file, runContext);
     }
 
@@ -40,7 +41,7 @@ export class TestSuiteSummary {
     host: string;
     timeStamp: Date;
     duration: number;
-    results: ifm.TestRunResult[];
+    results: testifm.TestResultCreateModel[];
 
     constructor() {
         this.name = "JUnit";
@@ -62,7 +63,7 @@ export class ResultReader {
         this.type = readerType;
     }
 
-    public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRun2> {
+    public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRunWithResults> {
         var defer = Q.defer(); 
         var _this = this;
 
@@ -78,10 +79,10 @@ export class ResultReader {
         return defer.promise;
     }
 
-    private readTestRunData(contents: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRun2> {
+    private readTestRunData(contents: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRunWithResults> {
         var defer = Q.defer(); 
       
-        var testRun2 : ifm.TestRun2;
+        var testRun2 : ifm.TestRunWithResults;
         var _this = this;
 
         xmlreader.read(contents, function (err, res) {
@@ -119,7 +120,7 @@ export class ResultReader {
     }    
 
     private parseJUnitXml(res, runContext) {
-        var testRun2 : ifm.TestRun2;
+        var testRun2 : ifm.TestRunWithResults;
 
         var buildId = runContext.buildId;
         var buildRequestedFor = runContext.requestedFor;
@@ -164,26 +165,18 @@ export class ResultReader {
         completedDate.setSeconds(runSummary.timeStamp.getSeconds() + runSummary.duration);
 
         //create test run data
-        var testRun: ifm.TestRun = <ifm.TestRun>    {
+        var testRun =    <testifm.RunCreateModel>{
             name: runSummary.name,
-            iteration: "",
             state: "InProgress",
             automated: true,
-            errorMessage: "",
-            type: "",
-            controller: "",
-            buildDropLocation: "",
             buildPlatform: platform,
             buildFlavor: config,
-            comment: "",
-            testEnvironmentId: "",
-            startDate: runSummary.timeStamp,
-            completeDate: completedDate,
-            releaseUri: "",
+            startDate: runSummary.timeStamp.toISOString(),
+            completeDate: completedDate.toISOString(),
             build: { id: buildId }
         };
 
-        testRun2 = <ifm.TestRun2>{
+        testRun2 = <ifm.TestRunWithResults>{
             testRun: testRun,
             testResults: runSummary.results,
         };         
@@ -263,27 +256,19 @@ export class ResultReader {
                 }
             }
 
-            var testResult : ifm.TestRunResult = <ifm.TestRunResult> {
+            var testResult : testifm.TestResultCreateModel = <testifm.TestResultCreateModel> {
                 state: "Completed",
                 computerName: testSuiteSummary.host,
-                resolutionState: null,
-                testCasePriority: 1,
-                failureType: null,
+                testCasePriority: "1",
                 automatedTestName: testName,
                 automatedTestStorage: testStorage,
                 automatedTestType: "JUnit",
-                automatedTestTypeId: null,
-                automatedTestId: null,
-                area: null,
-                owner: buildRequestedFor, 
-                runBy: buildRequestedFor,
+                owner: { id: buildRequestedFor }, 
+                runBy: { id: buildRequestedFor },
                 testCaseTitle: testName,
-                revision: 0,
-                dataRowCount: 0,
-                testCaseRevision: 0,
                 outcome: outcome,
                 errorMessage: errorMessage,
-                durationInMs: Math.round(testCaseDuration * 1000), //convert to milliseconds and round to nearest whole number since server can't handle decimals for test case duration
+                durationInMs: "" + Math.round(testCaseDuration * 1000), //convert to milliseconds and round to nearest whole number since server can't handle decimals for test case duration
                 stackTrace: stackTrace
             };
                 
@@ -300,7 +285,7 @@ export class ResultReader {
     }
 
     private parseNUnitXml(res, runContext) {
-        var testRun2: ifm.TestRun2;
+        var testRun2: ifm.TestRunWithResults;
         
         var buildId = runContext.buildId;
         var buildRequestedFor = runContext.requestedFor;
@@ -367,26 +352,18 @@ export class ResultReader {
         completedDate.setSeconds(runStartTime.getSeconds() + totalRunDuration);
 
         //create test run data
-        var testRun: ifm.TestRun = <ifm.TestRun>    {
+        var testRun: testifm.RunCreateModel = <testifm.RunCreateModel>    {
             name: runName,
-            iteration: "",
             state: "InProgress",
             automated: true,
-            errorMessage: "",
-            type: "",
-            controller: "",
-            buildDropLocation: "",
             buildPlatform: platform,
             buildFlavor: config,
-            comment: "",
-            testEnvironmentId: "",
-            startDate: runStartTime,
-            completeDate: completedDate,
-            releaseUri: "",
+            startDate: runStartTime.toISOString(),
+            completeDate: completedDate.toISOString(),
             build: { id: buildId }
         };
 
-        testRun2 = <ifm.TestRun2>{
+        testRun2 = <ifm.TestRunWithResults>{
             testRun: testRun,
             testResults: testResults,
         };         
@@ -435,27 +412,19 @@ export class ResultReader {
                     }
                 }      
                 
-                var testResult : ifm.TestRunResult = <ifm.TestRunResult> {
+                var testResult : testifm.TestResultCreateModel = <testifm.TestResultCreateModel> {
                     state: "Completed",
                     computerName: hostName,
-                    resolutionState: null,
-                    testCasePriority: 1,
-                    failureType: null,
+                    testCasePriority: "1",
                     automatedTestName: testName,
                     automatedTestStorage: testStorage,
                     automatedTestType: "NUnit",
-                    automatedTestTypeId: null,
-                    automatedTestId: null,
-                    area: null,
-                    owner: buildRequestedFor,
-                    runBy: buildRequestedFor,
+                    owner: { id: buildRequestedFor },
+                    runBy: { id: buildRequestedFor },
                     testCaseTitle: testName,
-                    revision: 0,
-                    dataRowCount: 0,
-                    testCaseRevision: 0,
                     outcome: outcome,
                     errorMessage: errorMessage,
-                    durationInMs: Math.round(testCaseDuration * 1000), //convert to milliseconds
+                    durationInMs: "" + Math.round(testCaseDuration * 1000), //convert to milliseconds
                     stackTrace: stackTrace
                 };
 
@@ -473,7 +442,7 @@ export class ResultReader {
     }
 
     private parseXUnitXml(res, runContext) {
-        var testRun2: ifm.TestRun2;
+        var testRun2: ifm.TestRunWithResults;
 
         var buildId, buildRequestedFor, platform, config;
 
@@ -508,7 +477,7 @@ export class ResultReader {
         completedDate.setSeconds(runStartTime.getSeconds() + totalRunDuration);
 
         //create test run data.
-        var testRun: ifm.TestRun = <ifm.TestRun> {
+        var testRun = {
             name: runName,
             state: "InProgress",
             automated: true,
@@ -516,11 +485,11 @@ export class ResultReader {
             buildFlavor: config,
             startDate: runStartTime,
             completeDate: completedDate,
-            build: { id: buildId }
+            build: <testifm.ShallowReference>{ id: buildId }
         };
 
-        testRun2 = <ifm.TestRun2>{
-            testRun: testRun,
+        testRun2 = <ifm.TestRunWithResults>{
+            testRun: <testifm.RunCreateModel><any>testRun,
             testResults: testResults,
         };
 
@@ -588,7 +557,7 @@ export class ResultReader {
                     }
                 }
 
-                var testResult: ifm.TestRunResult = <ifm.TestRunResult> {
+                var testResult = {
                     state: "Completed",
                     computerName: hostName,
                     testCasePriority: priority,

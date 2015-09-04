@@ -62,7 +62,7 @@ export class TaskManager {
         var deferred = Q.defer();
         
         // Get all tasks
-        this.taskApi.getTaskDefinitions(null, (err, status, tasks) => {
+        this.taskApi.getTaskDefinitions(null, null, null, null, (err, status, tasks) => {
             if (err) {
                 deferred.reject(err);
             }
@@ -105,7 +105,7 @@ export class TaskManager {
         shell.mkdir('-p', taskPath);
 
         this.context.trace("Downloading task " + task.id + " v" + task.version + " to " + taskPath);
-        this.taskApi.getTaskContentZip(task.id, task.version, (err, statusCode, res) => {
+        this.taskApi.getTaskContentZip(task.id, task.version, null, null, (err, statusCode, res) => {
             if (err) {
                 deferred.reject(err);
             }

@@ -1,5 +1,5 @@
-import ifm = require('./api/interfaces');
-import webapi = require('./api/webapi');
+import ifm = require('./interfaces');
+import testifm = require('vso-node-api/interfaces/TestInterfaces');
 import ctxm = require('./context');
 import cm = require('./common');
 import utilities = require('./utilities');
@@ -43,10 +43,10 @@ export class TestRunPublisher {
     // Read results from a file. Each file will be published as a separate test run
     // - file: string () - location of the results file 
     //-----------------------------------------------------    
-    private readResults(file: string): Q.Promise<ifm.TestRun2> {
+    private readResults(file: string): Q.Promise<ifm.TestRunWithResults> {
         var defer = Q.defer();
 
-        var testRun: ifm.TestRun2;
+        var testRun: ifm.TestRunWithResults;
 
         this.reader.readResults(file, this.runContext).then(function (testRun) {
             defer.resolve(testRun);
@@ -62,12 +62,12 @@ export class TestRunPublisher {
     // - testRun: TestRun - test run to be published  
     // - resultsFilePath - needed for uploading the run level attachment 
     //-----------------------------------------------------
-    public startTestRun(testRun: ifm.TestRun, resultFilePath: string): Q.Promise<ifm.TestRun> {
+    public startTestRun(testRun: testifm.RunCreateModel, resultFilePath: string): Q.Promise<testifm.TestRun> {
         var defer = Q.defer();
 
         var _this = this;
         
-        _this.service.createTestRun(testRun).then(function (createdTestRun) { 
+        _this.service.createTestRun(testRun).then(function (createdTestRun) {
             utilities.readFileContents(resultFilePath, "ascii").then(function (res) {
                 var contents = new Buffer(res).toString('base64');
                 _this.service.createTestRunAttachment(createdTestRun.id, path.basename(resultFilePath), contents).then(
@@ -76,11 +76,12 @@ export class TestRunPublisher {
                     },
                     function (err) {
                         // We can skip attachment publishing if it fails to upload
-                        if (_this.command)
+                        if (_this.command) {
                             _this.command.warning("Skipping attachment : " + resultFilePath + ". " + err.statusCode + " - " + err.message);
+                        }
 
                         defer.resolve(createdTestRun);
-                    });                
+                    });
             },
             function (err) {
                 defer.reject(err);
@@ -95,7 +96,7 @@ export class TestRunPublisher {
     // Stop a test run - mark it completed
     // - testRun: TestRun - test run to be published  
     //-----------------------------------------------------
-    public endTestRun(testRunId: number): Q.Promise<ifm.TestRun> {
+    public endTestRun(testRunId: number): Q.Promise<testifm.TestRun> {
         var defer = Q.defer();
 
         this.service.endTestRun(testRunId).then(function (endedTestRun) {
@@ -112,7 +113,7 @@ export class TestRunPublisher {
     // - testrunID: number - runId against which results are to be published 
     // - testRunResults: TestRunResult[] - testresults to be published  
     //-----------------------------------------------------
-    public addResults(testRunId: number, testResults: ifm.TestRunResult[]) : Q.Promise<ifm.TestRunResult[]> {
+    public addResults(testRunId: number, testResults: testifm.TestResultCreateModel[]) : Q.Promise<testifm.TestCaseResult[]> {
         var defer = Q.defer();
         var _this = this;
 
@@ -151,7 +152,7 @@ export class TestRunPublisher {
     // Publish a test run
     // - resultFilePath: string - Path to the results file
     //-----------------------------------------------------
-    public publishTestRun(resultFilePath: string): Q.Promise<ifm.TestRun> {
+    public publishTestRun(resultFilePath: string): Q.Promise<testifm.TestRun> {
         var defer = Q.defer();
         
         var _this = this;
@@ -191,5 +192,5 @@ export interface TestRunContext {
 //-----------------------------------------------------
 export interface IResultReader {
     // Reads a test results file from disk  
-    readResults(filePath: string, runContext: TestRunContext): Q.Promise<ifm.TestRun2>; 
+    readResults(filePath: string, runContext: TestRunContext): Q.Promise<ifm.TestRunWithResults>; 
 }

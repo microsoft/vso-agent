@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 /// <reference path="./definitions/node.d.ts"/>
-import ifm = require('./api/interfaces');
 import path = require('path');
 var fs = require('fs');
 import os = require('os');

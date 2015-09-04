@@ -6,7 +6,7 @@ import fs = require('fs');
 import ctxm = require('context');
 import zlib = require('zlib');
 import fcifm = require('vso-node-api/interfaces/FileContainerInterfaces');
-import ifm = require('./api/interfaces');
+import ifm = require('./interfaces');
 import cm = require('./common');
 var uuid = require('node-uuid');
 

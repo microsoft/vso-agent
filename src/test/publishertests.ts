@@ -8,7 +8,7 @@ import path = require('path');
 import fm = require('./lib/feedback');
 import trp = require('../agent/testrunpublisher');
 import trr = require('../agent/testresultreader');
-import ifm  =require('../agent/api/interfaces');
+import testifm = require('vso-node-api/interfaces/TestInterfaces');
 
 describe('PublisherTests', function() {
 		
@@ -54,7 +54,7 @@ describe('PublisherTests', function() {
 			done();
 		},
 		function (err) {
-			assert(false, 'RestulPublish Task Failed! Details : ' + err.message);
+			assert(false, 'ResultPublish Task Failed! Details : ' + err.message);
 		});
     })	
 
@@ -77,7 +77,7 @@ describe('PublisherTests', function() {
             done();
         },
             function (err) {
-                assert(false, 'RestulPublish Task Failed! Details : ' + err.message);
+                assert(false, 'ResultPublish Task Failed! Details : ' + err.message);
             });
     })
 
@@ -94,7 +94,7 @@ describe('PublisherTests', function() {
         var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
 		var testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, reader);
 		var resultsFile = path.resolve(__dirname, './testresults/junitresults1.xml');
-		var testRun: ifm.TestRun = <ifm.TestRun> {
+		var testRun: testifm.RunCreateModel = <any>{
 	        name: "foobar",
 	        id: -1
 	    };
@@ -102,6 +102,7 @@ describe('PublisherTests', function() {
 	    // error handling/propagation from start test run 
 		testRunPublisher.startTestRun(testRun, resultsFile).then(function (createdTestRun) {
 			assert(false, 'ResultPublish Task did not fail as expected');
+            done();
         },
         function (err) {
             assert(err.message == "Too bad - createTestRun failed", 'ResultPublish Task error message does not match expected - ' + err.message);
@@ -123,7 +124,7 @@ describe('PublisherTests', function() {
         var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
 		var testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, reader);
 		var resultsFile = path.resolve(__dirname, './testresults/junitresults1.xml');
-		var testRun: ifm.TestRun = <ifm.TestRun> {
+		var testRun = {
 	        name: "foobar",
 	        id: -1
 	    };
@@ -131,6 +132,7 @@ describe('PublisherTests', function() {
 	    // error handling/propagation from end test run 
 		testRunPublisher.endTestRun(testRun.id).then(function (createdTestRun) {
 			assert(false, 'ResultPublish Task did not fail as expected');
+            done();
         },
         function (err) {
             assert(err.message == "Too bad - endTestRun failed", 'ResultPublish Task error message does not match expected - ' + err.message);
@@ -151,11 +153,7 @@ describe('PublisherTests', function() {
         var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
 		var testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, reader);
 		var resultsFile = path.resolve(__dirname, './testresults/junitresults1.xml');
-		var testRun: ifm.TestRun = <ifm.TestRun> {
-	        name: "foobar",
-	        id: -1
-	    };
-
+		
         // error handling/propagation from parsing failures of junit/nunit files
 		resultsFile = path.resolve(__dirname, './testresults/junit_bad.xml');
 		testRunPublisher.publishTestRun(resultsFile).then(function (createdTestRun) {
