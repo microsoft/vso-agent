@@ -104,9 +104,7 @@ export class RollingDiagnosticFileWriter implements cm.IDiagnosticWriter {
             
             // add the filename to the queue and delete any old ones
             this._fileQueue.push(filename);
-            while (this._fileQueue.length > this._filesToKeep) {
-                fs.unlinkSync(this._fileQueue.splice(0, 1)[0]);
-            }
+            this._deleteOldFiles();
         }
         
         return this._fileDescriptor;
@@ -158,11 +156,20 @@ export class RollingDiagnosticFileWriter implements cm.IDiagnosticWriter {
                     this._fileDescriptor = fs.openSync(mostRecentFile, 'a');
                 }
             }
+            
+            // delete any old log files
+            this._deleteOldFiles();
         }
         else {
             shell.mkdir('-p', this._folder);
             shell.chmod(775, this._folder);
             this._fileQueue = [];
+        }
+    }
+    
+    private _deleteOldFiles(): void {
+        while (this._fileQueue.length > this._filesToKeep) {
+            fs.unlinkSync(this._fileQueue.splice(0, 1)[0]);
         }
     }
 }
