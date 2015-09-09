@@ -255,6 +255,10 @@ export class ResultReader {
                     errorMessage = testCaseNode.error.attributes().message;
                 }
             }
+            else if (testCaseNode.skipped) {
+                outcome = "NotExecuted";
+                errorMessage = testCaseNode.skipped.text();
+            }
 
             var testResult : testifm.TestResultCreateModel = <testifm.TestResultCreateModel> {
                 state: "Completed",
