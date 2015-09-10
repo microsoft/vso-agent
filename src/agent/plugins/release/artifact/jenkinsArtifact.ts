@@ -39,8 +39,8 @@ export class JenkinsArtifact implements rmInterfaces.IArtifact {
             var zipSource = path.join(artifactFolder, 'download.zip');
             var fileStream: NodeJS.WritableStream = fs.createWriteStream(zipSource);
             var creds: baseifm.IBasicCredentials = <baseifm.IBasicCredentials>{};
-            creds.username = this.getAuthParameter(jenkinsEndpoint, 'username');
-            creds.password = this.getAuthParameter(jenkinsEndpoint, 'password');
+            creds.username = this.getAuthParameter(jenkinsEndpoint, 'Username');
+            creds.password = this.getAuthParameter(jenkinsEndpoint, 'Password');
             var jenkinsApi = new jenkinsapim.JenkinsApi(jenkinsEndpoint.url, [cm.basicHandlerFromCreds(creds)]);
             jenkinsApi.getArtifactContentZip(jenkinsDetails.jobName, artifactDefinition.version.toString(), jenkinsDetails.relativePath, (err, statusCode, res) => {
                 if (err) {
@@ -94,7 +94,15 @@ export class JenkinsArtifact implements rmInterfaces.IArtifact {
     public getAuthParameter(endpoint: agentifm.ServiceEndpoint, paramName: string) {
         var paramValue = null;
         if (endpoint && endpoint.authorization && endpoint.authorization['parameters']) {
-            paramValue = endpoint.authorization['parameters'][paramName];
+            var parameters = Object.getOwnPropertyNames(endpoint.authorization['parameters']);
+            var keyName: string;
+            parameters.some(key => {
+                if (key.toLowerCase() === paramName.toLowerCase()) {
+                    keyName = key;
+                    return true;
+                }
+            });
+            paramValue = endpoint.authorization['parameters'][keyName];
         }
 
         return paramValue;
