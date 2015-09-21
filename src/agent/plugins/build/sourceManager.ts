@@ -1,5 +1,7 @@
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import shell = require('shelljs');
+import cm = require('../../common');
+import crypto = require('crypto');
 
 export class SourceManager {
     constructor(workingDirectory: string) {
@@ -8,10 +10,7 @@ export class SourceManager {
 
     public workingDirectory: string;
 
-    public ensureDirectory(job: agentifm.JobRequestMessage): string {
-
-        // only support 1
-        var endpoint: agentifm.ServiceEndpoint = endpoints[0];
+    public ensureDirectory(job: agentifm.JobRequestMessage, endpoint: agentifm.ServiceEndpoint): string {
 
         var variables = job.environment.variables;
 
@@ -34,6 +33,6 @@ export class SourceManager {
             return legacyDir;
         }
 
-        
+        return '';
     }
 }
