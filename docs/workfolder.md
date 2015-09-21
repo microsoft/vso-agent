@@ -135,7 +135,7 @@ Locations are stored as relative paths relative to the root of the working folde
   "collectionId": "7ca83873-9ab2-43be-86ac-bfb844bf5232",
   "definitionId": "7",
   "hashKey": "88255a024f3b92da0b6939a240b3b1c3e65e30c7",
-  "repositoryUrl": "http://ericlaptop:8080/tfs/DefaultCollection/gitTest/_git/gitTest%20WithSpace",
+  "repositoryUrl": "http://sample.visualstudio.com/DefaultCollection/gitTest/_git/gitTest%20WithSpace",
   "system": "build"
 }
 ```
