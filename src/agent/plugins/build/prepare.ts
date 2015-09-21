@@ -13,6 +13,7 @@ import Q = require('q');
 import shell = require('shelljs');
 import crypto = require('crypto');
 import cm = require('../../common');
+import smm = require('./sourceManager');
 
 // keep lower case, we do a lower case compare
 var supported: string[] = ['tfsgit', 'git', 'github', 'tfsversioncontrol'];
@@ -36,10 +37,9 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     // Get Code from Repos
     //------------------------------------------------------------
 
-    var jobMessage = executionContext.jobInfo.jobMessage;
-    var endpoints: agentifm.ServiceEndpoint[] = jobMessage.environment.endpoints;
+    var endpoints: agentifm.ServiceEndpoint[] = job.environment.endpoints;
 
-    var variables = jobMessage.environment.variables;    
+    var variables = job.environment.variables;    
 
     var srcendpoints = endpoints.filter(function (endpoint: agentifm.ServiceEndpoint) {
         if (!endpoint.type) {
@@ -56,27 +56,8 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     // only support 1
     var endpoint: agentifm.ServiceEndpoint = endpoints[0];
 
-    var sys = variables[cm.sysVars.system];
-    var collId = variables[cm.sysVars.collectionId];
-
-    var defId = variables[cm.sysVars.definitionId];
-    var hashInput = collId + ':' + defId;
-
-    //
-    // Get the repo path under the working directory
-    //
-    var hashInput = collId + ':' + defId;
-    if (job.environment.endpoints) {
-        job.environment.endpoints.forEach(function (endpoint) {
-            hashInput = hashInput + ':' + endpoint.url;
-        });
-    }
-    // TODO: build dir should be defined in the build plugin - not in core agent
-    var hashProvider = crypto.createHash("sha256");
-    hashProvider.update(hashInput, 'utf8');
-    var hash = hashProvider.digest('hex');
-    var workingFolder = variables[cm.agentVars.workingDirectory];
-    var buildDirectory = path.join(workingFolder, sys, hash);
+    var srcMgr: smm.SourceManager = new smm.SourceManager(variables[cm.agentVars.workingDirectory]);
+    var buildDirectory: string = srcMgr.ensureDirectory(job);
     executionContext.info('using build directory: ' + buildDirectory);
 
     job.environment.variables['agent.buildDirectory'] = buildDirectory;
@@ -84,11 +65,11 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     shell.cd(buildDirectory);
 
     var repoPath = path.resolve('repo');
-    jobMessage.environment.variables['build.sourceDirectory'] = repoPath;
-    jobMessage.environment.variables['build.stagingdirectory'] = path.resolve("staging");
+    job.environment.variables['build.sourceDirectory'] = repoPath;
+    job.environment.variables['build.stagingdirectory'] = path.resolve("staging");
 
     // TODO: remove compat variable
-    jobMessage.environment.variables['sys.sourcesFolder'] = repoPath;
+    job.environment.variables['sys.sourcesFolder'] = repoPath;
 
     var scmm;
     var providerType = endpoint.type.toLowerCase();
@@ -112,7 +93,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     return Q(null)
     .then(() => {
         if (endpoint.data['clean'] === "true") {
-            var behavior = jobMessage.environment.variables['build.clean'];
+            var behavior = job.environment.variables['build.clean'];
             if (behavior && behavior.toLowerCase() === 'delete') {
                 executionContext.info('deleting ' + repoPath);
                 shell.rm('-rf', repoPath);
