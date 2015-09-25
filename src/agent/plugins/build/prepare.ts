@@ -54,7 +54,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     }
 
     // only support 1
-    var endpoint: agentifm.ServiceEndpoint = endpoints[0];
+    var endpoint: agentifm.ServiceEndpoint = srcendpoints[0];
 
     var sys = variables[cm.sysVars.system];
     var collId = variables[cm.sysVars.collectionId];
