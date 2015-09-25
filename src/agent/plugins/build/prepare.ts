@@ -49,7 +49,7 @@ export function beforeJob(ctx: ctxm.JobContext, callback) {
     }
 
     // only support 1
-    var endpoint: ifm.JobEndpoint = endpoints[0];
+    var endpoint: ifm.JobEndpoint = srcendpoints[0];
 
     var repoPath = path.resolve('repo');
     ctx.job.environment.variables['build.sourceDirectory'] = repoPath;
