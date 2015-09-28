@@ -247,6 +247,7 @@ export class ResultReader {
 			}
 			else {
 				stackTrace = typeof( testFailure.text );
+				console.log( "testFailure.text", testFailure.text );
 			}
                     }
                     if ( testFailure.attributes().message) {
