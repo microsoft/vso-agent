@@ -242,7 +242,12 @@ export class ResultReader {
                     outcome = "Failed";
                     var testFailure = testCaseNode.failure.at( f_idx );
                     if (testFailure.text) {
-                        stackTrace = testFailure.text();
+			if(testFailure.text instanceof Function ) {
+	                        stackTrace = testFailure.text();
+			}
+			else {
+				stackTrace = typeof( testFailure.text );
+			}
                     }
                     if ( testFailure.attributes().message) {
                         errorMessage = testFailure.attributes().message;
