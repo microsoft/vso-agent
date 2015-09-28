@@ -240,7 +240,7 @@ export class ResultReader {
             if(testCaseNode.failure) {
 	        for( var f_idx = 0; f_idx < testCaseNode.failure.count(); f_idx++ ) {
                     outcome = "Failed";
-                    testFailure = testCaseNode.failure.at( f_idx );
+                    var testFailure = testCaseNode.failure.at( f_idx );
                     if (testFailure.text) {
                         stackTrace = testFailure.text();
                     }
