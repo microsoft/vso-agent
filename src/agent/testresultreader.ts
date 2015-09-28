@@ -245,10 +245,6 @@ export class ResultReader {
 			if(testFailure.text instanceof Function ) {
 	                        stackTrace = testFailure.text();
 			}
-			else {
-				stackTrace = typeof( testFailure.text );
-				console.log( "testFailure.text", testFailure.text );
-			}
                     }
                     if ( testFailure.attributes().message) {
                         errorMessage = testFailure.attributes().message;
