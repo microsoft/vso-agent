@@ -91,16 +91,18 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     var sm: smm.SourceMappings = new smm.SourceMappings(workingFolder, executionContext.hostContext);
     sm.getSourceMapping(hashKey, job, endpoint)
     .then((srcMap: smm.ISourceMapping) => {
-        repoPath = scmProvider.targetPath = srcMap.build_sourcesdirectory;
+        repoPath = scmProvider.targetPath = path.join(workingFolder, srcMap.build_sourcesdirectory);
 
         //
         // Variables
         //        
         variables[cm.vars.buildSourcesDirectory] = repoPath;
-        variables[cm.vars.agentBuildDirectory] = srcMap.agent_builddirectory;
-        variables[cm.vars.buildArtifactsStagingDirectory] = srcMap.build_artifactstagingdirectory;
-        variables[cm.vars.commonTestResultsDirectory] = srcMap.common_testresultsdirectory;
-                
+        variables[cm.vars.buildArtifactsStagingDirectory] = path.join(workingFolder, srcMap.build_artifactstagingdirectory);
+        variables[cm.vars.commonTestResultsDirectory] = path.join(workingFolder, srcMap.common_testresultsdirectory);
+        var bd = variables[cm.vars.agentBuildDirectory] = path.join(workingFolder, srcMap.agent_builddirectory);
+        shell.cd(bd);
+        shell.mkdir('-p', bd);
+        
         if (endpoint.data['clean'] === "true") {
             var behavior = job.environment.variables['build.clean'];
             if (behavior && behavior.toLowerCase() === 'delete') {
