@@ -353,13 +353,14 @@ export class JobRunner {
                 instructions['target'] = path.join(taskPath, instructions.target);
                 trace.state('instructions', instructions);
                 this.taskExecution[task.id] = instructions;
-                callback();
             }
             catch (e) {
                 trace.write('exception getting metadata: ' + e.message);
                 callback(new Error('Invalid metadata @ ' + taskJsonPath));
                 return;
             }
+            
+            callback();
         });
     }
 

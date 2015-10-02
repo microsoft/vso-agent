@@ -81,6 +81,7 @@ export class SourceMappings {
             lastBuildFolderCreatedOn: new Date().toISOString()
         };
         
+        shell.mkdir('-p', this.sourceMappingRootPath);
         return utilm.getOrCreateObjectFromFile(this.sourceTrackingPath, newTrk);
     }
     

@@ -33,48 +33,48 @@ export class AutomationVariables {
     //
     // System Variables
     //
-    public static system = "System";
-    public static systemCollectionId = "System.CollectionId";
-    public static systemDefinitionId = "System.DefinitionId";
-    public static systemTfsUri = "System.TeamFoundationServerUri";
-    public static systemTfCollectionUri = 'System.TeamFoundationCollectionUri';
-    public static systemTeamProjectId = 'System.TeamProjectId';
-    public static systemDebug = 'System.Debug';
+    public static system = "system";
+    public static systemCollectionId = "system.collectionId";
+    public static systemDefinitionId = "system.definitionId";
+    public static systemTfsUri = "system.teamFoundationServerUri";
+    public static systemTfCollectionUri = 'system.teamFoundationCollectionUri';
+    public static systemTeamProjectId = 'system.teamProjectId';
+    public static systemDebug = 'system.debug';
     
     //
     // Agent Variables
     //    
-    public static agentRootDirectory = 'Agent.RootDirectory';
-    public static agentWorkingDirectory = 'Agent.WorkingDirectory';
-    public static agentWorkFolder = 'Agent.WorkFolder';
-    public static agentHomeDirectory = 'Agent.HomeDirectory';
-    public static agentAgentId = 'Agent.AgentId';
-    public static agentBuildDirectory = 'Agent.BuildDirectory';
+    public static agentRootDirectory = 'agent.rootDirectory';
+    public static agentWorkingDirectory = 'agent.workingDirectory';
+    public static agentWorkFolder = 'agent.workFolder';
+    public static agentHomeDirectory = 'agent.homeDirectory';
+    public static agentAgentId = 'agent.agentId';
+    public static agentBuildDirectory = 'agent.buildDirectory';
     
     //
     // Build Variables
     //
-    public static buildSourcesDirectory = 'Build.SourcesDirectory';
-    public static buildArtifactsStagingDirectory = 'Build.ArtifactsStagingDirectory';
-    public static buildStagingDirectory = 'Build.StagingDirectory';
-    public static buildBinariesDirectory = 'Build.BinariesDirectory';
-    public static buildDefinitionName = 'Build.DefinitionName';
-    public static buildDefinitionVersion = 'Build.DefinitionVersion';
-    public static buildNumber = 'Build.BuildNumber';
-    public static buildUri = 'Build.BuildUri';
-    public static buildId = 'Build.BuildId';
-    public static buildQueuedBy = 'Build.QueuedBy';
-    public static buildQueuedById = 'Build.QueuedById';
-    public static buildRequestedFor = 'Build.RequestedFor';
-    public static buildRequestedForId = 'Build.RequestedForId';
-    public static buildSourceVersion = 'Build.SourceVersion';
-    public static buildSourceBranch = 'Build.SourceBranch';
-    public static buildSourceBranchName = 'Build.SourceBranchName';
+    public static buildSourcesDirectory = 'build.sourcesDirectory';
+    public static buildArtifactsStagingDirectory = 'build.artifactsStagingDirectory';
+    public static buildStagingDirectory = 'build.stagingDirectory';
+    public static buildBinariesDirectory = 'build.binariesDirectory';
+    public static buildDefinitionName = 'build.definitionName';
+    public static buildDefinitionVersion = 'build.definitionVersion';
+    public static buildNumber = 'build.buildNumber';
+    public static buildUri = 'build.buildUri';
+    public static buildId = 'build.buildId';
+    public static buildQueuedBy = 'build.queuedBy';
+    public static buildQueuedById = 'build.queuedById';
+    public static buildRequestedFor = 'build.requestedFor';
+    public static buildRequestedForId = 'build.requestedForId';
+    public static buildSourceVersion = 'build.sourceVersion';
+    public static buildSourceBranch = 'build.sourceBranch';
+    public static buildSourceBranchName = 'build.sourceBranchName';
     
     //
     // Common Variables
     //       
-    public static commonTestResultsDirectory = "Common.TestResultsDirectory";
+    public static commonTestResultsDirectory = "common.testResultsDirectory";
 }
 
 export var vars = AutomationVariables;

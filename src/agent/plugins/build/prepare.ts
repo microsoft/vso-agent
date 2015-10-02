@@ -35,7 +35,8 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     //
 
     var supported = [];
-    shell.ls('./scm/*.js').forEach((provPath: string) => {
+    var filter = path.join(executionContext.scmPath, '*.js');
+    shell.ls(filter).forEach((provPath: string) => {
         supported.push(path.basename(provPath, '.js'));
     })
     executionContext.debug('valid scm providers: ' + supported);
@@ -84,7 +85,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     //
     // Get source mappings and set variables
     //
-    var workingFolder = this.variables[cm.vars.agentWorkingDirectory];
+    var workingFolder = variables[cm.vars.agentWorkingDirectory];
     var repoPath: string;
     var sm: smm.SourceMappings = new smm.SourceMappings(workingFolder);
     sm.getSourceMapping(hashKey, job, endpoint)
