@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-//import shell = require('shelljs');
 import path = require('path');
 import fs = require('fs');
 var url = require('url');
@@ -13,10 +12,7 @@ import Q = require('q');
 import shell = require('shelljs');
 import crypto = require('crypto');
 import cm = require('../../common');
-import smm = require('./sourceManager');
-
-// keep lower case, we do a lower case compare
-var supported: string[] = ['tfsgit', 'git', 'github', 'tfsversioncontrol'];
+import smm = require('./sourceMappings');
 
 export function pluginName() {
     return "prepareWorkspace";
@@ -32,15 +28,19 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     executionContext.info('cwd: ' + process.cwd());
 
     var job: agentifm.JobRequestMessage = executionContext.jobInfo.jobMessage;
+    var variables: {[key: string]: string} = job.environment.variables;
+    
+    //
+    // Get the valid scm providers and filter endpoints
+    //
 
-    //------------------------------------------------------------
-    // Get Code from Repos
-    //------------------------------------------------------------
-
+    var supported = [];
+    shell.ls('./scm/*.js').forEach((provPath: string) => {
+        supported.push(path.basename(provPath, '.js'));
+    })
+    executionContext.debug('valid scm providers: ' + supported);
+    
     var endpoints: agentifm.ServiceEndpoint[] = job.environment.endpoints;
-
-    var variables = job.environment.variables;    
-
     var srcendpoints = endpoints.filter(function (endpoint: agentifm.ServiceEndpoint) {
         if (!endpoint.type) {
             return false;
@@ -49,69 +49,56 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     });
 
     if (srcendpoints.length == 0) {
-        callback(new Error('No valid repository type'));
-        return;
+        throw new Error('Unsupported SCM system.  Supported: ' + supported.toString());
     }
-
-    // only support 1
-    var endpoint: agentifm.ServiceEndpoint = endpoints[0];
-
-    var sys = variables[cm.sysVars.system];
-    var collId = variables[cm.sysVars.collectionId];
-
-    var defId = variables[cm.sysVars.definitionId];
-    var hashInput = collId + ':' + defId;
+    
+    // only support 1 SCM system
+    var endpoint: agentifm.ServiceEndpoint = srcendpoints[0];
 
     //
-    // Get the repo path under the working directory
+    // Get SCM plugin
     //
-    var hashInput = collId + ':' + defId;
-    if (job.environment.endpoints) {
-        job.environment.endpoints.forEach(function (endpoint) {
-            hashInput = hashInput + ':' + endpoint.url;
-        });
-    }
-    // TODO: build dir should be defined in the build plugin - not in core agent
-    var hashProvider = crypto.createHash("sha256");
-    hashProvider.update(hashInput, 'utf8');
-    var hash = hashProvider.digest('hex');
-    var workingFolder = variables[cm.agentVars.workingDirectory];
-    var buildDirectory = path.join(workingFolder, sys, hash);
-
-    executionContext.info('using build directory: ' + buildDirectory);
-
-    job.environment.variables['agent.buildDirectory'] = buildDirectory;
-    shell.mkdir('-p', buildDirectory);
-    shell.cd(buildDirectory);
-
-    var repoPath = path.resolve('repo');
-    job.environment.variables['build.sourceDirectory'] = repoPath;
-    job.environment.variables['build.stagingdirectory'] = path.resolve("staging");
-
-    // TODO: remove compat variable
-    job.environment.variables['sys.sourcesFolder'] = repoPath;
-
     var scmm;
     var providerType = endpoint.type.toLowerCase();
     executionContext.info('using source provider: ' + providerType);
 
-    try {
+    try {        
         var provPath = path.join(executionContext.scmPath, providerType);
         executionContext.info('loading: ' + provPath);
-        scmm = require(provPath);    
+        scmm = require(provPath);
     }
     catch(err) {
         callback(new Error('Source Provider not found: ' + providerType));
         return;        
     }
     
-    var scmProvider: cm.IScmProvider = scmm.getProvider(executionContext, repoPath);
-    scmProvider.hash = hash;
-    scmProvider.initialize(endpoint);
+    if (!scmm.getProvider) {
+        throw new Error('SCM Provider does not implement getProvider: ' + providerType);
+    }
+    
+    var scmProvider: cm.IScmProvider = scmm.getProvider(executionContext, endpoint);
+    scmProvider.initialize();
     scmProvider.debugOutput = executionContext.debugOutput;
+    var hashKey: string = scmProvider.hashKey;
+    
+    //
+    // Get source mappings and set variables
+    //
+    var workingFolder = this.variables[cm.vars.agentWorkingDirectory];
+    var repoPath: string;
+    var sm: smm.SourceMappings = new smm.SourceMappings(workingFolder);
+    sm.getSourceMapping(hashKey, job, endpoint)
+    .then((srcMap: smm.ISourceMapping) => {
+        repoPath = scmProvider.targetPath = srcMap.build_sourcesdirectory;
 
-    return Q(null)
-    .then(() => {
+        //
+        // Variables
+        //        
+        variables[cm.vars.buildSourcesDirectory] = repoPath;
+        variables[cm.vars.agentBuildDirectory] = srcMap.agent_builddirectory;
+        variables[cm.vars.buildArtifactsStagingDirectory] = srcMap.build_artifactstagingdirectory;
+        variables[cm.vars.commonTestResultsDirectory] = srcMap.common_testresultsdirectory;
+                
         if (endpoint.data['clean'] === "true") {
             var behavior = job.environment.variables['build.clean'];
             if (behavior && behavior.toLowerCase() === 'delete') {
@@ -133,6 +120,8 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         return scmProvider.getCode();
     })
     .then((code: number) => {
+        executionContext.info('CD: ' + repoPath);
+        shell.cd(repoPath);
         callback();
     })    
     .fail((err) => {

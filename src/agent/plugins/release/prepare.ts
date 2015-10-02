@@ -28,7 +28,7 @@ export function beforeJob(context: common.IExecutionContext, callback) {
 
     var skipArtifactDownload = context.variables[releaseCommon.releaseVars.skipArtifactsDownload].toLowerCase() === 'true';
     var releaseId = +context.variables[releaseCommon.releaseVars.releaseId];
-    var teamProjectId = context.variables[common.sysVars.teamProjectId];
+    var teamProjectId = context.variables[common.vars.systemTeamProjectId];
     var releaseDefinitionName = context.variables[releaseCommon.releaseVars.releaseDefinitionName];
     context.info('SkipArtifactsDownload=' + skipArtifactDownload + ', ReleaseId=' + releaseId + ', TeamProjectId=' + teamProjectId + ', ReleaseDefintionName=' + releaseDefinitionName);
 

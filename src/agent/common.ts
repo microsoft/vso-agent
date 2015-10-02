@@ -25,23 +25,59 @@ var fs = require('fs');
 
 require('./extensions');
 
-export var sysVars = <any>{};
-sysVars.system = 'system';
-sysVars.collectionId = 'system.collectionId';
-sysVars.definitionId = 'system.definitionId';
-sysVars.tfsUri = 'system.teamFoundationServerUri';
-sysVars.collectionUri = 'system.teamFoundationCollectionUri';
-sysVars.teamProjectId = 'system.teamProjectId';
-sysVars.debug = 'system.debug';
+//
+// Variables - Keep grouped and ordered
+// 
+export class AutomationVariables {
+    
+    //
+    // System Variables
+    //
+    public static system = "System";
+    public static systemCollectionId = "System.CollectionId";
+    public static systemDefinitionId = "System.DefinitionId";
+    public static systemTfsUri = "System.TeamFoundationServerUri";
+    public static systemTfCollectionUri = 'System.TeamFoundationCollectionUri';
+    public static systemTeamProjectId = 'System.TeamProjectId';
+    public static systemDebug = 'System.Debug';
+    
+    //
+    // Agent Variables
+    //    
+    public static agentRootDirectory = 'Agent.RootDirectory';
+    public static agentWorkingDirectory = 'Agent.WorkingDirectory';
+    public static agentWorkFolder = 'Agent.WorkFolder';
+    public static agentHomeDirectory = 'Agent.HomeDirectory';
+    public static agentAgentId = 'Agent.AgentId';
+    public static agentBuildDirectory = 'Agent.BuildDirectory';
+    
+    //
+    // Build Variables
+    //
+    public static buildSourcesDirectory = 'Build.SourcesDirectory';
+    public static buildArtifactsStagingDirectory = 'Build.ArtifactsStagingDirectory';
+    public static buildStagingDirectory = 'Build.StagingDirectory';
+    public static buildBinariesDirectory = 'Build.BinariesDirectory';
+    public static buildDefinitionName = 'Build.DefinitionName';
+    public static buildDefinitionVersion = 'Build.DefinitionVersion';
+    public static buildNumber = 'Build.BuildNumber';
+    public static buildUri = 'Build.BuildUri';
+    public static buildId = 'Build.BuildId';
+    public static buildQueuedBy = 'Build.QueuedBy';
+    public static buildQueuedById = 'Build.QueuedById';
+    public static buildRequestedFor = 'Build.RequestedFor';
+    public static buildRequestedForId = 'Build.RequestedForId';
+    public static buildSourceVersion = 'Build.SourceVersion';
+    public static buildSourceBranch = 'Build.SourceBranch';
+    public static buildSourceBranchName = 'Build.SourceBranchName';
+    
+    //
+    // Common Variables
+    //       
+    public static commonTestResultsDirectory = "Common.TestResultsDirectory";
+}
 
-export var agentVars = <any>{};
-agentVars.rootDirectory = 'agent.rootDirectory';
-agentVars.workingDirectory = 'agent.workingDirectory';
-
-// TODO: should be in build plugin
-export var buildVars = <any>{};
-buildVars.sourceDirectory = 'build.sourceDirectory';
-buildVars.stagingDirectory = 'build.stagingDirectory';
+export var vars = AutomationVariables;
 
 //-----------------------------------------------------------
 // ENV VARS
@@ -284,11 +320,12 @@ export interface ILogPageInfo {
 }
 
 export interface IScmProvider {
-    hash: string;
+    hashKey: string;
     debugOutput: boolean;
+    targetPath: string;
     
     // virtual - must override
-    initialize(endpoint: agentifm.ServiceEndpoint);
+    initialize();
     getCode(): Q.Promise<number>;
     clean(): Q.Promise<number>;
 }

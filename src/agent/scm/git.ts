@@ -8,8 +8,8 @@ var path = require('path');
 var shell = require('shelljs');
 var url = require('url');
 
-export function getProvider(ctx: cm.IExecutionContext, targetPath: string): cm.IScmProvider {
-	return new GitScmProvider(ctx, targetPath);
+export function getProvider(ctx: cm.IExecutionContext, endpoint: agentifm.ServiceEndpoint): cm.IScmProvider {
+	return new GitScmProvider(ctx, endpoint);
 }
 
 function _translateRef(ref) {
@@ -24,7 +24,7 @@ function _translateRef(ref) {
 // TODO: take options with stdout and stderr streams for testing?
 
 export class GitScmProvider extends scmm.ScmProvider {
-	constructor(ctx: cm.IExecutionContext, targetPath: string) {
+	constructor(ctx: cm.IExecutionContext, endpoint: agentifm.ServiceEndpoint) {
 		this.gitw = new gitwm.GitWrapper();
 		this.gitw.on('stdout', (data) => {
 			ctx.info(data.toString());
@@ -34,36 +34,29 @@ export class GitScmProvider extends scmm.ScmProvider {
 			ctx.info(data.toString());
 		});
 
-		super(ctx, targetPath);
+		super(ctx, endpoint);
 	}
 
 	public username: string;
 	public password: string;
 	public gitw: gitwm.GitWrapper;
-	public endpoint: agentifm.ServiceEndpoint;
 
-	public initialize(endpoint: agentifm.ServiceEndpoint) {
-		this.endpoint = endpoint;
+    public setAuthorization(authorization: agentifm.EndpointAuthorization) {
+        if (authorization && authorization['scheme']) {
+            var scheme = authorization['scheme'];
+            this.ctx.info('Using auth scheme: ' + scheme);
 
-		if (!endpoint) {
-			throw (new Error('endpoint null initializing git scm provider'));
-		}
+            switch (scheme) {
+                case 'UsernamePassword':
+                    this.username = this.getAuthParameter(authorization, 'Username') || 'not supplied';
+                    this.password = this.getAuthParameter(authorization, 'Password') || 'not supplied';
+                    break;
 
-	    if (endpoint.authorization && endpoint.authorization['scheme']) {
-	        var scheme = endpoint.authorization['scheme'];
-	        this.ctx.info('Using auth scheme: ' + scheme);
-
-	        switch (scheme) {
-	            case 'UsernamePassword':
-	                this.username = this.getAuthParameter(endpoint, 'Username') || 'not supplied';
-	                this.password = this.getAuthParameter(endpoint, 'Password') || 'not supplied';
-	                break;
-
-	            default:
-	                this.ctx.warning('invalid auth scheme: ' + scheme);
-	        }
-	    }		
-	}
+                default:
+                    this.ctx.warning('invalid auth scheme: ' + scheme);
+            }
+        }
+    }
 
 	public getCode(): Q.Promise<number> {
 		if (!this.endpoint) {
@@ -87,7 +80,6 @@ export class GitScmProvider extends scmm.ScmProvider {
 	    var srcBranch = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceBranch'];
 	    this.ctx.info('srcVersion: ' + srcVersion);
 	    this.ctx.info('srcBranch: ' + srcBranch);
-
 	    
 	    var selectedRef = srcVersion ? srcVersion : srcBranch;
 
