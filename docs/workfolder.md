@@ -83,6 +83,13 @@ Variable: Build.ArtifactsStagingDirectory
 EnvVar:   BUILD_ARTIFACTSSTAGINGDIRECTORY
 ```
 
+### TestResults
+
+```
+Variable: Common.TestResultsDirectory
+EnvVar:   COMMON_TESTRESULTSDIRECTORY
+```
+
 ## Source Mappings
 
 Location of sources is maintained in the SourceRootMapping folder directly under the root folder.  These files are used by the agent to define the variables that tasks and build scripts use. 
@@ -131,7 +138,7 @@ Locations are stored as relative paths relative to the root of the working folde
   "fileFormatVersion": 2,
   "lastRunOn": "09/15/2015 00:44:53 -04:00",
   "build_sourcesdirectory": "4\\s",
-  "build_testresultsdirectory": "4\\TestResults",
+  "common_testresultsdirectory": "4\\TestResults",
   "collectionId": "7ca83873-9ab2-43be-86ac-bfb844bf5232",
   "definitionId": "7",
   "hashKey": "88255a024f3b92da0b6939a240b3b1c3e65e30c7",
