@@ -143,7 +143,7 @@ export class Context extends events.EventEmitter {
     }
 }
 
-export class HostContext extends Context implements cm.ITraceWriter, cm.IOutputChannel {
+export class HostContext extends Context implements cm.IHostContext {
     private _fileWriter: cm.IDiagnosticWriter;
     
     public config: cm.IConfiguration;

@@ -252,9 +252,15 @@ export interface IOutputChannel {
     warning(message: string): void;
 }
 
+export interface IHostContext extends IOutputChannel, ITraceWriter {
+    config: IConfiguration;
+    workFolder: string;    
+}
+
 export interface IExecutionContext extends IOutputChannel, ITraceWriter {
     // communication
     service: IServiceChannel;
+    hostContext: IHostContext;
     authHandler: baseifm.IRequestHandler;
     getWebApi(): webapi.WebApi;
     

@@ -9,6 +9,7 @@ import utilm = require('../../utilities');
 import crypto = require('crypto');
 import path = require('path');
 import fs = require('fs');
+import tm = require('../../tracing');
 
 //
 // Structure for persisting source mapping information to disk
@@ -56,6 +57,14 @@ export interface ISourceMapping {
   system: string;    
 }
 
+var trace: tm.Tracing;
+
+function ensureTrace(writer: cm.ITraceWriter) {
+    if (!trace) {
+        trace = new tm.Tracing(__filename, writer);
+    }
+}
+
 // Mapping info is used primarily for the ever incrementing int for new source folders
 export interface ISourceTracking {
     lastBuildFolderCreatedOn: string;
@@ -63,10 +72,15 @@ export interface ISourceTracking {
 }
 
 export class SourceMappings {
-    constructor(workPath: string) {
+    constructor(workPath: string, writer: cm.ITraceWriter) {
+        ensureTrace(writer);
+        trace.enter('SourceMappings()');
+        
         this.workPath = workPath;
         this.sourceMappingRootPath = path.join(this.workPath, "SourceRootMapping");
+        trace.state('sourceMappingRootPath', this.sourceMappingRootPath);
         this.sourceTrackingPath = path.join(this.sourceMappingRootPath, "Mappings.json");
+        trace.state('sourceTrackingPath', this.sourceTrackingPath);
     }
 
     public workPath: string;
@@ -74,7 +88,6 @@ export class SourceMappings {
     public sourceTrackingPath: string;
 
     public getSourceTracking(): Q.Promise<ISourceTracking> {
-        var defer = Q.defer();
         
         var newTrk = <ISourceTracking>{
             lastBuildFolderNumber: 1,
@@ -103,6 +116,7 @@ export class SourceMappings {
                             job: agentifm.JobRequestMessage, 
                             endpoint: agentifm.ServiceEndpoint): Q.Promise<ISourceMapping> {
 
+        trace.enter('getSourceMapping');
         var defer = Q.defer();
         
         var expectedMap = <ISourceMapping>{};
@@ -125,30 +139,35 @@ export class SourceMappings {
         var hash = hashProvider.digest('hex');
                 
         var legacyDir = path.join('build', hash);
+        trace.state('legacyDir', legacyDir);
         fs.exists(legacyDir, (exists: boolean) => {
             if (exists) {
+                trace.write('legacy exists');
                 expectedMap.hashKey = hash;
                 expectedMap.agent_builddirectory = legacyDir;
                 expectedMap.build_sourcesdirectory = path.join(legacyDir, 'repo');
                 expectedMap.build_artifactstagingdirectory = path.join(legacyDir, 'artifacts');
                 expectedMap.common_testresultsdirectory = path.join(legacyDir, 'TestResults');
                 // not setting other informational fields since legacy is not persisted
-                
+                trace.state('map', expectedMap);
                 defer.resolve(expectedMap);                
             }
             else {
                 // non-legacy path
                 // TODO: set info fields
-                
+                trace.write('using source tracking');
                 this.getSourceTracking()
                 .then((trk: ISourceTracking) => {
+                    trace.state('hashKey', hashKey);
                     expectedMap.hashKey = hashKey;
                     return this.processSourceMapping(expectedMap, trk);                    
                 })
                 .then((resultMap: ISourceMapping) => {
+                    trace.state('resultMap', resultMap);
                     defer.resolve(resultMap);
                 })
-                .fail((err) => {
+                .fail((err: Error) => {
+                    trace.error(err.message);
                     defer.reject(new Error('Failed creating source map: ' + err.message));
                 })                
             }
@@ -162,24 +181,36 @@ export class SourceMappings {
         var srcMapPath = path.join(this.sourceMappingRootPath
                                     , expectedMap.collectionId
                                     , expectedMap.definitionId);
-                                    
+        
+        trace.state('srcMapPath', srcMapPath);                                    
         shell.mkdir('-p', srcMapPath);
         srcMapPath = path.join(srcMapPath, 'SourceFolder.json');
+        trace.state('srcMapPath', srcMapPath);
+        trace.write('updating expected map');
+        this.updateSourceMappingPaths(expectedMap, trk);
         
         return utilm.getOrCreateObjectFromFile(srcMapPath, expectedMap)
         .then((currMap: ISourceMapping) => {
+            trace.state('curr.hashKey', currMap.hashKey);
+            trace.state('expected.hashKey', expectedMap.hashKey);
+            
             if (currMap.hashKey !== expectedMap.hashKey) {
+                trace.write('creating new source folder');
                 return this.createNewSourceFolder(currMap);
             }
             else {
+                trace.write('using current map');
                 return currMap;
             }
         })
         .then((map: ISourceMapping) => {
-            resultMap = map;            
+            resultMap = map;
+            trace.write('writing map');
+            trace.state('map', resultMap);            
             return utilm.objectToFile(srcMapPath, resultMap);
         })
         .then(() => {
+            trace.write('done: ' + srcMapPath); 
             return resultMap;
         })
     }
@@ -188,16 +219,26 @@ export class SourceMappings {
         return this.incrementSourceTracking()
         .then((trk: ISourceTracking) => {
             this.updateSourceMappingPaths(map, trk);
+            trace.write('ensuring paths exist');
             shell.mkdir('-p', map.agent_builddirectory);
+            shell.mkdir('-p', map.build_artifactstagingdirectory);
+            shell.mkdir('-p', map.common_testresultsdirectory);
+            
+            // build_sourcesdirectory: 
+            // we are not creating because SCM provider will create (clone etc...)
+            trace.write('folders created');
+                        
             return map;
         }); 
     }
     
     public updateSourceMappingPaths(map: ISourceMapping, trk: ISourceTracking) {
+        trace.enter('updateSourceMappingPaths');
         var rootPath = trk.lastBuildFolderNumber + '';
         map.agent_builddirectory = rootPath;
         map.build_sourcesdirectory = path.join(rootPath, 's');
         map.build_artifactstagingdirectory = path.join(rootPath, 'a');
         map.common_testresultsdirectory = path.join(rootPath, 'TestResults');
+        trace.state('map', map);
     }
 }

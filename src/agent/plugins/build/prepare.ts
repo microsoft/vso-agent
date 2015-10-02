@@ -87,7 +87,8 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     //
     var workingFolder = variables[cm.vars.agentWorkingDirectory];
     var repoPath: string;
-    var sm: smm.SourceMappings = new smm.SourceMappings(workingFolder);
+    
+    var sm: smm.SourceMappings = new smm.SourceMappings(workingFolder, executionContext.hostContext);
     sm.getSourceMapping(hashKey, job, endpoint)
     .then((srcMap: smm.ISourceMapping) => {
         repoPath = scmProvider.targetPath = srcMap.build_sourcesdirectory;
