@@ -25,17 +25,18 @@ function setVariables(job: agentifm.JobRequestMessage, config: cm.IConfiguration
     trace.enter('setVariables');
     trace.state('variables', job.environment.variables);
 
-    var workingFolder = cm.getWorkPath(config);
     var variables = job.environment.variables;
 
-    if (!variables[cm.sysVars.collectionUri]) {
-        variables[cm.sysVars.collectionUri] =  job.environment.systemConnection.url;     
+    var rt = variables[cm.vars.agentRootDirectory] = __dirname;
+    variables[cm.vars.agentHomeDirectory] = rt;
+    variables[cm.vars.agentAgentId] = config.settings.agentName;
+    
+    var wp = variables[cm.vars.agentWorkingDirectory] = cm.getWorkPath(config);
+    variables[cm.vars.agentWorkFolder] = wp;
+           
+    if (!variables[cm.vars.systemTfCollectionUri]) {
+        variables[cm.vars.systemTfCollectionUri] =  job.environment.systemConnection.url;     
     }
-
-    variables[cm.agentVars.workingDirectory] = workingFolder;
-
-    var stagingFolder = path.join(workingFolder, 'staging');
-    job.environment.variables[cm.buildVars.stagingDirectory] = stagingFolder;
 
     trace.state('variables', job.environment.variables);
 }
@@ -108,7 +109,7 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
         trace.state('msg:', msg);
 
         var agentUrl = hostContext.config.settings.serverUrl;
-        var taskUrl = job.environment.variables[cm.sysVars.collectionUri]
+        var taskUrl = job.environment.variables[cm.vars.systemTfCollectionUri];
         
         var jobInfo = cm.jobInfoFromJob(job, systemAuthHandler);
         var serviceChannel: cm.IServiceChannel = createFeedbackChannel(agentUrl, taskUrl, jobInfo, hostContext);

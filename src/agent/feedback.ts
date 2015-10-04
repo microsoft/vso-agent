@@ -147,7 +147,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
                 else {
                     this.taskApi.updateRecords(
                         { value: values, count: values.length },
-                        this.jobInfo.variables[cm.sysVars.teamProjectId], 
+                        this.jobInfo.variables[cm.vars.systemTeamProjectId], 
                         this.jobInfo.description, 
                         this.jobInfo.planId,
                         this.jobInfo.timelineId,
@@ -379,7 +379,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
             contentStream, 
             containerId, 
             containerItemTuple.containerItem.path, 
-            this.jobInfo.variables[cm.sysVars.teamProjectId]);
+            this.jobInfo.variables[cm.vars.systemTeamProjectId]);
     }  
 
     public postArtifact(projectId: string, buildId: number, artifact: buildifm.BuildArtifact): Q.Promise<buildifm.BuildArtifact> {
@@ -511,7 +511,7 @@ export class WebConsoleQueue extends BaseQueue<string> {
         else {
             this._taskApi.postLines(
                 { value: values, count: values.length },
-                this._jobInfo.variables[cm.sysVars.teamProjectId], 
+                this._jobInfo.variables[cm.vars.systemTeamProjectId], 
                 this._jobInfo.description, 
                 this._jobInfo.planId,
                 this._jobInfo.timelineId,
@@ -639,7 +639,7 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                                     serverLogPath = 'logs\\' + recordId; // FCS expects \
                                     this._taskApi.createLog(
                                         <agentifm.TaskLog>{ path: serverLogPath },
-                                        this._jobInfo.variables[cm.sysVars.teamProjectId], 
+                                        this._jobInfo.variables[cm.vars.systemTeamProjectId], 
                                         this._jobInfo.description, 
                                         planId,
                                         (err: any, statusCode: number, log: agentifm.TaskLog) => {
@@ -672,7 +672,7 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                                         var pageStream: NodeJS.ReadableStream = fs.createReadStream(pagePath);
                                         this._taskApi.appendLog(
                                             { "Content-Length": stats.size }, pageStream,
-                                            this._jobInfo.variables[cm.sysVars.teamProjectId],
+                                            this._jobInfo.variables[cm.vars.systemTeamProjectId],
                                             this._jobInfo.description,
                                             planId,
                                             logId,

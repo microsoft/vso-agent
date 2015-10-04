@@ -4,24 +4,23 @@ import gitm = require('./git');
 import cm = require('../common');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 
-export function getProvider(ctx: cm.IExecutionContext, targetPath: string): cm.IScmProvider {
-	return new GitTfsScmProvider(ctx, targetPath);
+export function getProvider(ctx: cm.IExecutionContext, endpoint: agentifm.ServiceEndpoint): cm.IScmProvider {
+	return new GitTfsScmProvider(ctx, endpoint);
 }
 
 export class GitTfsScmProvider extends gitm.GitScmProvider {
 
 	// override since TfsGit uses the generated OAuth token
-	public initialize(endpoint: agentifm.ServiceEndpoint) {
-		this.endpoint = endpoint;
+	public setAuthorization(authorization: agentifm.EndpointAuthorization) {
 
-	    if (endpoint.authorization && endpoint.authorization['scheme']) {
-	        var scheme = endpoint.authorization['scheme'];
+	    if (authorization && authorization['scheme']) {
+	        var scheme = authorization['scheme'];
 	        this.ctx.info('Using auth scheme: ' + scheme);
 
 	        switch (scheme) {
 	            case 'OAuth':
 	                this.username = process.env['VSO_GIT_USERNAME'] || 'OAuth';
-	                this.password = process.env['VSO_GIT_PASSWORD'] || this.getAuthParameter(endpoint, 'AccessToken') || 'not supplied';
+	                this.password = process.env['VSO_GIT_PASSWORD'] || this.getAuthParameter(authorization, 'AccessToken') || 'not supplied';
 	                break;
 
 	            default:

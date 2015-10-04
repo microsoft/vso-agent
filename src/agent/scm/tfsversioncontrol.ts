@@ -9,12 +9,12 @@ var shell = require('shelljs');
 var path = require('path');
 var tl = require('vso-task-lib');
 
-export function getProvider(ctx: cm.IExecutionContext, targetPath: string): cm.IScmProvider {
-    return new TfsvcScmProvider(ctx, targetPath);
+export function getProvider(ctx: cm.IExecutionContext, endpoint: agentifm.ServiceEndpoint): cm.IScmProvider {
+    return new TfsvcScmProvider(ctx, endpoint);
 }
 
 export class TfsvcScmProvider extends scmm.ScmProvider {
-    constructor(ctx: cm.IExecutionContext, targetPath: string) {
+    constructor(ctx: cm.IExecutionContext, endpoint: agentifm.ServiceEndpoint) {
         this.tfvcw = new tfvcwm.TfvcWrapper();
         this.tfvcw.on('stdout', (data) => {
             ctx.info(data.toString());
@@ -24,39 +24,34 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
             ctx.info(data.toString());
         });
 
-        super(ctx, targetPath);
+        super(ctx, endpoint);
     }
 
     public tfvcw: tfvcwm.TfvcWrapper;
     public username: string;
     public password: string;
-    public endpoint: agentifm.ServiceEndpoint;
     public workspaceName: string;
     public version: string;
     public shelveset: string;
 
-    public initialize(endpoint: agentifm.ServiceEndpoint) {
-        this.endpoint = endpoint;
-
-        if (!endpoint) {
-            throw (new Error('endpoint null initializing tfvc scm provider'));
-        }
-
-        if (endpoint.authorization && endpoint.authorization['scheme']) {
-            var scheme = endpoint.authorization['scheme'];
+    public setAuthorization(authorization: agentifm.EndpointAuthorization) {
+        if (authorization && authorization['scheme']) {
+            var scheme = authorization['scheme'];
             this.ctx.info('Using auth scheme: ' + scheme);
 
             switch (scheme) {
                 case 'OAuth':
                     this.username = process.env['VSO_TFVC_USERNAME'] || 'OAuth';
-                    this.password = process.env['VSO_TFVC_PASSWORD'] || this.getAuthParameter(endpoint, 'AccessToken') || 'not supplied';
+                    this.password = process.env['VSO_TFVC_PASSWORD'] || this.getAuthParameter(authorization, 'AccessToken') || 'not supplied';
                     break;
 
                 default:
                     this.ctx.warning('invalid auth scheme: ' + scheme);
             }
         }
+    }
 
+    public getCode(): Q.Promise<number> {
         var collectionUri = this.ctx.variables['system.teamFoundationCollectionUri'];
         if (!collectionUri) {
             throw (new Error('collectionUri null initializing tfvc scm provider'));
@@ -72,9 +67,7 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
 
         this.version = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceVersion'];
         this.shelveset = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceTfvcShelveset'];
-    }
 
-    public getCode(): Q.Promise<number> {
         var buildDefinitionMappings = this._getTfvcMappings(this.endpoint);
 
         var byType = function(mappings: tfvcwm.TfvcMapping[], type: string) {
@@ -285,7 +278,7 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
 
     private _getWorkspaceName(): string {
         var agentId = this.ctx.config.agent.id;
-        var workspaceName = ("ws_" + this.hash + "_" + agentId).slice(0,60);
+        var workspaceName = ("ws_" + this.hashKey + "_" + agentId).slice(0,60);
         this.ctx.info("workspace name: " + workspaceName);
 
         return workspaceName;

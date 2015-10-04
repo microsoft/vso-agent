@@ -117,7 +117,7 @@ export class JobRunner {
                     // TODO: replace build with sender id once confirm how sent
 
                     hostContext.info('loading plugins...');
-                    var system = _this._job.environment.variables[cm.sysVars.system];
+                    var system = _this._job.environment.variables[cm.vars.system];
                     plgm.load(system, hostContext, executionContext, (err: any, plugins: any) => {
                         if (err) {
                             trace.write('error loading plugins');
@@ -353,13 +353,14 @@ export class JobRunner {
                 instructions['target'] = path.join(taskPath, instructions.target);
                 trace.state('instructions', instructions);
                 this.taskExecution[task.id] = instructions;
-                callback();
             }
             catch (e) {
                 trace.write('exception getting metadata: ' + e.message);
                 callback(new Error('Invalid metadata @ ' + taskJsonPath));
                 return;
             }
+            
+            callback();
         });
     }
 
@@ -386,7 +387,7 @@ export class JobRunner {
         });
 
         trace.state('filePathInputs', filePathInputs);
-        var srcFolder = this._job.environment.variables[cm.buildVars.sourceDirectory];
+        var srcFolder = this._job.environment.variables[cm.vars.buildSourcesDirectory];
         trace.write('srcFolder: ' + srcFolder);
 
         for (var key in task.inputs) {
@@ -409,7 +410,7 @@ export class JobRunner {
         this._hostContext.info('Task: ' + task.name);
         
         //TODO: This call should be made to the plugin as it is build specific
-        if (executionContext.variables[cm.sysVars.system].toLowerCase() === 'Build'.toLowerCase()) {
+        if (executionContext.variables[cm.vars.system].toLowerCase() === 'Build'.toLowerCase()) {
             this._processInputs(task);
         }
 
