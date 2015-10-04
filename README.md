@@ -115,7 +115,7 @@ NOTE: Updating the agent will overwrite the code in the agent subfolder and upda
 
 ## Install preview version of agent
 
-The current preview version of the agent is 0.3.1.  
+The current preview version of the agent is 0.3.x.  
 It contains preview features currently in testing:
 
   * Release Management vNext Support

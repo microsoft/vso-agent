@@ -103,8 +103,8 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         variables[cm.vars.buildArtifactStagingDirectory] = path.join(workingFolder, srcMap.build_artifactstagingdirectory);
         variables[cm.vars.commonTestResultsDirectory] = path.join(workingFolder, srcMap.common_testresultsdirectory);
         var bd = variables[cm.vars.agentBuildDirectory] = path.join(workingFolder, srcMap.agent_builddirectory);
-        shell.cd(bd);
         shell.mkdir('-p', bd);
+        shell.cd(bd);
         
         if (endpoint.data['clean'] === "true") {
             var behavior = job.environment.variables['build.clean'];
