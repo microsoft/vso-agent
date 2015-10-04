@@ -44,7 +44,7 @@ export interface ISourceMapping {
   definitionName: string;
   
   // 2015-09-22T19:39:41.803Z
-  lastRun: string;
+  lastRunOn: string;
   
   // sha1 hash of key source provider fields (like url) 
   // used to see if we should create a new source folder
@@ -86,6 +86,7 @@ export class SourceMappings {
     public workPath: string;
     public sourceMappingRootPath: string;
     public sourceTrackingPath: string;
+    public supportsLegacyPaths: boolean;
 
     public getSourceTracking(): Q.Promise<ISourceTracking> {
         
@@ -127,7 +128,7 @@ export class SourceMappings {
         expectedMap.collectionId = variables[cm.vars.systemCollectionId];
         expectedMap.definitionId = variables[cm.vars.systemDefinitionId];
         expectedMap.repositoryUrl = endpoint.url;
-        expectedMap.lastRun = new Date().toISOString();
+        expectedMap.lastRunOn = new Date().toISOString();
         
         //
         // Use old source enlistments if they already exist.  Let's not force a reclone on agent update
@@ -141,7 +142,7 @@ export class SourceMappings {
         var legacyDir = path.join('build', hash);
         trace.state('legacyDir', legacyDir);
         fs.exists(legacyDir, (exists: boolean) => {
-            if (exists) {
+            if (exists && this.supportsLegacyPaths) {
                 trace.write('legacy exists');
                 expectedMap.hashKey = hash;
                 expectedMap.agent_builddirectory = legacyDir;

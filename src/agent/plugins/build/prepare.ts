@@ -50,7 +50,8 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     });
 
     if (srcendpoints.length == 0) {
-        throw new Error('Unsupported SCM system.  Supported: ' + supported.toString());
+        callback(new Error('Unsupported SCM system.  Supported: ' + supported.toString()));
+        return;
     }
     
     // only support 1 SCM system
@@ -69,12 +70,13 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         scmm = require(provPath);
     }
     catch(err) {
-        callback(new Error('Source Provider not found: ' + providerType));
+        callback(new Error('Source Provider failed to load: ' + providerType));
         return;        
     }
     
     if (!scmm.getProvider) {
-        throw new Error('SCM Provider does not implement getProvider: ' + providerType);
+        callback(new Error('SCM Provider does not implement getProvider: ' + providerType));
+        return;
     }
     
     var scmProvider: cm.IScmProvider = scmm.getProvider(executionContext, endpoint);
@@ -89,6 +91,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     var repoPath: string;
     
     var sm: smm.SourceMappings = new smm.SourceMappings(workingFolder, executionContext.hostContext);
+    sm.supportsLegacyPaths = endpoint.type !== 'tfsversioncontrol';
     sm.getSourceMapping(hashKey, job, endpoint)
     .then((srcMap: smm.ISourceMapping) => {
         repoPath = scmProvider.targetPath = path.join(workingFolder, srcMap.build_sourcesdirectory);
@@ -97,7 +100,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         // Variables
         //        
         variables[cm.vars.buildSourcesDirectory] = repoPath;
-        variables[cm.vars.buildArtifactsStagingDirectory] = path.join(workingFolder, srcMap.build_artifactstagingdirectory);
+        variables[cm.vars.buildArtifactStagingDirectory] = path.join(workingFolder, srcMap.build_artifactstagingdirectory);
         variables[cm.vars.commonTestResultsDirectory] = path.join(workingFolder, srcMap.common_testresultsdirectory);
         var bd = variables[cm.vars.agentBuildDirectory] = path.join(workingFolder, srcMap.agent_builddirectory);
         shell.cd(bd);

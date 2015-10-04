@@ -55,7 +55,7 @@ export class AutomationVariables {
     // Build Variables
     //
     public static buildSourcesDirectory = 'build.sourcesDirectory';
-    public static buildArtifactsStagingDirectory = 'build.artifactsStagingDirectory';
+    public static buildArtifactStagingDirectory = 'build.artifactStagingDirectory';
     public static buildStagingDirectory = 'build.stagingDirectory';
     public static buildBinariesDirectory = 'build.binariesDirectory';
     public static buildDefinitionName = 'build.definitionName';
