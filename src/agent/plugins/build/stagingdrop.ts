@@ -96,9 +96,9 @@ class CopyToStagingFolder implements plugins.IPlugin {
         // determine root: $(build.sourcesdirectory)
         _ensureTracing(ctx, 'copyToStagingFolder');
 
-        ctx.info("looking for source in " + ctxm.WellKnownVariables.sourceFolder);
+        ctx.info("looking for source in " + cm.vars.buildSourcesDirectory);
         var environment = ctx.jobInfo.jobMessage.environment;
-        var sourcesRoot: string = environment.variables[ctxm.WellKnownVariables.sourceFolder].replaceVars(environment.variables);
+        var sourcesRoot: string = environment.variables[cm.vars.buildSourcesDirectory].replaceVars(environment.variables);
         _trace.state('sourcesRoot', sourcesRoot);
 
         var stagingFolder = getStagingFolder(ctx, this._stagingOption);
@@ -262,8 +262,8 @@ class CreateDrop implements plugins.IPlugin {
                 var token = webapim.getBearerHandler(accessToken);
                 var buildClient = new webapim.WebApi(serverUrl, webapim.getBearerHandler(accessToken)).getQBuildApi();
 
-                return ctx.service.postArtifact(ctx.variables[ctxm.WellKnownVariables.projectId],
-                    parseInt(ctx.variables[ctxm.WellKnownVariables.buildId]), <buildifm.BuildArtifact>{
+                return ctx.service.postArtifact(ctx.variables[cm.vars.systemTeamProjectId],
+                    parseInt(ctx.variables[cm.vars.buildId]), <buildifm.BuildArtifact>{
                     name: "drop",
                     resource: {
                         data: artifactLocation,
@@ -354,8 +354,8 @@ class CreateDrop implements plugins.IPlugin {
 function getStagingFolder(ctx: cm.IExecutionContext, stagingOption: agentifm.JobOption): string {
     // determine staging folder: $(build.stagingdirectory)[/{stagingfolder}]
     var environment = ctx.jobInfo.jobMessage.environment;
-    ctx.info("looking for staging folder in " + ctxm.WellKnownVariables.stagingFolder);
-    var stagingFolder = environment.variables[ctxm.WellKnownVariables.stagingFolder].replaceVars(environment.variables)
+    ctx.info("looking for staging folder in " + cm.vars.buildStagingDirectory);
+    var stagingFolder = environment.variables[cm.vars.buildStagingDirectory].replaceVars(environment.variables)
 
     if (stagingOption) {
         var relativeStagingPath = stagingOption.data["stagingfolder"];

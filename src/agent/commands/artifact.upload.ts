@@ -35,7 +35,7 @@ export class ArtifactUploadCommand implements cm.IAsyncCommand {
         }
 
 		var localPath = this.command.properties["localpath"];
-		var containerId = parseInt(this.executionContext.variables[ctxm.WellKnownVariables.containerId]);
+		var containerId = parseInt(this.executionContext.variables["build.containerId"]);
 
 		this.command.info('artifactName: ' + artifactName);
 		this.command.info('containerFolder: ' + containerFolder);
@@ -46,7 +46,7 @@ export class ArtifactUploadCommand implements cm.IAsyncCommand {
         return fc.copyToFileContainer(this.executionContext, localPath, containerId, containerFolder).then((artifactLocation: string) => {
 			this.command.info('Associating artifact ' + artifactLocation + ' ...');
 		
-			var buildId: number = parseInt(this.executionContext.variables[ctxm.WellKnownVariables.buildId]);
+			var buildId: number = parseInt(this.executionContext.variables[cm.vars.buildId]);
 			var artifact: buildifm.BuildArtifact = <buildifm.BuildArtifact>{
 				name: artifactName,
 				resource: {
@@ -57,7 +57,7 @@ export class ArtifactUploadCommand implements cm.IAsyncCommand {
 			
 			var webapi = this.executionContext.getWebApi();
 			var buildClient = webapi.getQBuildApi();
-			return buildClient.createArtifact(artifact, buildId, this.executionContext.variables[ctxm.WellKnownVariables.projectId]);
+			return buildClient.createArtifact(artifact, buildId, this.executionContext.variables[cm.vars.systemTeamProjectId]);
 		});
 	}
 }

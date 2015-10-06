@@ -106,6 +106,9 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         shell.mkdir('-p', bd);
         shell.cd(bd);
         
+        // back-compat
+        variables["build.sourceDirectory"] = variables[cm.vars.buildSourcesDirectory];
+        
         if (endpoint.data['clean'] === "true") {
             var behavior = job.environment.variables['build.clean'];
             if (behavior && behavior.toLowerCase() === 'delete') {

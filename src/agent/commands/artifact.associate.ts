@@ -33,7 +33,7 @@ export class ArtifactAssociateCommand implements cm.IAsyncCommand {
 
 		this.command.info('Associating artifact...');
 		
-		var buildId: number = parseInt(this.executionContext.variables[ctxm.WellKnownVariables.buildId]);
+		var buildId: number = parseInt(this.executionContext.variables[cm.vars.buildId]);
 		var artifact: buildifm.BuildArtifact = <buildifm.BuildArtifact>{
 			name: artifactName,
 			resource: {
@@ -44,6 +44,6 @@ export class ArtifactAssociateCommand implements cm.IAsyncCommand {
 		
 		var webapi = this.executionContext.getWebApi();
 		var buildClient = webapi.getQBuildApi();
-		return buildClient.createArtifact(artifact, buildId, this.executionContext.variables[ctxm.WellKnownVariables.projectId]);
+		return buildClient.createArtifact(artifact, buildId, this.executionContext.variables[cm.vars.systemTeamProjectId]);
 	}	
 }
