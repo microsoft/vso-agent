@@ -96,7 +96,7 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
                 for (var localPath in newMappings) {
                     var mappingDetails: sw.SvnMappingDetails = newMappings[localPath];
                     var serverPath: string = mappingDetails.serverPath;
-                    var effectiveRevision: string = mappingDetails.revision.toUpperCase() == 'HEAD' ? latestRevision : mappingDetails.revision;
+                    var effectiveRevision: string = mappingDetails.revision.toUpperCase() === 'HEAD' ? latestRevision : mappingDetails.revision;
                     mappingDetails.revision = effectiveRevision;
                     
                     if (!shell.test('-d', this.svnw.appendPath(localPath, '.svn'))) {
@@ -107,7 +107,7 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
                             return this.svnw.checkout(mappingDetails)
                         });
                     }
-                    else if (currentMappings[localPath] && (currentMappings[localPath] == serverPath)) {
+                    else if (currentMappings[localPath] && (currentMappings[localPath] === serverPath)) {
                         promiseChain = promiseChain.then(() => {
                             this.ctx.info("Updating with depth: " + mappingDetails.depth 
                                         + ", revision: " + mappingDetails.revision 

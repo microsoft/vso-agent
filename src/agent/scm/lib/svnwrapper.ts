@@ -152,28 +152,28 @@ export class SvnWrapper extends events.EventEmitter {
 
     public update(svnModule: SvnMappingDetails): Q.Promise<number> {
         return this._exec('update', [svnModule.localPath, 
-                                     '-revision:' + svnModule.revision, 
-                                     '-depth:' + this._toSvnDepth(svnModule.depth), 
+                                     '--revision:' + svnModule.revision, 
+                                     '--depth:' + this._toSvnDepth(svnModule.depth), 
                                      '--ignore-externals:' + svnModule.ignoreExternals, 
-                                     '-noprompt']);
+                                     '--non-interactive']);
     }
 
     public switch(svnModule: SvnMappingDetails): Q.Promise<number> {
         return this._exec('switch', [svnModule.serverPath,
                                      svnModule.localPath, 
-                                     '-revision:' + svnModule.revision, 
-                                     '-depth:' + this._toSvnDepth(svnModule.depth), 
+                                     '--revision:' + svnModule.revision, 
+                                     '--depth:' + this._toSvnDepth(svnModule.depth), 
                                      '--ignore-externals:' + svnModule.ignoreExternals, 
-                                     '-noprompt']);
+                                     '--non-interactive']);
     }
 
     public checkout(svnModule: SvnMappingDetails): Q.Promise<number> {
         return this._exec('checkout', [svnModule.serverPath,
                                        svnModule.localPath, 
-                                       '-revision:' + svnModule.revision, 
-                                       '-depth:' + this._toSvnDepth(svnModule.depth), 
+                                       '--revision:' + svnModule.revision, 
+                                       '--depth:' + this._toSvnDepth(svnModule.depth), 
                                        '--ignore-externals:' + svnModule.ignoreExternals, 
-                                       '-noprompt']);
+                                       '--non-interactive']);
     }
 
     public getLatestRevision(sourceBranch: string, sourceRevision: string): Q.Promise<string> {
