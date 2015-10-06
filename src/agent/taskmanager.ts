@@ -15,10 +15,9 @@ import agentm = require('vso-node-api/TaskAgentApi');
 import webapi = require('vso-node-api/WebApi');
 
 export class TaskManager {
-    constructor(hostContext: ctxm.HostContext, authHandler: baseifm.IRequestHandler) {
+    constructor(hostContext: ctxm.HostContext, executionContext: cm.IExecutionContext, authHandler: baseifm.IRequestHandler) {
         this.context = hostContext;
-        this.taskApi = new webapi.WebApi(hostContext.config.settings.serverUrl, 
-                                      authHandler).getTaskAgentApi();
+        this.taskApi = executionContext.getWebApi().getTaskAgentApi();
         this.taskFolder = path.resolve(hostContext.workFolder, 'tasks');
     }
 
