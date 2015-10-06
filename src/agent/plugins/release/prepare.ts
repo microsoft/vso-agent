@@ -77,7 +77,7 @@ export function beforeJob(context: common.IExecutionContext, callback) {
     });
 }
 
-function cleanUpArtifactsDirectory(context: common.IExecutionContext, artifactsFolder: string, callback): void {
+export function cleanUpArtifactsDirectory(context: common.IExecutionContext, artifactsFolder: string, callback): void {
     context.info('Cleaning artifacts directory: ' + artifactsFolder);
     shell.rm('-rf', artifactsFolder);
     var errorMessage = shell.error();
@@ -92,14 +92,14 @@ function cleanUpArtifactsDirectory(context: common.IExecutionContext, artifactsF
     context.info('Cleaned artifacts directory: ' + artifactsFolder);
 }
 
-function createHash(teamProject: string, releaseDefinitionName: string): string {
+export function createHash(teamProject: string, releaseDefinitionName: string): string {
     var hashProvider = crypto.createHash("sha256");
     var hashInput = teamProject + ':' + releaseDefinitionName;
     hashProvider.update(hashInput, 'utf8');
     return hashProvider.digest('hex');
 }
 
-function setAndLogLocalVariables(context: common.IExecutionContext, artifactsFolder: string, artifactDefinitions: releaseIfm.AgentArtifactDefinition[]): void {
+export function setAndLogLocalVariables(context: common.IExecutionContext, artifactsFolder: string, artifactDefinitions: releaseIfm.AgentArtifactDefinition[]): void {
     if (artifactDefinitions.length === 1 && artifactDefinitions[0].artifactType === releaseIfm.AgentArtifactType.Build) {
         context.variables[releaseCommon.releaseVars.buildId] = artifactDefinitions[0].version;
     }
