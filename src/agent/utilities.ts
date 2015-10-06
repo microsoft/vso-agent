@@ -114,7 +114,7 @@ export function readDirectory(directory: string, includeFiles: boolean, includeF
                     Q.nfcall(fs.stat, fullPath)
                         .then((stat: fs.Stats) => {
                             if (stat && stat.isDirectory()) {
-                                if (searchOption && (searchOption == SearchOption.TopDirectoryOnly)) {
+                                if (SearchOption.TopDirectoryOnly === searchOption) {
                                     results.push(fullPath);
                                 }
                                 else {
