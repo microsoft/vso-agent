@@ -25,12 +25,14 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
         });
 
         super(ctx, endpoint);
+
+        this.version = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceVersion'];
+        this.shelveset = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceTfvcShelveset'];
     }
 
     public tfvcw: tfvcwm.TfvcWrapper;
     public username: string;
     public password: string;
-    public workspaceName: string;
     public version: string;
     public shelveset: string;
 
@@ -49,9 +51,7 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
                     this.ctx.warning('invalid auth scheme: ' + scheme);
             }
         }
-    }
-
-    public getCode(): Q.Promise<number> {
+        
         var collectionUri = this.ctx.variables['system.teamFoundationCollectionUri'];
         if (!collectionUri) {
             throw (new Error('collectionUri null initializing tfvc scm provider'));
@@ -62,11 +62,10 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
             password: this.password,
             collection: collectionUri
         });
+    }
 
-        this.workspaceName = this._getWorkspaceName();
-
-        this.version = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceVersion'];
-        this.shelveset = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceTfvcShelveset'];
+    public getCode(): Q.Promise<number> {
+        var workspaceName = this._getWorkspaceName();
 
         var buildDefinitionMappings = this._getTfvcMappings(this.endpoint);
 
@@ -120,7 +119,7 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
             return true;
         }
 
-        return this.tfvcw.getWorkspace(this.workspaceName)
+        return this.tfvcw.getWorkspace(workspaceName)
         .then((workspace: tfvcwm.TfvcWorkspace) => {
             if (workspace) {
                 if (isMappingIdentical(buildDefinitionMappings, workspace.mappings)) {
@@ -181,7 +180,7 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
                 //workspace either doesn't exist, or we deleted it due to mapping changed
                 //need to recreate  
                 var newWorkspace = <tfvcwm.TfvcWorkspace> {
-                    name: this.workspaceName,
+                    name: workspaceName,
                     mappings: []
                 };
                 this.ctx.info("Creating workspace " + newWorkspace.name);
@@ -245,7 +244,7 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
                 shell.cd(this.targetPath);
                 this.ctx.info("Unshelving "+this.shelveset);
                 return this.tfvcw.unshelve(this.shelveset, <tfvcwm.TfvcWorkspace> {
-                    name: this.workspaceName
+                    name: workspaceName
                 });
             } else {
                 return Q(0);
@@ -255,8 +254,10 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
 
     // clean a workspace. Delete the workspace and remove the target folder
     public clean(): Q.Promise<number> {
+        var workspaceName = this._getWorkspaceName();
+
         // clean workspace and delete local folder
-        return this.tfvcw.getWorkspace(this.workspaceName)
+        return this.tfvcw.getWorkspace(workspaceName)
         .then((workspace: tfvcwm.TfvcWorkspace) => {
             if (workspace) {
                 return this.tfvcw.deleteWorkspace(workspace);
@@ -278,10 +279,17 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
 
     private _getWorkspaceName(): string {
         var agentId = this.ctx.config.agent.id;
-        var workspaceName = ("ws_" + this.hashKey + "_" + agentId).slice(0,60);
+        var workspaceName = ("ws_" + this._getBuildFolder() + "_" + agentId).slice(0,60);
         this.ctx.info("workspace name: " + workspaceName);
 
         return workspaceName;
+    }
+
+    private _getBuildFolder(): string {
+        var agentBuildDir = this.ctx.jobInfo.jobMessage.environment.variables["agent.buildDirectory"];
+        var agentWorkDir = this.ctx.jobInfo.jobMessage.environment.variables["agent.workFolder"]; 
+
+        return agentBuildDir.slice(agentWorkDir.length + 1);
     }
 
     private _ensurePathExist(path: string) {
