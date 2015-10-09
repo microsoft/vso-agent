@@ -14,9 +14,9 @@ export class AgentApi implements ifm.IAgentApi {
     httpClient: httpm.HttpClient;
     restClient: restm.RestClient;
 
-    constructor(accountUrl:string, handlers: ifm.IRequestHandler[]) {
+    constructor(accountUrl: string, handlers: ifm.IRequestHandler[], socketTimeout?: number) {
         this.accountUrl = accountUrl;
-        this.httpClient = new httpm.HttpClient('vso-build-api', handlers, 60000);
+        this.httpClient = new httpm.HttpClient('vso-build-api', handlers, socketTimeout || 60000);
         this.restClient = new restm.RestClient(accountUrl, this.httpClient);     
     }
 
