@@ -10,6 +10,11 @@ import fs = require('fs');
 var shell = require('shelljs');
 var path = require('path');
 
+export interface GetOrCreateResult<T> {
+    created: boolean;
+    result: T;
+}
+
 // TODO: offer these module level context-less helper functions in utilities below
 export function ensurePathExists(path: string): Q.Promise<void> {
     var defer = Q.defer<void>();
@@ -100,8 +105,8 @@ export function objectFromFile(filePath: string, defObj?:any): Q.Promise<any> {
     return defer.promise;
 }
 
-export function getOrCreateObjectFromFile(filePath: string, defObj:any): Q.Promise<any> {
-    var defer = Q.defer<any>();
+export function getOrCreateObjectFromFile<T>(filePath: string, defObj: T): Q.Promise<GetOrCreateResult<T>> {
+    var defer = Q.defer<GetOrCreateResult<T>>();
     
     fs.exists(filePath, (exists) => {
         if (!exists) {
@@ -110,7 +115,10 @@ export function getOrCreateObjectFromFile(filePath: string, defObj:any): Q.Promi
                     defer.reject(new Error('Could not save to file (' + filePath + '): ' + err.message));
                 }
                 else {
-                    defer.resolve(defObj);
+                    defer.resolve({
+                        created: true,
+                        result: defObj
+                    });
                 }
             });
         }
@@ -121,7 +129,10 @@ export function getOrCreateObjectFromFile(filePath: string, defObj:any): Q.Promi
                 }
                 else {
                     var obj: any = JSON.parse(contents.toString());
-                    defer.resolve(obj);
+                    defer.resolve({
+                        created: false,
+                        result: obj
+                    });
                 }
             });            
         }
