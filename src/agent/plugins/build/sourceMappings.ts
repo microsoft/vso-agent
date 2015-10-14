@@ -96,7 +96,9 @@ export class SourceMappings {
         };
         
         shell.mkdir('-p', this.sourceMappingRootPath);
-        return utilm.getOrCreateObjectFromFile(this.sourceTrackingPath, newTrk);
+        return utilm.getOrCreateObjectFromFile(this.sourceTrackingPath, newTrk).then((result: utilm.GetOrCreateResult<ISourceTracking>) => {
+            return result.result;
+        });
     }
     
     public incrementSourceTracking(): Q.Promise<ISourceTracking> {
@@ -191,11 +193,12 @@ export class SourceMappings {
         this.updateSourceMappingPaths(expectedMap, trk);
         
         return utilm.getOrCreateObjectFromFile(srcMapPath, expectedMap)
-        .then((currMap: ISourceMapping) => {
+        .then((result: utilm.GetOrCreateResult<ISourceMapping>) => {
+            var currMap: ISourceMapping = result.result;
             trace.state('curr.hashKey', currMap.hashKey);
             trace.state('expected.hashKey', expectedMap.hashKey);
             
-            if (currMap.hashKey !== expectedMap.hashKey) {
+            if (result.created || currMap.hashKey !== expectedMap.hashKey) {
                 trace.write('creating new source folder');
                 return this.createNewSourceFolder(currMap);
             }
