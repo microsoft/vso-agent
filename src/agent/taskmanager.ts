@@ -12,11 +12,12 @@ import shell = require('shelljs');
 import webapi = require('./api/webapi');
 
 export class TaskManager {
-
-    constructor(workerContext: ctxm.WorkerContext, authHandler: ifm.IRequestHandler) {
+    constructor(workerContext: ctxm.WorkerContext, jobContext: ctxm.JobContext) {
         this.context = workerContext;
-        this.taskApi = webapi.TaskApi(workerContext.config.settings.serverUrl, 
-                                      authHandler);
+        var taskDefinitionsUri = this.getTaskDefinitionsUri(jobContext.variables);
+        this.context.trace("TaskDownloader will download tasks from " + taskDefinitionsUri);
+        this.taskApi = webapi.TaskApi(taskDefinitionsUri, 
+                                      jobContext.authHandler);
         this.taskFolder = path.resolve(workerContext.config.settings.workFolder, 'tasks');
     }
 
@@ -110,6 +111,17 @@ export class TaskManager {
 
     private getTaskInstance(task: ifm.TaskDefinition) : ifm.TaskInstance {
         return <ifm.TaskInstance>{'id':task.id, 'name': task.name, 'version': cm.versionStringFromTaskDef(task)}
+    }
+    
+    private getTaskDefinitionsUri(variables: { [key: string]: string }): string {
+        var taskDefinitionsUri = variables["system.taskDefinitionsUri"];
+        if (!taskDefinitionsUri) {
+            taskDefinitionsUri = variables[cm.sysVars.collectionUri];
+        }
+        if (!taskDefinitionsUri) {
+            taskDefinitionsUri = this.context.config.settings.serverUrl; 
+        }
+        return taskDefinitionsUri;
     }
 
     private context: ctxm.WorkerContext;
