@@ -10,6 +10,11 @@ import fs = require('fs');
 var shell = require('shelljs');
 var path = require('path');
 
+export interface GetOrCreateResult<T> {
+    created: boolean;
+    result: T;
+}
+
 // TODO: offer these module level context-less helper functions in utilities below
 export function ensurePathExists(path: string): Q.Promise<void> {
     var defer = Q.defer<void>();
@@ -50,6 +55,15 @@ export function readFileContents(filePath: string, encoding: string) : Q.Promise
     return defer.promise;
 }
 
+export function fileExists(filePath: string): Q.Promise<boolean> {
+    var defer = Q.defer<boolean>();
+    
+    fs.exists(filePath, (exists) => {
+        defer.resolve(exists);
+    });
+    
+    return <Q.Promise<boolean>>defer.promise;
+}
 export function objectToFile(filePath: string, obj: any): Q.Promise<void> {
     var defer = Q.defer<void>();
 
@@ -65,18 +79,64 @@ export function objectToFile(filePath: string, obj: any): Q.Promise<void> {
     return defer.promise;
 }
 
-export function objectFromFile(filePath: string): Q.Promise<any> {
+export function objectFromFile(filePath: string, defObj?:any): Q.Promise<any> {
     var defer = Q.defer<any>();
 
-    fs.readFile(filePath, (err, contents) => {
-        if (err) {
-            defer.reject(new Error('Could not read file (' + filePath + '): ' + err.message));
+    fs.exists(filePath, (exists) => {
+        if (!exists && defObj) {
+            defer.resolve(defObj);
+        }
+        else if (!exists) {
+            defer.reject(new Error('File does not exist: ' + filePath));
         }
         else {
-            var obj: any = JSON.parse(contents.toString());
-            defer.resolve(obj);
+            fs.readFile(filePath, (err, contents) => {
+                if (err) {
+                    defer.reject(new Error('Could not read file (' + filePath + '): ' + err.message));
+                }
+                else {
+                    var obj: any = JSON.parse(contents.toString());
+                    defer.resolve(obj);
+                }
+            });            
         }
-    });
+    })
+
+    return defer.promise;
+}
+
+export function getOrCreateObjectFromFile<T>(filePath: string, defObj: T): Q.Promise<GetOrCreateResult<T>> {
+    var defer = Q.defer<GetOrCreateResult<T>>();
+    
+    fs.exists(filePath, (exists) => {
+        if (!exists) {
+            fs.writeFile(filePath, JSON.stringify(defObj, null, 2), (err) => {
+                if (err) {
+                    defer.reject(new Error('Could not save to file (' + filePath + '): ' + err.message));
+                }
+                else {
+                    defer.resolve({
+                        created: true,
+                        result: defObj
+                    });
+                }
+            });
+        }
+        else {
+            fs.readFile(filePath, (err, contents) => {
+                if (err) {
+                    defer.reject(new Error('Could not read file (' + filePath + '): ' + err.message));
+                }
+                else {
+                    var obj: any = JSON.parse(contents.toString());
+                    defer.resolve({
+                        created: false,
+                        result: obj
+                    });
+                }
+            });            
+        }
+    })
 
     return defer.promise;
 }

@@ -25,23 +25,59 @@ var fs = require('fs');
 
 require('./extensions');
 
-export var sysVars = <any>{};
-sysVars.system = 'system';
-sysVars.collectionId = 'system.collectionId';
-sysVars.definitionId = 'system.definitionId';
-sysVars.tfsUri = 'system.teamFoundationServerUri';
-sysVars.collectionUri = 'system.teamFoundationCollectionUri';
-sysVars.teamProjectId = 'system.teamProjectId';
-sysVars.debug = 'system.debug';
+//
+// Variables - Keep grouped and ordered
+// 
+export class AutomationVariables {
+    
+    //
+    // System Variables
+    //
+    public static system = "system";
+    public static systemCollectionId = "system.collectionId";
+    public static systemDefinitionId = "system.definitionId";
+    public static systemTfsUri = "system.teamFoundationServerUri";
+    public static systemTfCollectionUri = 'system.teamFoundationCollectionUri';
+    public static systemTeamProjectId = 'system.teamProjectId';
+    public static systemDebug = 'system.debug';
+    
+    //
+    // Agent Variables
+    //    
+    public static agentRootDirectory = 'agent.rootDirectory';
+    public static agentWorkingDirectory = 'agent.workingDirectory';
+    public static agentWorkFolder = 'agent.workFolder';
+    public static agentHomeDirectory = 'agent.homeDirectory';
+    public static agentAgentId = 'agent.agentId';
+    public static agentBuildDirectory = 'agent.buildDirectory';
+    
+    //
+    // Build Variables
+    //
+    public static buildSourcesDirectory = 'build.sourcesDirectory';
+    public static buildArtifactStagingDirectory = 'build.artifactStagingDirectory';
+    public static buildStagingDirectory = 'build.stagingDirectory';
+    public static buildBinariesDirectory = 'build.binariesDirectory';
+    public static buildDefinitionName = 'build.definitionName';
+    public static buildDefinitionVersion = 'build.definitionVersion';
+    public static buildNumber = 'build.buildNumber';
+    public static buildUri = 'build.buildUri';
+    public static buildId = 'build.buildId';
+    public static buildQueuedBy = 'build.queuedBy';
+    public static buildQueuedById = 'build.queuedById';
+    public static buildRequestedFor = 'build.requestedFor';
+    public static buildRequestedForId = 'build.requestedForId';
+    public static buildSourceVersion = 'build.sourceVersion';
+    public static buildSourceBranch = 'build.sourceBranch';
+    public static buildSourceBranchName = 'build.sourceBranchName';
+    
+    //
+    // Common Variables
+    //       
+    public static commonTestResultsDirectory = "common.testResultsDirectory";
+}
 
-export var agentVars = <any>{};
-agentVars.rootDirectory = 'agent.rootDirectory';
-agentVars.workingDirectory = 'agent.workingDirectory';
-
-// TODO: should be in build plugin
-export var buildVars = <any>{};
-buildVars.sourceDirectory = 'build.sourceDirectory';
-buildVars.stagingDirectory = 'build.stagingDirectory';
+export var vars = AutomationVariables;
 
 //-----------------------------------------------------------
 // ENV VARS
@@ -216,9 +252,15 @@ export interface IOutputChannel {
     warning(message: string): void;
 }
 
+export interface IHostContext extends IOutputChannel, ITraceWriter {
+    config: IConfiguration;
+    workFolder: string;    
+}
+
 export interface IExecutionContext extends IOutputChannel, ITraceWriter {
     // communication
     service: IServiceChannel;
+    hostContext: IHostContext;
     authHandler: baseifm.IRequestHandler;
     getWebApi(): webapi.WebApi;
     
@@ -284,11 +326,12 @@ export interface ILogPageInfo {
 }
 
 export interface IScmProvider {
-    hash: string;
+    hashKey: string;
     debugOutput: boolean;
+    targetPath: string;
     
     // virtual - must override
-    initialize(endpoint: agentifm.ServiceEndpoint);
+    initialize();
     getCode(): Q.Promise<number>;
     clean(): Q.Promise<number>;
 }

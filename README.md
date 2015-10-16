@@ -33,6 +33,8 @@ $ sudo chown -R $USER ~/.npm
 
 This does not install an agent.  It simply pulls down the latest version of the agent installer.
 
+Preview version:  See Install Preview Version of Agent below
+
 ### Create Agents
 
 From a directory you created for the agent, run the installer.  Repeat from different folders for multiple agents.
@@ -110,6 +112,25 @@ $ vsoagent-installer
 ```
 
 NOTE: Updating the agent will overwrite the code in the agent subfolder and update the package.json 
+
+## Install preview version of agent
+
+The current preview version of the agent is 0.3.x.  
+It contains preview features currently in testing:
+
+  * Release Management vNext Support
+  * TfsVC xplat support using TEE command line
+  * Service Endpoint support
+  * Shorter repo paths
+
+```bash
+$ sudo npm install vsoagent-installer@preview -g
+$ sudo chown -R $USER ~/.npm
+```
+
+[more on npm issue](http://stackoverflow.com/questions/22152162/npm-cannot-install-dependencies-attempt-to-unlock-something-which-hasnt-been)
+
+This does not install an agent.  It simply pulls down the latest version of the agent installer.
 
 ## Contributing
 

@@ -143,7 +143,7 @@ export class Context extends events.EventEmitter {
     }
 }
 
-export class HostContext extends Context implements cm.ITraceWriter, cm.IOutputChannel {
+export class HostContext extends Context implements cm.IHostContext {
     private _fileWriter: cm.IDiagnosticWriter;
     
     public config: cm.IConfiguration;
@@ -191,14 +191,14 @@ export class ExecutionContext extends Context implements cm.IExecutionContext {
         this.service = service;
         this.config = hostContext.config;
 
-        this.workingDirectory = this.variables[cm.agentVars.workingDirectory];
+        this.workingDirectory = this.variables[cm.vars.agentWorkingDirectory];
         var logFolder = path.join(this.workingDirectory, '_logs');
 
         var logData = <cm.ILogMetadata>{};
         logData.jobInfo = jobInfo;
         logData.recordId = recordId;
 
-        this.debugOutput = this.variables[cm.sysVars.debug] == 'true';
+        this.debugOutput = this.variables[cm.vars.systemDebug] == 'true';
         var logger: lm.PagingLogger = new lm.PagingLogger(logFolder, logData);
 
         logger.level =  this.debugOutput ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info;

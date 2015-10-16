@@ -31,13 +31,14 @@ export class BuildArtifactResolver {
                     defer.reject(errorMessage);
                     return;
                 }
+                defer.resolve(null);
             }).fail((err) => {
                 defer.reject(err);
                 return;
             });
         }
         else if (buildArtifact.resource.type.toLowerCase() === 'container') {
-            var serverUrl = context.jobInfo.jobMessage.environment.systemConnection.url;
+            var serverUrl = context.variables[common.vars.systemTfCollectionUri];
             var buildClient = new webapim.WebApi(serverUrl, context.jobInfo.systemAuthHandler).getBuildApi();
             var zipFilePath = artifactDownloadFolder + '.zip';
             buildClient.getArtifactContentZip(buildId, buildArtifact.name, buildDetails.project, (err, statusCode, res) => {
