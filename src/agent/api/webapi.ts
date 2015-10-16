@@ -27,8 +27,8 @@ export function bearerHandler(token) {
 // ---------------------------------------------------------------------------
 // factory to return hostapi (for building build host/agents) or buildapi (for querying and queuing builds)
 //----------------------------------------------------------------------------
-export function AgentApi(serverUrl: string, authHandler: ifm.IRequestHandler): ifm.IAgentApi {
-    return new agentm.AgentApi(serverUrl, [authHandler, versionHandler('1.0')]); 
+export function AgentApi(serverUrl: string, authHandler: ifm.IRequestHandler, socketTimeout?: number): ifm.IAgentApi {
+    return new agentm.AgentApi(serverUrl, [authHandler, versionHandler('1.0')], socketTimeout); 
 }
 
 export function QAgentApi(serverUrl: string, authHandler: ifm.IRequestHandler): ifm.IQAgentApi {

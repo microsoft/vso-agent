@@ -39,7 +39,7 @@ var trace: tm.Tracing;
 var cfgr: cfgm.Configurator = new cfgm.Configurator();
 var messageListener: listener.MessageListener;
 
-var runWorker = function(ag: ctxm.AgentContext, agentApi: ifm.IAgentApi, workerMsg: any) {
+var runWorker = function(ag: ctxm.AgentContext, agentApi: ifm.IAgentApi, lockRenewerClient: ifm.IAgentApi, workerMsg: any) {
 
     var worker: childProcess.ChildProcess = childProcess.fork(path.join(__dirname, 'vsoworker'), [], {
         env: process.env,
@@ -61,7 +61,7 @@ var runWorker = function(ag: ctxm.AgentContext, agentApi: ifm.IAgentApi, workerM
                 var lockToken: string = msg.lockToken;
                 var jobRequest: ifm.TaskAgentJobRequest = msg.jobRequest;
                 
-                agentApi.updateJobRequest(poolId, lockToken, jobRequest, (err, status, jobRequest) => {
+                lockRenewerClient.updateJobRequest(poolId, lockToken, jobRequest, (err, status, jobRequest) => {
                     trace.write('err: ' + err);
                     trace.write('status: ' + status);
                     if (status === 404) {
@@ -134,6 +134,10 @@ cm.readBasicCreds()
     ag.info('Listening for agent: ' + queueName);
 
     var agentApi: ifm.IAgentApi = webapi.AgentApi(settings.serverUrl, cm.basicHandlerFromCreds(_creds));
+    
+    // use a short timeout for the lock renewer
+    var lockRenewerClient: ifm.IAgentApi = webapi.AgentApi(settings.serverUrl, cm.basicHandlerFromCreds(_creds), 10000);
+    
     messageListener = new listener.MessageListener(agentApi, agent, config.poolId);
     trace.write('created message listener');
     ag.info('starting listener...');
@@ -178,7 +182,7 @@ cm.readBasicCreds()
                 data: messageBody
             }
 
-            runWorker(ag, agentApi, workerMsg);
+            runWorker(ag, agentApi, lockRenewerClient, workerMsg);
         }
         else {
             ag.error('Unknown Message Type: ' + message.messageType);
