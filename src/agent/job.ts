@@ -97,7 +97,7 @@ export class JobRunner {
         executionContext.writeConsoleSection('Preparing tasks');
 
         hostContext.info('Downloading required tasks');
-        var taskManager = new taskm.TaskManager(hostContext, executionContext.authHandler);
+        var taskManager = new taskm.TaskManager(executionContext);
         taskManager.ensureTasksExist(this._job.tasks).then(() => {
             // prepare (might download) up to 5 tasks in parallel and then run tasks sequentially
             hostContext.info('Preparing Tasks');
