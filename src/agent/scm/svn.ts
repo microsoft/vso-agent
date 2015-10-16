@@ -1,6 +1,6 @@
 import Q = require('q');
 import scmprovider = require('./lib/scmprovider');
-import agent = require('vso-node-api/interfaces/TaskAgentInterfaces');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import sw = require('./lib/svnwrapper');
 import cm = require('../common');
 import utilm = require('../utilities');
@@ -11,12 +11,12 @@ var tl = require('vso-task-lib');
 
 var administrativeDirectoryName = ".svn";
 
-export function getProvider(ctx: cm.IExecutionContext, targetPath: string): cm.IScmProvider {
-    return new SvnScmProvider(ctx, targetPath);
+export function getProvider(ctx: cm.IExecutionContext, endpoint: agentifm.ServiceEndpoint): cm.IScmProvider {
+    return new SvnScmProvider(ctx, endpoint);
 }
 
 export class SvnScmProvider extends scmprovider.ScmProvider {
-    constructor(ctx: cm.IExecutionContext, targetPath: string) {
+    constructor(ctx: cm.IExecutionContext, endpoint: agentifm.ServiceEndpoint) {
         this.svnw = new sw.SvnWrapper(ctx);
         this.svnw.on('stdout', (data) => {
             ctx.info(data.toString());
@@ -26,7 +26,7 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
             ctx.info(data.toString());
         });
 
-        super(ctx, targetPath);
+        super(ctx, endpoint);
     }
 
     public svnw: sw.SvnWrapper;
@@ -34,25 +34,22 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
     public password: string;
     public realmName: string;
     public url: string;
-    public endpoint: agent.ServiceEndpoint;
+    public endpoint: agentifm.ServiceEndpoint;
     public defaultRevision: string;
     public defaultBranch: string;
 
-    public initialize(endpoint: agent.ServiceEndpoint) {
-        this.endpoint = endpoint;
+    public setAuthorization(authorization: agentifm.EndpointAuthorization) {
 
-        if (!endpoint) {
-            throw (new Error('endpoint null initializing svn scm provider'));
-        }
+        if (authorization && authorization['scheme']) {
+            var scheme = authorization['scheme'];
+            this.ctx.info('Using auth scheme: ' + scheme);
 
-        if (endpoint.authorization && endpoint.authorization['scheme']) {
-            var scheme = endpoint.authorization['scheme'];
 
             switch (scheme) {
                 case 'UsernamePassword':
-                    this.username = process.env['VSO_SVN_USERNAME'] || this.getAuthParameter(endpoint, 'Username') || '';
-                    this.password = process.env['VSO_SVN_PASSWORD'] || this.getAuthParameter(endpoint, 'Password') || '';
-                    this.realmName = process.env['VSO_SVN_REALMNAME'] || this.getAuthParameter(endpoint, 'RealmName') || '';
+                    this.username = process.env['VSO_SVN_USERNAME'] || this.getAuthParameter(authorization, 'Username') || '';
+                    this.password = process.env['VSO_SVN_PASSWORD'] || this.getAuthParameter(authorization, 'Password') || '';
+                    this.realmName = process.env['VSO_SVN_REALMNAME'] || this.getAuthParameter(authorization, 'RealmName') || '';
                     break;
 
                 default:
@@ -222,7 +219,7 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
         return (s || '').replaceVars(environment.variables);
     }
     
-    private _buildNewMappings(endpoint: agent.ServiceEndpoint): sw.ISvnMappingDictionary {
+    private _buildNewMappings(endpoint: agentifm.ServiceEndpoint): sw.ISvnMappingDictionary {
         var svnMappings: sw.ISvnMappingDictionary = {};
 
         if (endpoint && endpoint.data && endpoint.data['svnWorkspaceMapping']) {
