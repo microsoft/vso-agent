@@ -11,6 +11,8 @@ var shell = require('shelljs');
 var path = require('path');
 var xmlrReader = require('xmlreader');
 
+import fs = require('fs');
+
 var administrativeDirectoryName = ".svn";
 
 export interface SvnMappingDetails {
@@ -45,14 +47,16 @@ export interface ISvnExecOptions {
 }
 
 export class SvnWrapper extends events.EventEmitter {
-    constructor() {
+    constructor(ctx: cm.IExecutionContext) {
         this.svnPath = shell.which('svn', false);
         this.endpoint = <ISvnConnectionEndpoint>{};
+        this.ctx = ctx;
         super();
     }
 
     public svnPath: string;
     public endpoint: ISvnConnectionEndpoint;
+    public ctx: cm.IExecutionContext;
 
     public setSvnConnectionEndpoint(endpoint: ISvnConnectionEndpoint) {
         if (endpoint) {
@@ -65,145 +69,253 @@ export class SvnWrapper extends events.EventEmitter {
             throw new Error("The file " + rootPath + " already exists.");
         }
 
-        var mappings: cm.IStringDictionary = <cm.IStringDictionary>{}; 
-
         if (shell.test("-d", rootPath)) {
-            this._getSvnWorkingCopyPaths(rootPath)
+            
+            return this._getSvnWorkingCopyPaths(rootPath)
             .then((workingDirectoryPaths: string[]) => {
                 if (workingDirectoryPaths) {
+        
+                    var mappingsPromise: Q.Promise<cm.IStringDictionary> = Q(<cm.IStringDictionary>{});
+                    var mappings: cm.IStringDictionary = <cm.IStringDictionary>{}; 
+        
                     workingDirectoryPaths.forEach((workingDirectoryPath: string) => {
-                        this.svnInfo(workingDirectoryPath)
-                        .then((info) => {
-                            if (info && info.url) {
-                                mappings[workingDirectoryPath] = info.url;
+                        mappingsPromise = mappingsPromise
+                        .then((v) => {
+                            return this._getTargetUrl(workingDirectoryPath)
+                        })
+                        .then((url) => {
+                            if (url) {
+                                mappings[workingDirectoryPath] = url;
                             }
+                            return Q(mappings);
                         });
                     });
+                    
+                    return mappingsPromise;
+                }
+                else {
+                    return Q(<cm.IStringDictionary>{});
+                }
+            });
+        }
+        else {
+            return Q(<cm.IStringDictionary>{});
+        }
+    }
+    
+    private _getSvnWorkingCopyPaths(rootPath: string): Q.Promise<string[]> {
+        var candidates: string[] = []; 
+        var deferred: Q.Deferred<string[]> = Q.defer<string[]>();
+        
+        if (shell.test("-d", path.join(rootPath, administrativeDirectoryName))) {
+            // The rootPath contains .svn subfolder and we treat it as
+            // a working copy candidate.  
+            deferred.resolve([rootPath]);
+        }
+        else {
+            // Browse direct subfolder children of the rootPath
+            utilm.readDirectory(rootPath, false, true, utilm.SearchOption.TopDirectoryOnly)
+            .then((subFolders: string[]) => {
+
+                // The first element in the collection returned by the method is the rootPath, 
+                // which we've already tested. Ignore it.
+                subFolders.shift();
+
+                var count = subFolders.length;
+                if (count > 0) {
+                    subFolders.forEach((subFolder) => {
+                        if (shell.test("-d", path.join(subFolder, administrativeDirectoryName))) {
+                            // The subfolder contains .svn directory and we treat it as
+                            // a working copy candidate.
+                            candidates.push(subFolder); 
+                            if (--count == 0) {
+                                deferred.resolve(candidates);
+                            } 
+                        }
+                        else {
+                            // Merge working directory paths found in the subfolder into the common candidates collection.
+                            this._getSvnWorkingCopyPaths(subFolder)
+                            .then((moreCandidates) => {
+                                candidates = candidates.concat(moreCandidates);
+                                if (--count == 0) {
+                                    deferred.resolve(candidates);
+                                } 
+                            })
+                        }
+                        
+                    });
+                }
+                else {
+                    deferred.resolve(candidates);
                 }
             });
         }
         
-        return Q(mappings);
-    }
-    
-    private _getSvnWorkingCopyPaths(rootPath: string): Q.Promise<string[]> {
-        if (shell.test("-d", path.join(rootPath, administrativeDirectoryName))) {
-            // The rootPath contains .svn subfolder and we treat it as
-            // a working copy candidate.  
-            return Q([rootPath]);
-        }
-        else {
-            var candidates: string[] = []; 
-            
-            var addRange = function(from: Q.Promise<string[]>) {
-                from.then((workingCopyPaths: string[]) => {
-                    workingCopyPaths.forEach((folder: string) => {
-                        candidates.push(folder);
-                    })
-                })
-            }
-            
-            // Browse direct subfolder children of the rootPath
-            utilm.readDirectory(rootPath, false, true, utilm.SearchOption.TopDirectoryOnly)
-            .then((subFolders: string[]) => {
-                if (subFolders && (subFolders.length > 1)) {
-                    // The first element in the collection returned by the method is the rootPath, 
-                    // which we've already tested. Ignore it.
-                    subFolders.shift();
-                    
-                    // Merge working directory paths found in subfolders into common candidates collection.
-                    subFolders.forEach((subFolder: string) => {
-                        addRange(this._getSvnWorkingCopyPaths(subFolder));
-                    })
-                }
-            });
-            
-            return Q(candidates);
-        }
+        return deferred.promise;
     }
 
-    public svnInfo(folder: string): Q.Promise<any> {
+    private _getTargetUrl(folder: string): Q.Promise<string> {
         if (!shell.test("-d", folder)) {
             throw new Error("Folder " + folder + " does not exists");
         }
         
-        return this._shellExec('info', [folder, "--xml"])
+        var deferred = Q.defer<string>();
+        
+        this._shellExec('info', [folder, "--depth", "empty", "--xml"])
         .then((ret) => {
-            if (!this._success(ret)) {
-                return null; 
+            if (!this.isSuccess(ret)) {
+                deferred.resolve(null);
             }
-
-            if (ret.output) {
-                return xmlrReader.read(ret.output, (err, res) => {
+            else if (ret.output) {
+                xmlrReader.read(ret.output, (err, res) => {
                     if (err) {
-                        return null;
+                        deferred.reject(err);
                     }
                     else {
-                        return res.info;
+                        try {
+                            return deferred.resolve(res.info.entry.url.text());
+                        }
+                        catch (e) {
+                            deferred.reject(e);
+                        }
                     }
                 });
             }
             else {
-                return null;
+                deferred.resolve(null);
             }
         });
         
-    }
-
-    public update(svnModule: SvnMappingDetails): Q.Promise<number> {
-        return this._exec('update', [svnModule.localPath, 
-                                     '--revision:' + svnModule.revision, 
-                                     '--depth:' + this._toSvnDepth(svnModule.depth), 
-                                     '--ignore-externals:' + svnModule.ignoreExternals, 
-                                     '--non-interactive']);
-    }
-
-    public switch(svnModule: SvnMappingDetails): Q.Promise<number> {
-        return this._exec('switch', [svnModule.serverPath,
-                                     svnModule.localPath, 
-                                     '--revision:' + svnModule.revision, 
-                                     '--depth:' + this._toSvnDepth(svnModule.depth), 
-                                     '--ignore-externals:' + svnModule.ignoreExternals, 
-                                     '--non-interactive']);
-    }
-
-    public checkout(svnModule: SvnMappingDetails): Q.Promise<number> {
-        return this._exec('checkout', [svnModule.serverPath,
-                                       svnModule.localPath, 
-                                       '--revision:' + svnModule.revision, 
-                                       '--depth:' + this._toSvnDepth(svnModule.depth), 
-                                       '--ignore-externals:' + svnModule.ignoreExternals, 
-                                       '--non-interactive']);
+        return deferred.promise;
     }
 
     public getLatestRevision(sourceBranch: string, sourceRevision: string): Q.Promise<string> {
-        
-        return this._shellExec('info', [this.endpoint.url, 
-                                            "--depth:Empty", 
-                                            "--revision:" + sourceRevision, 
-                                            "--xml"])
+        return this._shellExec('info', [this.buildSvnUrl(sourceBranch), 
+                                        "--depth", "empty", 
+                                        "--revision", sourceRevision, 
+                                        "--xml"])
         .then((ret) => {
-            if (!this._success(ret)) {
-                return sourceRevision; 
-            }
-
-            if (ret.output) {
-                return xmlrReader.read(ret.output, (err, res) => {
-                    if (err) {
-                        return sourceRevision;
-                    }
-                    else {
-                        return res.info.entry.revision;
-                    }
-                });
+            var defer = Q.defer<any>(); 
+            
+            if (!this.isSuccess(ret)) {
+                defer.reject(ret.output); 
             }
             else {
+                try {
+                    xmlrReader.read(ret.output, (err, res) => {
+                        if (err) {
+                            defer.reject(err);
+                        }
+                        else {
+                            defer.resolve(res);
+                        }
+                    });
+                }
+                catch (e) {
+                    defer.reject(e);
+                }
+                return defer.promise;
+            }
+        })
+        .then(
+            (res) => {
+                var rev: string = res.info.entry.commit.attributes()["revision"];
+                this.ctx.verbose("Latest revision: " + rev);
+                return rev;
+            },
+            (err) => {
+                this.ctx.verbose("Subversion call filed: " + err);
+                this.ctx.verbose("Using the original revision: " + sourceRevision);
                 return sourceRevision;
             }
-        });
-        
+        );
     }
     
+    public update(svnModule: SvnMappingDetails): Q.Promise<number> {
+        var deferred = Q.defer<number>();
+        
+        this.ctx.info("Updating " + svnModule.localPath
+                    + " with depth: " + svnModule.depth 
+                    + ", revision: " + svnModule.revision 
+                    + ", ignore externals: " + svnModule.ignoreExternals);
+        var args: string[] = [svnModule.localPath, 
+                             '--revision', svnModule.revision, 
+                             '--depth', this._toSvnDepth(svnModule.depth)];
+        if (svnModule.ignoreExternals) {
+            args.push('--ignore-externals');
+        }
+        
+        this._exec('update', args)
+        .then(
+            (ret) => {
+                deferred.resolve(ret);
+            },
+            (err) => {
+                deferred.reject(err);
+            }
+        );
+        
+        return deferred.promise;
+    }
+
+    public switch(svnModule: SvnMappingDetails): Q.Promise<number> {
+        var deferred = Q.defer<number>();
+        
+        this.ctx.info("Switching " + svnModule.localPath
+                    + " to ^" + svnModule.serverPath
+                    + " with depth: " + svnModule.depth 
+                    + ", revision: " + svnModule.revision 
+                    + ", ignore externals: " + svnModule.ignoreExternals);
+        var args: string[] = [svnModule.serverPath,
+                              svnModule.localPath, 
+                             '--revision', svnModule.revision, 
+                             '--depth', this._toSvnDepth(svnModule.depth)];
+        if (svnModule.ignoreExternals) {
+            args.push('--ignore-externals');
+        }
+        
+        this._exec('switch', args)
+        .then(
+            (ret) => {
+                deferred.resolve(ret);
+            },
+            (err) => {
+                deferred.reject(err);
+            }
+        );
+        
+        return deferred.promise;
+    }
+
+    public checkout(svnModule: SvnMappingDetails): Q.Promise<number> {
+        var deferred = Q.defer<number>();
+        
+        this.ctx.info("Checking out " + svnModule.localPath
+                    + " with depth: " + svnModule.depth 
+                    + ", revision: " + svnModule.revision 
+                    + ", ignore externals: " + svnModule.ignoreExternals);
+
+        var args: string[] = [svnModule.serverPath,
+                              svnModule.localPath, 
+                             '--revision', svnModule.revision, 
+                             '--depth', this._toSvnDepth(svnModule.depth)];
+        if (svnModule.ignoreExternals) {
+            args.push('--ignore-externals');
+        }
+        
+        this._exec('checkout', args)
+        .then(
+            (ret) => {
+                deferred.resolve(ret);
+            },
+            (err) => {
+                deferred.reject(err);
+            }
+        );
+        
+        return deferred.promise;
+    }
+
     public buildSvnUrl(sourceBranch: string, serverPath?: string): string {
         var url: string = this.endpoint.url.replace('\\', '/');
         
@@ -212,8 +324,10 @@ export class SvnWrapper extends events.EventEmitter {
         }
         
         url = this.appendPath(url, sourceBranch);
-        url = this.appendPath(url, serverPath);
-        
+        if (serverPath) {
+            url = this.appendPath(url, serverPath);
+        }
+
         return url;
     }
     
@@ -221,7 +335,8 @@ export class SvnWrapper extends events.EventEmitter {
         var url = base.replace('\\', '/');
 
         if (path && (path.length > 0)) {
-            if (url.match(/.*\/$/).length == 0) {
+            var matches: RegExpMatchArray = url.match(/.*\/$/);
+            if (!(matches && matches.length > 0)) {
                 url = url + '/';
             }
             url = url + path;
@@ -232,8 +347,19 @@ export class SvnWrapper extends events.EventEmitter {
 
     private _getQuotedArgsWithDefaults(args: string[]): string[] {
         // default connection related args
-        var usernameArg = '--username ' + this.endpoint.username;
-        var passwordArg = '--password ' + this.endpoint.password;
+        var usernameArg = '--username';
+        var passwordArg = '--password';
+        
+        var defaults: string[] = [];
+        
+        if (this.endpoint.username && this.endpoint.username.length > 0) {
+            this.ctx.verbose("username=" + this.endpoint.username);
+            defaults.push(usernameArg, this.endpoint.username);
+        }
+        if (this.endpoint.password && this.endpoint.password.length > 0) {
+            this.ctx.verbose("password=" + this.endpoint.password);
+            defaults.push(passwordArg, this.endpoint.password);
+        }
 
         var quotedArg = function(arg) {
             var quote = '"';
@@ -243,7 +369,7 @@ export class SvnWrapper extends events.EventEmitter {
             return quote + arg + quote;
         }
 
-        return args.concat([usernameArg, passwordArg, "--non-interactive", "--trust-server-cert"]).map((a) => quotedArg(a));
+        return args.concat(defaults).map((a) => quotedArg(a));
     }
 
     private _scrubCredential(msg: string): string {
@@ -261,7 +387,7 @@ export class SvnWrapper extends events.EventEmitter {
         }
 
         var svn = new tl.ToolRunner(this.svnPath);
-        svn.silent = true;
+        svn.silent = !this.isDebugMode();
 
         svn.on('debug', (message) => {
             this.emit('stdout', '[debug]' + this._scrubCredential(message));
@@ -288,7 +414,7 @@ export class SvnWrapper extends events.EventEmitter {
         var ops: any = {
             cwd: options.cwd || process.cwd(),
             env: options.env || process.env,
-            silent: true,
+            silent: !this.isDebugMode(),
             outStream: options.outStream || process.stdout,
             errStream: options.errStream || process.stderr,
             failOnStdErr: options.failOnStdErr || false,
@@ -303,8 +429,14 @@ export class SvnWrapper extends events.EventEmitter {
             return this._getSvnNotInstalled();
         }
 
-        var cmdline = 'svn ' + cmd + ' ' + this._getQuotedArgsWithDefaults(args).join(' ');
-        return utilm.exec(cmdline);
+        var cmdline = this.svnPath + ' ' + cmd + ' ' + this._getQuotedArgsWithDefaults(args).join(' ');
+        
+        return utilm.exec(cmdline)
+        .then ((v) => {
+            this.ctx.verbose(cmdline);
+            this.ctx.verbose(JSON.stringify(v));
+            return v;
+        });
     }
 
     private _getSvnNotInstalled(): Q.Promise<number>{
@@ -323,15 +455,21 @@ export class SvnWrapper extends events.EventEmitter {
         return defer.promise;
     }
     
-    private _success(ret): boolean {
+    private _toSvnDepth(depth): string {
+        return depth == "0" ? 'empty' :
+               depth == "1" ? 'files' :
+               depth == "2" ? 'children' :
+               depth == "3" ? 'infinity' :
+               depth || 'infinity'; 
+    }
+    
+    public isSuccess(ret): boolean {
         return ret && ret.code  === 0;
     }
     
-    private _toSvnDepth(depth): string {
-        return depth == "0" ? 'Empty' :
-               depth == "1" ? 'Files' :
-               depth == "2" ? 'Children' :
-               depth == "3" ? 'Infinity' :
-               depth; 
+    public isDebugMode(): boolean {
+        var environment = this.ctx.jobInfo.jobMessage.environment;
+        var debugMode: string = environment.variables["system.debug"] || 'false';
+        return debugMode === 'true';
     }
 }

@@ -9,13 +9,15 @@ var shell = require('shelljs');
 var path = require('path');
 var tl = require('vso-task-lib');
 
+var administrativeDirectoryName = ".svn";
+
 export function getProvider(ctx: cm.IExecutionContext, targetPath: string): cm.IScmProvider {
     return new SvnScmProvider(ctx, targetPath);
 }
 
 export class SvnScmProvider extends scmprovider.ScmProvider {
     constructor(ctx: cm.IExecutionContext, targetPath: string) {
-        this.svnw = new sw.SvnWrapper();
+        this.svnw = new sw.SvnWrapper(ctx);
         this.svnw.on('stdout', (data) => {
             ctx.info(data.toString());
         });
@@ -45,13 +47,12 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
 
         if (endpoint.authorization && endpoint.authorization['scheme']) {
             var scheme = endpoint.authorization['scheme'];
-            this.ctx.info('Using auth scheme: ' + scheme);
 
             switch (scheme) {
                 case 'UsernamePassword':
-                    this.username = process.env['VSO_SVN_USERNAME'] || this.getAuthParameter(endpoint, 'Username') || 'not supplied';
-                    this.password = process.env['VSO_SVN_PASSWORD'] || this.getAuthParameter(endpoint, 'Password') || 'not supplied';
-                    this.realmName = process.env['VSO_SVN_REALMNAME'] || this.getAuthParameter(endpoint, 'RealmName') || 'not supplied';
+                    this.username = process.env['VSO_SVN_USERNAME'] || this.getAuthParameter(endpoint, 'Username') || '';
+                    this.password = process.env['VSO_SVN_PASSWORD'] || this.getAuthParameter(endpoint, 'Password') || '';
+                    this.realmName = process.env['VSO_SVN_REALMNAME'] || this.getAuthParameter(endpoint, 'RealmName') || '';
                     break;
 
                 default:
@@ -77,67 +78,75 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
 	    this.ctx.info('Revision: ' + this.defaultRevision);
 	    this.ctx.info('Branch: ' + this.defaultBranch);
 
-        var oldMappings: Q.Promise<cm.IStringDictionary> = this.svnw.getOldMappings(this.targetPath);
         var newMappings: sw.ISvnMappingDictionary = this._buildNewMappings(this.endpoint);
+        var oldMappings: cm.IStringDictionary = {};
 
-        return this._cleanupSvnWorkspace(oldMappings, newMappings)
-        .then((ret:number) => {
-            if (ret != 0) {
-                throw new Error("Failed to cleanup the subversion working directory"); 
-            }
+        return this.svnw.getOldMappings(this.targetPath)
+        .then((mappings) => {
+            oldMappings = mappings;
+            this.ctx.verbose("OldMappings: " + JSON.stringify(oldMappings));
+            this.ctx.verbose("NewMappings: " + JSON.stringify(newMappings));
+            this._cleanupSvnWorkspace(mappings, newMappings)
         })
         .then(() => {
             return this.svnw.getLatestRevision(this.defaultBranch, this.defaultRevision);
         })
         .then((latestRevision: string) => {
-            var promiseChain = Q(0);
-
-            oldMappings.then((currentMappings: cm.IStringDictionary) => {
-                for (var localPath in newMappings) {
-                    var mappingDetails: sw.SvnMappingDetails = newMappings[localPath];
-                    var serverPath: string = mappingDetails.serverPath;
-                    var effectiveRevision: string = mappingDetails.revision.toUpperCase() === 'HEAD' ? latestRevision : mappingDetails.revision;
-                    mappingDetails.revision = effectiveRevision;
-                    
-                    if (!shell.test('-d', this.svnw.appendPath(localPath, '.svn'))) {
-                        promiseChain = promiseChain.then(() => {
-                            this.ctx.info("Checking out with depth: " + mappingDetails.depth 
-                                        + ", revision: " + mappingDetails.revision 
-                                        + ", ignore externals: " + mappingDetails.ignoreExternals);
-                            return this.svnw.checkout(mappingDetails)
-                        });
-                    }
-                    else if (currentMappings[localPath] && (currentMappings[localPath] === serverPath)) {
-                        promiseChain = promiseChain.then(() => {
-                            this.ctx.info("Updating with depth: " + mappingDetails.depth 
-                                        + ", revision: " + mappingDetails.revision 
-                                        + ", ignore externals: " + mappingDetails.ignoreExternals);
-                            return this.svnw.update(mappingDetails)
-                        });
-                    }
-                    else {
-                        promiseChain = promiseChain.then(() => {
-                            this.ctx.info("Switching to ^" + serverPath
-                                        + " with depth: " + mappingDetails.depth 
-                                        + ", revision: " + mappingDetails.revision 
-                                        + ", ignore externals: " + mappingDetails.ignoreExternals);
-                            return this.svnw.switch(mappingDetails)
-                        });
-                    }
-                }
-            });
+            var deferred = Q.defer<number>();
             
-            return promiseChain;
-        })
+            var promiseChain = Q(0);
+            
+            for (var localPath in newMappings) {
+                var mapping: sw.SvnMappingDetails = newMappings[localPath];
+                var serverPath: string = mapping.serverPath;
+                var effectiveRevision: string = mapping.revision.toUpperCase() === 'HEAD' ? latestRevision : mapping.revision;
+                var effectiveMapping: sw.SvnMappingDetails = {
+                        localPath: mapping.localPath,
+                        serverPath: mapping.serverPath,
+                        revision: effectiveRevision,
+                        depth: mapping.depth,
+                        ignoreExternals: mapping.ignoreExternals};
+
+                this.ctx.verbose("effectiveMapping: " + JSON.stringify(effectiveMapping));
+                
+                if (!shell.test('-d', this.svnw.appendPath(localPath, administrativeDirectoryName))) {
+                    promiseChain = promiseChain.then((ret) => {
+                        return this.svnw.checkout(effectiveMapping);
+                    });
+                }
+                else if (oldMappings[localPath] && (oldMappings[localPath] === serverPath)) {
+                    promiseChain = promiseChain.then((ret) => {
+                        return this.svnw.update(effectiveMapping)
+                    });
+                }
+                else {
+                    promiseChain = promiseChain.then((ret) => {
+                        return this.svnw.switch(effectiveMapping)
+                    });
+                }
+            };
+        
+            promiseChain.then(
+                (ret) => {
+                    deferred.resolve(ret);
+                },
+                (err) => {
+                    deferred.reject(err);
+                }
+            );
+            
+            return deferred.promise;
+        });
     }
 
     // Remove the target folder
     public clean(): Q.Promise<number> {
+        this.ctx.info("Remove the target folder");
         if (this.enlistmentExists()) {
             return utilm.exec('rm -fr ' + this.targetPath)
-            .then((ret) => { return ret.code});
+            .then((ret) => { return Q(ret.code)});
         } else {
-            this.ctx.debug('Skip delete nonexistent local source directory');
+            this.ctx.debug('Skip deleting nonexisting local source directory ' + this.targetPath);
             return Q(0); 
         }
     }
@@ -184,16 +193,21 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
                     
                     fullMapping = true;
                     distinctMappings = null;
+                    distinctMappings = <sw.ISvnMappingDictionary>{};
+                    distinctMappings[localPath] = map;
                 }
                 else {
-                    if ((localPath == null) || (localPath.length == 0)) {
-                        localPath = this._normalizeRelativePath(serverPath);
+                    if (!(localPath && localPath.length > 0)) {
+                        localPath = serverPath;
                     }
                     
                     if ((distinctLocalPaths[localPath] == null) && (distinctServerPaths[serverPath] == null)) {
-                            distinctMappings[localPath] = map;
-                            distinctLocalPaths[localPath] = localPath;
-                            distinctServerPaths[serverPath] = serverPath;                        
+                        map.localPath = localPath;
+                        map.serverPath = serverPath;
+                        
+                        distinctMappings[localPath] = map;
+                        distinctLocalPaths[localPath] = localPath;
+                        distinctServerPaths[serverPath] = serverPath;                        
                     }
                     
                 }
@@ -214,16 +228,15 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
         if (endpoint && endpoint.data && endpoint.data['svnWorkspaceMapping']) {
             var svnWorkspace: sw.SvnWorkspace = JSON.parse(endpoint.data['svnWorkspaceMapping']);
             
-            if (svnWorkspace && svnWorkspace.mappings) {
+            if (svnWorkspace && svnWorkspace.mappings && svnWorkspace.mappings.length > 0) {
                 var distinctMappings = this._normalizeMappings(svnWorkspace.mappings);
 
                 if (distinctMappings) {
                     for (var key in distinctMappings) {
                         var value: sw.SvnMappingDetails = distinctMappings[key];
                         
-                        var serverPath: string = key;
                         var absoluteLocalPath: string = this.svnw.appendPath(this.targetPath, value.localPath);
-                        var url: string = this.svnw.buildSvnUrl(this.defaultBranch, serverPath);
+                        var url: string = this.svnw.buildSvnUrl(this.defaultBranch, value.serverPath);
                         
                         svnMappings[absoluteLocalPath] = {
                             serverPath: url,
@@ -233,6 +246,7 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
                             ignoreExternals: value.ignoreExternals
                         };
                     }
+                    
                     return svnMappings;
                 }
             }
@@ -242,27 +256,25 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
             serverPath: this.svnw.buildSvnUrl(this.defaultBranch),
             localPath: this.targetPath,
             revision: 'HEAD',
-            depth: 'Infinity',
+            depth: 'infinity',
             ignoreExternals: true
         };
         
         return svnMappings;
     }
     
-    private _cleanupSvnWorkspace(oldMappings: Q.Promise<cm.IStringDictionary>, newMappings: sw.ISvnMappingDictionary): Q.Promise<number> {
-        var retSummary: number = 0;
-        oldMappings.then((currentMappings: cm.IStringDictionary) => {
-            for(var key in currentMappings) {
-                if (newMappings[key] == null) {
-                    utilm.exec('rm -fr ' + this.targetPath)
-                    .then((ret) => {
-                        if (ret.code > retSummary) {
-                            retSummary = ret.code;
-                        }
-                    });
-                }
+    private _cleanupSvnWorkspace(oldMappings: cm.IStringDictionary, newMappings: sw.ISvnMappingDictionary): Q.Promise<number> {
+        var promiseChain: Q.Promise<number>  = Q(0);
+        
+        this.ctx.verbose("_cleanupSvnWorkspace");
+        
+        for(var localPath in oldMappings) {
+            if (!newMappings[localPath]) {
+                this.ctx.verbose("Removing old mapping folder " + localPath);
+                shell.rm('-rf', localPath);
             }
-        });
-        return Q(retSummary);
+        };
+        
+        return promiseChain;
     }
 }

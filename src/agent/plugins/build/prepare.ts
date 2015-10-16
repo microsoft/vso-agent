@@ -16,7 +16,7 @@ import cm = require('../../common');
 import smm = require('./sourceManager');
 
 // keep lower case, we do a lower case compare
-var supported: string[] = ['tfsgit', 'git', 'github', 'tfsversioncontrol'];
+var supported: string[] = ['tfsgit', 'git', 'github', 'tfsversioncontrol', 'svn'];
 
 export function pluginName() {
     return "prepareWorkspace";
@@ -45,6 +45,8 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         if (!endpoint.type) {
             return false;
         }
+        
+        executionContext.info('Repository type: ' + endpoint.type);
         return (supported.indexOf(endpoint.type.toLowerCase()) >= 0);
     });
 
@@ -112,7 +114,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
 
     return Q(null)
     .then(() => {
-        if (endpoint.data['clean'] === "true") {
+        if (endpoint.data['clean'].replaceVars(job.environment.variables) === "true") {
             var behavior = job.environment.variables['build.clean'];
             if (behavior && behavior.toLowerCase() === 'delete') {
                 executionContext.info('deleting ' + repoPath);
@@ -125,6 +127,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
             }
         }
         else {
+            executionContext.info('running incremental');
             return 0;
         }
     })

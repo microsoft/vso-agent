@@ -116,6 +116,9 @@ export function readDirectory(directory: string, includeFiles: boolean, includeF
                             if (stat && stat.isDirectory()) {
                                 if (SearchOption.TopDirectoryOnly === searchOption) {
                                     results.push(fullPath);
+                                    if (--count === 0) {
+                                        deferred.resolve(results);
+                                    }
                                 }
                                 else {
                                     readDirectory(fullPath, includeFiles, includeFolders, searchOption)
