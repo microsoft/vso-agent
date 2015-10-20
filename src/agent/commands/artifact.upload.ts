@@ -34,7 +34,7 @@ export class ArtifactUploadCommand implements cm.IAsyncCommand {
             containerFolder = "/" + containerFolder;
         }
 
-		var localPath = this.command.properties["localpath"];
+		var localPath = this.command.message;
 		var containerId = parseInt(this.executionContext.variables[ctxm.WellKnownVariables.containerId]);
 
 		this.command.info('artifactName: ' + artifactName);

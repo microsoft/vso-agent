@@ -25,7 +25,7 @@ export class ArtifactAssociateCommand implements cm.IAsyncCommand {
 	public runCommandAsync() {
 		var artifactName = this.command.properties["artifactname"];
 		var artifactType = this.command.properties["artifacttype"];
-		var artifactLocation = this.command.properties["artifactlocation"];
+		var artifactLocation = this.command.message;
 
 		this.command.info('artifactName: ' + artifactName);
 		this.command.info('artifactType: ' + artifactType);
