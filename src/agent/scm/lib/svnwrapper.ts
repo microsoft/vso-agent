@@ -73,9 +73,9 @@ export class SvnWrapper extends events.EventEmitter {
             
             return this._getSvnWorkingCopyPaths(rootPath)
             .then((workingDirectoryPaths: string[]) => {
+                var mappingsPromise: Q.Promise<cm.IStringDictionary> = Q(<cm.IStringDictionary>{});
+
                 if (workingDirectoryPaths) {
-        
-                    var mappingsPromise: Q.Promise<cm.IStringDictionary> = Q(<cm.IStringDictionary>{});
                     var mappings: cm.IStringDictionary = <cm.IStringDictionary>{}; 
         
                     workingDirectoryPaths.forEach((workingDirectoryPath: string) => {
@@ -91,11 +91,9 @@ export class SvnWrapper extends events.EventEmitter {
                         });
                     });
                     
-                    return mappingsPromise;
                 }
-                else {
-                    return Q(<cm.IStringDictionary>{});
-                }
+                
+                return mappingsPromise;
             });
         }
         else {
@@ -214,8 +212,8 @@ export class SvnWrapper extends events.EventEmitter {
                 catch (e) {
                     defer.reject(e);
                 }
-                return defer.promise;
             }
+            return defer.promise;
         })
         .then(
             (res) => {
@@ -281,13 +279,13 @@ export class SvnWrapper extends events.EventEmitter {
     }
 
     public buildSvnUrl(sourceBranch: string, serverPath?: string): string {
-        var url: string = this.endpoint.url.replace('\\', '/');
+        var url: string = this.endpoint.url;
         
         if ((url == null) || (url.length == 0)) {
             throw new Error("Connection endpoint URL cannot be empty.")
         }
         
-        url = this.appendPath(url, sourceBranch);
+        url = this.appendPath(url.replace('\\', '/'), sourceBranch);
         if (serverPath) {
             url = this.appendPath(url, serverPath);
         }
@@ -299,8 +297,7 @@ export class SvnWrapper extends events.EventEmitter {
         var url = base.replace('\\', '/');
 
         if (path && (path.length > 0)) {
-            var matches: RegExpMatchArray = url.match(/.*\/$/);
-            if (!(matches && matches.length > 0)) {
+            if (!url.endsWith('/')) {
                 url = url + '/';
             }
             url = url + path;
