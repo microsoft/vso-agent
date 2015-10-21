@@ -70,6 +70,7 @@ export class AutomationVariables {
     public static buildSourceVersion = 'build.sourceVersion';
     public static buildSourceBranch = 'build.sourceBranch';
     public static buildSourceBranchName = 'build.sourceBranchName';
+    public static buildContainerId = 'build.containerId';
     
     //
     // Common Variables

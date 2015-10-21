@@ -26,11 +26,11 @@ function ensureTrace(writer: cm.ITraceWriter) {
 }
 
 export class WellKnownVariables {
-    public static sourceFolder = "build.sourceDirectory";
-    public static stagingFolder = "build.stagingdirectory";
-    public static buildId = "build.buildId";
-    public static projectId = "system.teamProjectId";
-    public static containerId = "build.containerId";
+    public static sourceFolder = cm.vars.buildSourcesDirectory;
+    public static stagingFolder = cm.vars.buildStagingDirectory;
+    public static buildId = cm.vars.buildId;
+    public static projectId = cm.vars.systemTeamProjectId;
+    public static containerId = cm.vars.buildContainerId;
 }
 
 export class Context extends events.EventEmitter {
