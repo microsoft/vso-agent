@@ -2,6 +2,7 @@
 /// <reference path="../../definitions/toolrunner.d.ts"/>
 
 var tl = require('vso-task-lib');
+import cm = require('../../common');
 import events = require('events');
 import utilm = require('../../utilities');
 import Q = require('q');
@@ -128,7 +129,7 @@ export class TfvcWrapper extends events.EventEmitter {
     private _scrubCredential(msg: string): string {
         if (msg && typeof msg.replace === 'function' 
                     && this.connOptions.password) {
-            return msg.replace(this.connOptions.password, "******************");
+            return msg.replace(this.connOptions.password, cm.MASK_REPLACEMENT);
         }
 
         return msg;

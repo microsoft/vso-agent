@@ -13,7 +13,7 @@ var xmlrReader = require('xmlreader');
 
 import fs = require('fs');
 
-var administrativeDirectoryName = ".svn";
+export var administrativeDirectoryName = ".svn";
 
 export interface SvnMappingDetails {
     serverPath: string;
@@ -232,8 +232,6 @@ export class SvnWrapper extends events.EventEmitter {
     }
     
     public update(svnModule: SvnMappingDetails): Q.Promise<number> {
-        var deferred = Q.defer<number>();
-        
         this.ctx.info("Updating " + svnModule.localPath
                     + " with depth: " + svnModule.depth 
                     + ", revision: " + svnModule.revision 
@@ -245,22 +243,10 @@ export class SvnWrapper extends events.EventEmitter {
             args.push('--ignore-externals');
         }
         
-        this._exec('update', args)
-        .then(
-            (ret) => {
-                deferred.resolve(ret);
-            },
-            (err) => {
-                deferred.reject(err);
-            }
-        );
-        
-        return deferred.promise;
+        return this._exec('update', args);
     }
 
     public switch(svnModule: SvnMappingDetails): Q.Promise<number> {
-        var deferred = Q.defer<number>();
-        
         this.ctx.info("Switching " + svnModule.localPath
                     + " to ^" + svnModule.serverPath
                     + " with depth: " + svnModule.depth 
@@ -274,22 +260,10 @@ export class SvnWrapper extends events.EventEmitter {
             args.push('--ignore-externals');
         }
         
-        this._exec('switch', args)
-        .then(
-            (ret) => {
-                deferred.resolve(ret);
-            },
-            (err) => {
-                deferred.reject(err);
-            }
-        );
-        
-        return deferred.promise;
+        return this._exec('switch', args);
     }
 
     public checkout(svnModule: SvnMappingDetails): Q.Promise<number> {
-        var deferred = Q.defer<number>();
-        
         this.ctx.info("Checking out " + svnModule.localPath
                     + " with depth: " + svnModule.depth 
                     + ", revision: " + svnModule.revision 
@@ -303,17 +277,7 @@ export class SvnWrapper extends events.EventEmitter {
             args.push('--ignore-externals');
         }
         
-        this._exec('checkout', args)
-        .then(
-            (ret) => {
-                deferred.resolve(ret);
-            },
-            (err) => {
-                deferred.reject(err);
-            }
-        );
-        
-        return deferred.promise;
+        return this._exec('checkout', args);
     }
 
     public buildSvnUrl(sourceBranch: string, serverPath?: string): string {
@@ -433,28 +397,16 @@ export class SvnWrapper extends events.EventEmitter {
         
         return utilm.exec(cmdline)
         .then ((v) => {
-            this.ctx.verbose(cmdline);
+            this.ctx.verbose(this._scrubCredential(cmdline));
             this.ctx.verbose(JSON.stringify(v));
             return v;
         });
     }
 
     private _getSvnNotInstalled(): Q.Promise<number>{
-        var defer = Q.defer<number>();
-
-        defer.reject(new Error("'svn' was not found. Please install the Subversion command-line client and add 'svn' to the path."));
-
-        return defer.promise;
+        return Q.reject<number>(new Error("'svn' was not found. Please install the Subversion command-line client and add 'svn' to the path."));
     }
 
-    private _getFolderDoesNotExist(folder: string): Q.Promise<number>{
-        var defer = Q.defer<number>();
-
-        defer.reject(new Error("Folder " + folder + " does not exists"));
-
-        return defer.promise;
-    }
-    
     private _toSvnDepth(depth): string {
         return depth == "0" ? 'empty' :
                depth == "1" ? 'files' :

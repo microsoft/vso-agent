@@ -9,8 +9,6 @@ var shell = require('shelljs');
 var path = require('path');
 var tl = require('vso-task-lib');
 
-var administrativeDirectoryName = ".svn";
-
 export function getProvider(ctx: cm.IExecutionContext, endpoint: agentifm.ServiceEndpoint): cm.IScmProvider {
     return new SvnScmProvider(ctx, endpoint);
 }
@@ -67,13 +65,13 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
 
     public getCode(): Q.Promise<number> {
         this._ensurePathExist(this.targetPath);
-        
-	    var srcVersion = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceVersion'];
-	    var srcBranch = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceBranch'];
+
+        var srcVersion = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceVersion'];
+        var srcBranch = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceBranch'];
         this.defaultRevision = this._expandEnvironmentVariables(srcVersion);
         this.defaultBranch = this._expandEnvironmentVariables(srcBranch);
-	    this.ctx.info('Revision: ' + this.defaultRevision);
-	    this.ctx.info('Branch: ' + this.defaultBranch);
+        this.ctx.info('Revision: ' + this.defaultRevision);
+        this.ctx.info('Branch: ' + this.defaultBranch);
 
         var newMappings: sw.ISvnMappingDictionary = this._buildNewMappings(this.endpoint);
         var oldMappings: cm.IStringDictionary = {};
@@ -104,22 +102,20 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
                         depth: mapping.depth,
                         ignoreExternals: mapping.ignoreExternals};
 
-                this.ctx.verbose("effectiveMapping: " + JSON.stringify(effectiveMapping));
+                this.ctx.verbose("effectiveMapping for " + effectiveMapping.localPath);
+                this.ctx.verbose("         serverPath: " + effectiveMapping.serverPath);
+                this.ctx.verbose("         revision: " + effectiveMapping.revision);
+                this.ctx.verbose("         depth: " + effectiveMapping.depth);
+                this.ctx.verbose("         ignoreExternals: " + effectiveMapping.ignoreExternals);
                 
-                if (!shell.test('-d', this.svnw.appendPath(localPath, administrativeDirectoryName))) {
-                    promiseChain = promiseChain.then((ret) => {
-                        return this.svnw.checkout(effectiveMapping);
-                    });
+                if (!shell.test('-d', this.svnw.appendPath(localPath, sw.administrativeDirectoryName))) {
+                    promiseChain = this._addCheckoutPromise(promiseChain, effectiveMapping);
                 }
                 else if (oldMappings[localPath] && (oldMappings[localPath] === serverPath)) {
-                    promiseChain = promiseChain.then((ret) => {
-                        return this.svnw.update(effectiveMapping)
-                    });
+                    promiseChain = this._addUpdatePromise(promiseChain, effectiveMapping);
                 }
                 else {
-                    promiseChain = promiseChain.then((ret) => {
-                        return this.svnw.switch(effectiveMapping)
-                    });
+                    promiseChain = this._addSwitchPromise(promiseChain, effectiveMapping);
                 }
             };
         
@@ -146,6 +142,30 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
             this.ctx.debug('Skip deleting nonexisting local source directory ' + this.targetPath);
             return Q(0); 
         }
+    }
+
+    private _addCheckoutPromise(promiseChain: Q.Promise<number>, effectiveMapping: sw.SvnMappingDetails): Q.Promise<number> {
+        var svnModuleMapping: sw.SvnMappingDetails = effectiveMapping;
+        var oldChain: Q.Promise<number> = promiseChain;
+        return oldChain.then((ret) => {
+            return this.svnw.checkout(svnModuleMapping);
+        });
+    }
+
+    private _addUpdatePromise(promiseChain: Q.Promise<number>, effectiveMapping: sw.SvnMappingDetails): Q.Promise<number> {
+        var svnModuleMapping: sw.SvnMappingDetails = effectiveMapping;
+        var oldChain: Q.Promise<number> = promiseChain;
+        return oldChain.then((ret) => {
+            return this.svnw.update(svnModuleMapping);
+        });
+    }
+
+    private _addSwitchPromise(promiseChain: Q.Promise<number>, effectiveMapping: sw.SvnMappingDetails): Q.Promise<number> {
+        var svnModuleMapping: sw.SvnMappingDetails = effectiveMapping;
+        var oldChain: Q.Promise<number> = promiseChain;
+        return oldChain.then((ret) => {
+            return this.svnw.switch(svnModuleMapping);
+        });
     }
 
     private _ensurePathExist(path: string) {
