@@ -9,7 +9,7 @@ import Q = require('q');
 import os = require("os");
 var shell = require('shelljs');
 var path = require('path');
-var xmlrReader = require('xmlreader');
+var xmlReader = require('xmlreader');
 
 import fs = require('fs');
 
@@ -167,7 +167,7 @@ export class SvnWrapper extends events.EventEmitter {
                 deferred.resolve(null);
             }
             else if (ret.output) {
-                xmlrReader.read(ret.output, (err, res) => {
+                xmlReader.read(ret.output, (err, res) => {
                     if (err) {
                         deferred.reject(err);
                     }
@@ -202,7 +202,7 @@ export class SvnWrapper extends events.EventEmitter {
             }
             else {
                 try {
-                    xmlrReader.read(ret.output, (err, res) => {
+                    xmlReader.read(ret.output, (err, res) => {
                         if (err) {
                             defer.reject(err);
                         }
