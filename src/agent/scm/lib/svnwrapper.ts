@@ -336,7 +336,7 @@ export class SvnWrapper extends events.EventEmitter {
     private _scrubCredential(msg: string): string {
         if (msg && typeof msg.replace === 'function' 
                     && this.endpoint.password) {
-            return msg.replace(this.endpoint.password, "******************");
+            return msg.replace(this.endpoint.password, cm.MASK_REPLACEMENT);
         }
 
         return msg;
