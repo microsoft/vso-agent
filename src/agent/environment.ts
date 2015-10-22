@@ -203,6 +203,7 @@ export function getCapabilities(): cm.IStringDictionary {
     resolveCapability(filteredEnv, 'python');
     resolveCapability(filteredEnv, 'python3');
     resolveCapability(filteredEnv, 'sh');
+    resolveCapability(filteredEnv, 'svn', 'subversion');
     resolveCapabilityViaShell(filteredEnv, 'xcode-select', '-p', 'xcode');
 
     return filteredEnv;

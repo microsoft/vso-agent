@@ -46,6 +46,8 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         if (!endpoint.type) {
             return false;
         }
+        
+        executionContext.info('Repository type: ' + endpoint.type);
         return (supported.indexOf(endpoint.type.toLowerCase()) >= 0);
     });
 
@@ -106,7 +108,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         shell.mkdir('-p', bd);
         shell.cd(bd);
         
-        if (endpoint.data['clean'] === "true") {
+        if (endpoint.data['clean'].replaceVars(job.environment.variables) === "true") {
             var behavior = job.environment.variables['build.clean'];
             if (behavior && behavior.toLowerCase() === 'delete') {
                 executionContext.info('deleting ' + repoPath);
@@ -119,6 +121,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
             }
         }
         else {
+            executionContext.info('running incremental');
             return 0;
         }
     })

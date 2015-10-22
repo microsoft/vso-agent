@@ -395,7 +395,7 @@ export function getCreds(done: (err: any, creds: any) => void): void {
     });
 }
 
-var MASK_REPLACEMENT: string = "********";
+export var MASK_REPLACEMENT: string = "********";
 interface ReplacementFunction {
     (input: string): string;
 };

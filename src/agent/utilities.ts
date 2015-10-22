@@ -152,7 +152,12 @@ export function exec(cmdLine: string): Q.Promise<any> {
     return defer.promise;
 }
 
-export function readDirectory(directory: string, includeFiles: boolean, includeFolders: boolean): Q.Promise<string[]> {
+export enum SearchOption {
+    TopDirectoryOnly = 0,
+    AllDirectories = 1,
+}
+
+export function readDirectory(directory: string, includeFiles: boolean, includeFolders: boolean, searchOption?: SearchOption): Q.Promise<string[]> {
     var results: string[] = [];
     var deferred = Q.defer<string[]>();
 
@@ -169,16 +174,24 @@ export function readDirectory(directory: string, includeFiles: boolean, includeF
                     Q.nfcall(fs.stat, fullPath)
                         .then((stat: fs.Stats) => {
                             if (stat && stat.isDirectory()) {
-                                readDirectory(fullPath, includeFiles, includeFolders)
-                                    .then((moreFiles: string[]) => {
-                                        results = results.concat(moreFiles);
-                                        if (--count === 0) {
-                                            deferred.resolve(results);
-                                        }
-                                    },
-                                    (error) => {
-                                        deferred.reject(new Error(error.toString()));
-                                    });
+                                if (SearchOption.TopDirectoryOnly === searchOption) {
+                                    results.push(fullPath);
+                                    if (--count === 0) {
+                                        deferred.resolve(results);
+                                    }
+                                }
+                                else {
+                                    readDirectory(fullPath, includeFiles, includeFolders, searchOption)
+                                        .then((moreFiles: string[]) => {
+                                            results = results.concat(moreFiles);
+                                            if (--count === 0) {
+                                                deferred.resolve(results);
+                                            }
+                                        },
+                                        (error) => {
+                                            deferred.reject(new Error(error.toString()));
+                                        });
+                                }
                             }
                             else {
                                 if (includeFiles) {
