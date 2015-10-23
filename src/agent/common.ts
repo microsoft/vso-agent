@@ -258,6 +258,8 @@ export interface IHostContext extends IOutputChannel, ITraceWriter {
 }
 
 export interface IExecutionContext extends IOutputChannel, ITraceWriter {
+    recordId: string;
+    
     // communication
     service: IServiceChannel;
     hostContext: IHostContext;
