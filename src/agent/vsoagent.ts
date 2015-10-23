@@ -44,8 +44,8 @@ var messageListener: listener.MessageListener;
 var runWorker = function(hostContext: ctxm.HostContext, agentApi: agentm.ITaskAgentApi, workerMsg: cm.IWorkerMessage) {
 
     var worker: childProcess.ChildProcess = childProcess.fork(path.join(__dirname, 'vsoworker'), [], {
-        env: process.env,
-        execArgv: []
+        env: process.env //,
+        //execArgv: []
     });
     
     var abandoned: boolean = false;

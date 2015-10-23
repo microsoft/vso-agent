@@ -238,13 +238,37 @@ export class ResultReader {
             var errorMessage = "";
             var stackTrace = "";
             if(testCaseNode.failure) {
-                outcome = "Failed";
-                if (testCaseNode.failure.text) {
-                    stackTrace = testCaseNode.failure.text();
+	        for( var f_idx = 0; f_idx < testCaseNode.failure.count(); f_idx++ ) {
+                    outcome = "Failed";
+                    var testFailure = testCaseNode.failure.at( f_idx );
+                    if (testFailure.text) {
+			if(testFailure.text instanceof Function ) {
+	                        stackTrace = testFailure.text();
+			}
+                    }
+                    if ( testFailure.attributes().message) {
+                        errorMessage = testFailure.attributes().message;
+                    }
+                    var testResult : testifm.TestResultCreateModel = <testifm.TestResultCreateModel> {
+                        state: "Completed",
+                        computerName: testSuiteSummary.host,
+                        testCasePriority: "1",
+                        automatedTestName: testName,
+                        automatedTestStorage: testStorage,
+                        automatedTestType: "JUnit",
+                        owner: { id: buildRequestedFor }, 
+                        runBy: { id: buildRequestedFor },
+                        testCaseTitle: testName,
+                        outcome: outcome,
+                        errorMessage: errorMessage,
+                        durationInMs: "" + Math.round(testCaseDuration * 1000), //convert to milliseconds and round to nearest whole number since server can't handle decimals for test case duration
+                        stackTrace: stackTrace
+                    };
+
+                    testResults.push(testResult);
                 }
-                if (testCaseNode.failure.attributes().message) {
-                    errorMessage = testCaseNode.failure.attributes().message;
-                }
+
+		continue;
             }
             else if(testCaseNode.error) {
                 outcome = "Failed";
@@ -260,23 +284,25 @@ export class ResultReader {
                 errorMessage = testCaseNode.skipped.text();
             }
 
-            var testResult : testifm.TestResultCreateModel = <testifm.TestResultCreateModel> {
-                state: "Completed",
-                computerName: testSuiteSummary.host,
-                testCasePriority: "1",
-                automatedTestName: testName,
-                automatedTestStorage: testStorage,
-                automatedTestType: "JUnit",
-                owner: { id: buildRequestedFor }, 
-                runBy: { id: buildRequestedFor },
-                testCaseTitle: testName,
-                outcome: outcome,
-                errorMessage: errorMessage,
-                durationInMs: "" + Math.round(testCaseDuration * 1000), //convert to milliseconds and round to nearest whole number since server can't handle decimals for test case duration
-                stackTrace: stackTrace
-            };
-                
-            testResults.push(testResult);
+	    var testResult : testifm.TestResultCreateModel = <testifm.TestResultCreateModel> {
+		state: "Completed",
+		computerName: testSuiteSummary.host,
+		testCasePriority: "1",
+		automatedTestName: testName,
+		automatedTestStorage: testStorage,
+		automatedTestType: "JUnit",
+		owner: { id: buildRequestedFor }, 
+		runBy: { id: buildRequestedFor },
+		testCaseTitle: testName,
+		outcome: outcome,
+		errorMessage: errorMessage,
+		durationInMs: "" + Math.round(testCaseDuration * 1000), //convert to milliseconds and round to nearest whole number since server can't handle decimals for test case duration
+		stackTrace: stackTrace
+	    };
+
+	    testResults.push(testResult);
+
+
         }    
 
         if(totalRunDuration < totalTestCaseDuration) {
