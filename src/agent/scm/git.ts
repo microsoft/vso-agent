@@ -8,6 +8,9 @@ var path = require('path');
 var shell = require('shelljs');
 var url = require('url');
 
+var PullRefsPrefix = "refs/pull/";
+var PullRefsOriginPrefix = "refs/remotes/origin/pull/";
+
 export function getProvider(ctx: cm.IExecutionContext, endpoint: agentifm.ServiceEndpoint): cm.IScmProvider {
 	return new GitScmProvider(ctx, endpoint);
 }
@@ -81,7 +84,14 @@ export class GitScmProvider extends scmm.ScmProvider {
 	    this.ctx.info('srcVersion: ' + srcVersion);
 	    this.ctx.info('srcBranch: ' + srcBranch);
 	    
-	    var selectedRef = srcVersion ? srcVersion : srcBranch;
+        var selectedRef: string;
+        var isPullRequest = this._isPullRequest(srcBranch);
+        if (isPullRequest) {
+            selectedRef = srcBranch;
+        }
+        else {
+            selectedRef = srcVersion ? srcVersion : srcBranch;
+        }
 
 	    var inputref = "refs/heads/master";
 	    if (selectedRef && selectedRef.trim().length > 0) {
@@ -103,19 +113,37 @@ export class GitScmProvider extends scmm.ScmProvider {
         return Q(0)
         .then((code: number) => {
 	        if (!this.enlistmentExists()) {
-	        	return this.gitw.clone(giturl, true, folder, gopt);
+	        	return this.gitw.clone(giturl, true, folder, gopt).then((result: number) => {
+                    if (isPullRequest) {
+                        // clone doesn't pull the refs/pull namespace, so fetch it
+                        shell.cd(this.targetPath);
+                        return this.gitw.fetch(['origin', srcBranch], gopt);
+                    }
+                    else {
+                        return Q(result);
+                    }
+                });
 	        }
 	        else {
 	        	shell.cd(this.targetPath);
 
 	        	return this.gitw.remote(['set-url', 'origin', giturl], gopt)
                 .then((code: number) => {
-                    return this.gitw.fetch(gopt);
+                    var fetchArgs = [];
+                    if (isPullRequest) {
+                        fetchArgs.push('origin');
+                        fetchArgs.push(srcBranch);
+                    }
+                    return this.gitw.fetch(fetchArgs, gopt);
                 })
 	        }
         })
         .then((code: number) => {
             shell.cd(this.targetPath);
+            if (isPullRequest) {
+                ref = srcVersion;
+            }
+            
             return this.gitw.checkout(ref, gopt);
         })
         .then((code: number) => {
@@ -150,4 +178,7 @@ export class GitScmProvider extends scmm.ScmProvider {
 		}
 	}	
 
+    private _isPullRequest(branch: string): boolean {
+        return !!branch && (branch.toLowerCase().startsWith(PullRefsPrefix) || branch.toLowerCase().startsWith(PullRefsOriginPrefix));
+    }
 }
