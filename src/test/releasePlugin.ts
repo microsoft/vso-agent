@@ -69,6 +69,7 @@ describe('Release plugin before job', () => {
 
         assert(context.variables[releaseCommon.releaseVars.agentReleaseDirectory] === folder, 'Agent release directory should be set as a variable');
         assert(context.variables[releaseCommon.releaseVars.systemArtifactsDirectory] === folder, 'System artifacts directory should be set as variable');
+        assert(context.variables[releaseCommon.releaseVars.systemArtifactsDirectory] === folder, 'System default working directory should be set as variable');
         done();
     });
 

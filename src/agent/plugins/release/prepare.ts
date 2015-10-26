@@ -100,12 +100,16 @@ export function createHash(teamProject: string, releaseDefinitionName: string): 
 }
 
 export function setAndLogLocalVariables(context: common.IExecutionContext, artifactsFolder: string, artifactDefinitions: releaseIfm.AgentArtifactDefinition[]): void {
+    // Remove after M90 as it is set by service
     if (artifactDefinitions.length === 1 && artifactDefinitions[0].artifactType === releaseIfm.AgentArtifactType.Build) {
-        context.variables[releaseCommon.releaseVars.buildId] = artifactDefinitions[0].version;
+        if (!context.variables[releaseCommon.releaseVars.buildId]) {
+            context.variables[releaseCommon.releaseVars.buildId] = artifactDefinitions[0].version;
+        }
     }
 
     context.variables[releaseCommon.releaseVars.agentReleaseDirectory] = artifactsFolder;
     context.variables[releaseCommon.releaseVars.systemArtifactsDirectory] = artifactsFolder;
+    context.variables[common.AutomationVariables.defaultWorkingDirectory] = artifactsFolder;
 
     context.verbose('Environment variables available are below.  Note that these environment variables can be referred to in the task (in the ReleaseDefinition) by replacing "_" with "." e.g. AGENT_WORKINGDIRECTORY environment variable can be referenced using Agent.WorkingDirectory in the ReleaseDefinition:' + JSON.stringify(context.variables, null, 2));
 }
