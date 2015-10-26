@@ -40,7 +40,7 @@ export class AutomationVariables {
     public static systemTfCollectionUri = 'system.teamFoundationCollectionUri';
     public static systemTeamProjectId = 'system.teamProjectId';
     public static systemDebug = 'system.debug';
-    public static defaultWorkingDirectory = 'system.defaultworkingdirectory';
+    public static defaultWorkingDirectory = 'system.defaultWorkingDirectory';
     
     //
     // Agent Variables
