@@ -120,8 +120,11 @@ It contains preview features currently in testing:
 
   * Release Management vNext Support
   * TfsVC xplat support using TEE command line
+  * SVN support
+  * Pull Request Support
   * Service Endpoint support
   * Shorter repo paths
+  * Summary markdown support
 
 ```bash
 $ sudo npm install vsoagent-installer@preview -g
