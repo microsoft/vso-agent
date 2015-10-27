@@ -89,7 +89,7 @@ export class JobRunner {
         jobCtx.writeConsoleSection('Preparing tasks');
 
         wk.info('Downloading required tasks');
-        var taskManager = new taskm.TaskManager(wk, jobCtx.authHandler);
+        var taskManager = new taskm.TaskManager(wk, jobCtx);
         taskManager.ensureTasksExist(this.job.tasks, function (err) {
             if (err) {
                 complete(err, ifm.TaskResult.Failed);
