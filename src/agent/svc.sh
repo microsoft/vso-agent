@@ -1,5 +1,6 @@
 export ACTION="$1"
 export OPTION="$2"
+BASEDIR=$(dirname $0)
 
 function failed()
 {
@@ -11,11 +12,11 @@ function failed()
 function installsvc() {
 	export RUNAS=${USER}
 
-	sudo node service.js install ${RUNAS} ${OPTION}
+	sudo node ${BASEDIR}/service.js install ${RUNAS} ${OPTION}
 }
 
 function svcAction() { 
-	sudo node service.js $1 
+	sudo node ${BASEDIR}/service.js $1 
 }
 
 if [ "${ACTION}" == "install" ]; then
