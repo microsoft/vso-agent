@@ -15,6 +15,8 @@ export class TestExecutionContext implements cm.IExecutionContext {
         this.workingDirectory = this.variables[cm.vars.agentWorkingDirectory];
     }
 
+    public recordId: string;
+
     // communication
     public service: cm.IServiceChannel;
     public hostContext: cm.IHostContext;
