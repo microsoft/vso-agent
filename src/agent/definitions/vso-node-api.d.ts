@@ -244,7 +244,7 @@ declare module 'vso-node-api/VsoClient' {
 	     * @param area resource area name
 	     * @param locationId Guid of the location to get
 	     */
-	    _beginGetLocation(area: string, locationId: string): Q.Promise<ifm.ApiResourceLocation>;
+	    beginGetLocation(area: string, locationId: string): Q.Promise<ifm.ApiResourceLocation>;
 	    private beginGetAreaLocations(area);
 	    resolveUrl(relativeUrl: string): string;
 	    /**
@@ -6879,7 +6879,294 @@ declare module 'vso-node-api/GitApi' {
 	}
 
 }
+declare module 'vso-node-api/interfaces/common/FormInputInterfaces' {
+	export enum InputDataType {
+	    /**
+	     * No data type is specified.
+	     */
+	    None = 0,
+	    /**
+	     * Represents a textual value.
+	     */
+	    String = 10,
+	    /**
+	     * Represents a numberic value.
+	     */
+	    Number = 20,
+	    /**
+	     * Represents a value of true or false.
+	     */
+	    Boolean = 30,
+	    /**
+	     * Represents a Guid.
+	     */
+	    Guid = 40,
+	    /**
+	     * Represents a URI.
+	     */
+	    Uri = 50,
+	}
+	/**
+	 * Describes an input for subscriptions.
+	 */
+	export interface InputDescriptor {
+	    /**
+	     * The ids of all inputs that the value of this input is dependent on.
+	     */
+	    dependencyInputIds: string[];
+	    /**
+	     * Description of what this input is used for
+	     */
+	    description: string;
+	    /**
+	     * The group localized name to which this input belongs and can be shown as a header for the container that will include all the inputs in the group.
+	     */
+	    groupName: string;
+	    /**
+	     * If true, the value information for this input is dynamic and should be fetched when the value of dependency inputs change.
+	     */
+	    hasDynamicValueInformation: boolean;
+	    /**
+	     * Identifier for the subscription input
+	     */
+	    id: string;
+	    /**
+	     * Mode in which the value of this input should be entered
+	     */
+	    inputMode: InputMode;
+	    /**
+	     * Gets whether this input is confidential, such as for a password or application key
+	     */
+	    isConfidential: boolean;
+	    /**
+	     * Localized name which can be shown as a label for the subscription input
+	     */
+	    name: string;
+	    /**
+	     * Gets whether this input is included in the default generated action description.
+	     */
+	    useInDefaultDescription: boolean;
+	    /**
+	     * Information to use to validate this input's value
+	     */
+	    validation: InputValidation;
+	    /**
+	     * A hint for input value. It can be used in the UI as the input placeholder.
+	     */
+	    valueHint: string;
+	    /**
+	     * Information about possible values for this input
+	     */
+	    values: InputValues;
+	}
+	/**
+	 * Defines a filter for subscription inputs. The filter matches a set of inputs if any (one or more) of the groups evaluates to true.
+	 */
+	export interface InputFilter {
+	    /**
+	     * Groups of input filter expressions. This filter matches a set of inputs if any (one or more) of the groups evaluates to true.
+	     */
+	    conditions: InputFilterCondition[];
+	}
+	/**
+	 * An expression which can be applied to filter a list of subscription inputs
+	 */
+	export interface InputFilterCondition {
+	    /**
+	     * Whether or not to do a case sensitive match
+	     */
+	    caseSensitive: boolean;
+	    /**
+	     * The Id of the input to filter on
+	     */
+	    inputId: string;
+	    /**
+	     * The "expected" input value to compare with the actual input value
+	     */
+	    inputValue: string;
+	    /**
+	     * The operator applied between the expected and actual input value
+	     */
+	    operator: InputFilterOperator;
+	}
+	export enum InputFilterOperator {
+	    Equals = 0,
+	    NotEquals = 1,
+	}
+	export enum InputMode {
+	    /**
+	     * This input should not be shown in the UI
+	     */
+	    None = 0,
+	    /**
+	     * An input text box should be shown
+	     */
+	    TextBox = 10,
+	    /**
+	     * An password input box should be shown
+	     */
+	    PasswordBox = 20,
+	    /**
+	     * A select/combo control should be shown
+	     */
+	    Combo = 30,
+	    /**
+	     * Radio buttons should be shown
+	     */
+	    RadioButtons = 40,
+	    /**
+	     * Checkbox should be shown(for true/false values)
+	     */
+	    CheckBox = 50,
+	    /**
+	     * A multi-line text area should be shown
+	     */
+	    TextArea = 60,
+	}
+	/**
+	 * Describes what values are valid for a subscription input
+	 */
+	export interface InputValidation {
+	    dataType: InputDataType;
+	    isRequired: boolean;
+	    maxLength: number;
+	    maxValue: number;
+	    minLength: number;
+	    minValue: number;
+	    pattern: string;
+	    patternMismatchErrorMessage: string;
+	}
+	/**
+	 * Information about a single value for an input
+	 */
+	export interface InputValue {
+	    /**
+	     * Any other data about this input
+	     */
+	    data: {
+	        [key: string]: any;
+	    };
+	    /**
+	     * The text to show for the display of this value
+	     */
+	    displayValue: string;
+	    /**
+	     * The value to store for this input
+	     */
+	    value: string;
+	}
+	/**
+	 * Information about the possible/allowed values for a given subscription input
+	 */
+	export interface InputValues {
+	    /**
+	     * The default value to use for this input
+	     */
+	    defaultValue: string;
+	    /**
+	     * Errors encountered while computing dynamic values.
+	     */
+	    error: InputValuesError;
+	    /**
+	     * The id of the input
+	     */
+	    inputId: string;
+	    /**
+	     * Should this input be disabled
+	     */
+	    isDisabled: boolean;
+	    /**
+	     * Should the value be restricted to one of the values in the PossibleValues (True) or are the values in PossibleValues just a suggestion (False)
+	     */
+	    isLimitedToPossibleValues: boolean;
+	    /**
+	     * Should this input be made read-only
+	     */
+	    isReadOnly: boolean;
+	    /**
+	     * Possible values that this input can take
+	     */
+	    possibleValues: InputValue[];
+	}
+	/**
+	 * Error information related to a subscription input value.
+	 */
+	export interface InputValuesError {
+	    /**
+	     * The error message.
+	     */
+	    message: string;
+	}
+	export interface InputValuesQuery {
+	    currentValues: {
+	        [key: string]: string;
+	    };
+	    /**
+	     * The input values to return on input, and the result from the consumer on output.
+	     */
+	    inputValues: InputValues[];
+	    /**
+	     * Subscription containing information about the publisher/consumer and the current input values
+	     */
+	    resource: any;
+	}
+	export var TypeInfo: {
+	    InputDataType: {
+	        enumValues: {
+	            "none": number;
+	            "string": number;
+	            "number": number;
+	            "boolean": number;
+	            "guid": number;
+	            "uri": number;
+	        };
+	    };
+	    InputDescriptor: {
+	        fields: any;
+	    };
+	    InputFilter: {
+	        fields: any;
+	    };
+	    InputFilterCondition: {
+	        fields: any;
+	    };
+	    InputFilterOperator: {
+	        enumValues: {
+	            "equals": number;
+	            "notEquals": number;
+	        };
+	    };
+	    InputMode: {
+	        enumValues: {
+	            "none": number;
+	            "textBox": number;
+	            "passwordBox": number;
+	            "combo": number;
+	            "radioButtons": number;
+	            "checkBox": number;
+	            "textArea": number;
+	        };
+	    };
+	    InputValidation: {
+	        fields: any;
+	    };
+	    InputValue: {
+	        fields: any;
+	    };
+	    InputValues: {
+	        fields: any;
+	    };
+	    InputValuesError: {
+	        fields: any;
+	    };
+	    InputValuesQuery: {
+	        fields: any;
+	    };
+	};
+
+}
 declare module 'vso-node-api/interfaces/TaskAgentInterfaces' {
+	import FormInputInterfaces = require('vso-node-api/interfaces/common/FormInputInterfaces');
 	import VSSInterfaces = require('vso-node-api/interfaces/common/VSSInterfaces');
 	export interface AgentPoolEvent {
 	    eventType: string;
@@ -6914,6 +7201,18 @@ declare module 'vso-node-api/interfaces/TaskAgentInterfaces' {
 	     * GitHub Connection
 	     */
 	    GitHub = 4,
+	}
+	export interface DataSource {
+	    endpointUrl: string;
+	    name: string;
+	    resultSelector: string;
+	}
+	export interface DataSourceBinding {
+	    dataSourceName: string;
+	    endpointId: string;
+	    parameters: {
+	        [key: string]: string;
+	    };
 	}
 	export interface EndpointAuthorization {
 	    parameters: {
@@ -7043,6 +7342,19 @@ declare module 'vso-node-api/interfaces/TaskAgentInterfaces' {
 	     */
 	    url: string;
 	}
+	export interface ServiceEndpointAuthenticationScheme {
+	    displayName: string;
+	    inputDescriptors: FormInputInterfaces.InputDescriptor[];
+	    scheme: string;
+	}
+	export interface ServiceEndpointType {
+	    authenticationSchemes: ServiceEndpointAuthenticationScheme[];
+	    dataSources: DataSource[];
+	    description: string;
+	    displayName: string;
+	    imageUrl: string;
+	    name: string;
+	}
 	export interface TaskAgent extends TaskAgentReference {
 	    /**
 	     * Gets the date on which this agent was created.
@@ -7121,6 +7433,10 @@ declare module 'vso-node-api/interfaces/TaskAgentInterfaces' {
 	    isHosted: boolean;
 	    properties: any;
 	    /**
+	     * Gets a value indicating whether or not roles have been provisioned for this pool.
+	     */
+	    provisioned: boolean;
+	    /**
 	     * Gets the service accounts group for this agent pool.
 	     */
 	    serviceAccountsGroup: VSSInterfaces.IdentityRef;
@@ -7135,9 +7451,16 @@ declare module 'vso-node-api/interfaces/TaskAgentInterfaces' {
 	    scope: string;
 	}
 	export interface TaskAgentQueue {
+	    groupScopeId: string;
 	    id: number;
 	    name: string;
 	    pool: TaskAgentPoolReference;
+	    provisioned: boolean;
+	}
+	export enum TaskAgentQueueActionFilter {
+	    None = 0,
+	    Manage = 2,
+	    Use = 16,
 	}
 	export interface TaskAgentReference {
 	    /**
@@ -7171,6 +7494,8 @@ declare module 'vso-node-api/interfaces/TaskAgentInterfaces' {
 	    lastChangedBy: string;
 	    lastChangedOn: Date;
 	    name: string;
+	    recordId: string;
+	    timelineId: string;
 	    type: string;
 	}
 	export interface TaskChangeEvent {
@@ -7303,6 +7628,8 @@ declare module 'vso-node-api/interfaces/TaskAgentInterfaces' {
 	    environment: PlanEnvironment;
 	    finishTime: Date;
 	    implementation: TaskOrchestrationContainer;
+	    requestedById: string;
+	    requestedForId: string;
 	    result: TaskResult;
 	    resultCode: string;
 	    startTime: Date;
@@ -7498,6 +7825,12 @@ declare module 'vso-node-api/interfaces/TaskAgentInterfaces' {
 	            "gitHub": number;
 	        };
 	    };
+	    DataSource: {
+	        fields: any;
+	    };
+	    DataSourceBinding: {
+	        fields: any;
+	    };
 	    EndpointAuthorization: {
 	        fields: any;
 	    };
@@ -7546,6 +7879,12 @@ declare module 'vso-node-api/interfaces/TaskAgentInterfaces' {
 	    ServiceEndpoint: {
 	        fields: any;
 	    };
+	    ServiceEndpointAuthenticationScheme: {
+	        fields: any;
+	    };
+	    ServiceEndpointType: {
+	        fields: any;
+	    };
 	    TaskAgent: {
 	        fields: any;
 	    };
@@ -7563,6 +7902,13 @@ declare module 'vso-node-api/interfaces/TaskAgentInterfaces' {
 	    };
 	    TaskAgentQueue: {
 	        fields: any;
+	    };
+	    TaskAgentQueueActionFilter: {
+	        enumValues: {
+	            "none": number;
+	            "manage": number;
+	            "use": number;
+	        };
 	    };
 	    TaskAgentReference: {
 	        fields: any;
@@ -7687,7 +8033,7 @@ declare module 'vso-node-api/interfaces/TaskAgentInterfaces' {
 	};
 
 }
-declare module 'vso-node-api/TaskAgentApi' {
+declare module 'vso-node-api/TaskAgentApiBase' {
 	/// <reference path="../node/node.d.ts" />
 	/// <reference path="../q/Q.d.ts" />
 	import Q = require('q');
@@ -7695,83 +8041,108 @@ declare module 'vso-node-api/TaskAgentApi' {
 	import VsoBaseInterfaces = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 	import TaskAgentInterfaces = require('vso-node-api/interfaces/TaskAgentInterfaces');
 	import VSSInterfaces = require('vso-node-api/interfaces/common/VSSInterfaces');
-	export interface ITaskAgentApi extends basem.ClientApiBase {
-	    createAgent(agent: TaskAgentInterfaces.TaskAgent, poolId: number, onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent) => void): void;
+	export interface ITaskAgentApiBase extends basem.ClientApiBase {
+	    addAgent(agent: TaskAgentInterfaces.TaskAgent, poolId: number, onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent) => void): void;
 	    deleteAgent(poolId: number, agentId: number, onResult: (err: any, statusCode: number) => void): void;
-	    getAgent(poolId: number, agentId: number, includeCapabilities: boolean, propertyFilters: string, onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent) => void): void;
-	    getAgents(poolId: number, agentName: string, includeCapabilities: boolean, propertyFilters: string, demands: string, onResult: (err: any, statusCode: number, agents: TaskAgentInterfaces.TaskAgent[]) => void): void;
+	    getAgent(poolId: number, agentId: number, includeCapabilities: boolean, propertyFilters: string[], onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent) => void): void;
+	    getAgents(poolId: number, agentName: string, includeCapabilities: boolean, propertyFilters: string[], demands: string[], onResult: (err: any, statusCode: number, agents: TaskAgentInterfaces.TaskAgent[]) => void): void;
 	    replaceAgent(agent: TaskAgentInterfaces.TaskAgent, poolId: number, agentId: number, onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent) => void): void;
 	    updateAgent(agent: TaskAgentInterfaces.TaskAgent, poolId: number, agentId: number, onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent) => void): void;
 	    queryEndpoint(endpoint: TaskAgentInterfaces.TaskDefinitionEndpoint, onResult: (err: any, statusCode: number, endpoint: string[]) => void): void;
-	    deleteRequest(poolId: number, requestId: number, lockToken: string, onResult: (err: any, statusCode: number) => void): void;
-	    getRequest(poolId: number, requestId: number, onResult: (err: any, statusCode: number, jobrequest: TaskAgentInterfaces.TaskAgentJobRequest) => void): void;
-	    queueRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number, onResult: (err: any, statusCode: number, jobrequest: TaskAgentInterfaces.TaskAgentJobRequest) => void): void;
-	    updateRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number, requestId: number, lockToken: string, onResult: (err: any, statusCode: number, jobrequest: TaskAgentInterfaces.TaskAgentJobRequest) => void): void;
+	    deleteAgentRequest(poolId: number, requestId: number, lockToken: string, onResult: (err: any, statusCode: number) => void): void;
+	    getAgentRequest(poolId: number, requestId: number, onResult: (err: any, statusCode: number, jobrequest: TaskAgentInterfaces.TaskAgentJobRequest) => void): void;
+	    queueAgentRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number, onResult: (err: any, statusCode: number, jobrequest: TaskAgentInterfaces.TaskAgentJobRequest) => void): void;
+	    updateAgentRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number, requestId: number, lockToken: string, onResult: (err: any, statusCode: number, jobrequest: TaskAgentInterfaces.TaskAgentJobRequest) => void): void;
 	    deleteMessage(poolId: number, messageId: number, sessionId: string, onResult: (err: any, statusCode: number) => void): void;
 	    getMessage(poolId: number, sessionId: string, lastMessageId: number, onResult: (err: any, statusCode: number, message: TaskAgentInterfaces.TaskAgentMessage) => void): void;
 	    refreshAgent(poolId: number, agentId: number, onResult: (err: any, statusCode: number) => void): void;
 	    refreshAgents(poolId: number, onResult: (err: any, statusCode: number) => void): void;
 	    sendMessage(message: TaskAgentInterfaces.TaskAgentMessage, poolId: number, requestId: number, onResult: (err: any, statusCode: number) => void): void;
-	    createPool(pool: TaskAgentInterfaces.TaskAgentPool, onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool) => void): void;
-	    deletePool(poolId: number, onResult: (err: any, statusCode: number) => void): void;
-	    getPool(poolId: number, properties: string, onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool) => void): void;
-	    getPools(poolName: string, properties: string, onResult: (err: any, statusCode: number, pools: TaskAgentInterfaces.TaskAgentPool[]) => void): void;
-	    updatePool(pool: TaskAgentInterfaces.TaskAgentPool, poolId: number, onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool) => void): void;
-	    createQueue(queue: TaskAgentInterfaces.TaskAgentQueue, onResult: (err: any, statusCode: number, queue: TaskAgentInterfaces.TaskAgentQueue) => void): void;
-	    deleteQueue(queueId: number, onResult: (err: any, statusCode: number) => void): void;
-	    getQueue(queueId: number, onResult: (err: any, statusCode: number, queue: TaskAgentInterfaces.TaskAgentQueue) => void): void;
-	    getQueues(queueName: string, onResult: (err: any, statusCode: number, queues: TaskAgentInterfaces.TaskAgentQueue[]) => void): void;
-	    getAgentPoolRoles(poolId: number, onResult: (err: any, statusCode: number, roles: VSSInterfaces.IdentityRef[]) => void): void;
+	    getPackage(packageType: string, onResult: (err: any, statusCode: number, _package: TaskAgentInterfaces.TaskPackageMetadata) => void): void;
+	    getPackages(onResult: (err: any, statusCode: number, packages: TaskAgentInterfaces.TaskPackageMetadata[]) => void): void;
+	    getPackageZip(packageType: string, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
+	    getAgentPoolRoles(poolId: number, onResult: (err: any, statusCode: number, poolroles: VSSInterfaces.IdentityRef[]) => void): void;
+	    addAgentPool(pool: TaskAgentInterfaces.TaskAgentPool, onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool) => void): void;
+	    deleteAgentPool(poolId: number, onResult: (err: any, statusCode: number) => void): void;
+	    getAgentPool(poolId: number, properties: string[], onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool) => void): void;
+	    getAgentPools(poolName: string, properties: string[], onResult: (err: any, statusCode: number, pools: TaskAgentInterfaces.TaskAgentPool[]) => void): void;
+	    updateAgentPool(pool: TaskAgentInterfaces.TaskAgentPool, poolId: number, onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool) => void): void;
+	    getAgentQueueRoles(queueId: number, onResult: (err: any, statusCode: number, queueroles: VSSInterfaces.IdentityRef[]) => void): void;
+	    addAgentQueue(queue: TaskAgentInterfaces.TaskAgentQueue, onResult: (err: any, statusCode: number, queue: TaskAgentInterfaces.TaskAgentQueue) => void): void;
+	    deleteAgentQueue(queueId: number, onResult: (err: any, statusCode: number) => void): void;
+	    getAgentQueue(queueId: number, actionFilter: TaskAgentInterfaces.TaskAgentQueueActionFilter, onResult: (err: any, statusCode: number, queue: TaskAgentInterfaces.TaskAgentQueue) => void): void;
+	    getAgentQueues(queueName: string, actionFilter: TaskAgentInterfaces.TaskAgentQueueActionFilter, onResult: (err: any, statusCode: number, queues: TaskAgentInterfaces.TaskAgentQueue[]) => void): void;
+	    queryServiceEndpoint(binding: TaskAgentInterfaces.DataSourceBinding, scopeIdentifier: string, onResult: (err: any, statusCode: number, serviceendpointproxy: string[]) => void): void;
 	    createServiceEndpoint(endpoint: TaskAgentInterfaces.ServiceEndpoint, scopeIdentifier: string, endpointId: string, onResult: (err: any, statusCode: number, serviceendpoint: TaskAgentInterfaces.ServiceEndpoint) => void): void;
 	    deleteServiceEndpoint(scopeIdentifier: string, endpointId: string, onResult: (err: any, statusCode: number) => void): void;
 	    getServiceEndpointDetails(scopeIdentifier: string, endpointId: string, onResult: (err: any, statusCode: number, serviceendpoint: TaskAgentInterfaces.ServiceEndpoint) => void): void;
-	    getServiceEndpoints(scopeIdentifier: string, type: string, onResult: (err: any, statusCode: number, serviceendpoints: TaskAgentInterfaces.ServiceEndpoint[]) => void): void;
-	    createSession(session: TaskAgentInterfaces.TaskAgentSession, poolId: number, onResult: (err: any, statusCode: number, session: TaskAgentInterfaces.TaskAgentSession) => void): void;
-	    deleteSession(poolId: number, sessionId: string, onResult: (err: any, statusCode: number) => void): void;
+	    getServiceEndpoints(scopeIdentifier: string, type: string, authSchemes: string[], onResult: (err: any, statusCode: number, serviceendpoints: TaskAgentInterfaces.ServiceEndpoint[]) => void): void;
+	    getServiceEndpointTypes(scopeIdentifier: string, type: string, scheme: string, onResult: (err: any, statusCode: number, serviceendpointtypes: TaskAgentInterfaces.ServiceEndpointType[]) => void): void;
+	    createAgentSession(session: TaskAgentInterfaces.TaskAgentSession, poolId: number, onResult: (err: any, statusCode: number, session: TaskAgentInterfaces.TaskAgentSession) => void): void;
+	    deleteAgentSession(poolId: number, sessionId: string, onResult: (err: any, statusCode: number) => void): void;
 	    deleteTaskDefinition(taskId: string, onResult: (err: any, statusCode: number) => void): void;
 	    getTaskContentZip(taskId: string, versionString: string, visibility: string[], scopeLocal: boolean, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
-	    getTaskDefinitions(taskId: string, versionString: string, visibility: string[], scopeLocal: boolean, onResult: (err: any, statusCode: number, tasks: TaskAgentInterfaces.TaskDefinition[]) => void): void;
-	    uploadTaskDefinition(customHeaders: any, contentStream: NodeJS.ReadableStream, taskId: string, overwrite: boolean, onResult: (err: any, statusCode: number, obj: any) => void): void;
-	    updateUserCapabilities(userCapabilities: {
+	    getTaskDefinition(taskId: string, versionString: string, visibility: string[], scopeLocal: boolean, onResult: (err: any, statusCode: number, task: TaskAgentInterfaces.TaskDefinition) => void): void;
+	    getTaskDefinitions(taskId: string, visibility: string[], scopeLocal: boolean, onResult: (err: any, statusCode: number, tasks: TaskAgentInterfaces.TaskDefinition[]) => void): void;
+	    updateAgentUserCapabilities(userCapabilities: {
 	        [key: string]: string;
 	    }, poolId: number, agentId: number, onResult: (err: any, statusCode: number, usercapabilitie: TaskAgentInterfaces.TaskAgent) => void): void;
 	}
-	export interface IQTaskAgentApi extends basem.QClientApiBase {
-	    createAgent(agent: TaskAgentInterfaces.TaskAgent, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgent>;
-	    getAgent(poolId: number, agentId: number, includeCapabilities?: boolean, propertyFilters?: string): Q.Promise<TaskAgentInterfaces.TaskAgent>;
-	    getAgents(poolId: number, agentName?: string, includeCapabilities?: boolean, propertyFilters?: string, demands?: string): Q.Promise<TaskAgentInterfaces.TaskAgent[]>;
+	export interface IQTaskAgentApiBase extends basem.QClientApiBase {
+	    addAgent(agent: TaskAgentInterfaces.TaskAgent, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgent>;
+	    deleteAgent(poolId: number, agentId: number): Q.Promise<void>;
+	    getAgent(poolId: number, agentId: number, includeCapabilities?: boolean, propertyFilters?: string[]): Q.Promise<TaskAgentInterfaces.TaskAgent>;
+	    getAgents(poolId: number, agentName?: string, includeCapabilities?: boolean, propertyFilters?: string[], demands?: string[]): Q.Promise<TaskAgentInterfaces.TaskAgent[]>;
 	    replaceAgent(agent: TaskAgentInterfaces.TaskAgent, poolId: number, agentId: number): Q.Promise<TaskAgentInterfaces.TaskAgent>;
 	    updateAgent(agent: TaskAgentInterfaces.TaskAgent, poolId: number, agentId: number): Q.Promise<TaskAgentInterfaces.TaskAgent>;
 	    queryEndpoint(endpoint: TaskAgentInterfaces.TaskDefinitionEndpoint): Q.Promise<string[]>;
-	    getRequest(poolId: number, requestId: number): Q.Promise<TaskAgentInterfaces.TaskAgentJobRequest>;
-	    queueRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgentJobRequest>;
-	    updateRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number, requestId: number, lockToken: string): Q.Promise<TaskAgentInterfaces.TaskAgentJobRequest>;
+	    deleteAgentRequest(poolId: number, requestId: number, lockToken: string): Q.Promise<void>;
+	    getAgentRequest(poolId: number, requestId: number): Q.Promise<TaskAgentInterfaces.TaskAgentJobRequest>;
+	    queueAgentRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgentJobRequest>;
+	    updateAgentRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number, requestId: number, lockToken: string): Q.Promise<TaskAgentInterfaces.TaskAgentJobRequest>;
+	    deleteMessage(poolId: number, messageId: number, sessionId: string): Q.Promise<void>;
 	    getMessage(poolId: number, sessionId: string, lastMessageId?: number): Q.Promise<TaskAgentInterfaces.TaskAgentMessage>;
-	    createPool(pool: TaskAgentInterfaces.TaskAgentPool): Q.Promise<TaskAgentInterfaces.TaskAgentPool>;
-	    getPool(poolId: number, properties?: string): Q.Promise<TaskAgentInterfaces.TaskAgentPool>;
-	    getPools(poolName?: string, properties?: string): Q.Promise<TaskAgentInterfaces.TaskAgentPool[]>;
-	    updatePool(pool: TaskAgentInterfaces.TaskAgentPool, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgentPool>;
-	    createQueue(queue: TaskAgentInterfaces.TaskAgentQueue): Q.Promise<TaskAgentInterfaces.TaskAgentQueue>;
-	    getQueue(queueId: number): Q.Promise<TaskAgentInterfaces.TaskAgentQueue>;
-	    getQueues(queueName?: string): Q.Promise<TaskAgentInterfaces.TaskAgentQueue[]>;
+	    refreshAgent(poolId: number, agentId: number): Q.Promise<void>;
+	    refreshAgents(poolId: number): Q.Promise<void>;
+	    sendMessage(message: TaskAgentInterfaces.TaskAgentMessage, poolId: number, requestId: number): Q.Promise<void>;
+	    getPackage(packageType: string): Q.Promise<TaskAgentInterfaces.TaskPackageMetadata>;
+	    getPackages(): Q.Promise<TaskAgentInterfaces.TaskPackageMetadata[]>;
+	    getPackageZip(packageType: string): Q.Promise<NodeJS.ReadableStream>;
 	    getAgentPoolRoles(poolId?: number): Q.Promise<VSSInterfaces.IdentityRef[]>;
+	    addAgentPool(pool: TaskAgentInterfaces.TaskAgentPool): Q.Promise<TaskAgentInterfaces.TaskAgentPool>;
+	    deleteAgentPool(poolId: number): Q.Promise<void>;
+	    getAgentPool(poolId: number, properties?: string[]): Q.Promise<TaskAgentInterfaces.TaskAgentPool>;
+	    getAgentPools(poolName?: string, properties?: string[]): Q.Promise<TaskAgentInterfaces.TaskAgentPool[]>;
+	    updateAgentPool(pool: TaskAgentInterfaces.TaskAgentPool, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgentPool>;
+	    getAgentQueueRoles(queueId?: number): Q.Promise<VSSInterfaces.IdentityRef[]>;
+	    addAgentQueue(queue: TaskAgentInterfaces.TaskAgentQueue): Q.Promise<TaskAgentInterfaces.TaskAgentQueue>;
+	    deleteAgentQueue(queueId: number): Q.Promise<void>;
+	    getAgentQueue(queueId: number, actionFilter?: TaskAgentInterfaces.TaskAgentQueueActionFilter): Q.Promise<TaskAgentInterfaces.TaskAgentQueue>;
+	    getAgentQueues(queueName?: string, actionFilter?: TaskAgentInterfaces.TaskAgentQueueActionFilter): Q.Promise<TaskAgentInterfaces.TaskAgentQueue[]>;
+	    queryServiceEndpoint(binding: TaskAgentInterfaces.DataSourceBinding, scopeIdentifier: string): Q.Promise<string[]>;
 	    createServiceEndpoint(endpoint: TaskAgentInterfaces.ServiceEndpoint, scopeIdentifier: string, endpointId: string): Q.Promise<TaskAgentInterfaces.ServiceEndpoint>;
+	    deleteServiceEndpoint(scopeIdentifier: string, endpointId: string): Q.Promise<void>;
 	    getServiceEndpointDetails(scopeIdentifier: string, endpointId: string): Q.Promise<TaskAgentInterfaces.ServiceEndpoint>;
-	    getServiceEndpoints(scopeIdentifier: string, type?: string): Q.Promise<TaskAgentInterfaces.ServiceEndpoint[]>;
-	    createSession(session: TaskAgentInterfaces.TaskAgentSession, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgentSession>;
-	    getTaskDefinitions(taskId?: string, versionString?: string, visibility?: string[], scopeLocal?: boolean): Q.Promise<TaskAgentInterfaces.TaskDefinition[]>;
-	    updateUserCapabilities(userCapabilities: {
+	    getServiceEndpoints(scopeIdentifier: string, type?: string, authSchemes?: string[]): Q.Promise<TaskAgentInterfaces.ServiceEndpoint[]>;
+	    getServiceEndpointTypes(scopeIdentifier: string, type?: string, scheme?: string): Q.Promise<TaskAgentInterfaces.ServiceEndpointType[]>;
+	    createAgentSession(session: TaskAgentInterfaces.TaskAgentSession, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgentSession>;
+	    deleteAgentSession(poolId: number, sessionId: string): Q.Promise<void>;
+	    deleteTaskDefinition(taskId: string): Q.Promise<void>;
+	    getTaskContentZip(taskId: string, versionString: string, visibility?: string[], scopeLocal?: boolean): Q.Promise<NodeJS.ReadableStream>;
+	    getTaskDefinition(taskId: string, versionString: string, visibility?: string[], scopeLocal?: boolean): Q.Promise<TaskAgentInterfaces.TaskDefinition>;
+	    getTaskDefinitions(taskId?: string, visibility?: string[], scopeLocal?: boolean): Q.Promise<TaskAgentInterfaces.TaskDefinition[]>;
+	    updateAgentUserCapabilities(userCapabilities: {
 	        [key: string]: string;
 	    }, poolId: number, agentId: number): Q.Promise<TaskAgentInterfaces.TaskAgent>;
 	}
-	export class TaskAgentApi extends basem.ClientApiBase implements ITaskAgentApi {
+	export class TaskAgentApiBase extends basem.ClientApiBase implements ITaskAgentApiBase {
 	    constructor(baseUrl: string, handlers: VsoBaseInterfaces.IRequestHandler[]);
 	    /**
 	     * @param {TaskAgentInterfaces.TaskAgent} agent
 	     * @param {number} poolId
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgent
 	     */
-	    createAgent(agent: TaskAgentInterfaces.TaskAgent, poolId: number, onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent) => void): void;
+	    addAgent(agent: TaskAgentInterfaces.TaskAgent, poolId: number, onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent) => void): void;
 	    /**
 	     * @param {number} poolId
 	     * @param {number} agentId
@@ -7782,19 +8153,19 @@ declare module 'vso-node-api/TaskAgentApi' {
 	     * @param {number} poolId
 	     * @param {number} agentId
 	     * @param {boolean} includeCapabilities
-	     * @param {string} propertyFilters
+	     * @param {string[]} propertyFilters
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgent
 	     */
-	    getAgent(poolId: number, agentId: number, includeCapabilities: boolean, propertyFilters: string, onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent) => void): void;
+	    getAgent(poolId: number, agentId: number, includeCapabilities: boolean, propertyFilters: string[], onResult: (err: any, statusCode: number, agent: TaskAgentInterfaces.TaskAgent) => void): void;
 	    /**
 	     * @param {number} poolId
 	     * @param {string} agentName
 	     * @param {boolean} includeCapabilities
-	     * @param {string} propertyFilters
-	     * @param {string} demands
+	     * @param {string[]} propertyFilters
+	     * @param {string[]} demands
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgent[]
 	     */
-	    getAgents(poolId: number, agentName: string, includeCapabilities: boolean, propertyFilters: string, demands: string, onResult: (err: any, statusCode: number, agents: TaskAgentInterfaces.TaskAgent[]) => void): void;
+	    getAgents(poolId: number, agentName: string, includeCapabilities: boolean, propertyFilters: string[], demands: string[], onResult: (err: any, statusCode: number, agents: TaskAgentInterfaces.TaskAgent[]) => void): void;
 	    /**
 	     * @param {TaskAgentInterfaces.TaskAgent} agent
 	     * @param {number} poolId
@@ -7822,19 +8193,19 @@ declare module 'vso-node-api/TaskAgentApi' {
 	     * @param {string} lockToken
 	     * @param onResult callback function
 	     */
-	    deleteRequest(poolId: number, requestId: number, lockToken: string, onResult: (err: any, statusCode: number) => void): void;
+	    deleteAgentRequest(poolId: number, requestId: number, lockToken: string, onResult: (err: any, statusCode: number) => void): void;
 	    /**
 	     * @param {number} poolId
 	     * @param {number} requestId
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentJobRequest
 	     */
-	    getRequest(poolId: number, requestId: number, onResult: (err: any, statusCode: number, jobrequest: TaskAgentInterfaces.TaskAgentJobRequest) => void): void;
+	    getAgentRequest(poolId: number, requestId: number, onResult: (err: any, statusCode: number, jobrequest: TaskAgentInterfaces.TaskAgentJobRequest) => void): void;
 	    /**
 	     * @param {TaskAgentInterfaces.TaskAgentJobRequest} request
 	     * @param {number} poolId
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentJobRequest
 	     */
-	    queueRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number, onResult: (err: any, statusCode: number, jobrequest: TaskAgentInterfaces.TaskAgentJobRequest) => void): void;
+	    queueAgentRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number, onResult: (err: any, statusCode: number, jobrequest: TaskAgentInterfaces.TaskAgentJobRequest) => void): void;
 	    /**
 	     * @param {TaskAgentInterfaces.TaskAgentJobRequest} request
 	     * @param {number} poolId
@@ -7842,7 +8213,7 @@ declare module 'vso-node-api/TaskAgentApi' {
 	     * @param {string} lockToken
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentJobRequest
 	     */
-	    updateRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number, requestId: number, lockToken: string, onResult: (err: any, statusCode: number, jobrequest: TaskAgentInterfaces.TaskAgentJobRequest) => void): void;
+	    updateAgentRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number, requestId: number, lockToken: string, onResult: (err: any, statusCode: number, jobrequest: TaskAgentInterfaces.TaskAgentJobRequest) => void): void;
 	    /**
 	     * @param {number} poolId
 	     * @param {number} messageId
@@ -7876,58 +8247,91 @@ declare module 'vso-node-api/TaskAgentApi' {
 	     */
 	    sendMessage(message: TaskAgentInterfaces.TaskAgentMessage, poolId: number, requestId: number, onResult: (err: any, statusCode: number) => void): void;
 	    /**
-	     * @param {TaskAgentInterfaces.TaskAgentPool} pool
-	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentPool
+	     * This method can return packages/{packageType} -- package stream OR TaskPackageMetadata if requested for json
+	     *
+	     * @param {string} packageType
+	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskPackageMetadata
 	     */
-	    createPool(pool: TaskAgentInterfaces.TaskAgentPool, onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool) => void): void;
+	    getPackage(packageType: string, onResult: (err: any, statusCode: number, _package: TaskAgentInterfaces.TaskPackageMetadata) => void): void;
 	    /**
-	     * @param {number} poolId
-	     * @param onResult callback function
+	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskPackageMetadata[]
 	     */
-	    deletePool(poolId: number, onResult: (err: any, statusCode: number) => void): void;
+	    getPackages(onResult: (err: any, statusCode: number, packages: TaskAgentInterfaces.TaskPackageMetadata[]) => void): void;
 	    /**
-	     * @param {number} poolId
-	     * @param {string} properties
-	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentPool
+	     * This method can return packages/{packageType} -- package stream OR TaskPackageMetadata if requested for json
+	     *
+	     * @param {string} packageType
+	     * @param onResult callback function with the resulting ArrayBuffer
 	     */
-	    getPool(poolId: number, properties: string, onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool) => void): void;
-	    /**
-	     * @param {string} poolName
-	     * @param {string} properties
-	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentPool[]
-	     */
-	    getPools(poolName: string, properties: string, onResult: (err: any, statusCode: number, pools: TaskAgentInterfaces.TaskAgentPool[]) => void): void;
-	    /**
-	     * @param {TaskAgentInterfaces.TaskAgentPool} pool
-	     * @param {number} poolId
-	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentPool
-	     */
-	    updatePool(pool: TaskAgentInterfaces.TaskAgentPool, poolId: number, onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool) => void): void;
-	    /**
-	     * @param {TaskAgentInterfaces.TaskAgentQueue} queue
-	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentQueue
-	     */
-	    createQueue(queue: TaskAgentInterfaces.TaskAgentQueue, onResult: (err: any, statusCode: number, queue: TaskAgentInterfaces.TaskAgentQueue) => void): void;
-	    /**
-	     * @param {number} queueId
-	     * @param onResult callback function
-	     */
-	    deleteQueue(queueId: number, onResult: (err: any, statusCode: number) => void): void;
-	    /**
-	     * @param {number} queueId
-	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentQueue
-	     */
-	    getQueue(queueId: number, onResult: (err: any, statusCode: number, queue: TaskAgentInterfaces.TaskAgentQueue) => void): void;
-	    /**
-	     * @param {string} queueName
-	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentQueue[]
-	     */
-	    getQueues(queueName: string, onResult: (err: any, statusCode: number, queues: TaskAgentInterfaces.TaskAgentQueue[]) => void): void;
+	    getPackageZip(packageType: string, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
 	    /**
 	     * @param {number} poolId
 	     * @param onResult callback function with the resulting VSSInterfaces.IdentityRef[]
 	     */
-	    getAgentPoolRoles(poolId: number, onResult: (err: any, statusCode: number, roles: VSSInterfaces.IdentityRef[]) => void): void;
+	    getAgentPoolRoles(poolId: number, onResult: (err: any, statusCode: number, poolroles: VSSInterfaces.IdentityRef[]) => void): void;
+	    /**
+	     * @param {TaskAgentInterfaces.TaskAgentPool} pool
+	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentPool
+	     */
+	    addAgentPool(pool: TaskAgentInterfaces.TaskAgentPool, onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool) => void): void;
+	    /**
+	     * @param {number} poolId
+	     * @param onResult callback function
+	     */
+	    deleteAgentPool(poolId: number, onResult: (err: any, statusCode: number) => void): void;
+	    /**
+	     * @param {number} poolId
+	     * @param {string[]} properties
+	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentPool
+	     */
+	    getAgentPool(poolId: number, properties: string[], onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool) => void): void;
+	    /**
+	     * @param {string} poolName
+	     * @param {string[]} properties
+	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentPool[]
+	     */
+	    getAgentPools(poolName: string, properties: string[], onResult: (err: any, statusCode: number, pools: TaskAgentInterfaces.TaskAgentPool[]) => void): void;
+	    /**
+	     * @param {TaskAgentInterfaces.TaskAgentPool} pool
+	     * @param {number} poolId
+	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentPool
+	     */
+	    updateAgentPool(pool: TaskAgentInterfaces.TaskAgentPool, poolId: number, onResult: (err: any, statusCode: number, pool: TaskAgentInterfaces.TaskAgentPool) => void): void;
+	    /**
+	     * @param {number} queueId
+	     * @param onResult callback function with the resulting VSSInterfaces.IdentityRef[]
+	     */
+	    getAgentQueueRoles(queueId: number, onResult: (err: any, statusCode: number, queueroles: VSSInterfaces.IdentityRef[]) => void): void;
+	    /**
+	     * @param {TaskAgentInterfaces.TaskAgentQueue} queue
+	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentQueue
+	     */
+	    addAgentQueue(queue: TaskAgentInterfaces.TaskAgentQueue, onResult: (err: any, statusCode: number, queue: TaskAgentInterfaces.TaskAgentQueue) => void): void;
+	    /**
+	     * @param {number} queueId
+	     * @param onResult callback function
+	     */
+	    deleteAgentQueue(queueId: number, onResult: (err: any, statusCode: number) => void): void;
+	    /**
+	     * @param {number} queueId
+	     * @param {TaskAgentInterfaces.TaskAgentQueueActionFilter} actionFilter
+	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentQueue
+	     */
+	    getAgentQueue(queueId: number, actionFilter: TaskAgentInterfaces.TaskAgentQueueActionFilter, onResult: (err: any, statusCode: number, queue: TaskAgentInterfaces.TaskAgentQueue) => void): void;
+	    /**
+	     * @param {string} queueName
+	     * @param {TaskAgentInterfaces.TaskAgentQueueActionFilter} actionFilter
+	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentQueue[]
+	     */
+	    getAgentQueues(queueName: string, actionFilter: TaskAgentInterfaces.TaskAgentQueueActionFilter, onResult: (err: any, statusCode: number, queues: TaskAgentInterfaces.TaskAgentQueue[]) => void): void;
+	    /**
+	     * Proxy for a GET request defined by an service endpoint. The request is authorized using a data source in service endpoint. The response is filtered using an XPath/Json based selector.
+	     *
+	     * @param {TaskAgentInterfaces.DataSourceBinding} binding - Describes the data source to fetch.
+	     * @param {string} scopeIdentifier - The project GUID to scope the request
+	     * @param onResult callback function with the resulting string[]
+	     */
+	    queryServiceEndpoint(binding: TaskAgentInterfaces.DataSourceBinding, scopeIdentifier: string, onResult: (err: any, statusCode: number, serviceendpointproxy: string[]) => void): void;
 	    /**
 	     * @param {TaskAgentInterfaces.ServiceEndpoint} endpoint
 	     * @param {string} scopeIdentifier - The project GUID to scope the request
@@ -7950,21 +8354,29 @@ declare module 'vso-node-api/TaskAgentApi' {
 	    /**
 	     * @param {string} scopeIdentifier - The project GUID to scope the request
 	     * @param {string} type
+	     * @param {string[]} authSchemes
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.ServiceEndpoint[]
 	     */
-	    getServiceEndpoints(scopeIdentifier: string, type: string, onResult: (err: any, statusCode: number, serviceendpoints: TaskAgentInterfaces.ServiceEndpoint[]) => void): void;
+	    getServiceEndpoints(scopeIdentifier: string, type: string, authSchemes: string[], onResult: (err: any, statusCode: number, serviceendpoints: TaskAgentInterfaces.ServiceEndpoint[]) => void): void;
+	    /**
+	     * @param {string} scopeIdentifier - The project GUID to scope the request
+	     * @param {string} type
+	     * @param {string} scheme
+	     * @param onResult callback function with the resulting TaskAgentInterfaces.ServiceEndpointType[]
+	     */
+	    getServiceEndpointTypes(scopeIdentifier: string, type: string, scheme: string, onResult: (err: any, statusCode: number, serviceendpointtypes: TaskAgentInterfaces.ServiceEndpointType[]) => void): void;
 	    /**
 	     * @param {TaskAgentInterfaces.TaskAgentSession} session
 	     * @param {number} poolId
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgentSession
 	     */
-	    createSession(session: TaskAgentInterfaces.TaskAgentSession, poolId: number, onResult: (err: any, statusCode: number, session: TaskAgentInterfaces.TaskAgentSession) => void): void;
+	    createAgentSession(session: TaskAgentInterfaces.TaskAgentSession, poolId: number, onResult: (err: any, statusCode: number, session: TaskAgentInterfaces.TaskAgentSession) => void): void;
 	    /**
 	     * @param {number} poolId
 	     * @param {string} sessionId
 	     * @param onResult callback function
 	     */
-	    deleteSession(poolId: number, sessionId: string, onResult: (err: any, statusCode: number) => void): void;
+	    deleteAgentSession(poolId: number, sessionId: string, onResult: (err: any, statusCode: number) => void): void;
 	    /**
 	     * @param {string} taskId
 	     * @param onResult callback function
@@ -7983,49 +8395,54 @@ declare module 'vso-node-api/TaskAgentApi' {
 	     * @param {string} versionString
 	     * @param {string[]} visibility
 	     * @param {boolean} scopeLocal
+	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskDefinition
+	     */
+	    getTaskDefinition(taskId: string, versionString: string, visibility: string[], scopeLocal: boolean, onResult: (err: any, statusCode: number, task: TaskAgentInterfaces.TaskDefinition) => void): void;
+	    /**
+	     * @param {string} taskId
+	     * @param {string[]} visibility
+	     * @param {boolean} scopeLocal
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskDefinition[]
 	     */
-	    getTaskDefinitions(taskId: string, versionString: string, visibility: string[], scopeLocal: boolean, onResult: (err: any, statusCode: number, tasks: TaskAgentInterfaces.TaskDefinition[]) => void): void;
-	    /**
-	     * @param {NodeJS.ReadableStream} contentStream
-	     * @param {string} taskId
-	     * @param {boolean} overwrite
-	     * @param onResult callback function
-	     */
-	    uploadTaskDefinition(customHeaders: VsoBaseInterfaces.IHeaders, contentStream: NodeJS.ReadableStream, taskId: string, overwrite: boolean, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    getTaskDefinitions(taskId: string, visibility: string[], scopeLocal: boolean, onResult: (err: any, statusCode: number, tasks: TaskAgentInterfaces.TaskDefinition[]) => void): void;
 	    /**
 	     * @param {{ [key: string] : string; }} userCapabilities
 	     * @param {number} poolId
 	     * @param {number} agentId
 	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskAgent
 	     */
-	    updateUserCapabilities(userCapabilities: {
+	    updateAgentUserCapabilities(userCapabilities: {
 	        [key: string]: string;
 	    }, poolId: number, agentId: number, onResult: (err: any, statusCode: number, usercapabilitie: TaskAgentInterfaces.TaskAgent) => void): void;
 	}
-	export class QTaskAgentApi extends basem.QClientApiBase implements IQTaskAgentApi {
-	    api: TaskAgentApi;
-	    constructor(baseUrl: string, handlers: VsoBaseInterfaces.IRequestHandler[]);
+	export class QTaskAgentApiBase extends basem.QClientApiBase implements IQTaskAgentApiBase {
+	    api: TaskAgentApiBase;
+	    constructor(baseUrl: string, handlers: VsoBaseInterfaces.IRequestHandler[], api: typeof basem.ClientApiBase);
 	    /**
 	    * @param {TaskAgentInterfaces.TaskAgent} agent
 	    * @param {number} poolId
 	    */
-	    createAgent(agent: TaskAgentInterfaces.TaskAgent, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgent>;
+	    addAgent(agent: TaskAgentInterfaces.TaskAgent, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgent>;
+	    /**
+	    * @param {number} poolId
+	    * @param {number} agentId
+	    */
+	    deleteAgent(poolId: number, agentId: number): Q.Promise<void>;
 	    /**
 	    * @param {number} poolId
 	    * @param {number} agentId
 	    * @param {boolean} includeCapabilities
-	    * @param {string} propertyFilters
+	    * @param {string[]} propertyFilters
 	    */
-	    getAgent(poolId: number, agentId: number, includeCapabilities?: boolean, propertyFilters?: string): Q.Promise<TaskAgentInterfaces.TaskAgent>;
+	    getAgent(poolId: number, agentId: number, includeCapabilities?: boolean, propertyFilters?: string[]): Q.Promise<TaskAgentInterfaces.TaskAgent>;
 	    /**
 	    * @param {number} poolId
 	    * @param {string} agentName
 	    * @param {boolean} includeCapabilities
-	    * @param {string} propertyFilters
-	    * @param {string} demands
+	    * @param {string[]} propertyFilters
+	    * @param {string[]} demands
 	    */
-	    getAgents(poolId: number, agentName?: string, includeCapabilities?: boolean, propertyFilters?: string, demands?: string): Q.Promise<TaskAgentInterfaces.TaskAgent[]>;
+	    getAgents(poolId: number, agentName?: string, includeCapabilities?: boolean, propertyFilters?: string[], demands?: string[]): Q.Promise<TaskAgentInterfaces.TaskAgent[]>;
 	    /**
 	    * @param {TaskAgentInterfaces.TaskAgent} agent
 	    * @param {number} poolId
@@ -8047,20 +8464,32 @@ declare module 'vso-node-api/TaskAgentApi' {
 	    /**
 	    * @param {number} poolId
 	    * @param {number} requestId
+	    * @param {string} lockToken
 	    */
-	    getRequest(poolId: number, requestId: number): Q.Promise<TaskAgentInterfaces.TaskAgentJobRequest>;
+	    deleteAgentRequest(poolId: number, requestId: number, lockToken: string): Q.Promise<void>;
+	    /**
+	    * @param {number} poolId
+	    * @param {number} requestId
+	    */
+	    getAgentRequest(poolId: number, requestId: number): Q.Promise<TaskAgentInterfaces.TaskAgentJobRequest>;
 	    /**
 	    * @param {TaskAgentInterfaces.TaskAgentJobRequest} request
 	    * @param {number} poolId
 	    */
-	    queueRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgentJobRequest>;
+	    queueAgentRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgentJobRequest>;
 	    /**
 	    * @param {TaskAgentInterfaces.TaskAgentJobRequest} request
 	    * @param {number} poolId
 	    * @param {number} requestId
 	    * @param {string} lockToken
 	    */
-	    updateRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number, requestId: number, lockToken: string): Q.Promise<TaskAgentInterfaces.TaskAgentJobRequest>;
+	    updateAgentRequest(request: TaskAgentInterfaces.TaskAgentJobRequest, poolId: number, requestId: number, lockToken: string): Q.Promise<TaskAgentInterfaces.TaskAgentJobRequest>;
+	    /**
+	    * @param {number} poolId
+	    * @param {number} messageId
+	    * @param {string} sessionId
+	    */
+	    deleteMessage(poolId: number, messageId: number, sessionId: string): Q.Promise<void>;
 	    /**
 	    * @param {number} poolId
 	    * @param {string} sessionId
@@ -8068,40 +8497,91 @@ declare module 'vso-node-api/TaskAgentApi' {
 	    */
 	    getMessage(poolId: number, sessionId: string, lastMessageId?: number): Q.Promise<TaskAgentInterfaces.TaskAgentMessage>;
 	    /**
-	    * @param {TaskAgentInterfaces.TaskAgentPool} pool
+	    * @param {number} poolId
+	    * @param {number} agentId
 	    */
-	    createPool(pool: TaskAgentInterfaces.TaskAgentPool): Q.Promise<TaskAgentInterfaces.TaskAgentPool>;
+	    refreshAgent(poolId: number, agentId: number): Q.Promise<void>;
 	    /**
 	    * @param {number} poolId
-	    * @param {string} properties
 	    */
-	    getPool(poolId: number, properties?: string): Q.Promise<TaskAgentInterfaces.TaskAgentPool>;
+	    refreshAgents(poolId: number): Q.Promise<void>;
 	    /**
-	    * @param {string} poolName
-	    * @param {string} properties
-	    */
-	    getPools(poolName?: string, properties?: string): Q.Promise<TaskAgentInterfaces.TaskAgentPool[]>;
-	    /**
-	    * @param {TaskAgentInterfaces.TaskAgentPool} pool
+	    * @param {TaskAgentInterfaces.TaskAgentMessage} message
 	    * @param {number} poolId
+	    * @param {number} requestId
 	    */
-	    updatePool(pool: TaskAgentInterfaces.TaskAgentPool, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgentPool>;
+	    sendMessage(message: TaskAgentInterfaces.TaskAgentMessage, poolId: number, requestId: number): Q.Promise<void>;
 	    /**
-	    * @param {TaskAgentInterfaces.TaskAgentQueue} queue
+	    * This method can return packages/{packageType} -- package stream OR TaskPackageMetadata if requested for json
+	    *
+	    * @param {string} packageType
 	    */
-	    createQueue(queue: TaskAgentInterfaces.TaskAgentQueue): Q.Promise<TaskAgentInterfaces.TaskAgentQueue>;
+	    getPackage(packageType: string): Q.Promise<TaskAgentInterfaces.TaskPackageMetadata>;
 	    /**
-	    * @param {number} queueId
 	    */
-	    getQueue(queueId: number): Q.Promise<TaskAgentInterfaces.TaskAgentQueue>;
+	    getPackages(): Q.Promise<TaskAgentInterfaces.TaskPackageMetadata[]>;
 	    /**
-	    * @param {string} queueName
+	    * This method can return packages/{packageType} -- package stream OR TaskPackageMetadata if requested for json
+	    *
+	    * @param {string} packageType
 	    */
-	    getQueues(queueName?: string): Q.Promise<TaskAgentInterfaces.TaskAgentQueue[]>;
+	    getPackageZip(packageType: string): Q.Promise<NodeJS.ReadableStream>;
 	    /**
 	    * @param {number} poolId
 	    */
 	    getAgentPoolRoles(poolId?: number): Q.Promise<VSSInterfaces.IdentityRef[]>;
+	    /**
+	    * @param {TaskAgentInterfaces.TaskAgentPool} pool
+	    */
+	    addAgentPool(pool: TaskAgentInterfaces.TaskAgentPool): Q.Promise<TaskAgentInterfaces.TaskAgentPool>;
+	    /**
+	    * @param {number} poolId
+	    */
+	    deleteAgentPool(poolId: number): Q.Promise<void>;
+	    /**
+	    * @param {number} poolId
+	    * @param {string[]} properties
+	    */
+	    getAgentPool(poolId: number, properties?: string[]): Q.Promise<TaskAgentInterfaces.TaskAgentPool>;
+	    /**
+	    * @param {string} poolName
+	    * @param {string[]} properties
+	    */
+	    getAgentPools(poolName?: string, properties?: string[]): Q.Promise<TaskAgentInterfaces.TaskAgentPool[]>;
+	    /**
+	    * @param {TaskAgentInterfaces.TaskAgentPool} pool
+	    * @param {number} poolId
+	    */
+	    updateAgentPool(pool: TaskAgentInterfaces.TaskAgentPool, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgentPool>;
+	    /**
+	    * @param {number} queueId
+	    */
+	    getAgentQueueRoles(queueId?: number): Q.Promise<VSSInterfaces.IdentityRef[]>;
+	    /**
+	    * @param {TaskAgentInterfaces.TaskAgentQueue} queue
+	    */
+	    addAgentQueue(queue: TaskAgentInterfaces.TaskAgentQueue): Q.Promise<TaskAgentInterfaces.TaskAgentQueue>;
+	    /**
+	    * @param {number} queueId
+	    */
+	    deleteAgentQueue(queueId: number): Q.Promise<void>;
+	    /**
+	    * @param {number} queueId
+	    * @param {TaskAgentInterfaces.TaskAgentQueueActionFilter} actionFilter
+	    */
+	    getAgentQueue(queueId: number, actionFilter?: TaskAgentInterfaces.TaskAgentQueueActionFilter): Q.Promise<TaskAgentInterfaces.TaskAgentQueue>;
+	    /**
+	    * @param {string} queueName
+	    * @param {TaskAgentInterfaces.TaskAgentQueueActionFilter} actionFilter
+	    */
+	    getAgentQueues(queueName?: string, actionFilter?: TaskAgentInterfaces.TaskAgentQueueActionFilter): Q.Promise<TaskAgentInterfaces.TaskAgentQueue[]>;
+	    /**
+	    * Proxy for a GET request defined by an service endpoint. The request is authorized using a data source in service endpoint. The response is filtered using an XPath/Json based selector.
+	    *
+	    * @param {TaskAgentInterfaces.DataSourceBinding} binding - Describes the data source to fetch.
+	    * @param {string} scopeIdentifier - The project GUID to scope the request
+	    */
+	    queryServiceEndpoint(binding: TaskAgentInterfaces.DataSourceBinding, scopeIdentifier: string): Q.Promise<string[]>;
 	    /**
 	    * @param {TaskAgentInterfaces.ServiceEndpoint} endpoint
 	    * @param {string} scopeIdentifier - The project GUID to scope the request
@@ -8112,32 +8592,138 @@ declare module 'vso-node-api/TaskAgentApi' {
 	    * @param {string} scopeIdentifier - The project GUID to scope the request
 	    * @param {string} endpointId
 	    */
+	    deleteServiceEndpoint(scopeIdentifier: string, endpointId: string): Q.Promise<void>;
+	    /**
+	    * @param {string} scopeIdentifier - The project GUID to scope the request
+	    * @param {string} endpointId
+	    */
 	    getServiceEndpointDetails(scopeIdentifier: string, endpointId: string): Q.Promise<TaskAgentInterfaces.ServiceEndpoint>;
 	    /**
 	    * @param {string} scopeIdentifier - The project GUID to scope the request
 	    * @param {string} type
+	    * @param {string[]} authSchemes
 	    */
-	    getServiceEndpoints(scopeIdentifier: string, type?: string): Q.Promise<TaskAgentInterfaces.ServiceEndpoint[]>;
+	    getServiceEndpoints(scopeIdentifier: string, type?: string, authSchemes?: string[]): Q.Promise<TaskAgentInterfaces.ServiceEndpoint[]>;
+	    /**
+	    * @param {string} scopeIdentifier - The project GUID to scope the request
+	    * @param {string} type
+	    * @param {string} scheme
+	    */
+	    getServiceEndpointTypes(scopeIdentifier: string, type?: string, scheme?: string): Q.Promise<TaskAgentInterfaces.ServiceEndpointType[]>;
 	    /**
 	    * @param {TaskAgentInterfaces.TaskAgentSession} session
 	    * @param {number} poolId
 	    */
-	    createSession(session: TaskAgentInterfaces.TaskAgentSession, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgentSession>;
+	    createAgentSession(session: TaskAgentInterfaces.TaskAgentSession, poolId: number): Q.Promise<TaskAgentInterfaces.TaskAgentSession>;
+	    /**
+	    * @param {number} poolId
+	    * @param {string} sessionId
+	    */
+	    deleteAgentSession(poolId: number, sessionId: string): Q.Promise<void>;
+	    /**
+	    * @param {string} taskId
+	    */
+	    deleteTaskDefinition(taskId: string): Q.Promise<void>;
 	    /**
 	    * @param {string} taskId
 	    * @param {string} versionString
 	    * @param {string[]} visibility
 	    * @param {boolean} scopeLocal
 	    */
-	    getTaskDefinitions(taskId?: string, versionString?: string, visibility?: string[], scopeLocal?: boolean): Q.Promise<TaskAgentInterfaces.TaskDefinition[]>;
+	    getTaskContentZip(taskId: string, versionString: string, visibility?: string[], scopeLocal?: boolean): Q.Promise<NodeJS.ReadableStream>;
+	    /**
+	    * @param {string} taskId
+	    * @param {string} versionString
+	    * @param {string[]} visibility
+	    * @param {boolean} scopeLocal
+	    */
+	    getTaskDefinition(taskId: string, versionString: string, visibility?: string[], scopeLocal?: boolean): Q.Promise<TaskAgentInterfaces.TaskDefinition>;
+	    /**
+	    * @param {string} taskId
+	    * @param {string[]} visibility
+	    * @param {boolean} scopeLocal
+	    */
+	    getTaskDefinitions(taskId?: string, visibility?: string[], scopeLocal?: boolean): Q.Promise<TaskAgentInterfaces.TaskDefinition[]>;
 	    /**
 	    * @param {{ [key: string] : string; }} userCapabilities
 	    * @param {number} poolId
 	    * @param {number} agentId
 	    */
-	    updateUserCapabilities(userCapabilities: {
+	    updateAgentUserCapabilities(userCapabilities: {
 	        [key: string]: string;
 	    }, poolId: number, agentId: number): Q.Promise<TaskAgentInterfaces.TaskAgent>;
+	}
+
+}
+declare module 'vso-node-api/TaskAgentApi' {
+	import taskagentbasem = require('vso-node-api/TaskAgentApiBase');
+	import Q = require("q");
+	import TaskAgentInterfaces = require('vso-node-api/interfaces/TaskAgentInterfaces');
+	import VsoBaseInterfaces = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
+	export interface ITaskAgentApi extends taskagentbasem.ITaskAgentApiBase {
+	    uploadTaskDefinition(customHeaders: VsoBaseInterfaces.IHeaders, contentStream: NodeJS.ReadableStream, taskId: string, overwrite: boolean, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	}
+	export interface IQTaskAgentApi extends taskagentbasem.IQTaskAgentApiBase {
+	    uploadTaskDefinition(customHeaders: VsoBaseInterfaces.IHeaders, contentStream: NodeJS.ReadableStream, taskId: string, overwrite: boolean): Q.Promise<void>;
+	}
+	export class TaskAgentApi extends taskagentbasem.TaskAgentApiBase implements ITaskAgentApi {
+	    private _handlers;
+	    private _fallbackClient;
+	    constructor(baseUrl: string, handlers: VsoBaseInterfaces.IRequestHandler[]);
+	    /**
+	     * @param {string} taskId
+	     * @param onResult callback function
+	     */
+	    deleteTaskDefinition(taskId: string, onResult: (err: any, statusCode: number) => void): void;
+	    /**
+	     * @param {string} taskId
+	     * @param {string} versionString
+	     * @param {string[]} visibility
+	     * @param {boolean} scopeLocal
+	     * @param onResult callback function with the resulting ArrayBuffer
+	     */
+	    getTaskContentZip(taskId: string, versionString: string, visibility: string[], scopeLocal: boolean, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
+	    /**
+	     * @param {string} taskId
+	     * @param {string} versionString
+	     * @param {string[]} visibility
+	     * @param {boolean} scopeLocal
+	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskDefinition
+	     */
+	    getTaskDefinition(taskId: string, versionString: string, visibility: string[], scopeLocal: boolean, onResult: (err: any, statusCode: number, task: TaskAgentInterfaces.TaskDefinition) => void): void;
+	    /**
+	     * @param {string} taskId
+	     * @param {string[]} visibility
+	     * @param {boolean} scopeLocal
+	     * @param onResult callback function with the resulting TaskAgentInterfaces.TaskDefinition[]
+	     */
+	    getTaskDefinitions(taskId: string, visibility: string[], scopeLocal: boolean, onResult: (err: any, statusCode: number, tasks: TaskAgentInterfaces.TaskDefinition[]) => void): void;
+	    /**
+	     * @param {NodeJS.ReadableStream} contentStream
+	     * @param {string} taskId
+	     * @param {boolean} overwrite
+	     * @param onResult callback function
+	     */
+	    uploadTaskDefinition(customHeaders: VsoBaseInterfaces.IHeaders, contentStream: NodeJS.ReadableStream, taskId: string, overwrite: boolean, onResult: (err: any, statusCode: number, obj: any) => void): void;
+	    /**
+	     * @param {NodeJS.ReadableStream} contentStream
+	     * @param {string} taskId
+	     * @param {boolean} overwrite
+	     * @param onResult callback function
+	     */
+	    private _uploadTaskDefinition(customHeaders, contentStream, taskId, overwrite, onResult);
+	    private _getFallbackClient(baseUrl);
+	    private _getAccountUrl(collectionUrl);
+	}
+	export class QTaskAgentApi extends taskagentbasem.QTaskAgentApiBase implements IQTaskAgentApi {
+	    api: TaskAgentApi;
+	    constructor(baseUrl: string, handlers: VsoBaseInterfaces.IRequestHandler[]);
+	    /**
+	    * @param {NodeJS.ReadableStream} contentStream
+	    * @param {string} taskId
+	    * @param {boolean} overwrite
+	    */
+	    uploadTaskDefinition(customHeaders: VsoBaseInterfaces.IHeaders, contentStream: NodeJS.ReadableStream, taskId: string, overwrite: boolean): Q.Promise<void>;
 	}
 
 }
@@ -13408,292 +13994,6 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	    */
 	    updateWorkItemTypeDefinition(updateModel: WorkItemTrackingInterfaces.WorkItemTypeTemplateUpdateModel, project?: string): Q.Promise<WorkItemTrackingInterfaces.ProvisioningResult>;
 	}
-
-}
-declare module 'vso-node-api/interfaces/common/FormInputInterfaces' {
-	export enum InputDataType {
-	    /**
-	     * No data type is specified.
-	     */
-	    None = 0,
-	    /**
-	     * Represents a textual value.
-	     */
-	    String = 10,
-	    /**
-	     * Represents a numberic value.
-	     */
-	    Number = 20,
-	    /**
-	     * Represents a value of true or false.
-	     */
-	    Boolean = 30,
-	    /**
-	     * Represents a Guid.
-	     */
-	    Guid = 40,
-	    /**
-	     * Represents a URI.
-	     */
-	    Uri = 50,
-	}
-	/**
-	 * Describes an input for subscriptions.
-	 */
-	export interface InputDescriptor {
-	    /**
-	     * The ids of all inputs that the value of this input is dependent on.
-	     */
-	    dependencyInputIds: string[];
-	    /**
-	     * Description of what this input is used for
-	     */
-	    description: string;
-	    /**
-	     * The group localized name to which this input belongs and can be shown as a header for the container that will include all the inputs in the group.
-	     */
-	    groupName: string;
-	    /**
-	     * If true, the value information for this input is dynamic and should be fetched when the value of dependency inputs change.
-	     */
-	    hasDynamicValueInformation: boolean;
-	    /**
-	     * Identifier for the subscription input
-	     */
-	    id: string;
-	    /**
-	     * Mode in which the value of this input should be entered
-	     */
-	    inputMode: InputMode;
-	    /**
-	     * Gets whether this input is confidential, such as for a password or application key
-	     */
-	    isConfidential: boolean;
-	    /**
-	     * Localized name which can be shown as a label for the subscription input
-	     */
-	    name: string;
-	    /**
-	     * Gets whether this input is included in the default generated action description.
-	     */
-	    useInDefaultDescription: boolean;
-	    /**
-	     * Information to use to validate this input's value
-	     */
-	    validation: InputValidation;
-	    /**
-	     * A hint for input value. It can be used in the UI as the input placeholder.
-	     */
-	    valueHint: string;
-	    /**
-	     * Information about possible values for this input
-	     */
-	    values: InputValues;
-	}
-	/**
-	 * Defines a filter for subscription inputs. The filter matches a set of inputs if any (one or more) of the groups evaluates to true.
-	 */
-	export interface InputFilter {
-	    /**
-	     * Groups of input filter expressions. This filter matches a set of inputs if any (one or more) of the groups evaluates to true.
-	     */
-	    conditions: InputFilterCondition[];
-	}
-	/**
-	 * An expression which can be applied to filter a list of subscription inputs
-	 */
-	export interface InputFilterCondition {
-	    /**
-	     * Whether or not to do a case sensitive match
-	     */
-	    caseSensitive: boolean;
-	    /**
-	     * The Id of the input to filter on
-	     */
-	    inputId: string;
-	    /**
-	     * The "expected" input value to compare with the actual input value
-	     */
-	    inputValue: string;
-	    /**
-	     * The operator applied between the expected and actual input value
-	     */
-	    operator: InputFilterOperator;
-	}
-	export enum InputFilterOperator {
-	    Equals = 0,
-	    NotEquals = 1,
-	}
-	export enum InputMode {
-	    /**
-	     * This input should not be shown in the UI
-	     */
-	    None = 0,
-	    /**
-	     * An input text box should be shown
-	     */
-	    TextBox = 10,
-	    /**
-	     * An password input box should be shown
-	     */
-	    PasswordBox = 20,
-	    /**
-	     * A select/combo control should be shown
-	     */
-	    Combo = 30,
-	    /**
-	     * Radio buttons should be shown
-	     */
-	    RadioButtons = 40,
-	    /**
-	     * Checkbox should be shown(for true/false values)
-	     */
-	    CheckBox = 50,
-	    /**
-	     * A multi-line text area should be shown
-	     */
-	    TextArea = 60,
-	}
-	/**
-	 * Describes what values are valid for a subscription input
-	 */
-	export interface InputValidation {
-	    dataType: InputDataType;
-	    isRequired: boolean;
-	    maxLength: number;
-	    maxValue: number;
-	    minLength: number;
-	    minValue: number;
-	    pattern: string;
-	    patternMismatchErrorMessage: string;
-	}
-	/**
-	 * Information about a single value for an input
-	 */
-	export interface InputValue {
-	    /**
-	     * Any other data about this input
-	     */
-	    data: {
-	        [key: string]: any;
-	    };
-	    /**
-	     * The text to show for the display of this value
-	     */
-	    displayValue: string;
-	    /**
-	     * The value to store for this input
-	     */
-	    value: string;
-	}
-	/**
-	 * Information about the possible/allowed values for a given subscription input
-	 */
-	export interface InputValues {
-	    /**
-	     * The default value to use for this input
-	     */
-	    defaultValue: string;
-	    /**
-	     * Errors encountered while computing dynamic values.
-	     */
-	    error: InputValuesError;
-	    /**
-	     * The id of the input
-	     */
-	    inputId: string;
-	    /**
-	     * Should this input be disabled
-	     */
-	    isDisabled: boolean;
-	    /**
-	     * Should the value be restricted to one of the values in the PossibleValues (True) or are the values in PossibleValues just a suggestion (False)
-	     */
-	    isLimitedToPossibleValues: boolean;
-	    /**
-	     * Should this input be made read-only
-	     */
-	    isReadOnly: boolean;
-	    /**
-	     * Possible values that this input can take
-	     */
-	    possibleValues: InputValue[];
-	}
-	/**
-	 * Error information related to a subscription input value.
-	 */
-	export interface InputValuesError {
-	    /**
-	     * The error message.
-	     */
-	    message: string;
-	}
-	export interface InputValuesQuery {
-	    currentValues: {
-	        [key: string]: string;
-	    };
-	    /**
-	     * The input values to return on input, and the result from the consumer on output.
-	     */
-	    inputValues: InputValues[];
-	    /**
-	     * Subscription containing information about the publisher/consumer and the current input values
-	     */
-	    resource: any;
-	}
-	export var TypeInfo: {
-	    InputDataType: {
-	        enumValues: {
-	            "none": number;
-	            "string": number;
-	            "number": number;
-	            "boolean": number;
-	            "guid": number;
-	            "uri": number;
-	        };
-	    };
-	    InputDescriptor: {
-	        fields: any;
-	    };
-	    InputFilter: {
-	        fields: any;
-	    };
-	    InputFilterCondition: {
-	        fields: any;
-	    };
-	    InputFilterOperator: {
-	        enumValues: {
-	            "equals": number;
-	            "notEquals": number;
-	        };
-	    };
-	    InputMode: {
-	        enumValues: {
-	            "none": number;
-	            "textBox": number;
-	            "passwordBox": number;
-	            "combo": number;
-	            "radioButtons": number;
-	            "checkBox": number;
-	            "textArea": number;
-	        };
-	    };
-	    InputValidation: {
-	        fields: any;
-	    };
-	    InputValue: {
-	        fields: any;
-	    };
-	    InputValues: {
-	        fields: any;
-	    };
-	    InputValuesError: {
-	        fields: any;
-	    };
-	    InputValuesQuery: {
-	        fields: any;
-	    };
-	};
 
 }
 declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {

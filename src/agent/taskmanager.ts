@@ -62,7 +62,7 @@ export class TaskManager {
         var deferred = Q.defer();
         
         // Get all tasks
-        this.taskApi.getTaskDefinitions(null, null, null, null, (err, status, tasks) => {
+        this.taskApi.getTaskDefinitions(null, null, null, (err, status, tasks) => {
             if (err) {
                 deferred.reject(err);
             }
