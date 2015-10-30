@@ -85,7 +85,7 @@ export class MessageListener extends events.EventEmitter {
         session.agent = this.agent;
         session.ownerName = uuid.v1();
 
-        this.agentapi.createSession(session, this.poolId, (err, statusCode, session) => {
+        this.agentapi.createAgentSession(session, this.poolId, (err, statusCode, session) => {
             // exit on some conditions such as bad credentials
             if (statusCode == 401) {
                 console.error('Unauthorized.  Confirm credentials are correct and restart.  Exiting.');
@@ -128,7 +128,7 @@ export class MessageListener extends events.EventEmitter {
 
     stop(callback: (err: any) => void): void {
         if (this.sessionId) {
-            this.agentapi.deleteSession(this.poolId, this.sessionId, (err, statusCode) => {
+            this.agentapi.deleteAgentSession(this.poolId, this.sessionId, (err, statusCode) => {
                 callback(err);
             });
         } else {

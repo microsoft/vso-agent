@@ -148,7 +148,7 @@ export class Configurator {
         return agentApi.connect()
         .then((connected: any) => {
             console.log('successful connect as ' + connected.authenticatedUser.customDisplayName);
-            return agentApi.getPools(settings.poolName, null);
+            return agentApi.getAgentPools(settings.poolName, null);
         })
         .then((agentPools: agentifm.TaskAgentPool[]) => {
             if (agentPools.length == 0) {
@@ -229,7 +229,7 @@ export class Configurator {
         return agentApi.connect()
         .then((connected: any) => {
             console.log('successful connect as ' + connected.authenticatedUser.customDisplayName);
-            return agentApi.getPools(settings.poolName, null);
+            return agentApi.getAgentPools(settings.poolName, null);
         })
         .then((agentPools: agentifm.TaskAgentPool[]) => {
             if (agentPools.length == 0) {
@@ -263,7 +263,7 @@ export class Configurator {
                 return agentApi.updateAgent(agent, agentPoolId, agentId);
             }
             else {
-                return agentApi.createAgent(agent, agentPoolId);    
+                return agentApi.addAgent(agent, agentPoolId);
             }
         })
         .then((agent: agentifm.TaskAgent) => {

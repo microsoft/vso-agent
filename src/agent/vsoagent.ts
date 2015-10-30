@@ -64,7 +64,7 @@ var runWorker = function(hostContext: ctxm.HostContext, agentApi: agentm.ITaskAg
                 var lockToken: string = msg.lockToken;
                 var jobRequest: agentifm.TaskAgentJobRequest = msg.jobRequest;
                 
-                agentApi.updateRequest(jobRequest, poolId, jobRequest.requestId, lockToken, (err, status, jobRequest) => {
+                agentApi.updateAgentRequest(jobRequest, poolId, jobRequest.requestId, lockToken, (err, status, jobRequest) => {
                     trace.write('err: ' + err);
                     trace.write('status: ' + status);
                     if (status === 404) {
