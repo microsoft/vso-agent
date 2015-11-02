@@ -262,26 +262,35 @@ export class JobRunner {
                     taskContext.service.queueConsoleLine(message);
                 });
 
-                taskContext.setTaskStarted(item.name);
-                _this.runTask(item, taskContext, (err) => {
-                    var taskResult: agentifm.TaskResult = taskContext.result;
-                    if (err || taskResult == agentifm.TaskResult.Failed) {
-                        if (item.continueOnError) {
-                            taskResult = jobResult = agentifm.TaskResult.SucceededWithIssues;
-                            err = null;
+                if (item.enabled) {
+                    taskContext.setTaskStarted(item.name);
+                    _this.runTask(item, taskContext, (err) => {
+                        var taskResult: agentifm.TaskResult = taskContext.result;
+                        if (err || taskResult == agentifm.TaskResult.Failed) {
+                            if (item.continueOnError) {
+                                taskResult = jobResult = agentifm.TaskResult.SucceededWithIssues;
+                                err = null;
+                            }
+                            else {
+                                taskResult = jobResult = agentifm.TaskResult.Failed;
+                                err = new Error('Task Failed');
+                            }
                         }
-                        else {
-                            taskResult = jobResult = agentifm.TaskResult.Failed;
-                            err = new Error('Task Failed');  
-                        }
-                    }
 
+                        trace.write('taskResult: ' + taskResult);
+                        taskContext.setTaskResult(item.name, taskResult);
+
+                        taskContext.end();
+                        done(err);
+                    });
+                }
+                else {
+                    var err = '';
+                    var taskResult: agentifm.TaskResult = agentifm.TaskResult.Skipped;
                     trace.write('taskResult: ' + taskResult);
                     taskContext.setTaskResult(item.name, taskResult);
-
-                    taskContext.end();
                     done(err);
-                });
+                }
             }, function (err) {
                 hostContext.info('Done running tasks.');
                 trace.write('jobResult: ' + jobResult);
