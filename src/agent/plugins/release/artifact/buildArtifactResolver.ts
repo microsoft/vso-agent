@@ -71,6 +71,11 @@ export class BuildArtifactResolver {
                 });
             });
         }
+        else {
+            context.info('Release management does not support download of this artifact type: ' + buildArtifact.resource.type)
+            defer.resolve(null);
+            return;
+        }
 
         return defer.promise;
     }
