@@ -14,7 +14,7 @@ exports.execute = function(ctx, callback) {
 	var xcbpath = which('xcodebuild');
 	ctx.verbose('using xcodebuild: ' + xcbpath);
 
-	var repoPath = ctx.variables['build.sourceDirectory'];
+	var repoPath = ctx.variables['build.sourcesDirectory'];
 
 	//----------------------------------------------------------------------
 	// Input Validation/Feedback
