@@ -204,6 +204,9 @@ export function getCapabilities(): cm.IStringDictionary {
     resolveCapability(filteredEnv, 'python3');
     resolveCapability(filteredEnv, 'sh');
     resolveCapability(filteredEnv, 'svn', 'subversion');
+    resolveCapability(filteredEnv, 'ruby')
+    resolveCapability(filteredEnv, 'rake');
+    resolveCapability(filteredEnv, 'bundle', 'bundler');
     resolveCapabilityViaShell(filteredEnv, 'xcode-select', '-p', 'xcode');
 
     return filteredEnv;
