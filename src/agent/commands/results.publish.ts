@@ -42,6 +42,8 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
         var testRunContext: trp.TestRunContext = {
             requestedFor: this.executionContext.variables["build.requestedFor"],
             buildId: this.executionContext.variables["build.buildId"],
+            releaseEnvironmentUri: this.executionContext.variables["release.environmentUri"],
+            releaseUri: this.executionContext.variables["release.releaseUri"],
             platform: platform,
             config: config
         };

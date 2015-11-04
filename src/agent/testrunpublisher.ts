@@ -185,6 +185,8 @@ export interface TestRunContext {
     buildId: string;
     platform: string;
     config: string;
+    releaseUri: string;
+    releaseEnvironmentUri: string;
 };
 
 //-----------------------------------------------------
