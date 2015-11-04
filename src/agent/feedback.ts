@@ -408,7 +408,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
     //------------------------------------------------------------------  
     public initializeTestManagement(projectName: string): void {
         trace.enter('servicechannel:initializeTestManagement');
-        this._testApi = new webapim.WebApi(this.collectionUrl, this.jobInfo.systemAuthHandler).getQTestApi();
+        this._testApi = new webapim.WebApi(this.jobInfo.variables[cm.AutomationVariables.systemTfCollectionUri], this.jobInfo.systemAuthHandler).getQTestApi();
         this._projectName = projectName;
     }
 
