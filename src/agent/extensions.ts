@@ -31,13 +31,20 @@ String.prototype.isEqual = function(ignoreCase, str) {
 // "This $(somevar) and $(somevar2) replaced".replaceVars({somevar:someval, somevar2:someval2})
 //
 String.prototype.replaceVars = function (vars) {
-    return this.replace(/\$\(([^\)]+)\)/g, function (placeholder, variable) {
-      var lowerVar = variable.toLowerCase();
-      if (vars[lowerVar]) {
-        return vars[lowerVar];
-      }
-      else {
+    function recursiveResolve(inputValue, stack) {
+      return inputValue.replace(/\$\(([^\)]+)\)/g, function (placeholder, variable) {
+        var lowerVar = variable.toLowerCase();
+        
+        if (stack.indexOf(lowerVar) === -1 && vars[lowerVar]) {
+          stack.push(lowerVar);
+          var replacement = recursiveResolve(vars[lowerVar], stack);
+          stack.pop();
+          return replacement;
+        }
+        
         return placeholder;
-      }
-    });
+      });
+    }
+    
+    return recursiveResolve(this, []);
 };
