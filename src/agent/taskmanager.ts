@@ -15,11 +15,13 @@ import agentm = require('vso-node-api/TaskAgentApi');
 import webapi = require('vso-node-api/WebApi');
 
 export class TaskManager {
-    constructor(hostContext: ctxm.HostContext, authHandler: baseifm.IRequestHandler) {
-        this.context = hostContext;
-        this.taskApi = new webapi.WebApi(hostContext.config.settings.serverUrl, 
-                                      authHandler).getTaskAgentApi();
-        this.taskFolder = path.resolve(hostContext.workFolder, 'tasks');
+    constructor(executionContext: cm.IExecutionContext) {
+        this.executionContext = executionContext;
+        var taskDefinitionsUri = this.getTaskDefinitionsUri();
+        this.executionContext.trace("TaskDownloader will download tasks from " + taskDefinitionsUri);
+        this.taskApi = new webapi.WebApi(taskDefinitionsUri, 
+                                      executionContext.authHandler).getTaskAgentApi();
+        this.taskFolder = path.resolve(executionContext.hostContext.workFolder, 'tasks');
     }
 
     public ensureTaskExists(task: agentifm.TaskInstance): Q.IPromise<any> {
@@ -104,7 +106,7 @@ export class TaskManager {
         var deferred = Q.defer();
         shell.mkdir('-p', taskPath);
 
-        this.context.trace("Downloading task " + task.id + " v" + task.version + " to " + taskPath);
+        this.executionContext.trace("Downloading task " + task.id + " v" + task.version + " to " + taskPath);
         this.taskApi.getTaskContentZip(task.id, task.version, null, null, (err, statusCode, res) => {
             if (err) {
                 deferred.reject(err);
@@ -137,8 +139,19 @@ export class TaskManager {
     private getTaskInstance(task: agentifm.TaskDefinition) : agentifm.TaskInstance {
         return <agentifm.TaskInstance>{'id':task.id, 'name': task.name, 'version': cm.versionStringFromTaskDef(task)}
     }
+    
+    private getTaskDefinitionsUri(): string {
+        var taskDefinitionsUri = this.executionContext.variables[cm.vars.systemTaskDefinitionsUri];
+        if (!taskDefinitionsUri) {
+            taskDefinitionsUri = this.executionContext.variables[cm.vars.systemTfCollectionUri];
+        }
+        if (!taskDefinitionsUri) {
+            taskDefinitionsUri = this.executionContext.config.settings.serverUrl; 
+        }
+        return taskDefinitionsUri;
+    }
 
-    private context: ctxm.HostContext;
+    private executionContext: cm.IExecutionContext;
     private taskApi: agentm.ITaskAgentApi;
     private taskFolder: string;
 }

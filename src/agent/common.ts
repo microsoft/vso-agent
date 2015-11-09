@@ -41,6 +41,7 @@ export class AutomationVariables {
     public static systemTeamProjectId = 'system.teamProjectId';
     public static systemDebug = 'system.debug';
     public static defaultWorkingDirectory = 'system.defaultWorkingDirectory';
+    public static systemTaskDefinitionsUri = 'system.taskDefinitionsUri';
     
     //
     // Agent Variables
