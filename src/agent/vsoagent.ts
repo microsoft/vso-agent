@@ -46,6 +46,8 @@ var runWorker = function(ag: ctxm.AgentContext, agentApi: ifm.IAgentApi, lockRen
         execArgv: []
     });
     
+    var abandoned: boolean = false;
+    
     // worker ipc callbacks
     worker.on('message', function(msg) {
         try {
@@ -56,7 +58,7 @@ var runWorker = function(ag: ctxm.AgentContext, agentApi: ifm.IAgentApi, lockRen
             else if (msg.messageType === 'status') {
                 // consoleWriter.writeStatus(msg.data);
             }
-            else if (msg.messageType === 'updateJobRequest') {
+            else if (msg.messageType === 'updateJobRequest' && !abandoned) {
                 var poolId: number = msg.poolId;
                 var lockToken: string = msg.lockToken;
                 var jobRequest: ifm.TaskAgentJobRequest = msg.jobRequest;
@@ -64,9 +66,12 @@ var runWorker = function(ag: ctxm.AgentContext, agentApi: ifm.IAgentApi, lockRen
                 lockRenewerClient.updateJobRequest(poolId, lockToken, jobRequest, (err, status, jobRequest) => {
                     trace.write('err: ' + err);
                     trace.write('status: ' + status);
-                    if (status === 404) {
+                    
+                    // bail on 400-level responses
+                    if (status >= 400 && status < 500) {
+                        abandoned = true;
                         worker.send(fm.Events.JobAbandoned);
-                    } 
+                    }
                 });
             }
         }
