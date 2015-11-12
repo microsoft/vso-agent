@@ -8,13 +8,13 @@ import fs = require('fs');
 import Q = require('q');
 import cm = require('../../../common');
 import webapim = require('vso-node-api/WebApi');
-import releaseIfm = require('vso-node-api/interfaces/ReleaseManagementInterfaces');
-import buildIfm = require('vso-node-api/interfaces/BuildInterfaces')
+import buildIfm = require('vso-node-api/interfaces/BuildInterfaces');
+import rmInterfaces = require('../api/interfaces');
 var shell = require('shelljs');
 
 export class BuildArtifactResolver {
     public resolve(context: common.IExecutionContext,
-        buildDetails: releaseIfm.AgentTfsBuildArtifactDetails,
+        buildDetails: rmInterfaces.TfsBuildArtifactDetails,
         buildArtifact: buildIfm.BuildArtifact,
         buildId: number,
         artifactFolder: string): Q.Promise<void> {

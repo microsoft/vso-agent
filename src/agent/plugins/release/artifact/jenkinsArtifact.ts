@@ -20,7 +20,7 @@ export class JenkinsArtifact implements rmInterfaces.IArtifact {
     public download(context: common.IExecutionContext, artifactDefinition: releaseIfm.AgentArtifactDefinition, artifactFolder: string): Q.Promise<void> {
         var defer = Q.defer<void>();
         try {
-            var jenkinsDetails: releaseIfm.AgentJenkinsArtifactDetails = JSON.parse(artifactDefinition.details, releaseCommon.reviver);
+            var jenkinsDetails: rmInterfaces.JenkinsArtifactDetails = JSON.parse(artifactDefinition.details, releaseCommon.reviver);
             var jenkinsEndpoint: agentifm.ServiceEndpoint;
             context.jobInfo.jobMessage.environment.endpoints.some((endpoint: agentifm.ServiceEndpoint) => {
                 if (endpoint.name === jenkinsDetails.connectionName) {
