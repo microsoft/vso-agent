@@ -103,6 +103,10 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         //        
         variables[cm.vars.buildSourcesDirectory] = repoPath;
         variables[cm.vars.buildArtifactStagingDirectory] = path.join(workingFolder, srcMap.build_artifactstagingdirectory);
+
+        // back compat with old publish artifacts task
+        variables[cm.vars.buildStagingDirectory] = variables[cm.vars.buildArtifactStagingDirectory];
+
         variables[cm.vars.commonTestResultsDirectory] = path.join(workingFolder, srcMap.common_testresultsdirectory);
         var bd = variables[cm.vars.agentBuildDirectory] = path.join(workingFolder, srcMap.agent_builddirectory);
         shell.mkdir('-p', bd);

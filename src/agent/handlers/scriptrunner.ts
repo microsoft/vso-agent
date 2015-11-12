@@ -67,7 +67,14 @@ export function run(scriptEngine: string, scriptPath: string, executionContext: 
     //
     // Inputs
     //
-    var env = process.env;
+    var env = {} 
+
+    // deep copy the vars so we don't dirty the workers environment with
+    // a specific tasks inputs etc...
+    for (var key in process.env) {
+        env[key] = process.env[key];
+    }
+
     _trace.write('setting inputs as environment variables');
     for (var key in executionContext.inputs){
         var envVarName = 'INPUT_' + key.replace(' ', '_').toUpperCase();
@@ -81,7 +88,7 @@ export function run(scriptEngine: string, scriptPath: string, executionContext: 
     var vars = jobMessage.environment.variables;
     for (var variable in vars) {
         var envVarName: string = variable.replace(".", "_").toUpperCase();
-        process.env[envVarName] = vars[variable];
+        env[envVarName] = vars[variable];
         _trace.write('VAR VAL: ' + envVarName + '=' + vars[variable]);
     }
 
