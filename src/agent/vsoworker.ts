@@ -38,6 +38,10 @@ function setVariables(job: agentifm.JobRequestMessage, config: cm.IConfiguration
         variables[cm.vars.systemTfCollectionUri] =  job.environment.systemConnection.url;     
     }
 
+    if (!!variables[cm.vars.systemEnableAccessToken]) {
+        variables[cm.vars.systemAccessToken] =  job.environment.systemConnection.authorization.parameters['AccessToken'];     
+    }
+
     trace.state('variables', job.environment.variables);
 }
 

@@ -42,6 +42,8 @@ export class AutomationVariables {
     public static systemDebug = 'system.debug';
     public static defaultWorkingDirectory = 'system.defaultWorkingDirectory';
     public static systemTaskDefinitionsUri = 'system.taskDefinitionsUri';
+    public static systemAccessToken = 'system.accessToken';
+    public static systemEnableAccessToken = 'system.enableAccessToken';
     
     //
     // Agent Variables
