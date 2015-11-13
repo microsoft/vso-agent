@@ -7,3 +7,14 @@ import releaseIfm = require('vso-node-api/interfaces/ReleaseManagementInterfaces
 export interface IArtifact {
     download(context: common.IExecutionContext, artifactDefinition: releaseIfm.AgentArtifactDefinition, artifactsFolder: string, asyncCallback): void;
 }
+
+export interface JenkinsArtifactDetails {
+    connectionName: string;
+    jobName: string;
+    relativePath: string;
+}
+
+export interface TfsBuildArtifactDetails {
+    project: string;
+    relativePath: string;
+}
