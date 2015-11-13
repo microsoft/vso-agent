@@ -135,6 +135,10 @@ $ sudo chown -R $USER ~/.npm
 
 This does not install an agent.  It simply pulls down the latest version of the agent installer.
 
+## Troubleshooting
+
+[How to Troubleshoot](docs/troubleshooting.md)
+
 ## Contributing
 
 [How to contribute](docs/contribute.md)
