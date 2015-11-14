@@ -6,7 +6,7 @@ Related:[VSO Build Tasks](https://github.com/Microsoft/vso-agent-tasks), [VSO Ta
 
 ## What's New
 
-** New Release **
+**New Release**
 
 A new 0.3.x release includes the following features.  If you have a 0.2.x agent, you should update (see Updating Existing Agents below).  The new release includes:
 
