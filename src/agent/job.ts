@@ -264,6 +264,7 @@ export class JobRunner {
 
                 if (item.enabled) {
                     taskContext.setTaskStarted(item.name);
+
                     _this.runTask(item, taskContext, (err) => {
                         var taskResult: agentifm.TaskResult = taskContext.result;
                         if (err || taskResult == agentifm.TaskResult.Failed) {
@@ -436,6 +437,9 @@ export class JobRunner {
         this._hostContext.info('running ' + execution.target + ' with ' + execution.handler);
 
         trace.write('calling handler.runTask');
+
+        // task should set result.  If it doesn't and the script runs to completion should default to success
+        executionContext.result = agentifm.TaskResult.Succeeded;
         handler.runTask(execution.target, executionContext, callback);
     }
 }

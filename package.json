@@ -2,7 +2,7 @@
   "name": "vsoagent-installer",
   "description": "Visual Studio Xplat Build Agent Installer",
   "main": "bin/install.js",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "vsoAgentInfo": {
     "serviceMilestone": "1.999.0"
   },
