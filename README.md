@@ -2,9 +2,22 @@
 
 A cross platform build agent for Microsoft Visual Studio Online (VSO) and Team Foundation Server (TFS).  Supported on Mac OSX and Linux.
 
-*NOTE: This is a supported pre-release agent*
-
 Related:[VSO Build Tasks](https://github.com/Microsoft/vso-agent-tasks), [VSO Task SDK](https://github.com/Microsoft/vso-task-lib), [VSO Node API](https://github.com/Microsoft/vso-node-api)
+
+## What's New
+
+** New Release **
+
+A new 0.3.x release includes the following features.  If you have a 0.2.x agent, you should update (see Updating Existing Agents below).  The new release includes:
+
+  * Release Management vNext Support
+  * TfsVC xplat support using TEE command line
+  * Extensions (collection level tasks via extensions)
+  * Pull Request Support
+  * SVN support
+  * Service Endpoint support
+  * Shorter repo paths
+  * Summary markdown support
 
 ## Pre-Reqs
 
@@ -113,21 +126,12 @@ $ vsoagent-installer
 
 NOTE: Updating the agent will overwrite the code in the agent subfolder and update the package.json 
 
-## Install preview version of agent
+## Install previously released agents
 
-The current preview version of the agent is 0.3.x.  
-It contains preview features currently in testing:
-
-  * Release Management vNext Support
-  * TfsVC xplat support using TEE command line
-  * SVN support
-  * Pull Request Support
-  * Service Endpoint support
-  * Shorter repo paths
-  * Summary markdown support
+The previously released stable agent was 0.2.29
 
 ```bash
-$ sudo npm install vsoagent-installer@preview -g
+$ sudo npm install vsoagent-installer@0.2.29 -g
 $ sudo chown -R $USER ~/.npm
 ```
 
