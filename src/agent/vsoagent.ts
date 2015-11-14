@@ -67,12 +67,15 @@ var runWorker = function(hostContext: ctxm.HostContext, agentApi: agentm.ITaskAg
                 agentApi.updateAgentRequest(jobRequest, poolId, jobRequest.requestId, lockToken, (err, status, jobRequest) => {
                     trace.write('err: ' + err);
                     trace.write('status: ' + status);
-                    if (status === 404) {
+                    
+                    // bail on 400-level responses
+                    if (status >= 400 && status < 500) {
                         abandoned = true;
                         worker.send({
+                            // it could also be expired, but it doesn't make a difference here
                             messageType: cm.WorkerMessageTypes.Abandoned
                         });
-                    } 
+                    }
                 });
             }
         }
