@@ -116,11 +116,12 @@ export class TaskManager {
     private getTaskDefinitionsUri(variables: { [key: string]: string }): string {
         var taskDefinitionsUri = variables["system.taskDefinitionsUri"];
         if (!taskDefinitionsUri) {
-            taskDefinitionsUri = variables[cm.sysVars.collectionUri];
-        }
-        if (!taskDefinitionsUri) {
+            // this version of the agent does not use vso-node-api, but it may run against servers that don't support the collection-level tasks
+            // system.taskDefinitionsUri was added in the same sprint as collection-level tasks...
+            // so if it's not there we can assume collection-level tasks aren't supported
             taskDefinitionsUri = this.context.config.settings.serverUrl; 
         }
+        
         return taskDefinitionsUri;
     }
 
