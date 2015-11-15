@@ -227,7 +227,6 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
     //------------------------------------------------------------------  
     public queueLogPage(page: cm.ILogPageInfo): void {
         trace.enter('servicechannel:queueLogPage');
-        trace.state('page', page);
         this._logPageQueue.push(page);
     }
 
@@ -613,7 +612,6 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
 
             async.forEachSeries(logPages,
                 (logPageInfo: cm.ILogPageInfo, done: (err: any) => void) => {
-                    trace.state('process:logPageInfo', logPageInfo);
 
                     var pagePath: string = logPageInfo.pagePath;
                     trace.write('process:logPagePath: ' + pagePath);
@@ -725,7 +723,6 @@ export class LockRenewer extends TimedWorker {
         this.finished = Q(null);
         
         this._jobInfo = jobInfo;
-        trace.state('_jobInfo', this._jobInfo);
         this._poolId = poolId;
         trace.write('_poolId: ' + this._poolId);
 
@@ -746,8 +743,6 @@ export class LockRenewer extends TimedWorker {
     private _renewLock(): Q.Promise<any> {
         var jobRequest: agentifm.TaskAgentJobRequest = <agentifm.TaskAgentJobRequest>{};
         jobRequest.requestId = this._jobInfo.requestId;
-
-        trace.state('jobRequest', jobRequest);
         
         // create a new, unresolved "finished" promise
         var deferred: Q.Deferred<any> = Q.defer();

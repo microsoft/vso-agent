@@ -204,7 +204,6 @@ export class ExecutionContext extends Context implements cm.IExecutionContext {
         logger.level =  this.debugOutput ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info;
 
         logger.on('pageComplete', (info: cm.ILogPageInfo) => {
-            trace.state('pageComplete', info);
             service.queueLogPage(info);
         });
 
