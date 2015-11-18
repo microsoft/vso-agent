@@ -126,6 +126,8 @@ export class ResultReader {
         var buildRequestedFor = runContext.requestedFor;
         var platform = runContext.platform;
         var config = runContext.config;
+        var releaseUri = runContext.releaseUri;
+        var releaseEnvironmentUri = runContext.releaseEnvironmentUri;
 
         //init test run summary - runname, host, start time, run duration
         var runSummary = new TestSuiteSummary();
@@ -173,7 +175,9 @@ export class ResultReader {
             buildFlavor: config,
             startDate: runSummary.timeStamp.toISOString(),
             completeDate: completedDate.toISOString(),
-            build: { id: buildId }
+            build: { id: buildId },
+            releaseUri: releaseUri,
+            releaseEnvironmentUri: releaseEnvironmentUri
         };
 
         testRun2 = <ifm.TestRunWithResults>{
@@ -293,6 +297,8 @@ export class ResultReader {
         
         var buildId = runContext.buildId;
         var buildRequestedFor = runContext.requestedFor;
+        var releaseUri = runContext.releaseUri;
+        var releaseEnvironmentUri = runContext.releaseEnvironmentUri;
 
         //read test run summary - runname, host, start time, run duration
         var runName = "NUnit";
@@ -364,7 +370,9 @@ export class ResultReader {
             buildFlavor: config,
             startDate: runStartTime.toISOString(),
             completeDate: completedDate.toISOString(),
-            build: { id: buildId }
+            build: { id: buildId },
+            releaseUri: releaseUri,
+            releaseEnvironmentUri: releaseEnvironmentUri
         };
 
         testRun2 = <ifm.TestRunWithResults>{
@@ -458,6 +466,10 @@ export class ResultReader {
             //Run environment - platform, config, host name.
             platform = runContext.platform;
             config = runContext.config;
+
+            //Release uri, Release environment uri
+            var releaseUri = runContext.releaseUri;
+            var releaseEnvironmentUri = runContext.releaseEnvironmentUri;
         }
 
         var runName = "XUnit Test Run";
@@ -489,7 +501,9 @@ export class ResultReader {
             buildFlavor: config,
             startDate: runStartTime,
             completeDate: completedDate,
-            build: <testifm.ShallowReference>{ id: buildId }
+            build: <testifm.ShallowReference>{ id: buildId },
+            releaseUri: releaseUri,
+            releaseEnvironmentUri: releaseEnvironmentUri
         };
 
         testRun2 = <ifm.TestRunWithResults>{

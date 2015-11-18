@@ -19,7 +19,9 @@ describe('PublisherTests', function() {
             requestedFor: "userx",
             buildId: "21",
             platform: "",
-            config: ""
+            config: "",
+            releaseUri: "",
+            releaseEnvironmentUri: ""
         };
         var reader = new trr.JUnitResultReader();
         var resultsFile = path.resolve(__dirname, './testresults/junitresults1.xml');
@@ -42,7 +44,9 @@ describe('PublisherTests', function() {
 			requestedFor: "userx",
 			buildId: "21",
 			platform: "",
-			config: ""
+            config: "",
+            releaseUri: "",
+            releaseEnvironmentUri: ""
 		};
 		var reader = new trr.NUnitResultReader();
 		var resultsFile = path.resolve(__dirname, './testresults/nunitresults.xml');
@@ -65,7 +69,9 @@ describe('PublisherTests', function() {
             requestedFor: "userx",
             buildId: "21",
             platform: "",
-            config: ""
+            config: "",
+            releaseUri: "",
+            releaseEnvironmentUri: ""
         };
         var reader = new trr.XUnitResultReader();
         var resultsFile = path.resolve(__dirname, './testresults/xunitresults.xml');
@@ -88,7 +94,9 @@ describe('PublisherTests', function() {
             requestedFor: "userx",
             buildId: "21",
             platform: "",
-            config: ""
+            config: "",
+            releaseUri: "",
+            releaseEnvironmentUri: ""
         };
         var reader = new trr.JUnitResultReader();
         var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
@@ -118,7 +126,9 @@ describe('PublisherTests', function() {
             requestedFor: "userx",
             buildId: "21",
             platform: "",
-            config: ""
+            config: "",
+            releaseUri: "",
+            releaseEnvironmentUri: ""
         };
         var reader = new trr.JUnitResultReader();
         var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
@@ -147,7 +157,9 @@ describe('PublisherTests', function() {
             requestedFor: "userx",
             buildId: "21",
             platform: "",
-            config: ""
+            config: "",
+            releaseUri: "",
+            releaseEnvironmentUri: ""
         };
         var reader = new trr.JUnitResultReader();
         var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
