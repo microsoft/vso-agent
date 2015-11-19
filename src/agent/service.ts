@@ -141,6 +141,10 @@ switch (action) {
                 launchAgent: agent
             };
 
+            if (agent) {
+                options['sessionCreate'] = true;
+            }
+
             if (runAsUser) {
                 options['userName'] = runAsUser;
             }
