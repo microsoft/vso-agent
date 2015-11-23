@@ -51,6 +51,16 @@ export class MessageListener extends events.EventEmitter {
                 this.getMessages(callback, onError);
                 return;
             }
+            
+            // bail on any 400 error code
+            if (statusCode >= 400 && statusCode < 500) {
+                if (err && err.message) {
+                    onError(new Error('Unable to receive messages: ' + err.message));
+                } else {
+                    onError(new Error('Unable to receive messages: ' + statusCode));
+                }
+                return;
+            }
 
             this.emit('info', 'working status code: ' + statusCode);
 
