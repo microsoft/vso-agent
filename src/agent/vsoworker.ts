@@ -87,9 +87,18 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
         deserializeEnumValues(job);
         setVariables(job, config);
 
+        // TODO: on output from context --> diag
+        // TODO: these should be set beforePrepare and cleared postPrepare after we add agent ext
+        var altCreds: any = null;
+        if (msg.config && (<any>msg.config).creds) {
+            altCreds = (<any>msg.config).creds;
+            process.env['altusername'] = altCreds.username;
+            process.env['altpassword'] = altCreds.password;
+        }
+
         trace.write('Creating AuthHandler');
         var systemAuthHandler: baseifm.IRequestHandler;
-        if (job.environment.systemConnection) {
+        if (job.environment.systemConnection && !config.settings.useConfigurationCredentials) {
             trace.write('using session token');
             var accessToken = job.environment.systemConnection.authorization.parameters['AccessToken'];
             trace.state('AccessToken:', accessToken);
@@ -97,15 +106,7 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
         }
         else {
             trace.write('using altcreds');
-            hostContext.error('system connection token not supplied.  unsupported deployment.')
-        }
-
-        // TODO: on output from context --> diag
-        // TODO: these should be set beforePrepare and cleared postPrepare after we add agent ext
-        if (msg.config && (<any>msg.config).creds) {
-            var altCreds = (<any>msg.config).creds;
-            process.env['altusername'] = altCreds.username;
-            process.env['altpassword'] = altCreds.password;
+            systemAuthHandler = wapim.getBasicHandler(altCreds.username, altCreds.password);
         }
 
         hostContext.status('Running job: ' + job.jobName);

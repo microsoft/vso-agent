@@ -50,7 +50,8 @@ export function read(): cm.ISettings {
         logSettings: {
             linesPerFile: nconf.get("log.linesPerFile"),
             maxFiles: nconf.get("log.maxFiles")
-        }
+        },
+        useConfigurationCredentials: nconf.get("useConfigurationCredentials")
     }
 
     return settings;
@@ -99,7 +100,8 @@ export class Configurator {
         var cfgInputs = [
             { name: 'serverUrl', description: 'server url', arg: 's', type: 'string', req: true },
             { name: 'agentName', description: 'agent name', arg: 'a', def: os.hostname(), type: 'string', req: true },
-            { name: 'poolName', description: 'agent pool name', arg: 'l', def: 'default', type: 'string', req: true }
+            { name: 'poolName', description: 'agent pool name', arg: 'l', def: 'default', type: 'string', req: true },
+            { name: 'useConfigurationCredentials', description: 'is on-prem', arg: 'p', def: false, type: 'boolean', req: false }
             
             //TODO: consider supporting work folder outside of root - long path not an issue right now for OSX/Linux
             //{ name: 'workFolder', description: 'agent work folder', arg: 'f', def: './work', type: 'string', req: true }        
@@ -112,6 +114,7 @@ export class Configurator {
             settings.poolName = result['poolName'];
             settings.serverUrl = result['serverUrl'];
             settings.agentName = result['agentName'];
+            settings.useConfigurationCredentials = result['useConfigurationCredentials'];
             settings.workFolder = './_work';
             settings.logSettings = {
                 maxFiles: cm.DEFAULT_LOG_MAXFILES,

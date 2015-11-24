@@ -181,10 +181,14 @@ cm.readBasicCreds()
         hostContext.verbose(JSON.stringify(messageBody, null, 2));
         
         if (message.messageType === 'JobRequest') {
-            var workerMsg = { 
+            var workerMsg = <any>{ 
                 messageType: cm.WorkerMessageTypes.Job,
                 config: config,
                 data: messageBody
+            }
+            
+            if (settings.useConfigurationCredentials) {
+                workerMsg.config.creds = _creds;
             }
 
             runWorker(hostContext, agentApi, workerMsg);

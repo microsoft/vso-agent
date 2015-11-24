@@ -508,7 +508,7 @@ export class WebConsoleQueue extends BaseQueue<string> {
             callback(null);
         }
         else {
-            this._taskApi.postLines(
+            this._taskApi.appendTimelineRecordFeed(
                 { value: values, count: values.length },
                 this._jobInfo.variables[cm.vars.systemTeamProjectId], 
                 this._jobInfo.description, 
@@ -668,7 +668,7 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                                             return;
                                         }
                                         var pageStream: NodeJS.ReadableStream = fs.createReadStream(pagePath);
-                                        this._taskApi.appendLog(
+                                        this._taskApi.appendLogContent(
                                             { "Content-Length": stats.size }, pageStream,
                                             this._jobInfo.variables[cm.vars.systemTeamProjectId],
                                             this._jobInfo.description,

@@ -23,7 +23,7 @@ var getValueFromString = function (val, valtype, fallback) {
                 retVal = fallback;
             break;
         case "boolean":
-            retVal = ((val.toLowerCase() === "true") || (val === "1"));
+            retVal = (val && (val.toLowerCase() === "true") || (val === "1"));
             break;
     }
 
@@ -31,10 +31,10 @@ var getValueFromString = function (val, valtype, fallback) {
 };
 
 // Q wrapper
-export function Qget(inputs: any): Q.Promise<cm.IStringDictionary> {
+export function Qget(inputs: any): Q.Promise<cm.IDictionary> {
     var defer = Q.defer<cm.IStringDictionary>();
 
-    this.get(inputs, (err, result: cm.IStringDictionary) => {
+    this.get(inputs, (err, result: cm.IDictionary) => {
         if (err) {
             defer.reject(err);
             return;
@@ -47,8 +47,8 @@ export function Qget(inputs: any): Q.Promise<cm.IStringDictionary> {
 }
 
 // done(err, result)
-export function get(inputs, done: (err: Error, result: cm.IStringDictionary) => void): void {
-    var result: cm.IStringDictionary = <cm.IStringDictionary>{};
+export function get(inputs, done: (err: Error, result: cm.IDictionary) => void): void {
+    var result: cm.IDictionary = <cm.IDictionary>{};
     
     result['_'] = args['_'];
 
