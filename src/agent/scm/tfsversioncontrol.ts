@@ -42,6 +42,11 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
             this.ctx.info('Using auth scheme: ' + scheme);
 
             switch (scheme) {
+                case 'Basic':
+                    this.username = this.getAuthParameter(authorization, 'Username') || 'not supplied';
+                    this.password = this.getAuthParameter(authorization, 'Password') || 'not supplied';
+                    break;
+                                    
                 case 'OAuth':
                     this.username = process.env['VSO_TFVC_USERNAME'] || 'OAuth';
                     this.password = process.env['VSO_TFVC_PASSWORD'] || this.getAuthParameter(authorization, 'AccessToken') || 'not supplied';

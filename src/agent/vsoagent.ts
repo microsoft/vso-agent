@@ -187,7 +187,7 @@ cm.readBasicCreds()
                 data: messageBody
             }
             
-            if (settings.useConfigurationCredentials) {
+            if (settings.basic) {
                 workerMsg.config.creds = _creds;
             }
 

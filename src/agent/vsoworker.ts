@@ -87,26 +87,23 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
         deserializeEnumValues(job);
         setVariables(job, config);
 
-        // TODO: on output from context --> diag
-        // TODO: these should be set beforePrepare and cleared postPrepare after we add agent ext
-        var altCreds: any = null;
-        if (msg.config && (<any>msg.config).creds) {
-            altCreds = (<any>msg.config).creds;
-            process.env['altusername'] = altCreds.username;
-            process.env['altpassword'] = altCreds.password;
-        }
+        var cfgCreds: any = (<any>msg.config).creds;
 
         trace.write('Creating AuthHandler');
         var systemAuthHandler: baseifm.IRequestHandler;
-        if (job.environment.systemConnection && !config.settings.useConfigurationCredentials) {
+        if (cfgCreds) {
+            trace.write('using cfgcreds');
+            job.environment.systemConnection.authorization.scheme = 'Basic';
+            job.environment.systemConnection.authorization.parameters['Username'] = cfgCreds.username;
+            job.environment.systemConnection.authorization.parameters['Password'] = cfgCreds.password;
+
+            systemAuthHandler = wapim.getBasicHandler(cfgCreds.username, cfgCreds.password);            
+        }
+        else {
             trace.write('using session token');
             var accessToken = job.environment.systemConnection.authorization.parameters['AccessToken'];
             trace.state('AccessToken:', accessToken);
             systemAuthHandler = wapim.getBearerHandler(accessToken);
-        }
-        else {
-            trace.write('using altcreds');
-            systemAuthHandler = wapim.getBasicHandler(altCreds.username, altCreds.password);
         }
 
         hostContext.status('Running job: ' + job.jobName);

@@ -15,25 +15,18 @@ export class GitTfsScmProvider extends gitm.GitScmProvider {
 
 	    if (authorization && authorization['scheme']) {
 	        var scheme = authorization['scheme'];
-			
-			// override for on-prem
-			if (this.ctx.config.settings.useConfigurationCredentials) {
-				if (this.ctx.config && (<any>this.ctx.config).creds) {
-					var altCreds = (<any>this.ctx.config).creds;
-					process.env['VSO_GIT_USERNAME'] = altCreds.username;
-					process.env['VSO_GIT_PASSWORD'] = altCreds.password;
-				}
-				else {
-					this.ctx.warning('useConfigurationCredentials is specified but no alt creds are available');
-				}
-			}
-			
 	        this.ctx.info('Using auth scheme: ' + scheme);
 
 	        switch (scheme) {
+	        	case 'Basic':
+	        		this.username = this.getAuthParameter(authorization, 'Username') || 'not supplied';
+	        		this.password = this.getAuthParameter(authorization, 'Password') || 'not supplied';
+	        		break;
+
 	            case 'OAuth':
 	                this.username = process.env['VSO_GIT_USERNAME'] || 'OAuth';
-	                this.password = process.env['VSO_GIT_PASSWORD'] || this.getAuthParameter(authorization, 'AccessToken') || 'not supplied';
+	                this.password = process.env['VSO_GIT_PASSWORD'] || 
+	                				this.getAuthParameter(authorization, 'AccessToken') || 'not supplied';
 	                break;
 				
 	            default:
