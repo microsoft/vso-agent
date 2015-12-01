@@ -93,10 +93,6 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
         var systemAuthHandler: baseifm.IRequestHandler;
         if (cfgCreds) {
             trace.write('using cfgcreds');
-            job.environment.systemConnection.authorization.scheme = 'Basic';
-            job.environment.systemConnection.authorization.parameters['Username'] = cfgCreds.username;
-            job.environment.systemConnection.authorization.parameters['Password'] = cfgCreds.password;
-
             systemAuthHandler = wapim.getBasicHandler(cfgCreds.username, cfgCreds.password);            
         }
         else {
