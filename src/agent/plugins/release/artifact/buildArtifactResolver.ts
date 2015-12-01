@@ -14,7 +14,7 @@ var shell = require('shelljs');
 
 export class BuildArtifactResolver {
     public resolve(context: common.IExecutionContext,
-        buildDetails: releaseIfm.AgentTfsBuildArtifactDetails,
+        buildDetails: any,
         buildArtifact: buildIfm.BuildArtifact,
         buildId: number,
         artifactFolder: string): Q.Promise<void> {

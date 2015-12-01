@@ -138,6 +138,7 @@ export class WorkerMessageTypes {
 // Interfaces
 //-----------------------------------------------------------
 
+export interface IDictionary { [name: string]: any }
 export interface IStringDictionary { [name: string]: string }
 
 export interface IDiagnosticWriter {
@@ -163,6 +164,7 @@ export interface ISettings {
     agentName: string;
     workFolder: string;
     logSettings: ILogSettings;
+    useConfigurationCredentials: boolean;
 }
 
 // contains configuration data from server, runtime creds + settings

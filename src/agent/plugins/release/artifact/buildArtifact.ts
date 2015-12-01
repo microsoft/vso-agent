@@ -15,7 +15,7 @@ export class BuildArtifact implements rmInterfaces.IArtifact {
     public download(context: common.IExecutionContext, artifactDefinition: releaseIfm.AgentArtifactDefinition, artifactFolder: string): Q.Promise<void> {
         var defer = Q.defer<void>();
         try {
-            var buildDetails: releaseIfm.AgentTfsBuildArtifactDetails = JSON.parse(artifactDefinition.details, releaseCommon.reviver);
+            var buildDetails = JSON.parse(artifactDefinition.details, releaseCommon.reviver);
             var serverUrl = context.variables[common.vars.systemTfCollectionUri];
             var buildClient = new webapim.WebApi(serverUrl, context.jobInfo.systemAuthHandler).getQBuildApi();
             buildClient.getArtifacts(+artifactDefinition.version, buildDetails.project).then((buildArtifacts: buildIfm.BuildArtifact[]) => {

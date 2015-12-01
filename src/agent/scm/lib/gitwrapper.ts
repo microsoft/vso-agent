@@ -108,9 +108,11 @@ export class GitWrapper extends events.EventEmitter {
         git.silent = true;
 
         var creds = this.username + ':' + this.password;
+        var escapedCreds = encodeURIComponent(this.username) + ':' + encodeURIComponent(this.password);
         git.on('debug', (message) => {
             if (options.debugOutput) {
                 var repl = message.replace(creds, '...');
+                repl = message.replace(escapedCreds, '...');
                 this.emit('stdout', '[debug]' + repl);    
             }
         })
