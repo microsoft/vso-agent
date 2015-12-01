@@ -12,8 +12,12 @@ export class GitTfsScmProvider extends gitm.GitScmProvider {
 
 	// override since TfsGit uses the generated OAuth token
 	public setAuthorization(authorization: agentifm.EndpointAuthorization) {
-
-	    if (authorization && authorization['scheme']) {
+		if (this.ctx.config.settings.basic) {
+			this.ctx.info('Using cfgcreds');
+			this.username = (<any>this.ctx.config).creds.username;
+			this.password = (<any>this.ctx.config).creds.password;
+		}
+	    else if (authorization && authorization['scheme']) {
 	        var scheme = authorization['scheme'];
 	        this.ctx.info('Using auth scheme: ' + scheme);
 
