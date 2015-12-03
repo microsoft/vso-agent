@@ -101,6 +101,9 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         //
         // Variables
         //        
+        // back compat
+        variables['build.sourceDirectory'] = repoPath;     
+                
         variables[cm.vars.buildSourcesDirectory] = repoPath;
         variables[cm.vars.buildArtifactStagingDirectory] = path.join(workingFolder, srcMap.build_artifactstagingdirectory);
 

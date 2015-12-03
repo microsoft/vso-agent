@@ -62,6 +62,9 @@ export function get(inputs, done: (err: Error, result: cm.IDictionary) => void):
         var msg = 'Enter ' + input.description;
         if (input.def) {
             msg += ' (enter sets ' + input.def + ') ';
+        }
+        else if (input.type === 'boolean') {
+            msg += ' (enter is false) ';   
         } 
         msg += ' > ';
 

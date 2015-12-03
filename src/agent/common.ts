@@ -164,7 +164,7 @@ export interface ISettings {
     agentName: string;
     workFolder: string;
     logSettings: ILogSettings;
-    useConfigurationCredentials: boolean;
+    basic: boolean;
 }
 
 // contains configuration data from server, runtime creds + settings

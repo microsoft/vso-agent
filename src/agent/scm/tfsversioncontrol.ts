@@ -37,11 +37,21 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
     public shelveset: string;
 
     public setAuthorization(authorization: agentifm.EndpointAuthorization) {
-        if (authorization && authorization['scheme']) {
+        if (this.ctx.config.settings.basic) {
+			this.ctx.info('Using cfgcreds');
+			this.username = (<any>this.ctx.config).creds.username;
+			this.password = (<any>this.ctx.config).creds.password;
+		}
+        else if (authorization && authorization['scheme']) {
             var scheme = authorization['scheme'];
             this.ctx.info('Using auth scheme: ' + scheme);
 
             switch (scheme) {
+                case 'Basic':
+                    this.username = this.getAuthParameter(authorization, 'Username') || 'not supplied';
+                    this.password = this.getAuthParameter(authorization, 'Password') || 'not supplied';
+                    break;
+                                    
                 case 'OAuth':
                     this.username = process.env['VSO_TFVC_USERNAME'] || 'OAuth';
                     this.password = process.env['VSO_TFVC_PASSWORD'] || this.getAuthParameter(authorization, 'AccessToken') || 'not supplied';

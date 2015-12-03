@@ -12,28 +12,25 @@ export class GitTfsScmProvider extends gitm.GitScmProvider {
 
 	// override since TfsGit uses the generated OAuth token
 	public setAuthorization(authorization: agentifm.EndpointAuthorization) {
-
-	    if (authorization && authorization['scheme']) {
+		if (this.ctx.config.settings.basic) {
+			this.ctx.info('Using cfgcreds');
+			this.username = (<any>this.ctx.config).creds.username;
+			this.password = (<any>this.ctx.config).creds.password;
+		}
+	    else if (authorization && authorization['scheme']) {
 	        var scheme = authorization['scheme'];
-			
-			// override for on-prem
-			if (this.ctx.config.settings.useConfigurationCredentials) {
-				if (this.ctx.config && (<any>this.ctx.config).creds) {
-					var altCreds = (<any>this.ctx.config).creds;
-					process.env['VSO_GIT_USERNAME'] = altCreds.username;
-					process.env['VSO_GIT_PASSWORD'] = altCreds.password;
-				}
-				else {
-					this.ctx.warning('useConfigurationCredentials is specified but no alt creds are available');
-				}
-			}
-			
 	        this.ctx.info('Using auth scheme: ' + scheme);
 
 	        switch (scheme) {
+	        	case 'Basic':
+	        		this.username = this.getAuthParameter(authorization, 'Username') || 'not supplied';
+	        		this.password = this.getAuthParameter(authorization, 'Password') || 'not supplied';
+	        		break;
+
 	            case 'OAuth':
 	                this.username = process.env['VSO_GIT_USERNAME'] || 'OAuth';
-	                this.password = process.env['VSO_GIT_PASSWORD'] || this.getAuthParameter(authorization, 'AccessToken') || 'not supplied';
+	                this.password = process.env['VSO_GIT_PASSWORD'] || 
+	                				this.getAuthParameter(authorization, 'AccessToken') || 'not supplied';
 	                break;
 				
 	            default:
