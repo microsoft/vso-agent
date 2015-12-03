@@ -46,7 +46,7 @@ $ sudo chown -R $USER ~/.npm
 
 This does not install an agent.  It simply pulls down the latest version of the agent installer.
 
-### On-Premise 2015 Server
+### On-Premises 2015 Server
 
 Use 0.4@preview for now
 ```bash
@@ -76,7 +76,7 @@ Determine which account the agent will run as.
 
    1. Determine the account the agent will use to listen for builds (the queue)
       * (VSTS Online) [Create a presonal access token](http://roadtoalm.com/2015/07/22/using-personal-access-tokens-to-access-visual-studio-online/). Profile in upper right.
-      * (On-Premise) Determine the local/domain account used for the build
+      * (On-Premises) Determine the local/domain account used for the build
    2. Account Admin (gear upper right), Control Panel link: Agent Pools tab, expand pool
       * Add user to Agent Pool Administrators (allows adding agent to pool)
       * Add user to Agent Pool Service Accounts (allows agent to listen to the build queue)
@@ -101,7 +101,7 @@ Config saved
 Waiting ...
 
 VSTS Online should not force basic (enter)
-On-Premise TFS Server access should force base (true)
+On-Premises TFS Server access should force basic (true)
 ```
 
 ## Run Interactively
