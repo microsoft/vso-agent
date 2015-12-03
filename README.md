@@ -26,10 +26,10 @@ A new 0.3.x release includes the following features.  If you have a 0.2.x agent,
 
 **Linux**: Install [using package manager](https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager)
 
-From a terminal ensure at least node 0.10 and npm 1.4:
+From a terminal ensure at least node 4.2 and npm 2:
 ```bash
 $ node -v && npm -v
-v0.12.0
+v4.2.0
 2.5.1
 ```
 
@@ -46,7 +46,16 @@ $ sudo chown -R $USER ~/.npm
 
 This does not install an agent.  It simply pulls down the latest version of the agent installer.
 
-Preview version:  See Install Preview Version of Agent below
+### On-Premise 2015 Server
+
+Use 0.4@preview for now
+```bash
+$ sudo npm install vsoagent-installer@preview -g
+$ sudo chown -R $USER ~/.npm
+```
+
+Basic Auth is required for OSX/Linux Access.  Ensure ssl/https.
+[Instructions Here](https://github.com/Microsoft/tfs-cli/blob/master/docs/configureBasicAuth.md)
 
 ### Create Agents
 
@@ -65,7 +74,9 @@ Prefer running this from under your home directory (~)
 
 Determine which account the agent will run as.
 
-   1. Enable alternate credentials for account agent will run builds as. Profile in upper right.
+   1. Determine the account the agent will use to listen for builds (the queue)
+      * (VSTS Online) [Create a presonal access token](http://roadtoalm.com/2015/07/22/using-personal-access-tokens-to-access-visual-studio-online/). Profile in upper right.
+      * (On-Premise) Determine the local/domain account used for the build
    2. Account Admin (gear upper right), Control Panel link: Agent Pools tab, expand pool
       * Add user to Agent Pool Administrators (allows adding agent to pool)
       * Add user to Agent Pool Service Accounts (allows agent to listen to the build queue)
@@ -78,12 +89,19 @@ note: if the agent isn't configured, on first run, it will configure.
 
 ```bash
 $ node agent/vsoagent
-
+Enter alternate username > someuser
+Enter alternate password >
+Enter agent name (enter sets yourmac.local)  > 
+Enter agent pool name (enter sets default)  > 
 Enter poolName(enter sets default) > 
 Enter serverUrl > https://contoso.visualstudio.com
 ...
+Enter force basic (enter is false)  > 
 Config saved
 Waiting ...
+
+VSTS Online should not force basic (enter)
+On-Premise TFS Server access should force base (true)
 ```
 
 ## Run Interactively

@@ -21,6 +21,7 @@ import webapim = require('vso-node-api/WebApi');
 import heartbeat = require('./heartbeat');
 import fm = require('./feedback');
 import Q = require('q');
+var semver = require('semver');
 
 var inDebugger = (typeof global.v8debug === 'object');
 
@@ -33,6 +34,11 @@ if (supported.indexOf(process.platform) == -1) {
 
 if (process.getuid() == 0 && !process.env['VSO_AGENT_RUNASROOT']) {
     console.error('Agent should not run elevated.  uid: ' + process.getuid());
+    process.exit(1);
+}
+
+if (semver.lt(process.versions.node, '4.2.0')) {
+    console.error('Agent requires at least node 4.2.0');
     process.exit(1);
 }
 

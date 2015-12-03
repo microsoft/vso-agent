@@ -34,6 +34,8 @@ var options = minimist(process.argv.slice(2), mopts);
 
 gulp.task('copy', ['clean'], function () {
 	return merge([
+		gulp.src(['admin/publish.sh']).pipe(gulp.dest(packageRoot)),
+		gulp.src(['admin/dev.sh']).pipe(gulp.dest(packageRoot)),
 		gulp.src(['package.json']).pipe(gulp.dest(buildPath)),
 		gulp.src(['src/agent/svc.sh']).pipe(gulp.dest(agentPath)),
 	    gulp.src(['src/agent/plugins/build/lib/askpass.js']).pipe(gulp.dest(buildPluginLibPath)),
