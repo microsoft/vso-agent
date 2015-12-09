@@ -20,6 +20,9 @@ describe('PublisherTests', function() {
             buildId: "21",
             platform: "",
             config: "",
+			runTitle: "",
+			publishRunAttachments: true,
+			fileNumber: "",
             releaseUri: "",
             releaseEnvironmentUri: ""
         };
@@ -45,6 +48,9 @@ describe('PublisherTests', function() {
 			buildId: "21",
 			platform: "",
             config: "",
+			runTitle: "",
+			publishRunAttachments: true,
+			fileNumber: "",
             releaseUri: "",
             releaseEnvironmentUri: ""
 		};
@@ -70,6 +76,9 @@ describe('PublisherTests', function() {
             buildId: "21",
             platform: "",
             config: "",
+			runTitle: "",
+			publishRunAttachments: true,
+			fileNumber: "",
             releaseUri: "",
             releaseEnvironmentUri: ""
         };
@@ -95,6 +104,9 @@ describe('PublisherTests', function() {
             buildId: "21",
             platform: "",
             config: "",
+			runTitle: "",
+			publishRunAttachments: true,
+			fileNumber: "",
             releaseUri: "",
             releaseEnvironmentUri: ""
         };
@@ -127,6 +139,9 @@ describe('PublisherTests', function() {
             buildId: "21",
             platform: "",
             config: "",
+			runTitle: "",
+			publishRunAttachments: true,
+			fileNumber: "",
             releaseUri: "",
             releaseEnvironmentUri: ""
         };
@@ -136,11 +151,12 @@ describe('PublisherTests', function() {
 		var resultsFile = path.resolve(__dirname, './testresults/junitresults1.xml');
 		var testRun = {
 	        name: "foobar",
-	        id: -1
+	        id: -1,
+			resultsFile: resultsFile
 	    };
 
 	    // error handling/propagation from end test run 
-		testRunPublisher.endTestRun(testRun.id).then(function (createdTestRun) {
+		testRunPublisher.endTestRun(testRun.id, testRun.resultsFile).then(function (createdTestRun) {
 			assert(false, 'ResultPublish Task did not fail as expected');
             done();
         },
@@ -158,6 +174,9 @@ describe('PublisherTests', function() {
             buildId: "21",
             platform: "",
             config: "",
+			runTitle: "",
+			publishRunAttachments: true,
+			fileNumber: "",
             releaseUri: "",
             releaseEnvironmentUri: ""
         };

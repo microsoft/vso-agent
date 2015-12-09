@@ -4,6 +4,7 @@ import ctxm = require('./context');
 import cm = require('./common');
 import utilities = require('./utilities');
 
+
 var async = require('async');
 var fs = require('fs');
 var path = require("path");
@@ -68,24 +69,7 @@ export class TestRunPublisher {
         var _this = this;
         
         _this.service.createTestRun(testRun).then(function (createdTestRun) {
-            utilities.readFileContents(resultFilePath, "ascii").then(function (res) {
-                var contents = new Buffer(res).toString('base64');
-                _this.service.createTestRunAttachment(createdTestRun.id, path.basename(resultFilePath), contents).then(
-                    function (attachment) {
-                        defer.resolve(createdTestRun);
-                    },
-                    function (err) {
-                        // We can skip attachment publishing if it fails to upload
-                        if (_this.command) {
-                            _this.command.warning("Skipping attachment : " + resultFilePath + ". " + err.statusCode + " - " + err.message);
-                        }
-
-                        defer.resolve(createdTestRun);
-                    });
-            },
-            function (err) {
-                defer.reject(err);
-            });        
+             defer.resolve(createdTestRun);     
         }, function (err) {
             defer.reject(err);  
         });
@@ -96,11 +80,37 @@ export class TestRunPublisher {
     // Stop a test run - mark it completed
     // - testRun: TestRun - test run to be published  
     //-----------------------------------------------------
-    public endTestRun(testRunId: number): Q.Promise<testifm.TestRun> {
+    public endTestRun(testRunId: number, resultFilePath: string): Q.Promise<testifm.TestRun> {
         var defer = Q.defer();
-
-        this.service.endTestRun(testRunId).then(function (endedTestRun) {
-            defer.resolve(endedTestRun);
+		var _this = this;
+		this.service.endTestRun(testRunId).then(function (endedTestRun) {
+			// Uploading run level attachments, only after run is marked completed;
+			// so as to make sure that any server jobs that acts on the uploaded data (like CoverAn job does for Coverage files)  
+			// have a fully published test run results, in case it wants to iterate over results 
+			if (_this.runContext.publishRunAttachments === true)
+			{
+				utilities.readFileContents(resultFilePath, "ascii").then(function (res) {
+					var contents = new Buffer(res).toString('base64');
+					_this.service.createTestRunAttachment(testRunId, path.basename(resultFilePath), contents).then(
+						function (attachment) {
+							defer.resolve(endedTestRun);
+						},
+						function (err) {
+							// We can skip attachment publishing if it fails to upload
+							if (_this.command) {
+								_this.command.warning("Skipping attachment : " + resultFilePath + ". " + err.statusCode + " - " + err.message);
+							}
+							
+							defer.resolve(endedTestRun);
+						});
+				},
+				function (err) {
+					defer.reject(err);
+				});
+			}  
+			else {
+				defer.resolve(endedTestRun);
+			}
         },
         function (err) {
             defer.reject(err);  
@@ -166,7 +176,7 @@ export class TestRunPublisher {
             testRunId = res.id;
             return _this.addResults(testRunId, results);
         }).then(function (res) {
-            return _this.endTestRun(testRunId);
+            return _this.endTestRun(testRunId, resultFilePath);
         }).then(function (res) {
             defer.resolve(res);
         }).fail(function (err) {
@@ -185,6 +195,9 @@ export interface TestRunContext {
     buildId: string;
     platform: string;
     config: string;
+	runTitle: string;
+	publishRunAttachments: boolean;
+	fileNumber: string;
     releaseUri: string;
     releaseEnvironmentUri: string;
 };
