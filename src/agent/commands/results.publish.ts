@@ -37,9 +37,9 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
 
         var platform: string = this.command.properties['platform'];
         var config : string = this.command.properties['config'];
-		var runTitle : string = this.command.properties['runTitle'];
-		var fileNumber : string = this.command.properties['fileNumber'];
-		var publishRunAttachments : boolean = (this.command.properties['publishRunAttachments'] === "true");
+        var runTitle : string = this.command.properties['runTitle'];
+        var fileNumber : string = this.command.properties['fileNumber'];
+        var publishRunAttachments : boolean = (this.command.properties['publishRunAttachments'] === "true");
         var command = this.command;
         
         var testRunContext: trp.TestRunContext = {
@@ -49,9 +49,9 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
             releaseUri: this.executionContext.variables["release.releaseUri"],
             platform: platform,
             config: config,
-			runTitle: runTitle,
-			fileNumber: fileNumber,
-			publishRunAttachments: publishRunAttachments
+            runTitle: runTitle,
+            fileNumber: fileNumber,
+            publishRunAttachments: publishRunAttachments
         };
 
         var reader;
