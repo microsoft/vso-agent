@@ -85,4 +85,3 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
         return defer.promise;
     }   
 }
-

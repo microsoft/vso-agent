@@ -63,7 +63,7 @@ export class TestRunPublisher {
     // - testRun: TestRun - test run to be published  
     // - resultsFilePath - needed for uploading the run level attachment 
     //-----------------------------------------------------
-    public startTestRun(testRun: testifm.RunCreateModel, resultFilePath: string): Q.Promise<testifm.TestRun> {
+    public startTestRun(testRun: testifm.RunCreateModel): Q.Promise<testifm.TestRun> {
         var defer = Q.defer();
 
         var _this = this;
@@ -82,35 +82,35 @@ export class TestRunPublisher {
     //-----------------------------------------------------
     public endTestRun(testRunId: number, resultFilePath: string): Q.Promise<testifm.TestRun> {
         var defer = Q.defer();
-		var _this = this;
-		this.service.endTestRun(testRunId).then(function (endedTestRun) {
-			// Uploading run level attachments, only after run is marked completed;
-			// so as to make sure that any server jobs that acts on the uploaded data (like CoverAn job does for Coverage files)  
-			// have a fully published test run results, in case it wants to iterate over results 
-			if (_this.runContext.publishRunAttachments === true)
-			{
-				utilities.readFileContents(resultFilePath, "ascii").then(function (res) {
-					var contents = new Buffer(res).toString('base64');
-					_this.service.createTestRunAttachment(testRunId, path.basename(resultFilePath), contents).then(
-						function (attachment) {
-							defer.resolve(endedTestRun);
-						},
-						function (err) {
-							// We can skip attachment publishing if it fails to upload
-							if (_this.command) {
-								_this.command.warning("Skipping attachment : " + resultFilePath + ". " + err.statusCode + " - " + err.message);
-							}
-							
-							defer.resolve(endedTestRun);
-						});
-				},
-				function (err) {
-					defer.reject(err);
-				});
-			}  
-			else {
-				defer.resolve(endedTestRun);
-			}
+        var _this = this;
+        this.service.endTestRun(testRunId).then(function (endedTestRun) {
+            // Uploading run level attachments, only after run is marked completed;
+            // so as to make sure that any server jobs that acts on the uploaded data (like CoverAn job does for Coverage files)  
+            // have a fully published test run results, in case it wants to iterate over results 
+            if (_this.runContext.publishRunAttachments === true)
+            {
+                utilities.readFileContents(resultFilePath, "ascii").then(function (res) {
+                    var contents = new Buffer(res).toString('base64');
+                    _this.service.createTestRunAttachment(testRunId, path.basename(resultFilePath), contents).then(
+                        function (attachment) {
+                            defer.resolve(endedTestRun);
+                        },
+                        function (err) {
+                            // We can skip attachment publishing if it fails to upload
+                            if (_this.command) {
+                                _this.command.warning("Skipping attachment : " + resultFilePath + ". " + err.statusCode + " - " + err.message);
+                            }
+                            
+                            defer.resolve(endedTestRun);
+                        });
+                },
+                function (err) {
+                    defer.reject(err);
+                });
+            }  
+            else {
+                defer.resolve(endedTestRun);
+            }
         },
         function (err) {
             defer.reject(err);  
@@ -171,7 +171,7 @@ export class TestRunPublisher {
 
         _this.readResults(resultFilePath).then(function (res) {
             results = res.testResults;
-            return _this.startTestRun(res.testRun, resultFilePath);
+            return _this.startTestRun(res.testRun);
         }).then(function (res) {
             testRunId = res.id;
             return _this.addResults(testRunId, results);
@@ -195,9 +195,9 @@ export interface TestRunContext {
     buildId: string;
     platform: string;
     config: string;
-	runTitle: string;
-	publishRunAttachments: boolean;
-	fileNumber: string;
+    runTitle: string;
+    publishRunAttachments: boolean;
+    fileNumber: string;
     releaseUri: string;
     releaseEnvironmentUri: string;
 };

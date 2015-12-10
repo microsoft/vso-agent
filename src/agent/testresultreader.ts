@@ -10,7 +10,7 @@ var Q = require('q');
 
 export class JUnitResultReader implements trp.IResultReader {
     
-	public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRunWithResults> {
+    public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRunWithResults> {
         return new ResultReader("junit").readResults(file, runContext);
     }
           
@@ -22,7 +22,7 @@ export class JUnitResultReader implements trp.IResultReader {
 //-----------------------------------------------------
 export class NUnitResultReader implements trp.IResultReader {
     
-	public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRunWithResults> {
+    public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRunWithResults> {
         return  new ResultReader("nunit").readResults(file, runContext);
     }    
 
@@ -30,7 +30,7 @@ export class NUnitResultReader implements trp.IResultReader {
 
 export class XUnitResultReader implements trp.IResultReader {
 
-	public readResults(file: string, runContext: trp.TestRunContext): Q.Promise<ifm.TestRunWithResults> {
+    public readResults(file: string, runContext: trp.TestRunContext): Q.Promise<ifm.TestRunWithResults> {
         return new ResultReader("xunit").readResults(file, runContext);
     }
 
@@ -132,13 +132,13 @@ export class ResultReader {
         var runTitle = runContext.runTitle;
         var fileNumber = runContext.fileNumber;
         var fileName;
-		
+        
         //Getting the file name for naming the test run
         if (file && 0 !== file.length) {
             // This handles both windows and mac os file formats to extract the file name
             fileName = file.split('\\').pop().split('/').pop();
         }
-		
+        
 
         //init test run summary - runname, host, start time, run duration
         var runSummary = new TestSuiteSummary();
@@ -180,7 +180,7 @@ export class ResultReader {
 
         var completedDate = runSummary.timeStamp;
         completedDate.setSeconds(runSummary.timeStamp.getSeconds() + runSummary.duration);
-		
+        
         //create test run data
         var testRun = <testifm.RunCreateModel>{
             name: runSummary.name,
@@ -232,7 +232,7 @@ export class ResultReader {
         if (rootNode.attributes().time) {
             totalRunDuration = parseFloat(rootNode.attributes().time); //in seconds
         }
-		
+        
         //find test case nodes in JUnit result xml
         var testResults = [];
 
@@ -320,7 +320,7 @@ export class ResultReader {
         var releaseEnvironmentUri = runContext.releaseEnvironmentUri;
         var runTitle = runContext.runTitle;
         var fileNumber = runContext.fileNumber;		
-		
+        
         //read test run summary - runname, host, start time, run duration
         var runName = this.runTitleNunitAndXunit(runTitle, fileNumber, "NUnit");
         var runStartTime = new Date();
@@ -671,6 +671,3 @@ export class ResultReader {
     }
 
 }
-
-
-
