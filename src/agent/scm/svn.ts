@@ -69,7 +69,7 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
         var srcVersion = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceVersion'];
         var srcBranch = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceBranch'];
         this.defaultRevision = this._expandEnvironmentVariables(srcVersion);
-        this.defaultBranch = this._expandEnvironmentVariables(srcBranch);
+        this.defaultBranch = this._normalizeRelativePath(this._expandEnvironmentVariables(srcBranch));
         this.ctx.info('Revision: ' + this.defaultRevision);
         this.ctx.info('Branch: ' + this.defaultBranch);
 
@@ -84,7 +84,27 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
             this._cleanupSvnWorkspace(mappings, newMappings)
         })
         .then(() => {
-            return this.svnw.getLatestRevision(this.defaultBranch, this.defaultRevision);
+            var revs: Q.Promise<string>[] = [];
+            
+            for (var localPath in newMappings) {
+                var mapping: sw.SvnMappingDetails = newMappings[localPath];
+                var serverPath: string = mapping.serverPath;
+                revs.push(this.svnw.getLatestRevision(serverPath, this.defaultRevision));
+            }
+            
+            return Q.all(revs);
+        })
+        .then((revs: string[]) => {
+            var maxRevision: number = 0;
+            
+            revs.forEach((r: string) => {
+                var n: number = +r;
+                if (n > maxRevision) {
+                    maxRevision = n;
+                } 
+            });
+            
+            return Q(maxRevision > 0 ? maxRevision.toString() : this.defaultRevision);
         })
         .then((latestRevision: string) => {
             var deferred = Q.defer<number>();
@@ -95,6 +115,7 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
                 var mapping: sw.SvnMappingDetails = newMappings[localPath];
                 var serverPath: string = mapping.serverPath;
                 var effectiveRevision: string = mapping.revision.toUpperCase() === 'HEAD' ? latestRevision : mapping.revision;
+                var r = this.svnw.getLatestRevision(serverPath, this.defaultRevision)
                 var effectiveMapping: sw.SvnMappingDetails = {
                         localPath: mapping.localPath,
                         serverPath: mapping.serverPath,
@@ -187,11 +208,6 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
         
         return normalizedPath;
     }
-    
-    private _normalizeBranch(branch: string) {
-        var normalizedBranch = this._normalizeRelativePath(branch);
-        return (branch || '').length == 0 ? 'trunk' : branch;
-    }
 
     private _normalizeMappings(allMappings: sw.SvnMappingDetails[]): sw.ISvnMappingDictionary {
         var distinctMappings: sw.ISvnMappingDictionary = <sw.ISvnMappingDictionary>{};
@@ -243,7 +259,7 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
         var svnMappings: sw.ISvnMappingDictionary = {};
 
         if (endpoint && endpoint.data && endpoint.data['svnWorkspaceMapping']) {
-            var svnWorkspace: sw.SvnWorkspace = JSON.parse(endpoint.data['svnWorkspaceMapping']);
+            var svnWorkspace: sw.SvnWorkspace = JSON.parse(this._expandEnvironmentVariables(endpoint.data['svnWorkspaceMapping']));
             
             if (svnWorkspace && svnWorkspace.mappings && svnWorkspace.mappings.length > 0) {
                 var distinctMappings = this._normalizeMappings(svnWorkspace.mappings);
@@ -253,7 +269,7 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
                         var value: sw.SvnMappingDetails = distinctMappings[key];
                         
                         var absoluteLocalPath: string = this.svnw.appendPath(this.targetPath, value.localPath);
-                        var url: string = this.svnw.buildSvnUrl(this.defaultBranch, value.serverPath);
+                        var url: string = this.svnw.buildSvnUrl(value.serverPath);
                         
                         svnMappings[absoluteLocalPath] = {
                             serverPath: url,
