@@ -64,8 +64,8 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
         else if (resultType == "xunit") {
             reader = new trr.XUnitResultReader();
         }
-        else {
-            this.command.warning("Test results of format '" + resultType + "'' are not supported by the VSTS/TFS OSX and Linux build agent");
+        else if (resultType == "vstest") {
+            this.command.warning("Test results of format '" + resultType + "'' are not supported on this build agent");
         }
 
         if (reader != null) {

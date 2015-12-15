@@ -12,55 +12,51 @@ import ifm = require('../agent/interfaces');
 import testifm = require('vso-node-api/interfaces/TestInterfaces');
 
 describe('PublisherTests', function() {
-        
+    
+    var runContext: trp.TestRunContext = {
+        requestedFor: "userx",
+        buildId: "21",
+        platform: "mac",
+        config: "debug",
+        runTitle: "My Title",
+        publishRunAttachments: true,
+        fileNumber: "3",
+        releaseUri: "abc",
+        releaseEnvironmentUri: "xyz"
+    };  
+
+    var readerJUnit = new trr.JUnitResultReader();    
+    var readerNUnit = new trr.NUnitResultReader();
+    var readerXUnit = new trr.XUnitResultReader();
+
+    var resultsFileJUnit = path.resolve(__dirname, './testresults/junitresults1.xml');
+    var resultsFileNUnit = path.resolve(__dirname, './testresults/nunitresults.xml');
+    var resultsFileXUnit = path.resolve(__dirname, './testresults/xunitresults.xml');
+
+    var feedbackChannel;
+    var testRunPublisher;
+
     it('results.publish : JUnit results file', function(done) {
         this.timeout(2000);
+        
+        feedbackChannel = new fm.TestFeedbackChannel();
+        testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerJUnit);
 
-        var runContext: trp.TestRunContext = {
-            requestedFor: "userx",
-            buildId: "21",
-            platform: "",
-            config: "",
-            runTitle: "",
-            publishRunAttachments: true,
-            fileNumber: "",
-            releaseUri: "",
-            releaseEnvironmentUri: ""
-        };
-        var reader = new trr.JUnitResultReader();
-        var resultsFile = path.resolve(__dirname, './testresults/junitresults1.xml');
-        var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
-        var testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, reader);
-
-        testRunPublisher.publishTestRun(resultsFile).then(function (createdTestRun) {
+        testRunPublisher.publishTestRun(resultsFileJUnit).then(function (createdTestRun) {
             assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
             done();
         },
         function (err) {
             assert(false, 'ResultPublish Task Failed! Details : '  + err.message);
         });
-    })
+    })    
         
     it('results.publish : NUnit results file', function (done) {
         this.timeout(2000);
+        feedbackChannel = new fm.TestFeedbackChannel();
+        testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerNUnit);
 
-        var runContext: trp.TestRunContext = {
-            requestedFor: "userx",
-            buildId: "21",
-            platform: "",
-            config: "",
-            runTitle: "",
-            publishRunAttachments: true,
-            fileNumber: "",
-            releaseUri: "",
-            releaseEnvironmentUri: ""
-        };
-        var reader = new trr.NUnitResultReader();
-        var resultsFile = path.resolve(__dirname, './testresults/nunitresults.xml');
-        var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
-        var testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, reader);
-
-        testRunPublisher.publishTestRun(resultsFile).then(function (createdTestRun) {
+        testRunPublisher.publishTestRun(resultsFileNUnit).then(function (createdTestRun) {
             assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
             done();
         },
@@ -71,24 +67,11 @@ describe('PublisherTests', function() {
 
     it('results.publish : XUnit results file', function (done) {
         this.timeout(2000);
+        
+        feedbackChannel = new fm.TestFeedbackChannel();
+        testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerXUnit);
 
-        var runContext: trp.TestRunContext = {
-            requestedFor: "userx",
-            buildId: "21",
-            platform: "",
-            config: "",
-            runTitle: "",
-            publishRunAttachments: true,
-            fileNumber: "",
-            releaseUri: "",
-            releaseEnvironmentUri: ""
-        };
-        var reader = new trr.XUnitResultReader();
-        var resultsFile = path.resolve(__dirname, './testresults/xunitresults.xml');
-        var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
-        var testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, reader);
-
-        testRunPublisher.publishTestRun(resultsFile).then(function (createdTestRun) {
+        testRunPublisher.publishTestRun(resultsFileXUnit).then(function (createdTestRun) {
             assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
             done();
         },
@@ -100,21 +83,9 @@ describe('PublisherTests', function() {
     it('results.publish : error handling for create test run', function(done) {
         this.timeout(2000);
 
-        var runContext: trp.TestRunContext = {
-            requestedFor: "userx",
-            buildId: "21",
-            platform: "",
-            config: "",
-            runTitle: "",
-            publishRunAttachments: true,
-            fileNumber: "",
-            releaseUri: "",
-            releaseEnvironmentUri: ""
-        };
-        var reader = new trr.JUnitResultReader();
-        var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
-        var testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, reader);
-        var resultsFile = path.resolve(__dirname, './testresults/junitresults1.xml');
+        feedbackChannel = new fm.TestFeedbackChannel();
+        testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerJUnit);
+
         var testRun: testifm.RunCreateModel = <any>{
             name: "foobar",
             id: -1
@@ -135,25 +106,12 @@ describe('PublisherTests', function() {
     it('results.publish : error handling for end test run', function(done) {
         this.timeout(2000);
 
-        var runContext: trp.TestRunContext = {
-            requestedFor: "userx",
-            buildId: "21",
-            platform: "",
-            config: "",
-            runTitle: "",
-            publishRunAttachments: true,
-            fileNumber: "",
-            releaseUri: "",
-            releaseEnvironmentUri: ""
-        };
-        var reader = new trr.JUnitResultReader();
-        var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
-        var testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, reader);
-        var resultsFile = path.resolve(__dirname, './testresults/junitresults1.xml');
+        feedbackChannel = new fm.TestFeedbackChannel();
+        testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerJUnit);
         var testRun = {
             name: "foobar",
             id: -1,
-            resultsFile: resultsFile
+            resultsFile: resultsFileJUnit
         };
 
         // error handling/propagation from end test run 
@@ -170,24 +128,11 @@ describe('PublisherTests', function() {
     it('results.publish : error handling for reading results', function(done) {
         this.timeout(2000);
 
-        var runContext: trp.TestRunContext = {
-            requestedFor: "userx",
-            buildId: "21",
-            platform: "",
-            config: "",
-            runTitle: "",
-            publishRunAttachments: true,
-            fileNumber: "",
-            releaseUri: "",
-            releaseEnvironmentUri: ""
-        };
-        var reader = new trr.JUnitResultReader();
-        var feedbackChannel: fm.TestFeedbackChannel = new fm.TestFeedbackChannel();
-        var testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, reader);
-        var resultsFile = path.resolve(__dirname, './testresults/junitresults1.xml');
+        feedbackChannel = new fm.TestFeedbackChannel();
+        testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerJUnit);
         
         // error handling/propagation from parsing failures of junit/nunit files
-        resultsFile = path.resolve(__dirname, './testresults/junit_bad.xml');
+        var resultsFile = path.resolve(__dirname, './testresults/junit_bad.xml');
         testRunPublisher.publishTestRun(resultsFile).then(function (createdTestRun) {
             assert(!feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
         },
@@ -198,31 +143,20 @@ describe('PublisherTests', function() {
         });
     })
 
-    it('results.publish : JUnit reader sanity check without run title', function(done) {
+    it('results.publish : JUnit reader sanity check without run title', function (done) {
+
         var results;
-        var testRun;
-        var runContext: trp.TestRunContext = {
-            requestedFor: "userx",
-            buildId: "21",
-            platform: "mac",
-            config: "debug",
-            runTitle: "",
-            publishRunAttachments: true,
-            fileNumber: "0",
-            releaseUri: "abc",
-            releaseEnvironmentUri: "xyz"
-        };
-        var resultsFile = path.resolve(__dirname, './testresults/junitresults1.xml');
-        var reader = new trr.JUnitResultReader();
-        //var testRunWithResults = reader.readResults(resultsFile, runContext);
-        reader.readResults(resultsFile, runContext).then(function (res) {
+        var testRun;  
+        
+        runContext.runTitle = "";
+        runContext.fileNumber = "0";
+
+        readerJUnit.readResults(resultsFileJUnit, runContext).then(function (res) {
             testRun = res.testRun;
             results = res.testResults;
             
             //Verifying the test run details
             assert.strictEqual("JUnitXmlReporter", testRun.name);
-            //assert.equal("", testRun.startDate);
-            //assert.equal("", testRun.completeDate);
             assert.equal("debug", testRun.buildFlavor);
             assert.equal("mac", testRun.buildPlatform);
             assert.equal("abc", testRun.releaseUri);
@@ -247,21 +181,11 @@ describe('PublisherTests', function() {
     it('results.publish : JUnit reader sanity check with run title', function(done) {
         
         var testRun;
-        var runContext: trp.TestRunContext = {
-            requestedFor: "userx",
-            buildId: "21",
-            platform: "mac",
-            config: "debug",
-            runTitle: "My Title",
-            publishRunAttachments: true,
-            fileNumber: "0",
-            releaseUri: "abc",
-            releaseEnvironmentUri: "xyz"
-        };
-        var resultsFile = path.resolve(__dirname, './testresults/junitresults1.xml');
-        var reader = new trr.JUnitResultReader();
-        //var testRunWithResults = reader.readResults(resultsFile, runContext);
-        reader.readResults(resultsFile, runContext).then(function (res) {
+
+        runContext.runTitle = "My Title";
+        runContext.fileNumber = "0";        
+
+        readerJUnit.readResults(resultsFileJUnit, runContext).then(function (res) {
             testRun = res.testRun;
             
             //Verifying the test run details
@@ -276,26 +200,15 @@ describe('PublisherTests', function() {
     
     it('results.publish : JUnit reader sanity check with run title and file number', function(done) {
         
-        var testRun;
-        var runContext: trp.TestRunContext = {
-            requestedFor: "userx",
-            buildId: "21",
-            platform: "mac",
-            config: "debug",
-            runTitle: "My Title",
-            publishRunAttachments: true,
-            fileNumber: "4",
-            releaseUri: "abc",
-            releaseEnvironmentUri: "xyz"
-        };
-        var resultsFile = path.resolve(__dirname, './testresults/junitresults1.xml');
-        var reader = new trr.JUnitResultReader();
-        //var testRunWithResults = reader.readResults(resultsFile, runContext);
-        reader.readResults(resultsFile, runContext).then(function (res) {
+        var testRun;        
+        
+        runContext.fileNumber = "3";
+
+        readerJUnit.readResults(resultsFileJUnit, runContext).then(function (res) {
             testRun = res.testRun;
             
             //Verifying the test run details
-            assert.strictEqual("My Title 4", testRun.name);			
+            assert.strictEqual("My Title 3", testRun.name);			
             done();
         },
         function(err) {
@@ -306,30 +219,18 @@ describe('PublisherTests', function() {
     
     it('results.publish : NUnit reader sanity check without run title', function (done) {
         
-        var results;
-        var runContext: trp.TestRunContext = {
-            requestedFor: "userx",
-            buildId: "21",
-            platform: "mac",
-            config: "debug",
-            runTitle: "",
-            publishRunAttachments: true,
-            fileNumber: "0",
-            releaseUri: "abc",
-            releaseEnvironmentUri: "xyz"
-        };
-        var reader = new trr.NUnitResultReader();
-        var resultsFile = path.resolve(__dirname, './testresults/nunitresults.xml');
+        var results;        
         var testRun;
 
-        reader.readResults(resultsFile, runContext).then(function (res) {
+        runContext.runTitle = "";
+        runContext.fileNumber = "0";
+
+        readerNUnit.readResults(resultsFileNUnit, runContext).then(function (res) {
             testRun = res.testRun;
             results = res.testResults;
             
             //Verifying the test run details
             assert.strictEqual("/Volumes/Data/xamarin/workspaces/android-csharp-test-job-c2a0f46d-7bf3-4ba8-97ce-ce8a8fdd1c4720150429-96377-8lrqzf/CreditCardValidation.Tests.dll", testRun.name);
-            //assert.equal("", testRun.startDate);
-            //assert.equal("", testRun.completeDate);
             assert.equal("debug", testRun.buildFlavor);
             assert.equal("mac", testRun.buildPlatform);
             assert.equal("abc", testRun.releaseUri);
@@ -355,21 +256,11 @@ describe('PublisherTests', function() {
     it('results.publish : NUnit reader sanity check with run title', function(done) {
         
         var testRun;
-        var runContext: trp.TestRunContext = {
-            requestedFor: "userx",
-            buildId: "21",
-            platform: "mac",
-            config: "debug",
-            runTitle: "My Title",
-            publishRunAttachments: true,
-            fileNumber: "0",
-            releaseUri: "abc",
-            releaseEnvironmentUri: "xyz"
-        };
-        var resultsFile = path.resolve(__dirname, './testresults/nunitresults.xml');
-        var reader = new trr.NUnitResultReader();
-        //var testRunWithResults = reader.readResults(resultsFile, runContext);
-        reader.readResults(resultsFile, runContext).then(function (res) {
+
+        runContext.runTitle = "My Title";
+        runContext.fileNumber = "0";      
+        
+        readerNUnit.readResults(resultsFileNUnit, runContext).then(function (res) {
             testRun = res.testRun;
             
             //Verifying the test run details
@@ -385,25 +276,13 @@ describe('PublisherTests', function() {
     it('results.publish : NUnit reader sanity check with run title and file number', function(done) {
         
         var testRun;
-        var runContext: trp.TestRunContext = {
-            requestedFor: "userx",
-            buildId: "21",
-            platform: "mac",
-            config: "debug",
-            runTitle: "My Title",
-            publishRunAttachments: true,
-            fileNumber: "11",
-            releaseUri: "abc",
-            releaseEnvironmentUri: "xyz"
-        };
-        var resultsFile = path.resolve(__dirname, './testresults/nunitresults.xml');
-        var reader = new trr.NUnitResultReader();
-        //var testRunWithResults = reader.readResults(resultsFile, runContext);
-        reader.readResults(resultsFile, runContext).then(function (res) {
+        runContext.fileNumber = "3";
+          
+        readerNUnit.readResults(resultsFileNUnit, runContext).then(function (res) {
             testRun = res.testRun;
             
             //Verifying the test run details
-            assert.strictEqual("My Title 11", testRun.name);			
+            assert.strictEqual("My Title 3", testRun.name);			
             done();
         },
         function(err) {
@@ -414,30 +293,19 @@ describe('PublisherTests', function() {
     
     
     it('results.publish : XUnit reader sanity check without run title', function (done) {
+
         var results;
-        var runContext: trp.TestRunContext = {
-            requestedFor: "userx",
-            buildId: "21",
-            platform: "mac",
-            config: "debug",
-            runTitle: "",
-            publishRunAttachments: true,
-            fileNumber: "0",
-            releaseUri: "abc",
-            releaseEnvironmentUri: "xyz"
-        };
-        var reader = new trr.XUnitResultReader();
-        var resultsFile = path.resolve(__dirname, './testresults/xunitresults.xml');
         var testRun;
-        
-        reader.readResults(resultsFile, runContext).then(function (res) {
+
+        runContext.runTitle = "";
+        runContext.fileNumber = "0"; 
+               
+        readerXUnit.readResults(resultsFileXUnit, runContext).then(function (res) {
             testRun = res.testRun;
             results = res.testResults;
             
             //Verifying the test run details
             assert.strictEqual("XUnit Test Run debug mac", testRun.name);
-            //assert.equal("", testRun.startDate);
-            //assert.equal("", testRun.completeDate);
             assert.equal("debug", testRun.buildFlavor);
             assert.equal("mac", testRun.buildPlatform);
             assert.equal("abc", testRun.releaseUri);
@@ -463,21 +331,11 @@ describe('PublisherTests', function() {
     it('results.publish : XUnit reader sanity check with run title', function(done) {
         
         var testRun;
-        var runContext: trp.TestRunContext = {
-            requestedFor: "userx",
-            buildId: "21",
-            platform: "mac",
-            config: "debug",
-            runTitle: "My Title",
-            publishRunAttachments: true,
-            fileNumber: "0",
-            releaseUri: "abc",
-            releaseEnvironmentUri: "xyz"
-        };
-        var resultsFile = path.resolve(__dirname, './testresults/xunitresults.xml');
-        var reader = new trr.XUnitResultReader();
-        //var testRunWithResults = reader.readResults(resultsFile, runContext);
-        reader.readResults(resultsFile, runContext).then(function (res) {
+
+        runContext.runTitle = "My Title";
+        runContext.fileNumber = "0";
+        
+        readerXUnit.readResults(resultsFileXUnit, runContext).then(function (res) {
             testRun = res.testRun;
             
             //Verifying the test run details
@@ -492,31 +350,22 @@ describe('PublisherTests', function() {
     
     it('results.publish : XUnit reader sanity check with run title and file number', function(done) {
         
-        var testRun;
-        var runContext: trp.TestRunContext = {
-            requestedFor: "userx",
-            buildId: "21",
-            platform: "",
-            config: "",
-            runTitle: "My Title",
-            publishRunAttachments: true,
-            fileNumber: "9",
-            releaseUri: "abc",
-            releaseEnvironmentUri: "xyz"
-        };
-        var resultsFile = path.resolve(__dirname, './testresults/xunitresults.xml');
-        var reader = new trr.XUnitResultReader();
-        //var testRunWithResults = reader.readResults(resultsFile, runContext);
-        reader.readResults(resultsFile, runContext).then(function (res) {
+        var testRun;        
+        
+        runContext.fileNumber = "3";
+        readerXUnit.readResults(resultsFileXUnit, runContext).then(function (res) {
             testRun = res.testRun;
             
             //Verifying the test run details
-            assert.strictEqual("My Title 9", testRun.name);			
+            assert.strictEqual("My Title 3", testRun.name);
             done();
         },
-        function(err) {
-            assert(false, 'XUnit Reader Failed! Details : ' + err.message);
-            done();
-        });		
+            function (err) {
+                assert(false, 'XUnit Reader Failed! Details : ' + err.message);
+                done(err);
+            }).fail(function (err) {
+                assert(false, 'XUnit Reader Failed! Details : ' + err.message);
+                done(err);
+            });		
     })
 });	
