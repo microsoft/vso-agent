@@ -37,6 +37,9 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
 
         var platform: string = this.command.properties['platform'];
         var config : string = this.command.properties['config'];
+        var runTitle : string = this.command.properties['runTitle'];
+        var fileNumber : string = this.command.properties['fileNumber'];
+        var publishRunAttachments : boolean = (this.command.properties['publishRunAttachments'] === "true");
         var command = this.command;
         
         var testRunContext: trp.TestRunContext = {
@@ -45,7 +48,10 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
             releaseEnvironmentUri: this.executionContext.variables["release.environmentUri"],
             releaseUri: this.executionContext.variables["release.releaseUri"],
             platform: platform,
-            config: config
+            config: config,
+            runTitle: runTitle,
+            fileNumber: fileNumber,
+            publishRunAttachments: publishRunAttachments
         };
 
         var reader;
@@ -58,13 +64,12 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
         else if (resultType == "xunit") {
             reader = new trr.XUnitResultReader();
         }
-        else {
-            this.command.warning("Test results of format '" + resultType + "'' are not supported by the VSO/TFS OSX and Linux build agent");
+        else if (resultType == "vstest") {
+            this.command.warning("Test results of format '" + resultType + "'' are not supported on this build agent");
         }
 
         if (reader != null) {
             var testRunPublisher = new trp.TestRunPublisher(this.executionContext.service, command, teamProject, testRunContext, reader);
-
             testRunPublisher.publishTestRun(resultFilePath).then(function (createdTestRun) {
                 defer.resolve(null);
             })
@@ -80,4 +85,3 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
         return defer.promise;
     }   
 }
-

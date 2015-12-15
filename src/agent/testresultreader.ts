@@ -9,7 +9,7 @@ var xmlreader = require('xmlreader');
 var Q = require('q');
 
 export class JUnitResultReader implements trp.IResultReader {
-
+    
     public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRunWithResults> {
         return new ResultReader("junit").readResults(file, runContext);
     }
@@ -58,43 +58,44 @@ export class TestSuiteSummary {
 
 export class ResultReader {
 
-    private type: string;
     constructor(readerType: string) {
         this.type = readerType;
     }
 
-    public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRunWithResults> {
-        var defer = Q.defer(); 
+    private type: string;
+
+    public readResults(file: string, runContext: trp.TestRunContext): Q.Promise<ifm.TestRunWithResults> {
+        var defer = Q.defer();
         var _this = this;
 
         utilities.readFileContents(file, "utf-8").then(function (contents) {
             var xmlContents = contents.replace("\ufeff", ""); //replace BOM if exists to avoid xml read error
-            return _this.readTestRunData(xmlContents, runContext);
+            return _this.readTestRunData(xmlContents, runContext, file);
         }).then(function (testRun) {
             defer.resolve(testRun);
         }).fail(function (err) {
             defer.reject(err);
-        });        
+        });
 
         return defer.promise;
     }
 
-    private readTestRunData(contents: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRunWithResults> {
-        var defer = Q.defer(); 
-      
-        var testRun2 : ifm.TestRunWithResults;
+    private readTestRunData(contents: string, runContext: trp.TestRunContext, file: string): Q.Promise<ifm.TestRunWithResults> {
+        var defer = Q.defer();
+
+        var testRun2: ifm.TestRunWithResults;
         var _this = this;
 
         xmlreader.read(contents, function (err, res) {
-            if(err) {
+            if (err) {
                 defer.reject(err);
-            } 
+            }
             else {
                 try {
-                    testRun2 = _this.parseXml(res, runContext);
+                    testRun2 = _this.parseXml(res, runContext, file);
                     defer.resolve(testRun2);
                 }
-                catch(ex) {
+                catch (ex) {
                     defer.reject(ex);
                 }
             }
@@ -103,11 +104,11 @@ export class ResultReader {
         return defer.promise;
     }
 
-    private parseXml(res, runContext) {
-        if(this.type == "junit") {
-            return this.parseJUnitXml(res, runContext);
+    private parseXml(res, runContext, file) {
+        if (this.type == "junit") {
+            return this.parseJUnitXml(res, runContext, file);
         }
-        else if(this.type == "nunit") {
+        else if (this.type == "nunit") {
             return this.parseNUnitXml(res, runContext);
         }
         else if (this.type == "xunit") {
@@ -117,57 +118,71 @@ export class ResultReader {
             return null;
         }
 
-    }    
+    }
 
-    private parseJUnitXml(res, runContext) {
-        var testRun2 : ifm.TestRunWithResults;
+    private parseJUnitXml(res, runContext, file) {
 
+        var testRun2: ifm.TestRunWithResults;
         var buildId = runContext.buildId;
         var buildRequestedFor = runContext.requestedFor;
         var platform = runContext.platform;
         var config = runContext.config;
         var releaseUri = runContext.releaseUri;
         var releaseEnvironmentUri = runContext.releaseEnvironmentUri;
+        var runTitle = runContext.runTitle;
+        var fileNumber = runContext.fileNumber;
+        var fileName;
+        
+        //Getting the file name for naming the test run
+        if (file && 0 !== file.length) {
+            // This handles both windows and mac os file formats to extract the file name
+            fileName = file.split('\\').pop().split('/').pop();
+        }
+        
 
         //init test run summary - runname, host, start time, run duration
         var runSummary = new TestSuiteSummary();
-        
-        if(res.testsuites) {
+
+        if (res.testsuites) {
             var testSuitesNode = res.testsuites.at(0);
         }
 
-        if(testSuitesNode) {
-            if(testSuitesNode.testsuite) {
+        if (testSuitesNode) {
+            if (testSuitesNode.testsuite) {
                 var numTestSuites = testSuitesNode.testsuite.count();
-                for(var n = 0; n < numTestSuites; n ++) {
-                    var testSuiteSummary = this.readTestSuiteJUnitXml(testSuitesNode.testsuite.at(n), buildRequestedFor);
+                for (var n = 0; n < numTestSuites; n++) {
+                    var testSuiteSummary = this.readTestSuiteJUnitXml(testSuitesNode.testsuite.at(n), buildRequestedFor, runTitle, fileNumber, fileName);
                     runSummary.duration += testSuiteSummary.duration;
                     runSummary.addResults(testSuiteSummary.results);
                     runSummary.host = testSuiteSummary.host;
                     runSummary.name = testSuiteSummary.name;
-                    if(runSummary.timeStamp > testSuiteSummary.timeStamp) {
+
+                    if (runSummary.timeStamp > testSuiteSummary.timeStamp) {
                         runSummary.timeStamp = testSuiteSummary.timeStamp; //use earlier Date for run start time
                     }
                 }
-                if(numTestSuites > 1) {
-                    runSummary.name = "JUnit";
+
+                if (!(runTitle && 0 !== runTitle.length)) {
+                    if (numTestSuites > 1) {
+                        runSummary.name = this.runTitleJunit(fileName, parseInt(fileNumber));
+                    }
                 }
             }
         }
         else {
-            if(res.testsuite) {
+            if (res.testsuite) {
                 var testSuiteNode = res.testsuite.at(0);
             }
-            if(testSuiteNode) {
-                runSummary = this.readTestSuiteJUnitXml(testSuiteNode, buildRequestedFor);
+            if (testSuiteNode) {
+                runSummary = this.readTestSuiteJUnitXml(testSuiteNode, buildRequestedFor, runTitle, fileNumber, fileName);
             }
-        }            
+        }
 
         var completedDate = runSummary.timeStamp;
         completedDate.setSeconds(runSummary.timeStamp.getSeconds() + runSummary.duration);
-
+        
         //create test run data
-        var testRun =    <testifm.RunCreateModel>{
+        var testRun = <testifm.RunCreateModel>{
             name: runSummary.name,
             state: "InProgress",
             automated: true,
@@ -183,56 +198,61 @@ export class ResultReader {
         testRun2 = <ifm.TestRunWithResults>{
             testRun: testRun,
             testResults: runSummary.results,
-        };         
-
+        };
         return testRun2;
     }
 
-    private readTestSuiteJUnitXml(rootNode, buildRequestedFor) {
+    private readTestSuiteJUnitXml(rootNode, buildRequestedFor, runTitle, fileNumber, fileName) {
         var testSuiteSummary = new TestSuiteSummary();
         var totalRunDuration = 0;
         var totalTestCaseDuration = 0;
 
-        if(rootNode.attributes().name) {
+        if (runTitle && 0 !== runTitle.length) {
+            testSuiteSummary.name = this.fileNumberToTitle(runTitle, parseInt(fileNumber));
+        }
+        else if (rootNode.attributes().name) {
             testSuiteSummary.name = rootNode.attributes().name;
         }
+        else {
+            testSuiteSummary.name = this.runTitleJunit(fileName, parseInt(fileNumber));
+        }
 
-        if(rootNode.attributes().hostname) {
+        if (rootNode.attributes().hostname) {
             testSuiteSummary.host = rootNode.attributes().hostname;
         }
 
         //assume runtimes from xml are current local time since timezone information is not in the xml. If xml date > current local date, fall back to local
-        if(rootNode.attributes().timestamp) {
+        if (rootNode.attributes().timestamp) {
             var timestampFromXml = new Date(rootNode.attributes().timestamp);
-            if(timestampFromXml < new Date()) {
+            if (timestampFromXml < new Date()) {
                 testSuiteSummary.timeStamp = timestampFromXml;
-            }                    
+            }
         }
 
-        if(rootNode.attributes().time) {
+        if (rootNode.attributes().time) {
             totalRunDuration = parseFloat(rootNode.attributes().time); //in seconds
         }
-
+        
         //find test case nodes in JUnit result xml
         var testResults = [];
 
-        for(var i = 0; i < rootNode.testcase.count(); i ++) {
+        for (var i = 0; i < rootNode.testcase.count(); i++) {
             var testCaseNode = rootNode.testcase.at(i);
 
             //testcase name and type
             var testName = "";
-            if(testCaseNode.attributes().name) {
-                testName = testCaseNode.attributes().name;                    
-            } 
+            if (testCaseNode.attributes().name) {
+                testName = testCaseNode.attributes().name;
+            }
 
             var testStorage = "";
-            if(testCaseNode.attributes().classname) {
+            if (testCaseNode.attributes().classname) {
                 testStorage = testCaseNode.attributes().classname;
             }
 
             //testcase duration
             var testCaseDuration = 0; //in seconds
-            if(testCaseNode.attributes().time) {
+            if (testCaseNode.attributes().time) {
                 testCaseDuration = parseFloat(testCaseNode.attributes().time);
                 totalTestCaseDuration += testCaseDuration;
             }
@@ -241,7 +261,7 @@ export class ResultReader {
             var outcome = "Passed";
             var errorMessage = "";
             var stackTrace = "";
-            if(testCaseNode.failure) {
+            if (testCaseNode.failure) {
                 outcome = "Failed";
                 if (testCaseNode.failure.text) {
                     stackTrace = testCaseNode.failure.text();
@@ -250,7 +270,7 @@ export class ResultReader {
                     errorMessage = testCaseNode.failure.attributes().message;
                 }
             }
-            else if(testCaseNode.error) {
+            else if (testCaseNode.error) {
                 outcome = "Failed";
                 if (testCaseNode.error.text) {
                     stackTrace = testCaseNode.error.text();
@@ -264,14 +284,14 @@ export class ResultReader {
                 errorMessage = testCaseNode.skipped.text();
             }
 
-            var testResult : testifm.TestResultCreateModel = <testifm.TestResultCreateModel> {
+            var testResult: testifm.TestResultCreateModel = <testifm.TestResultCreateModel>{
                 state: "Completed",
                 computerName: testSuiteSummary.host,
                 testCasePriority: "1",
                 automatedTestName: testName,
                 automatedTestStorage: testStorage,
                 automatedTestType: "JUnit",
-                owner: { id: buildRequestedFor }, 
+                owner: { id: buildRequestedFor },
                 runBy: { id: buildRequestedFor },
                 testCaseTitle: testName,
                 outcome: outcome,
@@ -279,53 +299,55 @@ export class ResultReader {
                 durationInMs: "" + Math.round(testCaseDuration * 1000), //convert to milliseconds and round to nearest whole number since server can't handle decimals for test case duration
                 stackTrace: stackTrace
             };
-                
-            testResults.push(testResult);
-        }    
 
-        if(totalRunDuration < totalTestCaseDuration) {
+            testResults.push(testResult);
+        }
+
+        if (totalRunDuration < totalTestCaseDuration) {
             totalRunDuration = totalTestCaseDuration; //run duration may not be set in the xml, so use the testcase duration
         }
         testSuiteSummary.duration = totalRunDuration;
         testSuiteSummary.addResults(testResults);
-
         return testSuiteSummary;
     }
 
     private parseNUnitXml(res, runContext) {
         var testRun2: ifm.TestRunWithResults;
-        
+
         var buildId = runContext.buildId;
         var buildRequestedFor = runContext.requestedFor;
         var releaseUri = runContext.releaseUri;
         var releaseEnvironmentUri = runContext.releaseEnvironmentUri;
-
+        var runTitle = runContext.runTitle;
+        var fileNumber = runContext.fileNumber;		
+        
         //read test run summary - runname, host, start time, run duration
-        var runName = "NUnit";
-        var runStartTime = new Date(); 
+        var runName = this.runTitleNunitAndXunit(runTitle, fileNumber, "NUnit");
+        var runStartTime = new Date();
         var totalRunDuration = 0;
 
         var rootNode = res["test-results"].at(0);
-        if(rootNode) {
-                
-            if(rootNode.attributes().name) {
-                runName = rootNode.attributes().name;
+        if (rootNode) {
+            if (!(runTitle && 0 !== runTitle.length)) {
+                if (rootNode.attributes().name) {
+                    runName = rootNode.attributes().name;
+                }
             }
 
             var dateFromXml = new Date();
-            if(rootNode.attributes().date) {
+            if (rootNode.attributes().date) {
                 dateFromXml = rootNode.attributes().date;
             }
 
             var timeFromXml = "00:00:00";
-            if(rootNode.attributes().time) {
+            if (rootNode.attributes().time) {
                 timeFromXml = rootNode.attributes().time;
             }
-            
+
             var dateTimeFromXml = new Date(dateFromXml + "T" + timeFromXml);
             if (dateTimeFromXml < new Date()) {
                 runStartTime = dateTimeFromXml;
-            }                
+            }
         }
 
         //run environment - platform, config, hostname
@@ -334,26 +356,26 @@ export class ResultReader {
         var runUser = "";
         var hostName = "";
 
-        if(rootNode.environment) { var envNode = rootNode.environment.at(0); }
+        if (rootNode.environment) { var envNode = rootNode.environment.at(0); }
 
-        if(envNode) {
-            
-            if(envNode.attributes()["machine-name"]) {
+        if (envNode) {
+
+            if (envNode.attributes()["machine-name"]) {
                 hostName = envNode.attributes()["machine-name"];
             }
 
-            if(envNode.attributes().platform) {
+            if (envNode.attributes().platform) {
                 platform = envNode.attributes().platform;
             }
         }            
 
         //get all test cases
         var testResults = [];
-        
-        for(var t = 0; t < rootNode["test-suite"].count(); t ++) { 
+
+        for (var t = 0; t < rootNode["test-suite"].count(); t++) {
             testResults = testResults.concat(this.FindNUnitTestCaseNodes(rootNode["test-suite"].at(t), hostName, buildRequestedFor, rootNode.attributes().name));
 
-            if(rootNode["test-suite"].at(t).attributes().time) {
+            if (rootNode["test-suite"].at(t).attributes().time) {
                 totalRunDuration += parseFloat(rootNode["test-suite"].at(t).attributes().time);
             }
         }
@@ -362,7 +384,7 @@ export class ResultReader {
         completedDate.setSeconds(runStartTime.getSeconds() + totalRunDuration);
 
         //create test run data
-        var testRun: testifm.RunCreateModel = <testifm.RunCreateModel>    {
+        var testRun: testifm.RunCreateModel = <testifm.RunCreateModel>{
             name: runName,
             state: "InProgress",
             automated: true,
@@ -378,35 +400,35 @@ export class ResultReader {
         testRun2 = <ifm.TestRunWithResults>{
             testRun: testRun,
             testResults: testResults,
-        };         
+        };
 
         return testRun2;
     }
 
-    private FindNUnitTestCaseNodes(startNode, hostName : string, buildRequestedFor : string, assemblyName : string) {
-        
+    private FindNUnitTestCaseNodes(startNode, hostName: string, buildRequestedFor: string, assemblyName: string) {
+
         var foundTestResults = [];
-        
+
         var testStorage = assemblyName;
-        if(startNode.attributes().type == "Assembly") {
+        if (startNode.attributes().type == "Assembly") {
             testStorage = startNode.attributes().name;
         }
 
         //if test-case node exist, read test case information
-        if(startNode.results["test-case"]) {
-            
-            for(var i = 0; i < startNode.results["test-case"].count(); i ++) {
+        if (startNode.results["test-case"]) {
+
+            for (var i = 0; i < startNode.results["test-case"].count(); i++) {
                 var testCaseNode = startNode.results["test-case"].at(i);
                 
                 //testcase name and type
                 var testName = "";
-                if(testCaseNode.attributes().name) {
+                if (testCaseNode.attributes().name) {
                     testName = testCaseNode.attributes().name;
                 }                                                               
 
                 //testcase duration
                 var testCaseDuration = 0; //in seconds
-                if(testCaseNode.attributes().time) {
+                if (testCaseNode.attributes().time) {
                     testCaseDuration = parseFloat(testCaseNode.attributes().time);
                 }                            
 
@@ -414,17 +436,17 @@ export class ResultReader {
                 var outcome = "Passed";
                 var errorMessage = "";
                 var stackTrace = "";
-                if(testCaseNode.failure) {
+                if (testCaseNode.failure) {
                     outcome = "Failed";
-                    if(testCaseNode.failure.message && testCaseNode.failure.message.text) {
+                    if (testCaseNode.failure.message && testCaseNode.failure.message.text) {
                         errorMessage = testCaseNode.failure.message.text();
                     }
-                    if(testCaseNode.failure["stack-trace"] && testCaseNode.failure["stack-trace"].text) {
+                    if (testCaseNode.failure["stack-trace"] && testCaseNode.failure["stack-trace"].text) {
                         stackTrace = testCaseNode.failure["stack-trace"].text();
                     }
-                }      
-                
-                var testResult : testifm.TestResultCreateModel = <testifm.TestResultCreateModel> {
+                }
+
+                var testResult: testifm.TestResultCreateModel = <testifm.TestResultCreateModel>{
                     state: "Completed",
                     computerName: hostName,
                     testCasePriority: "1",
@@ -441,38 +463,41 @@ export class ResultReader {
                 };
 
                 foundTestResults.push(testResult);
-            }            
-        }   
+            }
+        }
 
-        if(startNode.results["test-suite"]) {
-            for(var j = 0; j < startNode.results["test-suite"].count(); j++) {
+        if (startNode.results["test-suite"]) {
+            for (var j = 0; j < startNode.results["test-suite"].count(); j++) {
                 foundTestResults = foundTestResults.concat(this.FindNUnitTestCaseNodes(startNode.results["test-suite"].at(j), hostName, buildRequestedFor, testStorage));
             }
-        }                      
-        
+        }
+
         return foundTestResults;
     }
 
     private parseXUnitXml(res, runContext) {
         var testRun2: ifm.TestRunWithResults;
 
-        var buildId, buildRequestedFor, platform, config;
+        var buildId, buildRequestedFor, platform, config, runTitle, fileNumber;
 
         if (runContext) {
             //Build ID, run user.
             buildId = runContext.buildId;
             buildRequestedFor = runContext.requestedFor;              
 
-            //Run environment - platform, config, host name.
+            //Run environment - platform, config, host name, run title, file number.
             platform = runContext.platform;
             config = runContext.config;
+            runTitle = runContext.runTitle;
+            fileNumber = runContext.fileNumber;
 
             //Release uri, Release environment uri
             var releaseUri = runContext.releaseUri;
             var releaseEnvironmentUri = runContext.releaseEnvironmentUri;
         }
 
-        var runName = "XUnit Test Run";
+        var runName = this.runTitleNunitAndXunit(runTitle, fileNumber, "XUnit Test Run", config, platform);
+
         var runStartTime = new Date();
         var totalRunDuration = 0;
         var hostName = "";
@@ -597,7 +622,52 @@ export class ResultReader {
 
         return foundTestResults;
     }
+
+    private runTitleJunit(fileName, fileNumber) {
+        var name = "JUnit";
+
+        if (fileName && 0 !== fileName.length) {
+            return (name + " " + fileName);
+        }
+        else {
+            if (fileNumber > 0) {
+                return (name + " " + fileNumber);
+            }
+        }
+
+        return name;
+    }
+
+    private runTitleNunitAndXunit(runTitle, fileNumber, formatType, config = "", platform = ""): string {
+        if (runTitle && 0 !== runTitle.length) {
+            return this.fileNumberToTitle(runTitle, parseInt(fileNumber));
+        }
+        else {
+            if (fileNumber == 0) {
+                if (config && platform && 0 !== config.length && 0 !== platform.length) {
+                    return (formatType + " " + config + " " + platform);
+                }
+                else {
+                    return formatType;
+                }
+            }
+            else {
+                if (config && platform && 0 !== config.length && 0 !== platform.length) {
+                    return (formatType + " " + config + " " + platform + " " + fileNumber);
+                }
+                else {
+                    return (formatType + " " + fileNumber);
+                }
+            }
+        }
+    }
+
+    private fileNumberToTitle(runTitle, fileNumber) {
+        if (fileNumber > 0) {
+            return (runTitle + " " + fileNumber);
+        }
+
+        return runTitle;
+    }
+
 }
-
-
-
