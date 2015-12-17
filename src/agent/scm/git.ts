@@ -51,8 +51,8 @@ export class GitScmProvider extends scmm.ScmProvider {
 
             switch (scheme) {
                 case 'UsernamePassword':
-                    this.username = this.getAuthParameter(authorization, 'Username') || 'not supplied';
-                    this.password = this.getAuthParameter(authorization, 'Password') || 'not supplied';
+                    this.username = this.getAuthParameter(authorization, 'Username') || this.getAuthParameter(authorization, 'username') || 'not supplied';
+                    this.password = this.getAuthParameter(authorization, 'Password') || this.getAuthParameter(authorization, 'password') || 'not supplied';
                     break;
 
                 default:
