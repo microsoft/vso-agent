@@ -23,6 +23,8 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
         this.svnw.on('stderr', (data) => {
             ctx.info(data.toString());
         });
+        
+        this.environmentVariables = this._getEnvironmentVariables(ctx);
 
         super(ctx, endpoint);
     }
@@ -35,6 +37,7 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
     public endpoint: agentifm.ServiceEndpoint;
     public defaultRevision: string;
     public defaultBranch: string;
+    public environmentVariables: cm.IStringDictionary;
 
     public setAuthorization(authorization: agentifm.EndpointAuthorization) {
 
@@ -115,7 +118,6 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
                 var mapping: sw.SvnMappingDetails = newMappings[localPath];
                 var serverPath: string = mapping.serverPath;
                 var effectiveRevision: string = mapping.revision.toUpperCase() === 'HEAD' ? latestRevision : mapping.revision;
-                var r = this.svnw.getLatestRevision(serverPath, this.defaultRevision)
                 var effectiveMapping: sw.SvnMappingDetails = {
                         localPath: mapping.localPath,
                         serverPath: mapping.serverPath,
@@ -249,10 +251,20 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
         
         return distinctMappings;
     }
+
+    private _getEnvironmentVariables(ctx: cm.IExecutionContext): cm.IStringDictionary {
+        var environment = ctx.jobInfo.jobMessage.environment;
+        var variables: cm.IStringDictionary = {};
+        if (environment.variables) {
+            for (var key in environment.variables) {
+                variables[key.toLowerCase()] = environment.variables[key];
+            }
+        }
+        return variables;
+    }
     
     private _expandEnvironmentVariables(s: string): string {
-        var environment = this.ctx.jobInfo.jobMessage.environment;
-        return (s || '').replaceVars(environment.variables);
+        return (s || '').replaceVars(this.environmentVariables);
     }
     
     private _buildNewMappings(endpoint: agentifm.ServiceEndpoint): sw.ISvnMappingDictionary {
