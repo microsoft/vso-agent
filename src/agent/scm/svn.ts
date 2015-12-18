@@ -69,7 +69,7 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
     public getCode(): Q.Promise<number> {
         this._ensurePathExist(this.targetPath);
 
-        var srcVersion = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceVersion'];
+        var srcVersion = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceVersion'] || "HEAD";
         var srcBranch = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceBranch'];
         this.defaultRevision = this._expandEnvironmentVariables(srcVersion);
         this.defaultBranch = this._normalizeRelativePath(this._expandEnvironmentVariables(srcBranch));
