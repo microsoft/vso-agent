@@ -187,8 +187,8 @@ export class SvnWrapper extends events.EventEmitter {
         return deferred.promise;
     }
 
-    public getLatestRevision(sourceBranch: string, sourceRevision: string): Q.Promise<string> {
-        return this._shellExec('info', [this.buildSvnUrl(sourceBranch), 
+    public getLatestRevision(serverPath: string, sourceRevision: string): Q.Promise<string> {
+        return this._shellExec('info', [this.buildSvnUrl(serverPath), 
                                         "--depth", "empty", 
                                         "--revision", sourceRevision, 
                                         "--xml"])
@@ -278,14 +278,14 @@ export class SvnWrapper extends events.EventEmitter {
         return this._exec('checkout', args);
     }
 
-    public buildSvnUrl(sourceBranch: string, serverPath?: string): string {
+    public buildSvnUrl(serverPath?: string): string {
         var url: string = this.endpoint.url;
         
         if ((url == null) || (url.length == 0)) {
             throw new Error("Connection endpoint URL cannot be empty.")
         }
         
-        url = this.appendPath(url.replace('\\', '/'), sourceBranch);
+        url = url.replace('\\', '/');
         if (serverPath) {
             url = this.appendPath(url, serverPath);
         }
