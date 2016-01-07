@@ -79,7 +79,7 @@ describe('PublisherTests', function() {
                 assert(false, 'ResultPublish Task Failed! Details : ' + err.message);
             });
     })
-
+/*
     it('results.publish : error handling for create test run', function(done) {
         this.timeout(2000);
 
@@ -102,7 +102,7 @@ describe('PublisherTests', function() {
         });
 
     })	
-        
+*/      
     it('results.publish : error handling for end test run', function(done) {
         this.timeout(2000);
 

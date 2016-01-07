@@ -41,7 +41,7 @@ describe('Release plugin before job', () => {
         assert(hash === "9cab5c7aa406b27c1c4d011e3c3eb222df7d107e90f1ce4cbf87ecfaa2b40c9e");
         done();
     });
-
+/*
     it("Cleans up the artifact directory", (done) => {
         for (var currentLine = 0; currentLine < config.settings.logSettings.linesPerFile; currentLine++) {
             writer.write('line ' + currentLine + '\n');
@@ -62,7 +62,7 @@ describe('Release plugin before job', () => {
         assert(files.length === 0, 'expected folder to be empty, found files: ' + files.length);
         done();
     });
-
+*/
     it("Sets the variables", (done) => {
         var context = new ctx.TestExecutionContext(new jobInf.TestJobInfo({}));
         plugin.setAndLogLocalVariables(context, folder, []);
