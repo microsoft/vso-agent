@@ -109,7 +109,7 @@ export function setAndLogLocalVariables(context: common.IExecutionContext, artif
 
     context.variables[releaseCommon.releaseVars.agentReleaseDirectory] = artifactsFolder;
     context.variables[releaseCommon.releaseVars.systemArtifactsDirectory] = artifactsFolder;
-    context.variables[common.AutomationVariables.defaultWorkingDirectory] = artifactsFolder;
+    context.variables[common.AutomationVariables.systemDefaultWorkingDirectory] = artifactsFolder;
 
     context.verbose('Environment variables available are below.  Note that these environment variables can be referred to in the task (in the ReleaseDefinition) by replacing "_" with "." e.g. AGENT_WORKINGDIRECTORY environment variable can be referenced using Agent.WorkingDirectory in the ReleaseDefinition:' + JSON.stringify(context.variables, null, 2));
 }

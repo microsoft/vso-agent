@@ -105,6 +105,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         variables['build.sourceDirectory'] = repoPath;     
                 
         variables[cm.vars.buildSourcesDirectory] = repoPath;
+        variables[cm.vars.systemDefaultWorkingDirectory] = repoPath;
         variables[cm.vars.buildArtifactStagingDirectory] = path.join(workingFolder, srcMap.build_artifactstagingdirectory);
 
         // back compat with old publish artifacts task

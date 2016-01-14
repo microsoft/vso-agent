@@ -40,7 +40,7 @@ export class AutomationVariables {
     public static systemTfCollectionUri = 'system.teamFoundationCollectionUri';
     public static systemTeamProjectId = 'system.teamProjectId';
     public static systemDebug = 'system.debug';
-    public static defaultWorkingDirectory = 'system.defaultWorkingDirectory';
+    public static systemDefaultWorkingDirectory = 'system.defaultWorkingDirectory';
     public static systemTaskDefinitionsUri = 'system.taskDefinitionsUri';
     public static systemAccessToken = 'system.accessToken';
     public static systemEnableAccessToken = 'system.enableAccessToken';
