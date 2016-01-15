@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# run to install
+# curl -sSL https://raw.githubusercontent.com/Microsoft/vso-agent/master/getagent.sh | sh
+
 DEFAULT_NODE_VERSION="4.2.4"
 #no version is latest
 DEFAULT_AGENT_VERSION=""
@@ -85,27 +88,35 @@ fi
 mkdir -p "runtime/node"
 cp -R ${node_file}/ "runtime/"
 
-echo uid is $uid
-
 writeHeader "Installing agent globally"  
 echo Installing...
-sudo npm install vsoagent-installer${agent_version} -g &> /dev/null
+install_name=vsoagent-installer${agent_version}
+
+# support installing locally built agent - provide location of the built package
+# export XPLAT_PKG
+script_dir=$(dirname $0)
+echo script location: ${script_dir}
+if [ ${XPLAT_PKG} ]; then
+    echo Dev Install.  Using location ${script_dir}
+    install_name=${script_dir}
+fi
+
+sudo npm install ${install_name} -g &> /dev/null
 checkRC "npm install"
 
 writeHeader "Creating agent"
 vsoagent-installer
 checkRC "vsoagent-installer"
 
-writeHeader "Done"
-echo Use the following scripts
+writeHeader "Next Steps ..."
 echo
 echo Configure:
 echo ./agent/configure.sh
 echo
-echo Start Interactively:
-echo ./agent/start.sh
+echo Run Interactively:
+echo ./run.sh
 echo
-echo "See documentation for more commands"
+echo "See documentation for more options"
 echo
 
 
