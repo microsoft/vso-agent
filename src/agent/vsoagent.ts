@@ -25,6 +25,10 @@ var semver = require('semver');
 
 var inDebugger = (typeof global.v8debug === 'object');
 
+var args = process.argv.slice(2);
+var nostart = args[0] && args[0] == 'nostart';
+
+
 var supported = ['darwin', 'linux'];
 if (supported.indexOf(process.platform) == -1) {
     console.error('Unsupported platform: ' + process.platform);
@@ -136,6 +140,11 @@ cm.readBasicCreds()
 
     if (!settings) {
         throw (new Error('Settings not configured.'));
+    }
+
+    if (nostart) {
+        console.log('Done');
+        process.exit(0);
     }
 
     var agent: agentifm.TaskAgent = config.agent;

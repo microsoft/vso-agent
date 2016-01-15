@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# TODO:
+# node handler uses private copy
+# doc separate scenarios
+
 # run to install
 # curl -sSL https://raw.githubusercontent.com/Microsoft/vso-agent/master/getagent.sh | sh
 
@@ -26,9 +30,6 @@ if [ ! $node_version ]; then
     node_version=$DEFAULT_NODE_VERSION
 fi
 
-echo $agent_version $node_version
-#exit 0
-
 uid=`id -u`
 platform=`uname`
 
@@ -41,9 +42,35 @@ function checkRC() {
 
 function writeHeader() {
     echo 
-    echo "--- ${1} ---"
+    echo "********** ${1} **********"
     echo
 }
+
+# ------------------------------------------------------------
+# Install Agent
+# ------------------------------------------------------------
+
+writeHeader "Installing agent globally"  
+echo Installing...
+install_name=vsoagent-installer${agent_version}
+
+# support installing locally built agent
+# run script through curl and piping to sh will have dir of .
+# if you run from locally built 
+script_dir=$(dirname $0)
+echo script location: ${script_dir}
+if [ ${script_dir} != "." ] && [ ${script_dir} ]; then
+    echo Dev Install.  Using location ${script_dir}
+    install_name=${script_dir}
+fi
+
+sudo npm install ${install_name} -g &> /dev/null
+checkRC "npm install"
+
+writeHeader "Creating agent"
+vsoagent-installer
+checkRC "vsoagent-installer"
+
 # ------------------------------------------------------------
 # Download Node
 # ------------------------------------------------------------
@@ -88,37 +115,20 @@ fi
 mkdir -p "runtime/node"
 cp -R ${node_file}/ "runtime/"
 
-writeHeader "Installing agent globally"  
-echo Installing...
-install_name=vsoagent-installer${agent_version}
-
-# support installing locally built agent - provide location of the built package
-# export XPLAT_PKG
-script_dir=$(dirname $0)
-echo script location: ${script_dir}
-if [ ${XPLAT_PKG} ]; then
-    echo Dev Install.  Using location ${script_dir}
-    install_name=${script_dir}
-fi
-
-sudo npm install ${install_name} -g &> /dev/null
-checkRC "npm install"
-
-writeHeader "Creating agent"
-vsoagent-installer
-checkRC "vsoagent-installer"
-
-writeHeader "Next Steps ..."
-echo
-echo Configure:
-echo ./agent/configure.sh
+writeHeader "Configuration Options:"
 echo
 echo Run Interactively:
 echo ./run.sh
 echo
+echo Configure Again:
+echo ./configure.sh
+echo
 echo "See documentation for more options"
 echo
 
-
-
+writeHeader "Configurating and Running Agent"
+echo
+echo ctrl-c to stop ...
+echo
+./runtime/bin/node agent/vsoagent.js
 

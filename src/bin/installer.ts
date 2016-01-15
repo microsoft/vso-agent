@@ -46,17 +46,18 @@ if (shell.test('-f', pkgTarget)) {
 // copy new bits
 console.log('Copying: ', agentDir, targetDir);
 shell.cp('-R', agentDir, targetDir);
-
 var modsDir = path.join(installDir, 'node_modules');
 var targetAgent = path.join(targetDir, 'agent');
 console.log('Copying: ', modsDir, targetDir);
 shell.cp('-R', modsDir, targetDir);
 shell.cp(path.join(installDir, 'package.json'), targetDir);
-
-console.log('making scripts executable')
+shell.cp(path.join(installDir, 'run.sh'), targetDir);
+shell.cp(path.join(installDir, 'configure.sh'), targetDir);
+console.log('making scripts executable');
+shell.chmod('u+x', path.join(targetDir, 'run.sh'));
+shell.chmod('u+x', path.join(targetDir, 'configure.sh'));
 shell.chmod('u+x', path.join(targetAgent, 'svc.sh'));
 shell.chmod('u+x', path.join(targetAgent, 'plugins/build/lib/askpass.js'));
 shell.chmod('u+x', path.join(targetAgent, 'scm/lib/credhelper.js'));
 shell.chmod('u+x', path.join(targetAgent, 'scm/lib/gitw.js'));
-
 console.log('Done.');

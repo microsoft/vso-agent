@@ -38,6 +38,7 @@ gulp.task('copy', ['clean'], function () {
 		gulp.src(['admin/dev.sh']).pipe(gulp.dest(packageRoot)),
 		gulp.src(['getagent.sh']).pipe(gulp.dest(buildPath)),
 		gulp.src(['run.sh']).pipe(gulp.dest(buildPath)),
+		gulp.src(['configure.sh']).pipe(gulp.dest(buildPath)),
 		gulp.src(['package.json']).pipe(gulp.dest(buildPath)),
 		gulp.src(['src/agent/svc.sh']).pipe(gulp.dest(agentPath)),
 	    gulp.src(['src/agent/plugins/build/lib/askpass.js']).pipe(gulp.dest(buildPluginLibPath)),

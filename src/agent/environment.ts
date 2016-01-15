@@ -157,7 +157,7 @@ var resolveCapability = function (filteredEnv: any, tool: any, capability?: stri
     }
 
     if (!result) {
-        cm.consoleTrace('cap ' + toolName + ' not found');
+        // cm.consoleTrace('cap ' + toolName + ' not found');
     }
     return result;
 }
@@ -177,7 +177,7 @@ var resolveCapabilityViaShell = function(filteredEnv: any, command: string, args
 
 // Adds the specified capability name and value to the specified environment.
 var setCapability = function (filteredEnv: cm.IStringDictionary, name: string, val: string) {
-    cm.consoleTrace('cap ' + name + '=' + val);
+    // cm.consoleTrace('cap ' + name + '=' + val);
     filteredEnv[name.trim()] = val;
 }
 
