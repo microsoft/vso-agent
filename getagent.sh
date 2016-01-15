@@ -42,7 +42,9 @@ function checkRC() {
 
 function writeHeader() {
     echo 
-    echo "********** ${1} **********"
+    echo --------------------------------------
+    echo "     ${1} "
+    echo --------------------------------------
     echo
 }
 
@@ -64,6 +66,7 @@ if [ ${script_dir} != "." ] && [ ${script_dir} ]; then
     install_name=${script_dir}
 fi
 
+echo installing ${install_name} ...
 sudo npm install ${install_name} -g &> /dev/null
 checkRC "npm install"
 
@@ -115,9 +118,8 @@ fi
 mkdir -p "runtime/node"
 cp -R ${node_file}/ "runtime/"
 
-writeHeader "Configuration Options:"
-echo
-echo Run Interactively:
+writeHeader "Agent Installed! Next Steps:"
+echo Run and Configure Interactively:
 echo ./run.sh
 echo
 echo Configure Again:
@@ -126,9 +128,4 @@ echo
 echo "See documentation for more options"
 echo
 
-writeHeader "Configurating and Running Agent"
-echo
-echo ctrl-c to stop ...
-echo
-./runtime/bin/node agent/vsoagent.js
 
