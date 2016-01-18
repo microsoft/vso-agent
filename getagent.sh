@@ -5,7 +5,7 @@
 # doc separate scenarios
 
 # run to install
-# curl -sSL https://raw.githubusercontent.com/Microsoft/vso-agent/master/getagent.sh | sh
+# curl -sSL https://raw.githubusercontent.com/Microsoft/vso-agent/master/getagent.sh | bash
 
 DEFAULT_NODE_VERSION="4.2.4"
 #no version is latest
@@ -17,6 +17,10 @@ function failed()
    echo "Failed: $error" >&2
    exit 1
 }
+
+if [[ $(id -u) -eq 0 ]]; then
+    failed "Install cannot be run as root.  Do not use sudo".
+fi
 
 agent_version=$1
 

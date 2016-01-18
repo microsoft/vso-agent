@@ -1,4 +1,4 @@
-~/Testing/test2$ curl -sSL https://raw.githubusercontent.com/Microsoft/vso-agent/master/getagent.sh | sh
+~/Testing/test2$ curl -sSL https://raw.githubusercontent.com/Microsoft/vso-agent/master/getagent.sh | bash
 
 --------------------------------------
      Installing agent globally 

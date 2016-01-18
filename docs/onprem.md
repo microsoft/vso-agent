@@ -12,7 +12,7 @@ Copy and paste the curl line.  If your linux box does not have curl [follow this
 mkdir myagent
 cd my agent
 
-curl -sSL https://raw.githubusercontent.com/Microsoft/vso-agent/master/getagent.sh | sh
+curl -sSL https://raw.githubusercontent.com/Microsoft/vso-agent/master/getagent.sh | bash
 ```
 Your output should look [similar to this](sampleoutput.md)
 
@@ -22,3 +22,7 @@ Your output should look [similar to this](sampleoutput.md)
 If you have Server and Agent without internet access, it's possible to download and agent to a thumbdrive from a computer that has internet access (you need it to download :)) and then then use that to stamp out agents on your private network agent machines.
 
 Run the Install steps above and simply copy that created folder to a thumbdrive.  From the private agent, copy that folder and then follow the steps after Install to configure the agent.
+
+After copying the folder from the thumbdrive, ensure the logged on account has rwx permissions
+
+
