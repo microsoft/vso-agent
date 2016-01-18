@@ -24,5 +24,3 @@ If you have Server and Agent without internet access, it's possible to download 
 Run the Install steps above and simply copy that created folder to a thumbdrive.  From the private agent, copy that folder and then follow the steps after Install to configure the agent.
 
 After copying the folder from the thumbdrive, ensure the logged on account has rwx permissions
-
-

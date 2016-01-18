@@ -5,4 +5,4 @@ if [ -f ".agent" ]; then
     rm .agent
 fi
 
-./runtime/bin/node agent/vsoagent.js nostart
+./runtime/node/bin/node agent/vsoagent.js nostart

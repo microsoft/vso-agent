@@ -51,6 +51,8 @@ function writeHeader() {
     echo
 }
 
+mkdir -p _install
+
 # ------------------------------------------------------------
 # Install Agent
 # ------------------------------------------------------------
@@ -70,7 +72,7 @@ if [ ${script_dir} != "." ] && [ ${script_dir} ]; then
 fi
 
 echo installing ${install_name} ...
-sudo npm install ${install_name} -g &> _npminstall.log
+sudo npm install ${install_name} -g &> _install/npminstall.log
 checkRC "npm install"
 
 writeHeader "Creating agent"
@@ -109,8 +111,8 @@ fi
 if [ -d ${node_file} ]; then
     echo "Already extracted"
 else
-    tar zxvf ./${zip_file} &> /dev/null
-    checkRC "Unzip (tar)"    
+    tar zxvf ./${zip_file} &> _install/targz.log
+    checkRC "Unzip (tar)"
 fi
 
 if [ -d "runtime" ]; then
@@ -118,8 +120,14 @@ if [ -d "runtime" ]; then
     rm -rf "runtime"
 fi
 
-mkdir -p "runtime/node"
-cp -R ${node_file}/ "runtime/"
+rm -rf runtime/node
+mkdir -p runtime/node
+cp -R ${node_file}/. runtime/node
+
+# logging info for troubleshooting
+find . > _install/layout.log
+ls -la > _install/ls.log
+cat package.json | grep "\"version" > _install/version.log
 
 writeHeader "Agent Installed! Next Steps:"
 echo Run and Configure Interactively:
