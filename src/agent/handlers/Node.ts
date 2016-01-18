@@ -3,6 +3,7 @@
 
 var runner = require('./scriptrunner');
 var path = require('path');
+var fs = require('fs');
 
 import cm = require('../common');
 
@@ -13,5 +14,24 @@ import cm = require('../common');
 ///-------------------------------------------------------------------------------
 
 export function runTask(scriptPath: string, ctx: cm.IExecutionContext, callback): void {
-    runner.run('node', scriptPath, ctx, callback);
+    //
+    // New install method has node being pulled down into a runtime folder.  If it exists, use that one
+    // But since there can be existing agents configured directly from npm (soon not supported), fallback
+    //
+    var nodePath = 'node';
+    var internalNode = path.join(process.env['AGENT_HOMEDIRECTORY'], '..', 'runtime', 'node', 'bin', 'node');
+    try{
+        if (fs.existsSync(internalNode)) {
+            nodePath = internalNode;
+        }
+        else {
+            console.log('Warning: internal node not found at ' + internalNode);
+            console.log('Falling back to globally installed node.  Will be deprecated soon.');
+        }
+    }
+    catch (err) { 
+        // ignore and fall back to 
+    }
+
+    runner.run(nodePath, scriptPath, ctx, callback);
 }
