@@ -18,8 +18,10 @@ function failed()
    exit 1
 }
 
-if [[ $(id -u) -eq 0 ]]; then
-    failed "Install cannot be run as root.  Do not use sudo".
+uid=`id -u`
+platform=`uname`
+if [ $uid -eq 0 ]; then
+    failed "Install cannot be run as root.  Do not use sudo"
 fi
 
 agent_version=$1
@@ -33,9 +35,6 @@ node_version=$2
 if [ ! $node_version ]; then
     node_version=$DEFAULT_NODE_VERSION
 fi
-
-uid=`id -u`
-platform=`uname`
 
 function checkRC() {
     local rc=$?
@@ -71,7 +70,7 @@ if [ ${script_dir} != "." ] && [ ${script_dir} ]; then
 fi
 
 echo installing ${install_name} ...
-sudo npm install ${install_name} -g &> /dev/null
+sudo npm install ${install_name} -g &> _npminstall.log
 checkRC "npm install"
 
 writeHeader "Creating agent"
