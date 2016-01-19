@@ -1,4 +1,7 @@
-~/Testing/test2$ curl -sSL https://raw.githubusercontent.com/Microsoft/vso-agent/master/getagent.sh | bash
+Sample Install Output:
+
+```bash
+~/Testing/test2$ curl -sSL http://aka.ms/latestxplat | bash
 
 --------------------------------------
      Installing agent globally 
@@ -38,3 +41,4 @@ Configure Again:
 See documentation for more options
 
 ~/Testing/test2$
+```

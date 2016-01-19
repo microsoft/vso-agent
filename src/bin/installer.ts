@@ -37,10 +37,13 @@ if (shell.test('-d', modsTarget)) {
 	shell.rm('-rf', modsTarget);
 }
 
-var pkgTarget = path.join(targetDir, 'package.json');
-if (shell.test('-f', pkgTarget)) {
-	console.log('updating agent.  removing old package.json')
-	shell.rm('-f', pkgTarget);
+var overwriteFile = function(src, dest) {
+	console.log('writing: ' + dest);
+	if (shell.test('-f', dest)) {
+		shell.rm('-f', dest);
+	}
+
+	shell.cp(src, dest);
 }
 
 // copy new bits
@@ -50,9 +53,11 @@ var modsDir = path.join(installDir, 'node_modules');
 var targetAgent = path.join(targetDir, 'agent');
 console.log('Copying: ', modsDir, targetDir);
 shell.cp('-R', modsDir, targetDir);
-shell.cp(path.join(installDir, 'package.json'), targetDir);
-shell.cp(path.join(installDir, 'run.sh'), targetDir);
-shell.cp(path.join(installDir, 'configure.sh'), targetDir);
+
+overwriteFile(path.join(installDir, 'package.json'), path.join(targetDir, 'package.json'));
+overwriteFile(path.join(installDir, 'run.sh'), path.join(targetDir, 'run.sh'));
+overwriteFile(path.join(installDir, 'configure.sh'), path.join(targetDir, 'configure.sh'));
+
 console.log('making scripts executable');
 shell.chmod('u+x', path.join(targetDir, 'run.sh'));
 shell.chmod('u+x', path.join(targetDir, 'configure.sh'));
