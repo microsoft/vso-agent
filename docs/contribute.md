@@ -34,28 +34,12 @@ This creates a _package which is what is pushed to npm.
 ## Install from _package
 
 This installs from a local package instead of pulling from npm.
+
+Create a directory for your agent and run the getagent.sh script from the _package directory you built.
+
 ```bash
-cd _package
-$ sudo npm install ./vsoxplat -g
-```
-Go to Create Agent instructions
+~/Testing$ mkdir test && cd test
+~/Testing/test3$ ~/Projects/vso-agent/_package/vsoxplat/getagent.sh 
 
-### Run Tests
-
-To have the best coverage, these should be run from an OSX machine with Xcode and all the java tools.
-If toolsets for the relevant tests are not present, they will noop.
-
-Run all suites:
-```bash
-gulp test
-```
-
-Test agent and tasks:
-```bash
-gulp test --suite builds
-```
-
-Test vso-task-lib:
-```bash
-gulp test --suite tasklib
+Your output should look [similar to this](sampleoutput.md)
 ```

@@ -58,7 +58,7 @@ Before updating stop the agent (ctrl-c if interactive, if service [see run as a 
 
 From a terminal:
 ```bash
-curl -sSL https://raw.githubusercontent.com/Microsoft/vso-agent/master/getagent.sh | bash
+curl -sSL http://aka.ms/latestxplat | bash
 ```
 Your output should look [similar to this](sampleoutput.md)
 

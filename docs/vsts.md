@@ -1,4 +1,4 @@
-# VSTS Agent (cloud)
+# VSTS Agent (visualstudio.com)
 
 These instructions cover installing and configuring an agent to connect to you Visual Studio Team Services (cloud) account.
 
@@ -6,9 +6,10 @@ These instructions cover installing and configuring an agent to connect to you V
 
 Create a PAT token.  [Step by Step here](http://roadtoalm.com/2015/07/22/using-personal-access-tokens-to-access-visual-studio-online/)
 
-Add the user you created the PAT token for to both:
-1. Agent Pool Administrators (allows to register)
-2. Agent Pool Service Accounts
+Add the user you created the PAT token for to *both*:
+
+  1. Agent Pool Administrators (allows to register)
+  2. Agent Pool Service Accounts (allows listening to build queue)
 
 ![Agent Roles](roles.png "Agent Roles")
 
@@ -67,7 +68,7 @@ Before updating stop the agent (ctrl-c if interactive, if service [see run as a 
 
 From a terminal:
 ```bash
-curl -sSL https://raw.githubusercontent.com/Microsoft/vso-agent/master/getagent.sh | bash
+curl -sSL http://aka.ms/latestxplat | bash
 ```
 Your output should look [similar to this](sampleoutput.md)
 
