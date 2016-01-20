@@ -8,6 +8,7 @@ import path = require('path');
 import fm = require('./lib/feedback');
 import trp = require('../agent/testrunpublisher');
 import trr = require('../agent/testresultreader');
+import cm = require('../agent/common');
 import ifm = require('../agent/interfaces');
 import testifm = require('vso-node-api/interfaces/TestInterfaces');
 
@@ -24,10 +25,11 @@ describe('PublisherTests', function() {
         releaseUri: "abc",
         releaseEnvironmentUri: "xyz"
     };  
-
-    var readerJUnit = new trr.JUnitResultReader();    
-    var readerNUnit = new trr.NUnitResultReader();
-    var readerXUnit = new trr.XUnitResultReader();
+	
+	var command : cm.ITaskCommand;
+    var readerJUnit = new trr.JUnitResultReader(command);    
+    var readerNUnit = new trr.NUnitResultReader(command);
+    var readerXUnit = new trr.XUnitResultReader(command);
 
     var resultsFileJUnit = path.resolve(__dirname, './testresults/junitresults1.xml');
     var resultsFileNUnit = path.resolve(__dirname, './testresults/nunitresults.xml');

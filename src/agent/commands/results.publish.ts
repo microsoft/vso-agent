@@ -56,13 +56,13 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
 
         var reader;
         if (resultType == "junit") {
-            reader = new trr.JUnitResultReader();
+            reader = new trr.JUnitResultReader(this.command);
         }
         else if (resultType == "nunit") {
-            reader = new trr.NUnitResultReader();
+            reader = new trr.NUnitResultReader(this.command);
         }
         else if (resultType == "xunit") {
-            reader = new trr.XUnitResultReader();
+            reader = new trr.XUnitResultReader(this.command);
         }
         else if (resultType == "vstest") {
             this.command.warning("Test results of format '" + resultType + "'' are not supported on this build agent");
