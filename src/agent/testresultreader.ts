@@ -10,17 +10,17 @@ var xmlreader = require('xmlreader');
 var Q = require('q');
 
 export class JUnitResultReader implements trp.IResultReader {
-    
-	public command: cm.ITaskCommand;
-	
-	constructor(command: cm.ITaskCommand) {
+
+    public command: cm.ITaskCommand;
+
+    constructor(command: cm.ITaskCommand) {
         this.command = command;
     }
-	
-    public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRunWithResults> {
+
+    public readResults(file: string, runContext: trp.TestRunContext): Q.Promise<ifm.TestRunWithResults> {
         return new ResultReader("junit", this.command).readResults(file, runContext);
     }
-          
+
 }
 
 //-----------------------------------------------------
@@ -28,34 +28,34 @@ export class JUnitResultReader implements trp.IResultReader {
 // - file: string () - location of the NUnit results file 
 //-----------------------------------------------------
 export class NUnitResultReader implements trp.IResultReader {
-    
-	public command: cm.ITaskCommand;
-	
-	constructor(command: cm.ITaskCommand) {
+
+    public command: cm.ITaskCommand;
+
+    constructor(command: cm.ITaskCommand) {
         this.command = command;
     }
-	
-    public readResults(file: string, runContext: trp.TestRunContext) : Q.Promise<ifm.TestRunWithResults> {
-        return  new ResultReader("nunit", this.command).readResults(file, runContext);
-    }    
+
+    public readResults(file: string, runContext: trp.TestRunContext): Q.Promise<ifm.TestRunWithResults> {
+        return new ResultReader("nunit", this.command).readResults(file, runContext);
+    }
 
 }
 
 export class XUnitResultReader implements trp.IResultReader {
-	
-	public command: cm.ITaskCommand;
-	
-	constructor(command: cm.ITaskCommand) {
+
+    public command: cm.ITaskCommand;
+
+    constructor(command: cm.ITaskCommand) {
         this.command = command;
     }
-	
+
     public readResults(file: string, runContext: trp.TestRunContext): Q.Promise<ifm.TestRunWithResults> {
         return new ResultReader("xunit", this.command).readResults(file, runContext);
     }
 
 }
 
-export class TestSuiteSummary {  
+export class TestSuiteSummary {
     name: string;
     host: string;
     timeStamp: Date;
@@ -69,7 +69,7 @@ export class TestSuiteSummary {
         this.duration = 0;
         this.results = [];
     }
-    
+
     addResults(res) {
         this.results = this.results.concat(res);
     }
@@ -79,11 +79,11 @@ export class ResultReader {
 
     constructor(readerType: string, command: cm.ITaskCommand) {
         this.type = readerType;
-		this.command = command;
+        this.command = command;
     }
 
     private type: string;
-	public command: cm.ITaskCommand;
+    public command: cm.ITaskCommand;
 
     public readResults(file: string, runContext: trp.TestRunContext): Q.Promise<ifm.TestRunWithResults> {
         var defer = Q.defer();
@@ -171,8 +171,8 @@ export class ResultReader {
         if (testSuitesNode) {
             if (testSuitesNode.testsuite) {
                 var numTestSuites = testSuitesNode.testsuite.count();
-				
-				for (var n = 0; n < numTestSuites; n++) {
+
+                for (var n = 0; n < numTestSuites; n++) {
                     var testSuiteSummary = this.readTestSuiteJUnitXml(testSuitesNode.testsuite.at(n), buildRequestedFor, runTitle, fileNumber, fileName);
                     runSummary.duration += testSuiteSummary.duration;
                     runSummary.addResults(testSuiteSummary.results);
@@ -285,36 +285,36 @@ export class ResultReader {
             var stackTrace = "";
             if (testCaseNode.failure) {
                 outcome = "Failed";
-				var testNode;
-				
-				if(testCaseNode.failure.count() > 1){
-					this.command.warning("Multiple failures in the test case: " + testName + ". Picking the first for publishing!");
-					testNode = testCaseNode.failure.at(0);
-				}
-				else{
-					testNode = testCaseNode.failure;
-				}
-				
+                var testNode;
+
+                if (testCaseNode.failure.count() > 1) {
+                    this.command.warning("Multiple failures in the test case: " + testName + ". Picking the first for publishing!");
+                    testNode = testCaseNode.failure.at(0);
+                }
+                else {
+                    testNode = testCaseNode.failure;
+                }
+
                 if (testNode.text) {
                     stackTrace = testNode.text();
                 }
-				
+
                 if (testNode.attributes().message) {
                     errorMessage = testNode.attributes().message;
                 }
             }
             else if (testCaseNode.error) {
                 outcome = "Failed";
-				var testNode;
-				
-				if(testCaseNode.error.count() > 1){
-					this.command.warning("Multiple failures in the test case: " + testName + ". Picking the first for publishing!");
-					testNode = testCaseNode.error.at(0);
-				}
-				else{
-					testNode = testCaseNode.error;
-				}
-				
+                var testNode;
+
+                if (testCaseNode.error.count() > 1) {
+                    this.command.warning("Multiple failures in the test case: " + testName + ". Picking the first for publishing!");
+                    testNode = testCaseNode.error.at(0);
+                }
+                else {
+                    testNode = testCaseNode.error;
+                }
+
                 if (testNode.text) {
                     stackTrace = testNode.text();
                 }
