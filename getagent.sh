@@ -104,7 +104,7 @@ if [ -f ${zip_file} ]; then
 else
     node_url="https://nodejs.org/dist/v${node_version}/${zip_file}"
     echo "Downloading Node ${node_version}"
-    curl -ssLO $node_url
+    curl -skSLO $node_url &> _install/curl.log
     checkRC "Download (curl)"
 fi
 

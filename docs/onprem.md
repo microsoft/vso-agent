@@ -9,6 +9,19 @@ Ensure ssl/https to secure the communicattion channel since basic credentials in
 
 [Instructions Here](https://github.com/Microsoft/tfs-cli/blob/master/docs/configureBasicAuth.md)
 
+## Account and Roles
+
+Determine the local or domain user to use.  Add to *both* pool roles:
+
+  1. Agent Pool Administrators (allows to register)
+  2. Agent Pool Service Accounts (allows listening to build queue)
+
+![Agent Roles](roles.png "Agent Roles")
+
+Then add the account to the collection level "Project Collection Build Service Accounts" group for any collections it will build.
+
+![Project Collection Build Service Accounts](buildsvc.png "Project Collection Build Service Accounts")
+
 ## Install
 
 Running this from the command line (terminal) will download prereqs, install/update the agent bits globally and create an agent in your current directory.  Make a new directory for your agent
@@ -24,7 +37,7 @@ From a terminal:
 mkdir myagent
 cd my agent
 
-curl -sSL http://aka.ms/latestxplat | bash
+curl -skSL http://aka.ms/latestxplat | bash
 ```
 Your output should look [similar to this](sampleoutput.md)
 
@@ -58,7 +71,7 @@ Before updating stop the agent (ctrl-c if interactive, if service [see run as a 
 
 From a terminal:
 ```bash
-curl -sSL http://aka.ms/latestxplat | bash
+curl -skSL http://aka.ms/latestxplat | bash
 ```
 Your output should look [similar to this](sampleoutput.md)
 
