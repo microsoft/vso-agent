@@ -7,6 +7,7 @@ Related:[VSO Build Tasks](https://github.com/Microsoft/vso-agent-tasks), [VSO Ta
 ## Setup
 
 [Using your VSTS Account](docs/vsts.md)
+
 [Using TFS2015 OnPrem Server](docs/vsts.md)
 
 The docs have been updated and streamlined.  The previous and more manual docs are located [here](docs/old.md)
