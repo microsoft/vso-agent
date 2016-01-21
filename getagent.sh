@@ -100,7 +100,7 @@ mkdir -p runtime/node
 cp -R ${node_file}/. runtime/node
 
 # ensure we use private node and npm for rest of script
-PATH=./runtime/node/bin:$PATH
+PATH=`pwd`/runtime/node/bin:$PATH
 NPM_PATH=`which npm`
 echo "using node : `which node`"
 echo "using npm  : ${NPM_PATH}"
@@ -110,7 +110,13 @@ echo "using npm  : ${NPM_PATH}"
 # ------------------------------------------------------------
 
 writeHeader "Installing agent installer"
-rm *.sh
+echo "Cleaning up existing agent"
+
+if [ -f "package.json" ]; then
+    rm package.json
+    rm *.sh
+fi
+
 rm -rf agent
 rm -rf node_modules
 rm -rf _installer
@@ -138,9 +144,12 @@ writeHeader "Creating agent"
 popd
 cp -R _installer/node_modules/vsoagent-installer/agent .
 cp -R _installer/node_modules/vsoagent-installer/*.sh .
-rm -rf _installer/node_modules/vsoagent-installer
-cp -R _installer/node_modules .
+cp _installer/node_modules/vsoagent-installer/package.json .
+cp -R _installer/node_modules/vsoagent-installer/node_modules .
+
 chmod 777 *.sh
+
+rm -rf getagent.sh
 rm -rf _installer
 
 # logging info for troubleshooting
