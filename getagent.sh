@@ -51,33 +51,8 @@ function writeHeader() {
     echo
 }
 
+# password early in script
 mkdir -p _install
-
-# ------------------------------------------------------------
-# Install Agent
-# ------------------------------------------------------------
-
-writeHeader "Installing agent globally"  
-echo Installing...
-install_name=vsoagent-installer${agent_version}
-
-# support installing locally built agent
-# run script through curl and piping to sh will have dir of .
-# if you run from locally built 
-script_dir=$(dirname $0)
-echo script location: ${script_dir}
-if [ ${script_dir} != "." ] && [ ${script_dir} ]; then
-    echo Dev Install.  Using location ${script_dir}
-    install_name=${script_dir}
-fi
-
-echo installing ${install_name} ...
-sudo npm install ${install_name} -g &> _install/npminstall.log
-checkRC "npm install"
-
-writeHeader "Creating agent"
-vsoagent-installer
-checkRC "vsoagent-installer"
 
 # ------------------------------------------------------------
 # Download Node
@@ -123,6 +98,37 @@ fi
 rm -rf runtime/node
 mkdir -p runtime/node
 cp -R ${node_file}/. runtime/node
+
+# ensure we use private node and npm for rest of script
+PATH=./runtime/node/bin:$PATH
+echo "using node : `which node`"
+echo "using npm  : `which npm`"
+
+# ------------------------------------------------------------
+# Install Agent
+# ------------------------------------------------------------
+
+writeHeader "Installing agent globally"  
+echo Installing...
+install_name=vsoagent-installer${agent_version}
+
+# support installing locally built agent
+# run script through curl and piping to sh will have dir of .
+# if you run from locally built 
+script_dir=$(dirname $0)
+echo script location: ${script_dir}
+if [ ${script_dir} != "." ] && [ ${script_dir} ]; then
+    echo Dev Install.  Using location ${script_dir}
+    install_name=${script_dir}
+fi
+
+echo installing ${install_name} ...
+npm install ${install_name} -g &> _install/npminstall.log
+checkRC "npm install"
+
+writeHeader "Creating agent"
+vsoagent-installer
+checkRC "vsoagent-installer"
 
 # logging info for troubleshooting
 find . > _install/layout.log

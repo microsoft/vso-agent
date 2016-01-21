@@ -41,6 +41,7 @@ Your output should look [similar to this](sampleoutput.md)
 ### Configure on first run
 
 >> TIPS:
+>> ensure it's account level url (no collection)
 >> for VSTS, ensure you answer false (default) for force basic
 >> if the agent isn't configured (.agent file exists), on first run, it will configure.
 

@@ -45,7 +45,8 @@ Your output should look [similar to this](sampleoutput.md)
 
 >> TIPS:
 >> IMPORTANT: for TFS, ensure you answer true (not the default) for force basic
->> if the agent isn't configured (.agent file exists), on first run, it will configure.
+>> Ensure it's server level url (no collection)
+>> If the agent isn't configured (.agent file exists), on first run, it will configure.
 
 ```bash
 $ ./run.sh

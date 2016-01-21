@@ -1,4 +1,3 @@
-# run to install
-# curl -sSL https://raw.githubusercontent.com/Microsoft/vso-agent/master/getagent.sh | sh
+#!/usr/bin/env bash
 
 ./runtime/node/bin/node agent/vsoagent.js
