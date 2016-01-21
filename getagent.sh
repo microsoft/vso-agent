@@ -101,14 +101,22 @@ cp -R ${node_file}/. runtime/node
 
 # ensure we use private node and npm for rest of script
 PATH=./runtime/node/bin:$PATH
+NPM_PATH=`which npm`
 echo "using node : `which node`"
-echo "using npm  : `which npm`"
+echo "using npm  : ${NPM_PATH}"
 
 # ------------------------------------------------------------
 # Install Agent
 # ------------------------------------------------------------
 
-writeHeader "Installing agent globally"  
+writeHeader "Installing agent installer"
+rm *.sh
+rm -rf agent
+rm -rf node_modules
+rm -rf _installer
+mkdir -p _installer/node_modules
+pushd _installer
+
 echo Installing...
 install_name=vsoagent-installer${agent_version}
 
@@ -123,12 +131,17 @@ if [ ${script_dir} != "." ] && [ ${script_dir} ]; then
 fi
 
 echo installing ${install_name} ...
-npm install ${install_name} -g &> _install/npminstall.log
+npm install ${install_name} &> ../_install/npminstall.log
 checkRC "npm install"
 
 writeHeader "Creating agent"
-vsoagent-installer
-checkRC "vsoagent-installer"
+popd
+cp -R _installer/node_modules/vsoagent-installer/agent .
+cp -R _installer/node_modules/vsoagent-installer/*.sh .
+rm -rf _installer/node_modules/vsoagent-installer
+cp -R _installer/node_modules .
+chmod 777 *.sh
+rm -rf _installer
 
 # logging info for troubleshooting
 find . > _install/layout.log
