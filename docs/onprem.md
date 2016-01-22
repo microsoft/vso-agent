@@ -81,7 +81,7 @@ Your output should look [similar to this](sampleoutput.md)
 Running interactively is good for testing and evaluation.  But, in production the agent should be run as a service
 to ensure the agent survives reboots.
 
-[How to run as a service](docs/service.md)
+[How to run as a service](service.md)
 
 
 ## Agents without Internet Access

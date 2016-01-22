@@ -2,7 +2,7 @@
 
 A cross platform build agent for Microsoft Visual Studio Online (VSO) and Team Foundation Server (TFS).  Supported on Mac OSX and Linux.
 
-Related:[VSO Build Tasks](https://github.com/Microsoft/vso-agent-tasks), [VSO Task SDK](https://github.com/Microsoft/vso-task-lib), [VSO Node API](https://github.com/Microsoft/vso-node-api)
+Related:[VSTS Build Tasks](https://github.com/Microsoft/vso-agent-tasks), [VSTS Task SDK](https://github.com/Microsoft/vsts-task-lib), [VSTS Node API](https://github.com/Microsoft/vso-node-api)
 
 ## What's New
 
@@ -124,7 +124,7 @@ To test out, we recommend running interactively.  It's also useful for running U
 Running interactively is good for testing and evaluation.  But, in production the agent should be run as a service
 to ensure the agent survives reboots.
 
-[How to run as a service](docs/service.md)
+[How to run as a service](service.md)
 
 ### Update Existing Agents
 
@@ -159,8 +159,8 @@ This does not install an agent.  It simply pulls down the latest version of the 
 
 ## Troubleshooting
 
-[How to Troubleshoot](docs/troubleshooting.md)
+[How to Troubleshoot](troubleshooting.md)
 
 ## Contributing
 
-[How to contribute](docs/contribute.md)
+[How to contribute](contribute.md)
