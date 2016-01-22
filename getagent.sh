@@ -7,7 +7,9 @@
 # run to install
 # curl -sSL https://raw.githubusercontent.com/Microsoft/vso-agent/master/getagent.sh | bash
 
-DEFAULT_NODE_VERSION="4.2.4"
+DEFAULT_NODE_VERSION="4.2.6"
+DEFAULT_TEE_VERSION="14.0.2"
+
 #no version is latest
 DEFAULT_AGENT_VERSION=""
 
@@ -24,22 +26,36 @@ if [ $uid -eq 0 ]; then
     failed "Install cannot be run as root.  Do not use sudo"
 fi
 
-agent_version=$1
+agent_version=${GET_AGENT_VERSION}
 
 if [ ! $agent_version ]; then
     agent_version=$DEFAULT_AGENT_VERSION
 fi
 
-node_version=$2
+node_version=${GET_NODE_VERSION}
 
 if [ ! $node_version ]; then
     node_version=$DEFAULT_NODE_VERSION
 fi
 
+tee_version=${GET_TEE_VERSION}
+
+if [ ! $tee_version ]; then
+    tee_version=$DEFAULT_TEE_VERSION
+fi
+
+
 function checkRC() {
     local rc=$?
     if [ $rc -ne 0 ]; then
         failed "${1} Failed with return code $rc"
+    fi
+}
+
+function warnRC() {
+    local rc=$?
+    if [ $rc -ne 0 ]; then
+        failed "WARNING: ${1} Failed with return code $rc.  ${2}"
     fi
 }
 
@@ -53,6 +69,11 @@ function writeHeader() {
 
 # password early in script
 mkdir -p _install
+
+if [ -d "runtime" ]; then
+    echo "removing existing runtime"
+    rm -rf "runtime"
+fi
 
 # ------------------------------------------------------------
 # Download Node
@@ -79,23 +100,17 @@ if [ -f ${zip_file} ]; then
 else
     node_url="https://nodejs.org/dist/v${node_version}/${zip_file}"
     echo "Downloading Node ${node_version}"
-    curl -skSLO $node_url &> _install/curl.log
+    curl -skSLO $node_url &> _install/downloadnode.log
     checkRC "Download (curl)"
 fi
 
 if [ -d ${node_file} ]; then
     echo "Already extracted"
 else
-    tar zxvf ./${zip_file} &> _install/targz.log
-    checkRC "Unzip (tar)"
+    tar zxvf ./${zip_file} &> _install/targznode.log
+    checkRC "Unzip (node)"
 fi
 
-if [ -d "runtime" ]; then
-    echo "removing existing runtime"
-    rm -rf "runtime"
-fi
-
-rm -rf runtime/node
 mkdir -p runtime/node
 cp -R ${node_file}/. runtime/node
 
@@ -104,6 +119,31 @@ PATH=`pwd`/runtime/node/bin:$PATH
 NPM_PATH=`which npm`
 echo "using node : `which node`"
 echo "using npm  : ${NPM_PATH}"
+
+# ------------------------------------------------------------
+# Download TEE CLI
+# ------------------------------------------------------------
+writeHeader "Acquiring TEE CLI $tee_version"
+tee_file=TEE-CLC-${tee_version}
+tee_zip=${tee_file}.zip
+
+if [ -f ${tee_zip} ]; then
+    echo "Download exists"
+else
+    echo "Downloading  TEE CLI ${tee_version}"
+    curl -skSLO http://aka.ms/${tee_zip} &> _install/downloadtee.log
+    warnRC "Download (TEE CLI)" "This is only critical if using TFSVC (not needed for git)"
+fi
+
+if [ -d ${tee_file} ]; then
+    echo "Already extracted"
+else
+    unzip ./${tee_zip} &> _install/unziptee.log
+    warnRC "Unzip (tee)" "This is only critical if using TFSVC (not needed for git)"
+fi
+
+mkdir -p runtime/tee
+cp -R ${tee_file}/. runtime/tee
 
 # ------------------------------------------------------------
 # Install Agent
@@ -145,11 +185,11 @@ popd
 cp -R _installer/node_modules/vsoagent-installer/agent .
 cp -R _installer/node_modules/vsoagent-installer/*.sh .
 cp _installer/node_modules/vsoagent-installer/package.json .
+#rm -rf _installer/node_modules/vsoagent-installer
 cp -R _installer/node_modules/vsoagent-installer/node_modules .
 
-chmod 777 *.sh
 
-rm -rf getagent.sh
+chmod 777 *.sh
 rm -rf _installer
 
 # logging info for troubleshooting
@@ -166,5 +206,4 @@ echo ./configure.sh
 echo
 echo "See documentation for more options"
 echo
-
 
