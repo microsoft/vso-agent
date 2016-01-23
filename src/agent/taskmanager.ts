@@ -9,6 +9,7 @@ import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 import async = require('async');
 import fs = require('fs');
 import path = require('path');
+import url = require('url');
 import shell = require('shelljs');
 import Q = require('q');
 import agentm = require('vso-node-api/TaskAgentApi');
@@ -141,14 +142,26 @@ export class TaskManager {
     }
     
     private getTaskDefinitionsUri(): string {
+        this.executionContext.trace('getTaskDefinitionsUri()');
         var taskDefinitionsUri = this.executionContext.variables[cm.vars.systemTaskDefinitionsUri];
-        if (!taskDefinitionsUri) {
-            taskDefinitionsUri = this.executionContext.variables[cm.vars.systemTfCollectionUri];
-        }
+
         if (!taskDefinitionsUri) {
             taskDefinitionsUri = this.executionContext.config.settings.serverUrl; 
         }
-        return taskDefinitionsUri;
+
+        // the hostname (how the agent knows the server) is external to our server
+        // in other words, an xplat agent may have it's own way (DNS, hostname) of refering
+        // to the server.  it owns that.  That's the hostname we will use
+        var connectUrl = url.parse(this.executionContext.config.settings.serverUrl);
+        this.executionContext.trace('connected with: ' + connectUrl.href);
+        
+        var sentUrl = url.parse(taskDefinitionsUri);
+        this.executionContext.trace('sent: ' + sentUrl.href);
+        
+        var taskUrl = url.resolve(connectUrl.protocol + "//" + connectUrl.host, sentUrl.path);
+        this.executionContext.trace('using: ' + taskUrl);
+        
+        return taskUrl;
     }
 
     private executionContext: cm.IExecutionContext;

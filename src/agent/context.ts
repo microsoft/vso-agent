@@ -167,7 +167,7 @@ export class HostContext extends Context implements cm.IHostContext {
     }
     
     public trace(message: string): void {
-        this._fileWriter.write(message);
+        this._fileWriter.write(message + os.EOL);
     }
 }
 
