@@ -34,7 +34,7 @@ From a terminal:
 mkdir myagent
 cd my agent
 
-curl -skSL http://aka.ms/latestxplat | bash
+curl -skSL http://aka.ms/xplatagent | bash
 ```
 Your output should look [similar to this](sampleoutput.md)
 
@@ -69,7 +69,7 @@ Before updating stop the agent (ctrl-c if interactive, if service [see run as a 
 
 From a terminal:
 ```bash
-curl -skSL http://aka.ms/latestxplat | bash
+curl -skSL http://aka.ms/xplatagent | bash
 ```
 Your output should look [similar to this](sampleoutput.md)
 
