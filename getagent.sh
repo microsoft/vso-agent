@@ -11,7 +11,7 @@ DEFAULT_NODE_VERSION="4.2.6"
 DEFAULT_TEE_VERSION="14.0.2"
 
 #no version is latest
-DEFAULT_AGENT_VERSION="0.4"
+DEFAULT_AGENT_VERSION="@0.4"
 
 function failed()
 {
