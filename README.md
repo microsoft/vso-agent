@@ -1,4 +1,4 @@
-# Microsoft Cross Platform Build Agent
+# Microsoft Cross Platform Build Agent (0.4.x)
 
 A cross platform build agent for Microsoft Visual Studio Team Services (VSTS) and Team Foundation Server (TFS).  Supported on Mac OSX and Linux.
 
