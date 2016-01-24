@@ -19,3 +19,7 @@ The docs have been updated and streamlined.  The previous and more manual docs a
 ## Contributing
 
 [How to contribute](docs/contribute.md)
+
+## Release Process
+
+[How to contribute](docs/releases.md)
