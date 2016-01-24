@@ -51,7 +51,8 @@ if (typeof svcinstall[action] !== 'function') {
 }*/
 
 // node is known as nodejs on some *nix installs
-var nodePath = shelljs.which('nodejs') || shelljs.which('node');
+//var nodePath = shelljs.which('nodejs') || shelljs.which('node');
+var nodePath = path.resolve('__dirname/..', 'runtime/node/bin/node')
 var getSvcCfg = function () {
     if (!shelljs.test('-f', _cfgPath)) {
         console.error('Error: not configured as a service.  use install action.');
