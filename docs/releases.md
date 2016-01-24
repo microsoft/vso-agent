@@ -14,7 +14,7 @@ topic branches are built and validated from source locally
 
 ## Functionality
 
-Agent is acquires by running getagent.sh via an http://aka.ms redirect
+Agent is acquired by running getagent.sh via an http://aka.ms redirect
 
 http://aka.ms/xplatagent --> getagent.sh @ 'latest' tag in github  
 http://aka.ms/previewxplat --> getagent.sh @ 'master' preview in github  
@@ -27,10 +27,24 @@ getagent.sh
 
 It does this via line in getagent.sh
 
-master: DEFAULT_AGENT_VERSION=""  
+master (preview): DEFAULT_AGENT_VERSION=""  
 releases/0.4: DEFAULT_AGENT_VERSION="@0.4"  
 
+You can influence the exact version to get from npm by setting an env var.  
+Make sure it starts with @
+
+For example:  
+```bash
+export GET_AGENT_VERSION="@0.5"  
+curl -skSL http://aka.ms/xplatagent | bash  
+```
+
 ## Create a release branch
+
+>
+> This should only be done by one of the release managers in build or RM.
+> Documenting process for transparency, not so anyone can do it.
+>
 
 With x.y being your new release version (currently at 0.4):
 
