@@ -1,3 +1,3 @@
 pushd vsoxplat
-npm publish --tag preview
+npm publish
 popd

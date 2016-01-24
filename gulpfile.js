@@ -35,7 +35,6 @@ var options = minimist(process.argv.slice(2), mopts);
 gulp.task('copy', ['clean'], function () {
 	return merge([
 		gulp.src(['admin/publish.sh']).pipe(gulp.dest(packageRoot)),
-		gulp.src(['admin/dev.sh']).pipe(gulp.dest(packageRoot)),
 		gulp.src(['getagent.sh']).pipe(gulp.dest(buildPath)),
 		gulp.src(['run.sh']).pipe(gulp.dest(buildPath)),
 		gulp.src(['configure.sh']).pipe(gulp.dest(buildPath)),
