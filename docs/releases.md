@@ -17,15 +17,17 @@ topic branches are built and validated from source locally
 Agent is acquires by running getagent.sh via an http://aka.ms redirect
 
 http://aka.ms/xplatagent --> getagent.sh @ 'latest' tag in github
+
 http://aka.ms/previewxplat --> getagent.sh @ 'master' preview in github
 
 getagent.sh is located in github.  It is referred to via a tag, latest or preview.  So the git tag moves and the aka.ms redirect is static
 
 getagent.sh
-- Downloads correct version of agent from npm (vsoagent-installer)
-- Downloads internal versions of node and tee cli 
+  - Downloads correct version of agent from npm (vsoagent-installer)
+  - Downloads internal versions of node and tee cli 
 
 It does this via line in getagent.sh
+
 master: DEFAULT_AGENT_VERSION=""
 releases/0.4: DEFAULT_AGENT_VERSION="@0.4"
 
