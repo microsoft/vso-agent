@@ -22,4 +22,4 @@ The docs have been updated and streamlined.  The previous and more manual docs a
 
 ## Release Process
 
-[How to contribute](docs/releases.md)
+[Release Process](docs/releases.md)
