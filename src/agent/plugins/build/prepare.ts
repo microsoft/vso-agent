@@ -116,6 +116,47 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         shell.mkdir('-p', bd);
         shell.cd(bd);
         
+        //
+        // Fix filePath variables to physical paths
+        //
+        var debug = executionContext.debug;
+        debug('resolving filePath variables');
+
+        //
+        // Resolve paths for filePath inputs
+        //
+        var job: agentifm.JobRequestMessage = executionContext.jobInfo.jobMessage;
+        job.tasks.forEach((task: agentifm.TaskInstance) => {
+            debug('processing task: ' + task.name + ' ( ' + task.id + ')');
+            var taskDef = executionContext.taskDefinitions[task.id];
+            if (!taskDef) {
+                throw new Error('Task definition for ' + task.id + ' not found.');
+            }
+            
+            // find the filePath inputs
+            var filePathInputs: { [key: string]: boolean } = {};
+            taskDef.inputs.forEach((input: agentifm.TaskInputDefinition) => {
+                if (input.type === 'filePath') {
+                    filePathInputs[input.name] = true;
+                    debug('filePath input: ' + input.name);                       
+                }
+            });
+            
+            // scan dictionary of input/val for pathInputs
+            for (var key in task.inputs) {
+                if (filePathInputs.hasOwnProperty(key)) {
+                    // defer to the source provider to resolve to the physical path
+                    // default is to append (relative to repo root but tfsvc mapped)
+                    var resolvedPath = scmProvider.resolveInputPath(task.inputs[key] || '');
+                    debug('rewriting ' + key + ' to ' + resolvedPath);
+                    task.inputs[key] = resolvedPath;
+                }
+            }    
+        });
+       
+        //
+        // Do the work, optionally clean and get sources
+        //
         if (endpoint.data['clean'].replaceVars(job.environment.variables) === "true") {
             var behavior = job.environment.variables['build.clean'];
             if (behavior && behavior.toLowerCase() === 'delete') {

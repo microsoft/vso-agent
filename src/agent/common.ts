@@ -277,6 +277,7 @@ export interface IExecutionContext extends IOutputChannel, ITraceWriter {
     jobInfo: IJobInfo;
     inputs: ifm.TaskInputs;
     variables: { [key: string]: string };
+    taskDefinitions: { [key: string]: agentifm.TaskDefinition };
     
     // environment
     config: IConfiguration;
@@ -338,6 +339,9 @@ export interface IScmProvider {
     hashKey: string;
     debugOutput: boolean;
     targetPath: string;
+    
+    // virtual - can override
+    resolveInputPath(inputPath: string);
     
     // virtual - must override
     initialize();

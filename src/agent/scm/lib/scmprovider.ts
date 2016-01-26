@@ -70,6 +70,11 @@ export class ScmProvider implements cm.IScmProvider {
 		return paramValue;
 	}
 	
+    // override if more complex than appending to root of repo
+    public resolveInputPath(inputPath: string) {
+        return path.resolve(this.targetPath, inputPath);
+    }
+    
 	// virtual - must override
 	public getCode(): Q.Promise<number> {
 		var defer = Q.defer<number>();
