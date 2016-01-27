@@ -12,6 +12,7 @@ import Q = require('q');
 import shell = require('shelljs');
 import crypto = require('crypto');
 import cm = require('../../common');
+import tm = require('../../tracing');
 import smm = require('./sourceMappings');
 
 export function pluginName() {
@@ -24,6 +25,7 @@ export function pluginTitle() {
 }
 
 export function beforeJob(executionContext: cm.IExecutionContext, callback) {
+    var trace = new tm.Tracing(__filename, executionContext.hostContext);
     executionContext.info('preparing Workspace');
     executionContext.info('cwd: ' + process.cwd());
 
@@ -119,15 +121,14 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         //
         // Fix filePath variables to physical paths
         //
-        var debug = executionContext.debug;
-        debug('resolving filePath variables');
+        trace.write('resolving filePath variables');
 
         //
         // Resolve paths for filePath inputs
         //
         var job: agentifm.JobRequestMessage = executionContext.jobInfo.jobMessage;
         job.tasks.forEach((task: agentifm.TaskInstance) => {
-            debug('processing task: ' + task.name + ' ( ' + task.id + ')');
+            trace.write('processing task: ' + task.name + ' ( ' + task.id + ')');
             var taskDef = executionContext.taskDefinitions[task.id];
             if (!taskDef) {
                 throw new Error('Task definition for ' + task.id + ' not found.');
@@ -138,7 +139,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
             taskDef.inputs.forEach((input: agentifm.TaskInputDefinition) => {
                 if (input.type === 'filePath') {
                     filePathInputs[input.name] = true;
-                    debug('filePath input: ' + input.name);                       
+                    trace.write('filePath input: ' + input.name);                       
                 }
             });
             
@@ -148,7 +149,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
                     // defer to the source provider to resolve to the physical path
                     // default is to append (relative to repo root but tfsvc mapped)
                     var resolvedPath = scmProvider.resolveInputPath(task.inputs[key] || '');
-                    debug('rewriting ' + key + ' to ' + resolvedPath);
+                    trace.write('rewriting ' + key + ' to ' + resolvedPath);
                     task.inputs[key] = resolvedPath;
                 }
             }    
