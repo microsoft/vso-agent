@@ -12,6 +12,7 @@ export class TestExecutionContext implements cm.IExecutionContext {
     constructor(jobInfo: cm.IJobInfo) {
         this.jobInfo = jobInfo;
         this.variables = jobInfo.variables;
+        this.taskDefinitions = {};
         this.workingDirectory = this.variables[cm.vars.agentWorkingDirectory];
     }
 
@@ -29,6 +30,7 @@ export class TestExecutionContext implements cm.IExecutionContext {
     public jobInfo: cm.IJobInfo;
     public inputs: ifm.TaskInputs;
     public variables: { [key: string]: string };
+    public taskDefinitions: { [key: string]: agentifm.TaskDefinition };
     
     // environment
     public config: cm.IConfiguration;

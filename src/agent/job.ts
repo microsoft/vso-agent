@@ -307,7 +307,6 @@ export class JobRunner {
     }
 
     private taskExecution = {};
-    private taskMetadata = {};
 
     private prepareTask(task: agentifm.TaskInstance, callback) {
         trace.enter('prepareTask');
@@ -336,7 +335,7 @@ export class JobRunner {
                 // Otherwise we modify the cached object for everyone
                 var taskMetadata = JSON.parse(JSON.stringify(require(taskJsonPath)));
                 trace.state('taskMetadata', taskMetadata);
-                this.taskMetadata[task.id] = taskMetadata;
+                this._executionContext.taskDefinitions[task.id] = taskMetadata;
 
                 var execution = taskMetadata.execution;
 
@@ -374,55 +373,10 @@ export class JobRunner {
         });
     }
 
-    //
-    // TODO: add beforeTask plugin step and move to their.  This is build specific code
-    // and should not be in the generic agent code
-    //
-    private _processInputs(task: agentifm.TaskInstance) {
-        trace.enter('processInputs');
-
-        //
-        // Resolve paths for filePath inputs
-        //
-        var metadata = this.taskMetadata[task.id];
-        trace.write('retrieved metadata for ' + task.name);
-
-        var filePathInputs = {};
-        metadata.inputs.forEach((input) => {
-            trace.write('input ' + input.name + ' is type ' + input.type);
-            if (input.type === 'filePath') {
-                trace.write('adding ' + input.name);
-                filePathInputs[input.name] = true;
-            }
-        });
-
-        trace.state('filePathInputs', filePathInputs);
-        var srcFolder = this._job.environment.variables[cm.vars.buildSourcesDirectory];
-        trace.write('srcFolder: ' + srcFolder);
-
-        for (var key in task.inputs) {
-            trace.write('checking ' + key);
-            if (filePathInputs.hasOwnProperty(key)) {
-                trace.write('rewriting value for ' + key);
-                var resolvedPath = path.resolve(srcFolder, task.inputs[key] || '');
-                trace.write('resolvedPath: ' + resolvedPath);
-                task.inputs[key] = resolvedPath;
-            }
-            this._executionContext.verbose(key + ': ' + task.inputs[key]);
-        }
-
-        trace.state('task.inputs', task.inputs);
-    }
-
     private runTask(task: agentifm.TaskInstance, executionContext: cm.IExecutionContext, callback) {
         trace.enter('runTask');
         
         this._hostContext.info('Task: ' + task.name);
-        
-        //TODO: This call should be made to the plugin as it is build specific
-        if (executionContext.variables[cm.vars.system].toLowerCase() === 'Build'.toLowerCase()) {
-            this._processInputs(task);
-        }
 
         for (var key in task.inputs) {
             executionContext.verbose(key + ': ' + task.inputs[key]);

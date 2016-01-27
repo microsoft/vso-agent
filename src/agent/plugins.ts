@@ -94,6 +94,7 @@ export function beforeJob(plugins: IPlugin[], executionContext: cm.IExecutionCon
             
             // create a new execution context with the before-job timeline record id
             var pluginContext = new ctxm.ExecutionContext(executionContext.jobInfo, executionContext.authHandler, plugin.beforeId, executionContext.service, hostContext);
+            pluginContext.taskDefinitions = executionContext.taskDefinitions;
             
             pluginContext.on('message', function (message) {
                 pluginContext.service.queueConsoleLine(message);
