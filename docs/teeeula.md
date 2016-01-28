@@ -14,9 +14,9 @@ for this software, unless other terms accompany those items. If so, those terms 
 
 **BY USING THE SOFTWARE, YOU ACCEPT THESE TERMS. IF YOU DO NOT ACCEPT THEM, DO NOT USE THE SOFTWARE.**  
 **IF YOU COMPLY WITH THESE LICENSE TERMS, YOU HAVE THE PERPETUAL RIGHTS BELOW.**  
-** 1. INSTALLATION AND USE RIGHTS.** You may install and use any number of copies of the software on your devices for your use solely with Visual Studio Team Foundation Server or Visual Studio Team Services.
-** 2. THIRD PARTY NOTICES.** Additional copyright notices and license terms applicable to portions of the software are set forth in the ThirdPartyNotices file accompanying the Microsoft software.  In addition to any terms and conditions of any third party license identified in the ThirdPartyNotices file, the disclaimer of warranty and limitation on and exclusion of remedies and damages provisions of this agreement shall apply to all software in this distribution. 
-**3. SCOPE OF LICENSE.** The software is licensed, not sold. This agreement only gives you some rights to use the software. Microsoft reserves all other rights. Unless applicable law gives you more rights despite this limitation, you may use the software only as expressly permitted in this agreement. In doing so, you must comply with any technical limitations in the software that only allow you to use it in certain ways. You may not
+** 1. INSTALLATION AND USE RIGHTS.** You may install and use any number of copies of the software on your devices for your use solely with Visual Studio Team Foundation Server or Visual Studio Team Services.  
+** 2. THIRD PARTY NOTICES.** Additional copyright notices and license terms applicable to portions of the software are set forth in the ThirdPartyNotices file accompanying the Microsoft software.  In addition to any terms and conditions of any third party license identified in the ThirdPartyNotices file, the disclaimer of warranty and limitation on and exclusion of remedies and damages provisions of this agreement shall apply to all software in this distribution.  
+**3. SCOPE OF LICENSE.** The software is licensed, not sold. This agreement only gives you some rights to use the software. Microsoft reserves all other rights. Unless applicable law gives you more rights despite this limitation, you may use the software only as expressly permitted in this agreement. In doing so, you must comply with any technical limitations in the software that only allow you to use it in certain ways. You may not  
 
   * work around any technical limitations in the software;  
   * reverse engineer, decompile or disassemble the software, except and only to the extent that applicable law expressly permits, despite this limitation;  
@@ -26,15 +26,13 @@ for this software, unless other terms accompany those items. If so, those terms 
   * transfer the software or this agreement to any third party; or  
   * use the software for commercial software hosting services.
 
-**4. BACKUP COPY.** You may make one backup copy of the software. You may use it only to reinstall the software.
-**5. DOCUMENTATION.** Any person that has valid access to your computer or internal network may copy and use the documentation for your internal, reference purposes.
-**6. EXPORT RESTRICTIONS.** The software is subject to United States export laws and regulations. You must comply with all domestic and international export laws and regulations that apply to the software. These laws include restrictions on destinations, end users and end use. For additional information, see [www.microsoft.com/exporting](http://www.microsoft.com/exporting)
-**7. SUPPORT SERVICES.** Because this software is “as is,” we may not provide support services for it.
-**8. ENTIRE AGREEMENT.** This agreement, and the terms for supplements, updates, Internet-based services and support services that you use, are the entire agreement for the software and support services.
-    
-**9. PRIVACY STATEMENT.** The <a href="http://go.microsoft.com/fwlink/?LinkId=528096&clcid=0x409">Microsoft Visual Studio Product Family Privacy Statement</a> describes the privacy statement of this software.
-
-**10. APPLICABLE LAW.**
+**4. BACKUP COPY.** You may make one backup copy of the software. You may use it only to reinstall the software.  
+**5. DOCUMENTATION.** Any person that has valid access to your computer or internal network may copy and use the documentation for your internal, reference purposes.  
+**6. EXPORT RESTRICTIONS.** The software is subject to United States export laws and regulations. You must comply with all domestic and international export laws and regulations that apply to the software. These laws include restrictions on destinations, end users and end use. For additional information, see [www.microsoft.com/exporting](http://www.microsoft.com/exporting)  
+**7. SUPPORT SERVICES.** Because this software is “as is,” we may not provide support services for it.  
+**8. ENTIRE AGREEMENT.** This agreement, and the terms for supplements, updates, Internet-based services and support services that you use, are the entire agreement for the software and support services.  
+**9. PRIVACY STATEMENT.** The <a href="http://go.microsoft.com/fwlink/?LinkId=528096&clcid=0x409">Microsoft Visual Studio Product Family Privacy Statement</a> describes the privacy statement of this software.  
+**10. APPLICABLE LAW.**  
 
 >> **a. United States.** If you acquired the software in the United States, Washington state law governs the interpretation of this agreement and applies to claims for breach of it, regardless of conflict of laws principles. The laws of the state where you live govern all other claims, including claims under state consumer protection laws, unfair competition laws, and in tort.
 >> **b. Outside the United States.** If you acquired the software in any other country, the laws of that country apply.
