@@ -124,7 +124,11 @@ export class TfvcWrapper extends events.EventEmitter {
     public undo(): Q.Promise<number> {
         return this._exec('undo', ['.', '-recursive']);
     }
-    
+
+    public listWorkspaces() {
+        return this._execSync("workspaces", []);
+    }
+
     public resolvePath(inputPath: string): string {
         if (this._isServerPath(inputPath)) {
             var output = this._execSync('resolvePath', [ inputPath ]);

@@ -243,6 +243,12 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
             }
         })
         .then(() => {
+            // Sometime the job fails with:
+            //   An argument error occurred: Unable to determine the workspace. 
+            //   You may be able to correct this by running 'tf workspaces -collection:TeamProjectCollectionUrl'.
+            // when getting the source.  Preemptively run this to be safe.
+            this.tfvcw.listWorkspaces();
+
             // now it's guaranteed build definition mapping and actual workspace mapping are identical
             var getCodePromiseChain = Q(0);
 
