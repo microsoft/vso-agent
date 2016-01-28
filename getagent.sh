@@ -8,7 +8,7 @@
 # curl -sSL https://raw.githubusercontent.com/Microsoft/vso-agent/master/getagent.sh | bash
 
 DEFAULT_NODE_VERSION="4.2.6"
-DEFAULT_TEE_VERSION="14.0.2"
+DEFAULT_TEE_VERSION="14.0.2-private"
 
 #no version is latest
 DEFAULT_AGENT_VERSION=""
@@ -144,6 +144,15 @@ fi
 
 mkdir -p runtime/tee
 cp -R ${tee_file}/. runtime/tee
+
+tf_path=`pwd`/runtime/tee/tf
+if [ -f "`which java`" ]; then
+   echo "Accepting Eula (${tf_path})"
+   `${tf_path} eula -accept`
+else
+   echo "Java not found in your path.  If you use tfsvc + tee, before use run:"
+   echo "${tf_path} eula -accept"
+fi
 
 # ------------------------------------------------------------
 # Install Agent
