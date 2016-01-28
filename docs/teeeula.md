@@ -15,9 +15,9 @@ for this software, unless other terms accompany those items. If so, those terms 
 **BY USING THE SOFTWARE, YOU ACCEPT THESE TERMS. IF YOU DO NOT ACCEPT THEM, DO NOT USE THE SOFTWARE.**  
 **IF YOU COMPLY WITH THESE LICENSE TERMS, YOU HAVE THE PERPETUAL RIGHTS BELOW.** 
  
-** 1. INSTALLATION AND USE RIGHTS.** You may install and use any number of copies of the software on your devices for your use solely with Visual Studio Team Foundation Server or Visual Studio Team Services.
+**1. INSTALLATION AND USE RIGHTS.** You may install and use any number of copies of the software on your devices for your use solely with Visual Studio Team Foundation Server or Visual Studio Team Services.
   
-** 2. THIRD PARTY NOTICES.** Additional copyright notices and license terms applicable to portions of the software are set forth in the ThirdPartyNotices file accompanying the Microsoft software.  In addition to any terms and conditions of any third party license identified in the ThirdPartyNotices file, the disclaimer of warranty and limitation on and exclusion of remedies and damages provisions of this agreement shall apply to all software in this distribution.
+**2. THIRD PARTY NOTICES.** Additional copyright notices and license terms applicable to portions of the software are set forth in the ThirdPartyNotices file accompanying the Microsoft software.  In addition to any terms and conditions of any third party license identified in the ThirdPartyNotices file, the disclaimer of warranty and limitation on and exclusion of remedies and damages provisions of this agreement shall apply to all software in this distribution.
   
 **3. SCOPE OF LICENSE.** The software is licensed, not sold. This agreement only gives you some rights to use the software. Microsoft reserves all other rights. Unless applicable law gives you more rights despite this limitation, you may use the software only as expressly permitted in this agreement. In doing so, you must comply with any technical limitations in the software that only allow you to use it in certain ways. You may not  
 
