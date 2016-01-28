@@ -21,6 +21,8 @@ Add the user you created the PAT token for to *both*:
 
 ## Install
 
+By Installing the agent, you are accepting the terms on the [Team Explorer Everywhere EULA](teeeula.md)  
+
 Running this from the command line (terminal) will download prereqs, install/update the agent bits globally and create an agent in your current directory.  Make a new directory for your agent
 
 > Tips 
