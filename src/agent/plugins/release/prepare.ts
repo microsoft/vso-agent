@@ -11,6 +11,7 @@ import artifactResolver = require('./artifact/artifactResolver');
 import path = require('path');
 import crypto = require('crypto');
 import Q = require('q');
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 var async = require('async');
 var shell = require("shelljs");
 
@@ -74,6 +75,38 @@ export function beforeJob(context: common.IExecutionContext, callback) {
     }).fail((err) => {
         callback(err);
         return;
+        });
+
+    //
+    // Resolve paths for filePath inputs
+    //
+    var job: agentifm.JobRequestMessage = context.jobInfo.jobMessage;
+    job.tasks.forEach((task: agentifm.TaskInstance) => {
+        context.info('processing task: ' + task.name + ' ( ' + task.id + ')');
+        var taskDef = context.taskDefinitions[task.id];
+        if (!taskDef) {
+            throw new Error('Task definition for ' + task.id + ' not found.');
+        }
+            
+        // find the filePath inputs
+        var filePathInputs: { [key: string]: boolean } = {};
+        taskDef.inputs.forEach((input: agentifm.TaskInputDefinition) => {
+            if (input.type === 'filePath') {
+                filePathInputs[input.name] = true;
+                context.info('filePath input: ' + input.name);
+            }
+        });
+            
+        // scan dictionary of input/val for pathInputs
+        for (var key in task.inputs) {
+            if (filePathInputs.hasOwnProperty(key)) {
+                // defer to the source provider to resolve to the physical path
+                // default is to append (relative to repo root but tfsvc mapped)
+                var resolvedPath = path.resolve(artifactsFolder, task.inputs[key] || '');
+                context.info('rewriting ' + key + ' to ' + resolvedPath);
+                task.inputs[key] = resolvedPath;
+            }
+        }
     });
 }
 
