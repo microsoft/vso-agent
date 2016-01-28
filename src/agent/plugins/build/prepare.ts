@@ -119,6 +119,31 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         shell.cd(bd);
         
         //
+        // Do the work, optionally clean and get sources
+        //
+        if (endpoint.data['clean'].replaceVars(job.environment.variables) === "true") {
+            var behavior = job.environment.variables['build.clean'];
+            if (behavior && behavior.toLowerCase() === 'delete') {
+                executionContext.info('deleting ' + repoPath);
+                shell.rm('-rf', repoPath);
+                return 0;
+            }
+            else {
+                executionContext.info('running clean');
+                return scmProvider.clean();                
+            }
+        }
+        else {
+            executionContext.info('running incremental');
+            return 0;
+        }
+    })
+    .then((code: number) => {
+        executionContext.info('getting code');
+        return scmProvider.getCode();
+    })
+    .then((code: number) => {
+        //
         // Fix filePath variables to physical paths
         //
         trace.write('resolving filePath variables');
@@ -154,30 +179,8 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
                 }
             }    
         });
-       
-        //
-        // Do the work, optionally clean and get sources
-        //
-        if (endpoint.data['clean'].replaceVars(job.environment.variables) === "true") {
-            var behavior = job.environment.variables['build.clean'];
-            if (behavior && behavior.toLowerCase() === 'delete') {
-                executionContext.info('deleting ' + repoPath);
-                shell.rm('-rf', repoPath);
-                return 0;
-            }
-            else {
-                executionContext.info('running clean');
-                return scmProvider.clean();                
-            }
-        }
-        else {
-            executionContext.info('running incremental');
-            return 0;
-        }
-    })
-    .then((code: number) => {
-        executionContext.info('getting code');
-        return scmProvider.getCode();
+
+        return 0;
     })
     .then((code: number) => {
         executionContext.info('CD: ' + repoPath);

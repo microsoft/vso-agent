@@ -73,6 +73,14 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
             collection: collectionUri
         });
     }
+    
+    public resolveInputPath(inputPath: string) {
+        this.ctx.debug("Resolving: " + inputPath);
+        var resolvedPath = this.tfvcw.resolvePath(inputPath);
+        this.ctx.debug("    resolved to: " + resolvedPath);
+
+        return resolvedPath;
+    }
 
     public getCode(): Q.Promise<number> {
         var workspaceName = this._getWorkspaceName();
