@@ -288,7 +288,9 @@ export class ResultReader {
                 var testNode;
 
                 if (testCaseNode.failure.count() > 1) {
-                    this.command.warning("Multiple failures in the test case: " + testName + ". Picking the first for publishing!");
+                    if (this.command) {
+                        this.command.info("Multiple failures in the test case: " + testName + ". Picking the first for publishing!");
+                    }
                     testNode = testCaseNode.failure.at(0);
                 }
                 else {
@@ -308,7 +310,9 @@ export class ResultReader {
                 var testNode;
 
                 if (testCaseNode.error.count() > 1) {
-                    this.command.warning("Multiple failures in the test case: " + testName + ". Picking the first for publishing!");
+                    if (this.command) {
+                        this.command.info("Multiple errors in the test case: " + testName + ". Picking the first for publishing!");
+                    }
                     testNode = testCaseNode.error.at(0);
                 }
                 else {

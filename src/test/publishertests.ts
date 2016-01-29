@@ -12,8 +12,8 @@ import cm = require('../agent/common');
 import ifm = require('../agent/interfaces');
 import testifm = require('vso-node-api/interfaces/TestInterfaces');
 
-describe('PublisherTests', function() {
-    
+describe('PublisherTests', function () {
+
     var runContext: trp.TestRunContext = {
         requestedFor: "userx",
         buildId: "21",
@@ -24,23 +24,24 @@ describe('PublisherTests', function() {
         fileNumber: "3",
         releaseUri: "abc",
         releaseEnvironmentUri: "xyz"
-    };  
-	
-	var command : cm.ITaskCommand;
-    var readerJUnit = new trr.JUnitResultReader(command);    
+    };
+
+    var command: cm.ITaskCommand;
+    var readerJUnit = new trr.JUnitResultReader(command);
     var readerNUnit = new trr.NUnitResultReader(command);
     var readerXUnit = new trr.XUnitResultReader(command);
 
     var resultsFileJUnit = path.resolve(__dirname, './testresults/junitresults1.xml');
+    var resultstFileJUnitMultiNode = path.resolve(__dirname, './testresults/Junit_test2.xml');
     var resultsFileNUnit = path.resolve(__dirname, './testresults/nunitresults.xml');
     var resultsFileXUnit = path.resolve(__dirname, './testresults/xunitresults.xml');
 
     var feedbackChannel;
     var testRunPublisher;
 
-    it('results.publish : JUnit results file', function(done) {
+    it('results.publish : JUnit results file', function (done) {
         this.timeout(2000);
-        
+
         feedbackChannel = new fm.TestFeedbackChannel();
         testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerJUnit);
 
@@ -48,11 +49,26 @@ describe('PublisherTests', function() {
             assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
             done();
         },
-        function (err) {
-            assert(false, 'ResultPublish Task Failed! Details : '  + err.message);
-        });
-    })    
-        
+            function (err) {
+                assert(false, 'ResultPublish Task Failed! Details : ' + err.message);
+            });
+    })
+
+    it('results.publish : JUnit results file with multiple test suite nodes (karma format)', function (done) {
+        this.timeout(2000);
+
+        feedbackChannel = new fm.TestFeedbackChannel();
+        testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerJUnit);
+
+        testRunPublisher.publishTestRun(resultstFileJUnitMultiNode).then(function (createdTestRun) {
+            assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
+            done();
+        },
+            function (err) {
+                assert(false, 'ResultPublish Task Failed! Details : ' + err.message);
+            });
+    })
+
     it('results.publish : NUnit results file', function (done) {
         this.timeout(2000);
         feedbackChannel = new fm.TestFeedbackChannel();
@@ -62,14 +78,14 @@ describe('PublisherTests', function() {
             assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
             done();
         },
-        function (err) {
-            assert(false, 'ResultPublish Task Failed! Details : ' + err.message);
-        });
-    })	
+            function (err) {
+                assert(false, 'ResultPublish Task Failed! Details : ' + err.message);
+            });
+    })
 
     it('results.publish : XUnit results file', function (done) {
         this.timeout(2000);
-        
+
         feedbackChannel = new fm.TestFeedbackChannel();
         testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerXUnit);
 
@@ -81,31 +97,31 @@ describe('PublisherTests', function() {
                 assert(false, 'ResultPublish Task Failed! Details : ' + err.message);
             });
     })
-/*
-    it('results.publish : error handling for create test run', function(done) {
-        this.timeout(2000);
-
-        feedbackChannel = new fm.TestFeedbackChannel();
-        testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerJUnit);
-
-        var testRun: testifm.RunCreateModel = <any>{
-            name: "foobar",
-            id: -1
-        };
-
-        // error handling/propagation from start test run 
-        testRunPublisher.startTestRun(testRun).then(function (createdTestRun) {
-            assert(false, 'ResultPublish Task did not fail as expected');
-            done();
-        },
-        function (err) {
-            assert(err.message == "Too bad - createTestRun failed", 'ResultPublish Task error message does not match expected - ' + err.message);
-            done();
-        });
-
-    })	
-*/      
-    it('results.publish : error handling for end test run', function(done) {
+    /*
+        it('results.publish : error handling for create test run', function(done) {
+            this.timeout(2000);
+    
+            feedbackChannel = new fm.TestFeedbackChannel();
+            testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerJUnit);
+    
+            var testRun: testifm.RunCreateModel = <any>{
+                name: "foobar",
+                id: -1
+            };
+    
+            // error handling/propagation from start test run 
+            testRunPublisher.startTestRun(testRun).then(function (createdTestRun) {
+                assert(false, 'ResultPublish Task did not fail as expected');
+                done();
+            },
+            function (err) {
+                assert(err.message == "Too bad - createTestRun failed", 'ResultPublish Task error message does not match expected - ' + err.message);
+                done();
+            });
+    
+        })	
+    */
+    it('results.publish : error handling for end test run', function (done) {
         this.timeout(2000);
 
         feedbackChannel = new fm.TestFeedbackChannel();
@@ -121,13 +137,13 @@ describe('PublisherTests', function() {
             assert(false, 'ResultPublish Task did not fail as expected');
             done();
         },
-        function (err) {
-            assert(err.message == "Too bad - endTestRun failed", 'ResultPublish Task error message does not match expected - ' + err.message);
-            done();
-        });
-    }) 
-           
-    it('results.publish : error handling for reading results', function(done) {
+            function (err) {
+                assert(err.message == "Too bad - endTestRun failed", 'ResultPublish Task error message does not match expected - ' + err.message);
+                done();
+            });
+    })
+
+    it('results.publish : error handling for reading results', function (done) {
         this.timeout(2000);
 
         feedbackChannel = new fm.TestFeedbackChannel();
@@ -138,18 +154,18 @@ describe('PublisherTests', function() {
         testRunPublisher.publishTestRun(resultsFile).then(function (createdTestRun) {
             assert(!feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
         },
-        function (err) {
-            assert(err.message == "Unmatched closing tag: XYZXYZuite\nLine: 13\nColumn: 16\nChar: >",
-                'ResultPublish Task Failed as expected! Details : '  + err.message);
-            done();
-        });
+            function (err) {
+                assert(err.message == "Unmatched closing tag: XYZXYZuite\nLine: 13\nColumn: 16\nChar: >",
+                    'ResultPublish Task Failed as expected! Details : ' + err.message);
+                done();
+            });
     })
 
     it('results.publish : JUnit reader sanity check without run title', function (done) {
 
         var results;
-        var testRun;  
-        
+        var testRun;
+
         runContext.runTitle = "";
         runContext.fileNumber = "0";
 
@@ -174,54 +190,54 @@ describe('PublisherTests', function() {
             assert.strictEqual("should default useDotNotation to true", results[2].automatedTestName);
             done();
         },
-        function(err) {
-            assert(false, 'JUnit Reader Failed! Details : ' + err.message);
-            done();
-        });		
+            function (err) {
+                assert(false, 'JUnit Reader Failed! Details : ' + err.message);
+                done();
+            });
     })
-    
-    it('results.publish : JUnit reader sanity check with run title', function(done) {
-        
+
+    it('results.publish : JUnit reader sanity check with run title', function (done) {
+
         var testRun;
 
         runContext.runTitle = "My Title";
-        runContext.fileNumber = "0";        
+        runContext.fileNumber = "0";
 
         readerJUnit.readResults(resultsFileJUnit, runContext).then(function (res) {
             testRun = res.testRun;
             
             //Verifying the test run details
-            assert.strictEqual("My Title", testRun.name);			
+            assert.strictEqual("My Title", testRun.name);
             done();
         },
-        function(err) {
-            assert(false, 'JUnit Reader Failed! Details : ' + err.message);
-            done();
-        });		
+            function (err) {
+                assert(false, 'JUnit Reader Failed! Details : ' + err.message);
+                done();
+            });
     })
-    
-    it('results.publish : JUnit reader sanity check with run title and file number', function(done) {
-        
-        var testRun;        
-        
+
+    it('results.publish : JUnit reader sanity check with run title and file number', function (done) {
+
+        var testRun;
+
         runContext.fileNumber = "3";
 
         readerJUnit.readResults(resultsFileJUnit, runContext).then(function (res) {
             testRun = res.testRun;
             
             //Verifying the test run details
-            assert.strictEqual("My Title 3", testRun.name);			
+            assert.strictEqual("My Title 3", testRun.name);
             done();
         },
-        function(err) {
-            assert(false, 'JUnit Reader Failed! Details : ' + err.message);
-            done();
-        });		
+            function (err) {
+                assert(false, 'JUnit Reader Failed! Details : ' + err.message);
+                done();
+            });
     })
-    
+
     it('results.publish : NUnit reader sanity check without run title', function (done) {
-        
-        var results;        
+
+        var results;
         var testRun;
 
         runContext.runTitle = "";
@@ -249,59 +265,59 @@ describe('PublisherTests', function() {
             assert.strictEqual("CreditCardValidation.Tests.ValidateCreditCardTests.CreditCardNumber_TooShort_DisplayErrorMessage(Android)_lg_nexus_5_4_4_4", results[3].automatedTestName);
             done();
         },
-        function(err) {
-            assert(false, 'NUnit Reader Failed! Details : ' + err.message);
-            done();
-        });
+            function (err) {
+                assert(false, 'NUnit Reader Failed! Details : ' + err.message);
+                done();
+            });
     })
-    
-    it('results.publish : NUnit reader sanity check with run title', function(done) {
-        
+
+    it('results.publish : NUnit reader sanity check with run title', function (done) {
+
         var testRun;
 
         runContext.runTitle = "My Title";
-        runContext.fileNumber = "0";      
-        
+        runContext.fileNumber = "0";
+
         readerNUnit.readResults(resultsFileNUnit, runContext).then(function (res) {
             testRun = res.testRun;
             
             //Verifying the test run details
-            assert.strictEqual("My Title", testRun.name);			
+            assert.strictEqual("My Title", testRun.name);
             done();
         },
-        function(err) {
-            assert(false, 'NUnit Reader Failed! Details : ' + err.message);
-            done();
-        });		
+            function (err) {
+                assert(false, 'NUnit Reader Failed! Details : ' + err.message);
+                done();
+            });
     })
-    
-    it('results.publish : NUnit reader sanity check with run title and file number', function(done) {
-        
+
+    it('results.publish : NUnit reader sanity check with run title and file number', function (done) {
+
         var testRun;
         runContext.fileNumber = "3";
-          
+
         readerNUnit.readResults(resultsFileNUnit, runContext).then(function (res) {
             testRun = res.testRun;
             
             //Verifying the test run details
-            assert.strictEqual("My Title 3", testRun.name);			
+            assert.strictEqual("My Title 3", testRun.name);
             done();
         },
-        function(err) {
-            assert(false, 'NUnit Reader Failed! Details : ' + err.message);
-            done();
-        });		
+            function (err) {
+                assert(false, 'NUnit Reader Failed! Details : ' + err.message);
+                done();
+            });
     })
-    
-    
+
+
     it('results.publish : XUnit reader sanity check without run title', function (done) {
 
         var results;
         var testRun;
 
         runContext.runTitle = "";
-        runContext.fileNumber = "0"; 
-               
+        runContext.fileNumber = "0";
+
         readerXUnit.readResults(resultsFileXUnit, runContext).then(function (res) {
             testRun = res.testRun;
             results = res.testResults;
@@ -324,36 +340,36 @@ describe('PublisherTests', function() {
             assert.strictEqual("test1", results[3].automatedTestName);
             done();
         },
-        function(err) {
-            assert(false, 'XUnit Reader Failed! Details : ' + err.message);
-            done();
-        }); 
+            function (err) {
+                assert(false, 'XUnit Reader Failed! Details : ' + err.message);
+                done();
+            });
     })
-    
-    it('results.publish : XUnit reader sanity check with run title', function(done) {
-        
+
+    it('results.publish : XUnit reader sanity check with run title', function (done) {
+
         var testRun;
 
         runContext.runTitle = "My Title";
         runContext.fileNumber = "0";
-        
+
         readerXUnit.readResults(resultsFileXUnit, runContext).then(function (res) {
             testRun = res.testRun;
             
             //Verifying the test run details
-            assert.strictEqual("My Title", testRun.name);			
+            assert.strictEqual("My Title", testRun.name);
             done();
         },
-        function(err) {
-            assert(false, 'XUnit Reader Failed! Details : ' + err.message);
-            done();
-        });		
+            function (err) {
+                assert(false, 'XUnit Reader Failed! Details : ' + err.message);
+                done();
+            });
     })
-    
-    it('results.publish : XUnit reader sanity check with run title and file number', function(done) {
-        
-        var testRun;        
-        
+
+    it('results.publish : XUnit reader sanity check with run title and file number', function (done) {
+
+        var testRun;
+
         runContext.fileNumber = "3";
         readerXUnit.readResults(resultsFileXUnit, runContext).then(function (res) {
             testRun = res.testRun;
@@ -368,6 +384,6 @@ describe('PublisherTests', function() {
             }).fail(function (err) {
                 assert(false, 'XUnit Reader Failed! Details : ' + err.message);
                 done(err);
-            });		
+            });
     })
 });	
