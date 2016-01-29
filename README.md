@@ -2,7 +2,7 @@
 
 A cross platform build agent for Microsoft Visual Studio Team Services (VSTS) and Team Foundation Server (TFS).  Supported on Mac OSX and Linux.
 
-Related:[VSO Build Tasks](https://github.com/Microsoft/vso-agent-tasks), [VSO Task SDK](https://github.com/Microsoft/vso-task-lib), [VSO Node API](https://github.com/Microsoft/vso-node-api)
+Related:[VSO Build Tasks](https://github.com/Microsoft/vso-agent-tasks), [VSO Task SDK](https://github.com/Microsoft/vsts-task-lib), [VSO Node API](https://github.com/Microsoft/vso-node-api)
 
 ## Setup
 
