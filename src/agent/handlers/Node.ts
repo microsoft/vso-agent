@@ -25,8 +25,8 @@ export function runTask(scriptPath: string, ctx: cm.IExecutionContext, callback)
             nodePath = internalNode;
         }
         else {
-            console.log('Warning: internal node not found at ' + internalNode);
-            console.log('Falling back to globally installed node.  Will be deprecated soon.');
+            ctx.warning('Warning: internal node not found at ' + internalNode);
+            ctx.warning('Falling back to globally installed node.  Will be deprecated soon.');
         }
     }
     catch (err) { 

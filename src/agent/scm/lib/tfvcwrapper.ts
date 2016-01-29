@@ -8,6 +8,7 @@ import utilm = require('../../utilities');
 import Q = require('q');
 var shell = require('shelljs');
 var path = require('path');
+var fs = require('fs');
 var xr = require('xmlreader');
 
 export interface TfvcMapping {
@@ -39,7 +40,21 @@ export interface ITfvcExecOptions {
 
 export class TfvcWrapper extends events.EventEmitter {
     constructor() {
-        this.tfPath = shell.which('tf', false);
+        var tfp = shell.which('tf', false);
+        var internalTf = path.join(process.env['AGENT_HOMEDIRECTORY'], '..', 'runtime', 'tee', 'tf');
+        try{
+            if (fs.existsSync(internalTf)) {
+                tfp = internalTf;
+            }
+            else {
+                console.log('Warning: internal tf not found at ' + tfp);
+                console.log('Falling back to globally installed tf.  Will be deprecated soon.');
+            }
+        }
+        catch (err) { 
+            // ignore and fall back to 
+        }        
+        this.tfPath = tfp;
         this.connOptions = <ITfvcConnOptions>{};
         super();
     }
