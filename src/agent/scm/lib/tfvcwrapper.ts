@@ -125,6 +125,27 @@ export class TfvcWrapper extends events.EventEmitter {
         return this._exec('undo', ['.', '-recursive']);
     }
 
+    public listWorkspaces() {
+        return this._execSync("workspaces", []);
+    }
+
+    public resolvePath(inputPath: string): string {
+        if (this._isServerPath(inputPath)) {
+            var output = this._execSync('resolvePath', [ inputPath ]);
+            if (this._success(output)) {
+                return output.stdout.toString();
+            } 
+        }
+
+        // if we failed to resolve the path (maybe it wasn't a server path, maybe the path isn't mapped)
+        // just return the input.  This way we honor any relative path user has manually typed in
+        return inputPath;
+    } 
+    
+    private _isServerPath(inputPath: string): boolean {
+        return  inputPath !== ""  && inputPath.charAt(0) === '$'; 
+    }
+
     private _getQuotedArgsWithDefaults(args: string[]): string[] {
         // default connection related args
         var collectionArg = '-collection:' + this.connOptions.collection;
@@ -149,15 +170,57 @@ export class TfvcWrapper extends events.EventEmitter {
 
         return msg;
     }
+    
+    private _getToolRunner(cmd: string, args: string[]) {
+        var tf = new tl.ToolRunner(this.tfPath);
+        tf.silent = true;
+        
+        // cmd
+        tf.arg(cmd, true);
 
+        var quotedArgs = this._getQuotedArgsWithDefaults(args);
+        // args
+        if (quotedArgs.map((arg: string) => {
+            tf.arg(arg, true); // raw arg
+        }));
+        
+        return tf;
+    }
+    
+    private _getOpts(options?: ITfvcExecOptions) {             
+        var options = options || <ITfvcExecOptions>{};
+        var ops: any = {
+            cwd: options.cwd || process.cwd(),
+            env: options.env || process.env,
+            silent: true,
+            outStream: options.outStream || process.stdout,
+            errStream: options.errStream || process.stderr,
+            failOnStdErr: options.failOnStdErr || false,
+            ignoreReturnCode: options.ignoreReturnCode || false
+        };
+        
+        return ops;
+    }
+    
+    private _execSync(cmd: string, args: string[], options?: ITfvcExecOptions) {
+        if (this.tfPath === null) {
+            return this._getTfNotInstalled();
+        }
+        
+        var tf = this._getToolRunner(cmd, args);
+        var ops = this._getOpts(options);
+        
+        return tf.execSync(ops);
+    }
+    
     private _exec(cmd: string, args: string[], options?: ITfvcExecOptions): Q.Promise<number> {
         if (this.tfPath === null) {
             return this._getTfNotInstalled();
         }
-
-        var tf = new tl.ToolRunner(this.tfPath);
-        tf.silent = true;
-
+        
+        var tf = this._getToolRunner(cmd, args);
+        var ops = this._getOpts(options);
+      
         tf.on('debug', (message) => {
             this.emit('stdout', '[debug]' + this._scrubCredential(message));
         })
@@ -169,26 +232,6 @@ export class TfvcWrapper extends events.EventEmitter {
         tf.on('stderr', (data) => {
             this.emit('stderr', this._scrubCredential(data));
         })
-
-        // cmd
-        tf.arg(cmd, true);
-
-        var quotedArgs = this._getQuotedArgsWithDefaults(args);
-        // args
-        if (quotedArgs.map((arg: string) => {
-            tf.arg(arg, true); // raw arg
-        }));
-
-        options = options || <ITfvcExecOptions>{};
-        var ops: any = {
-            cwd: options.cwd || process.cwd(),
-            env: options.env || process.env,
-            silent: true,
-            outStream: options.outStream || process.stdout,
-            errStream: options.errStream || process.stderr,
-            failOnStdErr: options.failOnStdErr || false,
-            ignoreReturnCode: options.ignoreReturnCode || false
-        };
 
         return tf.exec(ops);
     }

@@ -73,6 +73,14 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
             collection: collectionUri
         });
     }
+    
+    public resolveInputPath(inputPath: string) {
+        this.ctx.debug("Resolving: " + inputPath);
+        var resolvedPath = this.tfvcw.resolvePath(inputPath);
+        this.ctx.debug("    resolved to: " + resolvedPath);
+
+        return resolvedPath;
+    }
 
     public getCode(): Q.Promise<number> {
         var workspaceName = this._getWorkspaceName();
@@ -102,7 +110,9 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
             // hopefully mappings are short lists so a naive comparison isn't too terriably slow
             var contains = function(m: tfvcwm.TfvcMapping, mArray: tfvcwm.TfvcMapping[]): boolean {
                 for(var i = 0; i < mArray.length; i++) {
-                    if (m.type === mArray[i].type && m.serverPath === mArray[i].serverPath) {
+                    if (m.type === mArray[i].type 
+                            && m.serverPath === mArray[i].serverPath
+                            && m.localPath === mArray[i].localPath) {
                         return true; 
                     } 
                 }
@@ -233,6 +243,12 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
             }
         })
         .then(() => {
+            // Sometime the job fails with:
+            //   An argument error occurred: Unable to determine the workspace. 
+            //   You may be able to correct this by running 'tf workspaces -collection:TeamProjectCollectionUrl'.
+            // when getting the source.  Preemptively run this to be safe.
+            this.tfvcw.listWorkspaces();
+
             // now it's guaranteed build definition mapping and actual workspace mapping are identical
             var getCodePromiseChain = Q(0);
 
@@ -350,10 +366,16 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
         return commonPath;
     }
 
-    private _createLocalPath(mapping: string, commonPath: string): string {
+    private _createLocalPath(mapping, commonPath: string): string {
         var serverPath = mapping["serverPath"];
-        var rootedServerPath = this._rootingWildcardPath(serverPath.slice(commonPath.length));
-        var localPath = path.join(this.targetPath, rootedServerPath); 
+        var localPath;
+        if (mapping["localPath"]) {
+            this.ctx.debug("Use localPath defined in build definition");
+            localPath = path.join(this.targetPath, mapping["localPath"].replace(/\\/g, "/")); 
+        } else {
+            var rootedServerPath = this._rootingWildcardPath(serverPath.slice(commonPath.length));
+            localPath = path.join(this.targetPath, rootedServerPath); 
+        }
 
         this._ensurePathExist(localPath);
 
@@ -365,7 +387,7 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
             var tfvcMappings = JSON.parse(endpoint.data['tfvcWorkspaceMapping']);
             if (tfvcMappings && tfvcMappings.mappings) {
                 var commonRootPath = this._getCommonRootPath(tfvcMappings.mappings);
-                this.ctx.info('common path for mapping: ' + commonRootPath);
+                this.ctx.debug('common path for mapping: ' + commonRootPath);
                 return tfvcMappings.mappings.map((buildDefMap) => {
                     var serverPath = buildDefMap["serverPath"];
                     return <tfvcwm.TfvcMapping>{
