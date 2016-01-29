@@ -43,6 +43,8 @@ export function beforeJob(context: common.IExecutionContext, callback) {
             context.info('Skipping artifact download based on the setting specified.')
             utilm.ensurePathExists(artifactsFolder).then(() => {
                 setAndLogLocalVariables(context, artifactsFolder, artifactDefinitions);
+            }).then(() => {
+                resolvePathInputs(context, artifactsFolder);
                 callback();
                 return;
             }).fail((err) => {
@@ -64,6 +66,8 @@ export function beforeJob(context: common.IExecutionContext, callback) {
             Q.all(promises).then(() => {
                 context.info('Finished artifacts download.');
                 setAndLogLocalVariables(context, artifactsFolder, artifactDefinitions);
+            }).then(() => {
+                resolvePathInputs(context, artifactsFolder);
                 callback();
                 return;
             }).fail((err) => {
@@ -76,38 +80,6 @@ export function beforeJob(context: common.IExecutionContext, callback) {
         callback(err);
         return;
         });
-
-    //
-    // Resolve paths for filePath inputs
-    //
-    var job: agentifm.JobRequestMessage = context.jobInfo.jobMessage;
-    job.tasks.forEach((task: agentifm.TaskInstance) => {
-        context.info('processing task: ' + task.name + ' ( ' + task.id + ')');
-        var taskDef = context.taskDefinitions[task.id];
-        if (!taskDef) {
-            throw new Error('Task definition for ' + task.id + ' not found.');
-        }
-            
-        // find the filePath inputs
-        var filePathInputs: { [key: string]: boolean } = {};
-        taskDef.inputs.forEach((input: agentifm.TaskInputDefinition) => {
-            if (input.type === 'filePath') {
-                filePathInputs[input.name] = true;
-                context.info('filePath input: ' + input.name);
-            }
-        });
-            
-        // scan dictionary of input/val for pathInputs
-        for (var key in task.inputs) {
-            if (filePathInputs.hasOwnProperty(key)) {
-                // defer to the source provider to resolve to the physical path
-                // default is to append (relative to repo root but tfsvc mapped)
-                var resolvedPath = path.resolve(artifactsFolder, task.inputs[key] || '');
-                context.info('rewriting ' + key + ' to ' + resolvedPath);
-                task.inputs[key] = resolvedPath;
-            }
-        }
-    });
 }
 
 export function cleanUpArtifactsDirectory(context: common.IExecutionContext, artifactsFolder: string, callback): void {
@@ -145,4 +117,50 @@ export function setAndLogLocalVariables(context: common.IExecutionContext, artif
     context.variables[common.AutomationVariables.systemDefaultWorkingDirectory] = artifactsFolder;
 
     context.verbose('Environment variables available are below.  Note that these environment variables can be referred to in the task (in the ReleaseDefinition) by replacing "_" with "." e.g. AGENT_WORKINGDIRECTORY environment variable can be referenced using Agent.WorkingDirectory in the ReleaseDefinition:' + JSON.stringify(context.variables, null, 2));
+}
+
+export function resolvePathInputs(context: common.IExecutionContext, artifactsFolder: string): void {
+    var job: agentifm.JobRequestMessage = context.jobInfo.jobMessage;
+    var vars = context.variables;
+    if (vars) {
+        // we don't want vars to be case sensitive
+        var lowerVars = {};
+        for (var varName in vars) {
+            lowerVars[varName.toLowerCase()] = vars[varName];
+        }
+
+        job.tasks.forEach((task) => {
+            for (var key in task.inputs) {
+                if (task.inputs[key]) {
+                    task.inputs[key] = task.inputs[key].replaceVars(lowerVars);
+                }
+            }
+
+            context.info('processing task: ' + task.name + ' ( ' + task.id + ')');
+            var taskDef = context.taskDefinitions[task.id];
+            if (!taskDef) {
+                throw new Error('Task definition for ' + task.id + ' not found.');
+            }
+            
+            // find the filePath inputs
+            var filePathInputs: { [key: string]: boolean } = {};
+            taskDef.inputs.forEach((input: agentifm.TaskInputDefinition) => {
+                if (input.type === 'filePath') {
+                    filePathInputs[input.name] = true;
+                    context.info('filePath input: ' + input.name);
+                }
+            });
+            
+            // scan dictionary of input/val for pathInputs
+            for (var key in task.inputs) {
+                if (filePathInputs.hasOwnProperty(key)) {
+                    // defer to the source provider to resolve to the physical path
+                    // default is to append (relative to repo root but tfsvc mapped)
+                    var resolvedPath = path.resolve(artifactsFolder, task.inputs[key] || '');
+                    context.info('rewriting ' + key + 'from:' + task.inputs[key] + ' to ' + resolvedPath);
+                    task.inputs[key] = resolvedPath;
+                }
+            }
+        });
+    }
 }
