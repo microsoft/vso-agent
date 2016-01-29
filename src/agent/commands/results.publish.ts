@@ -29,19 +29,19 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
 
         var teamProject = this.executionContext.variables["system.teamProject"];
         var resultFilePath: string = this.command.message;
-        
+
         var resultType: string = this.command.properties['type'];
-        if(resultType) { 
-            resultType = resultType.toLowerCase(); 
+        if (resultType) {
+            resultType = resultType.toLowerCase();
         }
 
         var platform: string = this.command.properties['platform'];
-        var config : string = this.command.properties['config'];
-        var runTitle : string = this.command.properties['runTitle'];
-        var fileNumber : string = this.command.properties['fileNumber'];
-        var publishRunAttachments : boolean = (this.command.properties['publishRunAttachments'] === "true");
+        var config: string = this.command.properties['config'];
+        var runTitle: string = this.command.properties['runTitle'];
+        var fileNumber: string = this.command.properties['fileNumber'];
+        var publishRunAttachments: boolean = (this.command.properties['publishRunAttachments'] === "true");
         var command = this.command;
-        
+
         var testRunContext: trp.TestRunContext = {
             requestedFor: this.executionContext.variables["build.requestedFor"],
             buildId: this.executionContext.variables["build.buildId"],
@@ -56,13 +56,13 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
 
         var reader;
         if (resultType == "junit") {
-            reader = new trr.JUnitResultReader();
+            reader = new trr.JUnitResultReader(this.command);
         }
         else if (resultType == "nunit") {
-            reader = new trr.NUnitResultReader();
+            reader = new trr.NUnitResultReader(this.command);
         }
         else if (resultType == "xunit") {
-            reader = new trr.XUnitResultReader();
+            reader = new trr.XUnitResultReader(this.command);
         }
         else if (resultType == "vstest") {
             this.command.warning("Test results of format '" + resultType + "'' are not supported on this build agent");
@@ -73,15 +73,15 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
             testRunPublisher.publishTestRun(resultFilePath).then(function (createdTestRun) {
                 defer.resolve(null);
             })
-            .fail((err) => {
-                this.command.warning("Failed to publish test results: " + err.message);
-                defer.resolve(null);
-            });
+                .fail((err) => {
+                    this.command.warning("Failed to publish test results: " + err.message);
+                    defer.resolve(null);
+                });
         }
         else {
             defer.resolve(null);
         }
 
         return defer.promise;
-    }   
+    }
 }
