@@ -191,7 +191,6 @@ export function getCapabilities(): cm.IStringDictionary {
     resolveCapability(filteredEnv, 'cmake');
     resolveCapability(filteredEnv, 'curl');
     resolveCapability(filteredEnv, 'git');
-    resolveCapability(filteredEnv, 'jake', null, '.'); // If not in global path, use jake packaged in this agent
     resolveCapability(filteredEnv, 'java');
     resolveCapability(filteredEnv, 'make');
     resolveCapability(filteredEnv, { name: 'mdtool', paths: ['/Applications/Xamarin Studio.app/Contents/MacOS/mdtool'] }, 'Xamarin.iOS');
