@@ -428,6 +428,7 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
     };
 
     var envMasks = jobEnvironment.mask || [];
+    var endpoints = jobEnvironment.endpoints || [];
     var maskHints = [];
     envMasks.forEach((maskHint: agentifm.MaskHint) => { 
         if (maskHint.type === agentifm.MaskType.Variable && maskHint.value) {
@@ -437,8 +438,7 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
         }
     });
 
-    var endpoints = jobEnvironment.endpoints;
-    if (endpoints != null) {
+    if (endpoints != null || maskHints.length > 0) {
         var indexFunctions: IndexFunction[] = [];
         maskHints.forEach((maskHint: agentifm.MaskHint, index: number) => {
             if (maskHint.type === agentifm.MaskType.Variable) {
@@ -521,17 +521,7 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
             return charArray.join("");
         };
     }
-    else if (maskHints.length === 0) {
-        return noReplacement;
-    }
-    else if (maskHints.length === 1) {
-        var maskHint = maskHints[0];
-        if (maskHint.type === agentifm.MaskType.Variable) {
-            var toReplace = jobEnvironment.variables[maskHint.value];
-            return (input: string) => {
-                return input.replace(toReplace, MASK_REPLACEMENT);
-            };
-        }
+    else if (endpoints === null && maskHints.length === 0) {
         return noReplacement;
     }
 }
