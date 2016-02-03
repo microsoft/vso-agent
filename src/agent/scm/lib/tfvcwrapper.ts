@@ -129,9 +129,9 @@ export class TfvcWrapper extends events.EventEmitter {
         return this._execSync("workspaces", []);
     }
 
-    public resolvePath(inputPath: string): string {
+    public resolvePath(inputPath: string, workspaceName: string): string {
         if (this._isServerPath(inputPath)) {
-            var output = this._execSync('resolvePath', [ inputPath ]);
+            var output = this._execSync('resolvePath', [ inputPath, '-workspace:' + workspaceName ]);
             if (this._success(output)) {
                 return output.stdout.toString();
             } 

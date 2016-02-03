@@ -76,7 +76,7 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
     
     public resolveInputPath(inputPath: string) {
         this.ctx.debug("Resolving: " + inputPath);
-        var resolvedPath = this.tfvcw.resolvePath(inputPath);
+        var resolvedPath = this.tfvcw.resolvePath(inputPath, this._getWorkspaceName());
         this.ctx.debug("    resolved to: " + resolvedPath);
 
         return resolvedPath;
@@ -110,11 +110,11 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
             // hopefully mappings are short lists so a naive comparison isn't too terriably slow
             var contains = function(m: tfvcwm.TfvcMapping, mArray: tfvcwm.TfvcMapping[]): boolean {
                 for(var i = 0; i < mArray.length; i++) {
-                    if (m.type === mArray[i].type 
-                            && m.serverPath === mArray[i].serverPath
-                            && m.localPath === mArray[i].localPath) {
-                        return true; 
-                    } 
+                    if (m.type === mArray[i].type && m.serverPath === mArray[i].serverPath) {
+                        if (m.type === 'cloak' || m.localPath === mArray[i].localPath) {
+                            return true; 
+                        }
+                    }
                 }
 
                 return false;
@@ -370,7 +370,7 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
         var serverPath = mapping["serverPath"];
         var localPath;
         if (mapping["localPath"]) {
-            this.ctx.debug("Use localPath defined in build definition");
+            this.ctx.debug("Use localPath defined in build definition: " + mapping["localPath"]);
             localPath = path.join(this.targetPath, mapping["localPath"].replace(/\\/g, "/")); 
         } else {
             var rootedServerPath = this._rootingWildcardPath(serverPath.slice(commonPath.length));
