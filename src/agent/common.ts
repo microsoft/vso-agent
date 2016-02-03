@@ -438,7 +438,7 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
         }
     });
 
-    if (endpoints != null || maskHints.length > 0) {
+    if (endpoints.length > 0 || maskHints.length > 0) {
         var indexFunctions: IndexFunction[] = [];
         maskHints.forEach((maskHint: agentifm.MaskHint, index: number) => {
             if (maskHint.type === agentifm.MaskType.Variable) {
@@ -460,15 +460,17 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
                 var keys = Object.keys(endpoint.authorization['parameters']);
                 keys.forEach((key: string) => {
                     var valueToReplace: string = endpoint.authorization['parameters'][key];
-                    indexFunctions.push((input: string) => {
-                        var results: ReplacementPosition[] = [];
-                        var index: number = input.indexOf(valueToReplace);
-                        while (index > -1) {
-                            results.push({ start: index, length: valueToReplace.length });
-                            index = input.indexOf(valueToReplace, index + 1);
-                        }
-                        return results;
-                    });
+                    if (valueToReplace === null || valueToReplace === undefined) {
+                        indexFunctions.push((input: string) => {
+                            var results: ReplacementPosition[] = [];
+                            var index: number = input.indexOf(valueToReplace);
+                            while (index > -1) {
+                                results.push({ start: index, length: valueToReplace.length });
+                                index = input.indexOf(valueToReplace, index + 1);
+                            }
+                            return results;
+                        });
+                    }
                 });
             }
         });
@@ -521,7 +523,7 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
             return charArray.join("");
         };
     }
-    else if (endpoints === null && maskHints.length === 0) {
+    else if (endpoints.length === 0 && maskHints.length === 0) {
         return noReplacement;
     }
 }
