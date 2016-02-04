@@ -61,7 +61,7 @@ Enter alternate password > (copy paste PAT token here)
 Enter agent name (enter sets yourmac.local)  > 
 Enter agent pool name (enter sets default)  > 
 Enter poolName(enter sets default) > 
-Enter serverUrl > https://contoso.visualstudio.com
+Enter serverUrl > https://(YourAccount).visualstudio.com
 ...
 Enter force basic (enter is false)  > 
 Config saved
