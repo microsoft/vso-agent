@@ -428,17 +428,16 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
     };
 
     var envMasks = jobEnvironment.mask || [];
-    var endpoints = jobEnvironment.endpoints || [];
     var maskHints = [];
-    envMasks.forEach((maskHint: agentifm.MaskHint) => { 
-        if (maskHint.type === agentifm.MaskType.Variable && maskHint.value) {
+    envMasks.forEach((maskHint: agentifm.MaskHint) => {
+        if ((maskHint.type === agentifm.MaskType.Variable || maskHint.type === agentifm.MaskType.Regex) && maskHint.value) {
             if (jobEnvironment.variables[maskHint.value]) {
                 maskHints.push(maskHint);
             }
         }
     });
 
-    if (endpoints.length > 0 || maskHints.length > 0) {
+    if (maskHints.length > 0) {
         var indexFunctions: IndexFunction[] = [];
         maskHints.forEach((maskHint: agentifm.MaskHint, index: number) => {
             if (maskHint.type === agentifm.MaskType.Variable) {
@@ -453,24 +452,23 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
                     return results;
                 });
             }
-        });
-
-        endpoints.forEach((endpoint: agentifm.ServiceEndpoint) => {
-            if (endpoint.authorization != null && endpoint.authorization['parameters'] != null) {
-                var keys = Object.keys(endpoint.authorization['parameters']);
-                keys.forEach((key: string) => {
-                    var valueToReplace: string = endpoint.authorization['parameters'][key];
-                    if (valueToReplace === null || valueToReplace === undefined) {
-                        indexFunctions.push((input: string) => {
-                            var results: ReplacementPosition[] = [];
-                            var index: number = input.indexOf(valueToReplace);
-                            while (index > -1) {
-                                results.push({ start: index, length: valueToReplace.length });
-                                index = input.indexOf(valueToReplace, index + 1);
-                            }
-                            return results;
-                        });
+            else if (maskHint.type === agentifm.MaskType.Regex) {
+                indexFunctions.push((input: string) => {
+                    var results: ReplacementPosition[] = [];
+                    var actualIndex = 0;
+                    while (input.length > 0) {
+                        var match = input.match(maskHint.value);
+                        if (match === null) {
+                            break;
+                        }
+                        else {
+                            var matchString = match.toString();
+                            results.push({ start: actualIndex + match.index, length: matchString.length });
+                            input = input.substring(match.index + 1);
+                            actualIndex = actualIndex + match.index + 1;
+                        }
                     }
+                    return results;
                 });
             }
         });
@@ -523,7 +521,7 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
             return charArray.join("");
         };
     }
-    else if (endpoints.length === 0 && maskHints.length === 0) {
+    else if (maskHints.length === 0) {
         return noReplacement;
     }
 }
