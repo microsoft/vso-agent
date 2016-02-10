@@ -241,7 +241,7 @@ export class TfvcWrapper extends events.EventEmitter {
             return this._getTfNotInstalled();
         }
 
-        var cmdline = 'tf ' + cmd + ' ' + this._getQuotedArgsWithDefaults(args).join(' ');
+        var cmdline = this.tfPath + ' ' + cmd + ' ' + this._getQuotedArgsWithDefaults(args).join(' ');
         return utilm.exec(cmdline);
     }
 
