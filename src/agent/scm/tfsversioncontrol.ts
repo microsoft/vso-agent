@@ -111,7 +111,7 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
             var contains = function(m: tfvcwm.TfvcMapping, mArray: tfvcwm.TfvcMapping[]): boolean {
                 for(var i = 0; i < mArray.length; i++) {
                     if (m.type === mArray[i].type && m.serverPath === mArray[i].serverPath) {
-                        if (m.type === 'cloak' || m.localPath === mArray[i].localPath) {
+                        if (m.type === 'cloak' || path.resolve(m.localPath) === path.resolve(mArray[i].localPath)) {
                             return true; 
                         }
                     }
