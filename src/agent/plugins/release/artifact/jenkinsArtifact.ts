@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-import releaseIfm = require('vso-node-api/interfaces/ReleaseManagementInterfaces');
+import releaseIfm = require('vso-node-api/interfaces/ReleaseInterfaces');
 import rmInterfaces = require('../api/interfaces');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import common = require('../../../common');

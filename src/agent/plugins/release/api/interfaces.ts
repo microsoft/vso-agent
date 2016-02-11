@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 import common = require('../../../common');
-import releaseIfm = require('vso-node-api/interfaces/ReleaseManagementInterfaces');
+import releaseIfm = require('vso-node-api/interfaces/ReleaseInterfaces');
 
 export interface IArtifact {
     download(context: common.IExecutionContext, artifactDefinition: releaseIfm.AgentArtifactDefinition, artifactsFolder: string, asyncCallback): void;

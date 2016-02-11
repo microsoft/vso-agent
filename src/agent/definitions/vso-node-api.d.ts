@@ -15460,7 +15460,7 @@ declare module 'vso-node-api/WorkItemTrackingApi' {
 	}
 
 }
-declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
+declare module 'vso-node-api/interfaces/ReleaseInterfaces' {
 	import FormInputInterfaces = require('vso-node-api/interfaces/common/FormInputInterfaces');
 	import VSSInterfaces = require('vso-node-api/interfaces/common/VSSInterfaces');
 	export interface AgentArtifactDefinition {
@@ -15479,6 +15479,11 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    TfsOnPrem = 5,
 	    GitHub = 6,
 	    TFGit = 7,
+	    ExternalTfsBuild = 8,
+	}
+	export interface ApprovalOptions {
+	    releaseCreatorCanBeApprover: boolean;
+	    requiredApproverCount: number;
 	}
 	export interface ApprovalPendingEvent {
 	}
@@ -15489,44 +15494,21 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    Rejected = 4,
 	    Reassigned = 6,
 	    Canceled = 7,
+	    Skipped = 8,
 	}
 	export enum ApprovalType {
 	    Undefined = 0,
 	    PreDeploy = 1,
 	    PostDeploy = 2,
 	}
-	export interface ApprovalUpdateMetadata {
-	    /**
-	     * Changes the approver to this identity when status is Reassign
-	     */
-	    assignedTo: string;
-	    /**
-	     * Comment with which approval/rejection is made
-	     */
-	    comment: string;
-	    /**
-	     * Run the next step at this time.  ToDo: Start handling this when client needs it
-	     */
-	    scheduledTime: Date;
-	    /**
-	     * Target status of the approval step
-	     */
-	    status: ApprovalStatus;
-	}
 	export interface Artifact {
-	    definitions: ArtifactDefinition[];
-	    source: ArtifactSource;
-	}
-	export interface ArtifactDefinition {
-	    artifactSourceId: number;
-	    createdBy: VSSInterfaces.IdentityRef;
-	    createdOn: Date;
-	    description: string;
+	    alias: string;
+	    definitionReference: {
+	        [key: string]: ArtifactSourceReference;
+	    };
 	    id: number;
-	    modifiedBy: VSSInterfaces.IdentityRef;
-	    modifiedOn: Date;
-	    name: string;
-	    path: string;
+	    isPrimary: boolean;
+	    type: string;
 	}
 	export interface ArtifactInstanceData {
 	    accountName: string;
@@ -15534,28 +15516,15 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    tfsUrl: string;
 	    version: string;
 	}
+	export interface ArtifactMetadata {
+	    alias: string;
+	    instanceReference: BuildVersion;
+	}
 	export interface ArtifactProvider {
 	    id: number;
 	    name: string;
 	    sourceUri: string;
 	    version: string;
-	}
-	export interface ArtifactSource {
-	    actualSourceReference: {
-	        [key: string]: ArtifactSourceReference;
-	    };
-	    alias: string;
-	    artifactTypeId: string;
-	    artifactTypeName: string;
-	    createdBy: VSSInterfaces.IdentityRef;
-	    createdOn: Date;
-	    id: number;
-	    isPrimary: boolean;
-	    modifiedBy: VSSInterfaces.IdentityRef;
-	    modifiedOn: Date;
-	    sourceData: {
-	        [key: string]: FormInputInterfaces.InputValue;
-	    };
 	}
 	export interface ArtifactSourceId {
 	    artifactTypeId: string;
@@ -15565,11 +15534,10 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    artifactSourceIds: ArtifactSourceId[];
 	}
 	export interface ArtifactSourceReference {
-	    displayValue: string;
-	    value: string;
+	    id: string;
+	    name: string;
 	}
 	export interface ArtifactTypeDefinition {
-	    id: string;
 	    inputDescriptors: FormInputInterfaces.InputDescriptor[];
 	    name: string;
 	}
@@ -15624,6 +15592,16 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	     */
 	    timestamp: Date;
 	}
+	export interface Condition {
+	    conditionType: ConditionType;
+	    name: string;
+	    value: string;
+	}
+	export enum ConditionType {
+	    Undefined = 0,
+	    Event = 1,
+	    EnvironmentState = 2,
+	}
 	export interface ConfigurationVariableValue {
 	    isSecret: boolean;
 	    value: string;
@@ -15632,15 +15610,39 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    consumerId: number;
 	    consumerName: string;
 	}
+	export interface DeploymentAttempt {
+	    attempt: number;
+	    /**
+	     * Error log to show any unexpected error that occurred during executing deploy step
+	     */
+	    errorLog: string;
+	    id: number;
+	    job: ReleaseTask;
+	    runPlanId: string;
+	    tasks: ReleaseTask[];
+	}
+	/**
+	 * Defines policy on environment queuing at Release Management side queue. We will send to Environment Runner [creating pre-deploy and other steps] only when the policies mentioned are satisfied.
+	 */
+	export interface EnvironmentExecutionPolicy {
+	    /**
+	     * This policy decides, how many environments would be with Environment Runner.
+	     */
+	    concurrencyCount: number;
+	    /**
+	     * Queue depth in the EnvironmentQueue table, this table keeps the environment entries till Environment Runner is free [as per it's policy] to take another environment for running.
+	     */
+	    queueDepthCount: number;
+	}
 	export enum EnvironmentStatus {
-	    NotStarted = 0,
-	    Pending = 1,
-	    Succeeded = 2,
-	    Rejected = 3,
-	    InProgress = 4,
-	    Abandoned = 5,
-	    Stopped = 6,
-	    Canceled = 7,
+	    Undefined = 0,
+	    NotStarted = 1,
+	    Pending = 2,
+	    Succeeded = 3,
+	    Rejected = 4,
+	    InProgress = 5,
+	    Canceled = 6,
+	    Queued = 7,
 	}
 	export interface Issue {
 	    issueType: string;
@@ -15657,6 +15659,7 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    description: string;
 	    environments: ReleaseEnvironment[];
 	    id: number;
+	    keepForever: boolean;
 	    modifiedBy: VSSInterfaces.IdentityRef;
 	    modifiedOn: Date;
 	    name: string;
@@ -15665,20 +15668,17 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    releaseDefinition: ShallowReference;
 	    releaseNameFormat: string;
 	    status: ReleaseStatus;
-	    targetEnvironmentId: number;
 	    variables: {
 	        [key: string]: ConfigurationVariableValue;
 	    };
 	}
 	export interface ReleaseApproval {
-	    approvalHistory: ShallowReference;
 	    approvalType: ApprovalType;
 	    approvedBy: VSSInterfaces.IdentityRef;
 	    approver: VSSInterfaces.IdentityRef;
 	    comments: string;
 	    createdOn: Date;
-	    dateCreated: Date;
-	    dateLastModified: Date;
+	    history: ReleaseApprovalHistory[];
 	    id: number;
 	    isAutomated: boolean;
 	    isNotificationOn: boolean;
@@ -15687,8 +15687,17 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    release: ShallowReference;
 	    releaseDefinition: ShallowReference;
 	    releaseEnvironment: ShallowReference;
+	    revision: number;
 	    status: ApprovalStatus;
 	    trialNumber: number;
+	}
+	export interface ReleaseApprovalHistory {
+	    approver: VSSInterfaces.IdentityRef;
+	    changedBy: VSSInterfaces.IdentityRef;
+	    comments: string;
+	    createdOn: Date;
+	    modifiedOn: Date;
+	    revision: number;
 	}
 	export interface ReleaseArtifact {
 	    artifactProvider: ArtifactProvider;
@@ -15701,21 +15710,25 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    releaseId: number;
 	}
 	export interface ReleaseDefinition {
+	    artifacts: Artifact[];
 	    createdBy: VSSInterfaces.IdentityRef;
 	    createdOn: Date;
 	    environments: ReleaseDefinitionEnvironment[];
 	    id: number;
-	    isDeactivated: boolean;
-	    linkedArtifacts: Artifact[];
 	    modifiedBy: VSSInterfaces.IdentityRef;
 	    modifiedOn: Date;
 	    name: string;
 	    releaseNameFormat: string;
+	    retentionPolicy: RetentionPolicy;
 	    revision: number;
 	    triggers: ReleaseTrigger[];
 	    variables: {
 	        [key: string]: ConfigurationVariableValue;
 	    };
+	}
+	export interface ReleaseDefinitionApprovals {
+	    approvalOptions: ApprovalOptions;
+	    approvals: ReleaseDefinitionApprovalStep[];
 	}
 	export interface ReleaseDefinitionApprovalStep extends ReleaseDefinitionEnvironmentStep {
 	    approver: VSSInterfaces.IdentityRef;
@@ -15730,14 +15743,15 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    tasks: WorkflowTask[];
 	}
 	export interface ReleaseDefinitionEnvironment {
-	    agentPoolId: number;
+	    conditions: Condition[];
 	    demands: any[];
 	    deployStep: ReleaseDefinitionDeployStep;
+	    executionPolicy: EnvironmentExecutionPolicy;
 	    id: number;
 	    name: string;
 	    owner: VSSInterfaces.IdentityRef;
-	    postDeploySteps: ReleaseDefinitionApprovalStep[];
-	    preDeploySteps: ReleaseDefinitionApprovalStep[];
+	    postDeployApprovals: ReleaseDefinitionApprovals;
+	    preDeployApprovals: ReleaseDefinitionApprovals;
 	    queueId: number;
 	    rank: number;
 	    runOptions: {
@@ -15764,6 +15778,11 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    id: string;
 	    name: string;
 	}
+	export enum ReleaseDefinitionExpands {
+	    None = 0,
+	    Environments = 2,
+	    Artifacts = 4,
+	}
 	export interface ReleaseDefinitionRevision {
 	    changedBy: VSSInterfaces.IdentityRef;
 	    changedDate: Date;
@@ -15778,21 +15797,18 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    releases: Release[];
 	}
 	export interface ReleaseEnvironment {
-	    agentPoolId: number;
+	    conditions: Condition[];
 	    createdOn: Date;
 	    definitionEnvironmentId: number;
 	    demands: any[];
-	    /**
-	     * Error log to show any unexpected error that occurred during executing deploy step in the current environment
-	     */
-	    deployStepErrorLog: string;
+	    deploySteps: DeploymentAttempt[];
 	    id: number;
 	    modifiedOn: Date;
 	    name: string;
-	    originalPostDeployApprovals: ReleaseApproval[];
-	    originalPreDeployApprovals: ReleaseApproval[];
 	    owner: VSSInterfaces.IdentityRef;
+	    postApprovalsSnapshot: ReleaseDefinitionApprovals;
 	    postDeployApprovals: ReleaseApproval[];
+	    preApprovalsSnapshot: ReleaseDefinitionApprovals;
 	    preDeployApprovals: ReleaseApproval[];
 	    queueId: number;
 	    rank: number;
@@ -15800,14 +15816,15 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    runOptions: {
 	        [key: string]: string;
 	    };
+	    scheduledDeploymentTime: Date;
 	    status: EnvironmentStatus;
-	    tasks: ReleaseTask[];
 	    variables: {
 	        [key: string]: ConfigurationVariableValue;
 	    };
 	    workflowTasks: WorkflowTask[];
 	}
 	export interface ReleaseEnvironmentCompletedEvent {
+	    createdByName: string;
 	    definitionName: string;
 	    environment: ReleaseEnvironment;
 	    projectName: string;
@@ -15815,9 +15832,14 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    releaseLogsUri: string;
 	    releaseName: string;
 	    status: string;
-	    targetEnvironmentName: string;
 	    title: string;
 	    webAccessUri: string;
+	}
+	export enum ReleaseExpands {
+	    None = 0,
+	    Environments = 2,
+	    Artifacts = 4,
+	    Approvals = 8,
 	}
 	export enum ReleaseQueryOrder {
 	    Descending = 0,
@@ -15827,39 +15849,52 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    None = 0,
 	    Manual = 1,
 	    ContinuousIntegration = 2,
+	    Schedule = 3,
+	}
+	export interface ReleaseSchedule {
+	    /**
+	     * Days of the week to release
+	     */
+	    daysToRelease: ScheduleDays;
+	    /**
+	     * Team Foundation Job Definition Job Id
+	     */
+	    jobId: string;
+	    /**
+	     * Local time zone hour to start
+	     */
+	    startHours: number;
+	    /**
+	     * Local time zone minute to start
+	     */
+	    startMinutes: number;
+	    /**
+	     * Time zone Id of release schedule, such as 'UTC'
+	     */
+	    timeZoneId: string;
 	}
 	export interface ReleaseStartMetadata {
-	    artifactSourceData: {
-	        [key: number]: FormInputInterfaces.InputValue;
-	    };
+	    artifacts: ArtifactMetadata[];
 	    definitionId: number;
 	    description: string;
 	    isDraft: boolean;
 	    reason: ReleaseReason;
-	    targetEnvironmentId: number;
 	}
 	export enum ReleaseStatus {
 	    Undefined = 0,
 	    Draft = 1,
-	    InProgress = 2,
-	    Released = 3,
-	    Stopped = 4,
-	    Rejected = 5,
-	    Abandoned = 6,
-	    Canceled = 7,
+	    Abandoned = 2,
+	    Active = 3,
 	}
 	export interface ReleaseTask {
 	    agentName: string;
-	    attempt: number;
 	    dateEnded: Date;
 	    dateStarted: Date;
-	    environmentId: number;
 	    id: number;
 	    issues: Issue[];
 	    lineCount: number;
 	    name: string;
 	    rank: number;
-	    recordType: string;
 	    status: TaskStatus;
 	    timelineRecordId: string;
 	}
@@ -15870,30 +15905,50 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	}
 	export interface ReleaseTasksUpdatedEvent extends RealtimeReleaseEvent {
 	    environmentId: number;
+	    job: ReleaseTask;
+	    releaseStepId: number;
 	    tasks: ReleaseTask[];
 	}
 	export interface ReleaseTrigger {
-	    targetEnvironmentName: string;
 	    /**
-	     * Id of the TriggerType object. For Trigger type ArtifactSource, this would be the ArtifactSourceId
+	     * Artifact source alias for ArtifactSource trigger type - value is null for all other trigger types
 	     */
-	    triggerEntityId: number;
+	    artifactAlias: string;
+	    /**
+	     * Release schedule for Schedule trigger type - value is null for all other trigger types
+	     */
+	    schedule: ReleaseSchedule;
 	    triggerType: ReleaseTriggerType;
 	}
 	export enum ReleaseTriggerType {
 	    Undefined = 0,
 	    ArtifactSource = 1,
+	    Schedule = 2,
 	}
 	export interface ReleaseUpdatedEvent extends RealtimeReleaseEvent {
 	    release: Release;
 	}
 	export interface ReleaseUpdateMetadata {
-	    requestTime: Date;
+	    keepForever: boolean;
 	    status: ReleaseStatus;
 	}
 	export interface ReleaseWorkItemRef {
 	    id: string;
 	    url: string;
+	}
+	export interface RetentionPolicy {
+	    daysToKeep: number;
+	}
+	export enum ScheduleDays {
+	    None = 0,
+	    Monday = 1,
+	    Tuesday = 2,
+	    Wednesday = 4,
+	    Thursday = 8,
+	    Friday = 16,
+	    Saturday = 32,
+	    Sunday = 64,
+	    All = 127,
 	}
 	export interface ShallowReference {
 	    id: number;
@@ -15912,6 +15967,14 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    Failure = 4,
 	    Canceled = 5,
 	    Skipped = 6,
+	}
+	export interface TimeZone {
+	    displayName: string;
+	    id: string;
+	}
+	export interface TimeZoneList {
+	    utcTimeZone: TimeZone;
+	    validTimeZones: TimeZone[];
 	}
 	export interface WorkflowTask {
 	    alwaysRun: boolean;
@@ -15938,7 +16001,11 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	            "tfsOnPrem": number;
 	            "gitHub": number;
 	            "tFGit": number;
+	            "externalTfsBuild": number;
 	        };
+	    };
+	    ApprovalOptions: {
+	        fields: any;
 	    };
 	    ApprovalPendingEvent: {
 	        fields: any;
@@ -15951,6 +16018,7 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	            "rejected": number;
 	            "reassigned": number;
 	            "canceled": number;
+	            "skipped": number;
 	        };
 	    };
 	    ApprovalType: {
@@ -15960,22 +16028,16 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	            "postDeploy": number;
 	        };
 	    };
-	    ApprovalUpdateMetadata: {
-	        fields: any;
-	    };
 	    Artifact: {
-	        fields: any;
-	    };
-	    ArtifactDefinition: {
 	        fields: any;
 	    };
 	    ArtifactInstanceData: {
 	        fields: any;
 	    };
-	    ArtifactProvider: {
+	    ArtifactMetadata: {
 	        fields: any;
 	    };
-	    ArtifactSource: {
+	    ArtifactProvider: {
 	        fields: any;
 	    };
 	    ArtifactSourceId: {
@@ -16009,22 +16071,38 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    Change: {
 	        fields: any;
 	    };
+	    Condition: {
+	        fields: any;
+	    };
+	    ConditionType: {
+	        enumValues: {
+	            "undefined": number;
+	            "event": number;
+	            "environmentState": number;
+	        };
+	    };
 	    ConfigurationVariableValue: {
 	        fields: any;
 	    };
 	    Consumer: {
 	        fields: any;
 	    };
+	    DeploymentAttempt: {
+	        fields: any;
+	    };
+	    EnvironmentExecutionPolicy: {
+	        fields: any;
+	    };
 	    EnvironmentStatus: {
 	        enumValues: {
+	            "undefined": number;
 	            "notStarted": number;
 	            "pending": number;
 	            "succeeded": number;
 	            "rejected": number;
 	            "inProgress": number;
-	            "abandoned": number;
-	            "stopped": number;
 	            "canceled": number;
+	            "queued": number;
 	        };
 	    };
 	    Issue: {
@@ -16039,10 +16117,16 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    ReleaseApproval: {
 	        fields: any;
 	    };
+	    ReleaseApprovalHistory: {
+	        fields: any;
+	    };
 	    ReleaseArtifact: {
 	        fields: any;
 	    };
 	    ReleaseDefinition: {
+	        fields: any;
+	    };
+	    ReleaseDefinitionApprovals: {
 	        fields: any;
 	    };
 	    ReleaseDefinitionApprovalStep: {
@@ -16063,6 +16147,13 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    ReleaseDefinitionEnvironmentTemplate: {
 	        fields: any;
 	    };
+	    ReleaseDefinitionExpands: {
+	        enumValues: {
+	            "none": number;
+	            "environments": number;
+	            "artifacts": number;
+	        };
+	    };
 	    ReleaseDefinitionRevision: {
 	        fields: any;
 	    };
@@ -16075,6 +16166,14 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    ReleaseEnvironmentCompletedEvent: {
 	        fields: any;
 	    };
+	    ReleaseExpands: {
+	        enumValues: {
+	            "none": number;
+	            "environments": number;
+	            "artifacts": number;
+	            "approvals": number;
+	        };
+	    };
 	    ReleaseQueryOrder: {
 	        enumValues: {
 	            "descending": number;
@@ -16086,7 +16185,11 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	            "none": number;
 	            "manual": number;
 	            "continuousIntegration": number;
+	            "schedule": number;
 	        };
+	    };
+	    ReleaseSchedule: {
+	        fields: any;
 	    };
 	    ReleaseStartMetadata: {
 	        fields: any;
@@ -16095,12 +16198,8 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	        enumValues: {
 	            "undefined": number;
 	            "draft": number;
-	            "inProgress": number;
-	            "released": number;
-	            "stopped": number;
-	            "rejected": number;
 	            "abandoned": number;
-	            "canceled": number;
+	            "active": number;
 	        };
 	    };
 	    ReleaseTask: {
@@ -16119,6 +16218,7 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	        enumValues: {
 	            "undefined": number;
 	            "artifactSource": number;
+	            "schedule": number;
 	        };
 	    };
 	    ReleaseUpdatedEvent: {
@@ -16129,6 +16229,22 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	    };
 	    ReleaseWorkItemRef: {
 	        fields: any;
+	    };
+	    RetentionPolicy: {
+	        fields: any;
+	    };
+	    ScheduleDays: {
+	        enumValues: {
+	            "none": number;
+	            "monday": number;
+	            "tuesday": number;
+	            "wednesday": number;
+	            "thursday": number;
+	            "friday": number;
+	            "saturday": number;
+	            "sunday": number;
+	            "all": number;
+	        };
 	    };
 	    ShallowReference: {
 	        fields: any;
@@ -16147,169 +16263,145 @@ declare module 'vso-node-api/interfaces/ReleaseManagementInterfaces' {
 	            "skipped": number;
 	        };
 	    };
+	    TimeZone: {
+	        fields: any;
+	    };
+	    TimeZoneList: {
+	        fields: any;
+	    };
 	    WorkflowTask: {
 	        fields: any;
 	    };
 	};
 
 }
-declare module 'vso-node-api/ReleaseManagementApi' {
+declare module 'vso-node-api/ReleaseApi' {
 	/// <reference path="../node/node.d.ts" />
 	/// <reference path="../q/Q.d.ts" />
 	import Q = require('q');
 	import basem = require('vso-node-api/ClientApiBases');
 	import VsoBaseInterfaces = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 	import FormInputInterfaces = require('vso-node-api/interfaces/common/FormInputInterfaces');
-	import ReleaseManagementInterfaces = require('vso-node-api/interfaces/ReleaseManagementInterfaces');
-	export interface IReleaseManagementApi extends basem.ClientApiBase {
-	    getAgentArtifactDefinitions(project: string, releaseId: number, onResult: (err: any, statusCode: number, agentartifacts: ReleaseManagementInterfaces.AgentArtifactDefinition[]) => void): void;
-	    getApprovals(project: string, assignedToFilter: string, statusFilter: ReleaseManagementInterfaces.ApprovalStatus, releaseIdsFilter: number[], onResult: (err: any, statusCode: number, approvals: ReleaseManagementInterfaces.ReleaseApproval[]) => void): void;
-	    getApprovalHistory(project: string, approvalStepId: number, onResult: (err: any, statusCode: number, approvals: ReleaseManagementInterfaces.ReleaseApproval[]) => void): void;
-	    updateReleaseApproval(approvalUpdateMetadata: ReleaseManagementInterfaces.ApprovalUpdateMetadata, project: string, approvalId: number, onResult: (err: any, statusCode: number, approval: ReleaseManagementInterfaces.ReleaseApproval) => void): void;
-	    createArtifact(artifact: ReleaseManagementInterfaces.Artifact, project: string, onResult: (err: any, statusCode: number, artifact: ReleaseManagementInterfaces.Artifact) => void): void;
-	    getArtifact(project: string, definitionId: number, onResult: (err: any, statusCode: number, artifact: ReleaseManagementInterfaces.Artifact) => void): void;
-	    getArtifacts(project: string, typeId: string, name: string, sourceId: string, onResult: (err: any, statusCode: number, artifacts: ReleaseManagementInterfaces.Artifact[]) => void): void;
-	    updateArtifacts(artifactDefinitions: ReleaseManagementInterfaces.ArtifactDefinition[], project: string, onResult: (err: any, statusCode: number, artifacts: ReleaseManagementInterfaces.ArtifactDefinition[]) => void): void;
-	    getReleaseChanges(project: string, releaseId: number, baseReleaseId: number, top: number, onResult: (err: any, statusCode: number, changes: ReleaseManagementInterfaces.Change[]) => void): void;
-	    createReleaseDefinition(releaseDefinition: ReleaseManagementInterfaces.ReleaseDefinition, project: string, onResult: (err: any, statusCode: number, definition: ReleaseManagementInterfaces.ReleaseDefinition) => void): void;
+	import ReleaseInterfaces = require('vso-node-api/interfaces/ReleaseInterfaces');
+	export interface IReleaseApi extends basem.ClientApiBase {
+	    getAgentArtifactDefinitions(project: string, releaseId: number, onResult: (err: any, statusCode: number, agentartifacts: ReleaseInterfaces.AgentArtifactDefinition[]) => void): void;
+	    getApprovals(project: string, assignedToFilter: string, statusFilter: ReleaseInterfaces.ApprovalStatus, releaseIdsFilter: number[], onResult: (err: any, statusCode: number, approvals: ReleaseInterfaces.ReleaseApproval[]) => void): void;
+	    getApprovalHistory(project: string, approvalStepId: number, onResult: (err: any, statusCode: number, approval: ReleaseInterfaces.ReleaseApproval) => void): void;
+	    updateReleaseApproval(approval: ReleaseInterfaces.ReleaseApproval, project: string, approvalId: number, onResult: (err: any, statusCode: number, approval: ReleaseInterfaces.ReleaseApproval) => void): void;
+	    getReleaseChanges(project: string, releaseId: number, baseReleaseId: number, top: number, onResult: (err: any, statusCode: number, changes: ReleaseInterfaces.Change[]) => void): void;
+	    createReleaseDefinition(releaseDefinition: ReleaseInterfaces.ReleaseDefinition, project: string, onResult: (err: any, statusCode: number, definition: ReleaseInterfaces.ReleaseDefinition) => void): void;
 	    deleteReleaseDefinition(project: string, definitionId: number, onResult: (err: any, statusCode: number) => void): void;
-	    getReleaseDefinition(project: string, definitionId: number, onResult: (err: any, statusCode: number, definition: ReleaseManagementInterfaces.ReleaseDefinition) => void): void;
-	    getReleaseDefinitions(project: string, searchText: string, artifactIdFilter: number, onResult: (err: any, statusCode: number, definitions: ReleaseManagementInterfaces.ReleaseDefinition[]) => void): void;
-	    getReleaseDefinitionsForArtifactSource(project: string, artifactType: string, artifactSourceId: string, onResult: (err: any, statusCode: number, definitions: ReleaseManagementInterfaces.ReleaseDefinition[]) => void): void;
-	    updateReleaseDefinition(releaseDefinition: ReleaseManagementInterfaces.ReleaseDefinition, project: string, onResult: (err: any, statusCode: number, definition: ReleaseManagementInterfaces.ReleaseDefinition) => void): void;
-	    createDefinitionEnvironmentTemplate(template: ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate, project: string, onResult: (err: any, statusCode: number, environmenttemplate: ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate) => void): void;
+	    getReleaseDefinition(project: string, definitionId: number, onResult: (err: any, statusCode: number, definition: ReleaseInterfaces.ReleaseDefinition) => void): void;
+	    getReleaseDefinitions(project: string, searchText: string, artifactIdFilter: number, expand: ReleaseInterfaces.ReleaseDefinitionExpands, onResult: (err: any, statusCode: number, definitions: ReleaseInterfaces.ReleaseDefinition[]) => void): void;
+	    getReleaseDefinitionsForArtifactSource(project: string, artifactType: string, artifactSourceId: string, expand: ReleaseInterfaces.ReleaseDefinitionExpands, onResult: (err: any, statusCode: number, definitions: ReleaseInterfaces.ReleaseDefinition[]) => void): void;
+	    updateReleaseDefinition(releaseDefinition: ReleaseInterfaces.ReleaseDefinition, project: string, onResult: (err: any, statusCode: number, definition: ReleaseInterfaces.ReleaseDefinition) => void): void;
+	    getReleaseEnvironment(project: string, releaseId: number, environmentId: number, onResult: (err: any, statusCode: number, environment: ReleaseInterfaces.ReleaseEnvironment) => void): void;
+	    updateReleaseEnvironment(environmentUpdateData: any, project: string, releaseId: number, environmentId: number, onResult: (err: any, statusCode: number, environment: ReleaseInterfaces.ReleaseEnvironment) => void): void;
+	    createDefinitionEnvironmentTemplate(template: ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate, project: string, onResult: (err: any, statusCode: number, environmenttemplate: ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate) => void): void;
 	    deleteDefinitionEnvironmentTemplate(project: string, templateId: string, onResult: (err: any, statusCode: number) => void): void;
-	    getDefinitionEnvironmentTemplate(project: string, templateId: string, onResult: (err: any, statusCode: number, environmenttemplate: ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate) => void): void;
-	    listDefinitionEnvironmentTemplates(project: string, onResult: (err: any, statusCode: number, environmenttemplates: ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate[]) => void): void;
+	    getDefinitionEnvironmentTemplate(project: string, templateId: string, onResult: (err: any, statusCode: number, environmenttemplate: ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate) => void): void;
+	    listDefinitionEnvironmentTemplates(project: string, onResult: (err: any, statusCode: number, environmenttemplates: ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate[]) => void): void;
 	    getInputValues(query: FormInputInterfaces.InputValuesQuery, project: string, onResult: (err: any, statusCode: number, inputvaluesquery: FormInputInterfaces.InputValuesQuery) => void): void;
 	    getLogs(project: string, releaseId: number, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
 	    getLog(project: string, releaseId: number, environmentId: number, taskId: number, attemptId: number, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
-	    createRelease(releaseStartMetadata: ReleaseManagementInterfaces.ReleaseStartMetadata, project: string, onResult: (err: any, statusCode: number, release: ReleaseManagementInterfaces.Release) => void): void;
+	    createRelease(releaseStartMetadata: ReleaseInterfaces.ReleaseStartMetadata, project: string, onResult: (err: any, statusCode: number, release: ReleaseInterfaces.Release) => void): void;
 	    deleteRelease(project: string, releaseId: number, onResult: (err: any, statusCode: number) => void): void;
-	    getRelease(project: string, releaseId: number, includeAllApprovals: boolean, onResult: (err: any, statusCode: number, release: ReleaseManagementInterfaces.Release) => void): void;
-	    getReleaseDefinitionSummary(project: string, definitionId: number, releaseCount: number, includeArtifact: boolean, onResult: (err: any, statusCode: number, release: ReleaseManagementInterfaces.ReleaseDefinitionSummary) => void): void;
-	    getReleases(project: string, definitionId: number, searchText: string, statusFilter: ReleaseManagementInterfaces.ReleaseStatus, minCreatedTime: Date, maxCreatedTime: Date, queryOrder: ReleaseManagementInterfaces.ReleaseQueryOrder, top: number, continuationToken: number, onResult: (err: any, statusCode: number, releases: ReleaseManagementInterfaces.Release[]) => void): void;
-	    updateRelease(release: ReleaseManagementInterfaces.Release, project: string, releaseId: number, onResult: (err: any, statusCode: number, release: ReleaseManagementInterfaces.Release) => void): void;
-	    updateReleaseStatus(releaseUpdateMetadata: ReleaseManagementInterfaces.ReleaseUpdateMetadata, project: string, releaseId: number, onResult: (err: any, statusCode: number, release: ReleaseManagementInterfaces.Release) => void): void;
-	    getReleaseDefinitionHistory(project: string, definitionId: number, onResult: (err: any, statusCode: number, revisions: ReleaseManagementInterfaces.ReleaseDefinitionRevision[]) => void): void;
-	    getReleaseDefinitionRevision(project: string, definitionId: number, revision: number, onResult: (err: any, statusCode: number, revision: any) => void): void;
-	    getArtifactsSources(project: string, typeId: string, onResult: (err: any, statusCode: number, source: ReleaseManagementInterfaces.ArtifactSourceIdsQueryResult) => void): void;
-	    getTasks(project: string, releaseId: number, environmentId: number, attemptId: number, onResult: (err: any, statusCode: number, tasks: ReleaseManagementInterfaces.ReleaseTask[]) => void): void;
-	    getArtifactTypeDefinitions(project: string, onResult: (err: any, statusCode: number, types: ReleaseManagementInterfaces.ArtifactTypeDefinition[]) => void): void;
-	    getArtifactVersions(project: string, releaseDefinitionId: number, onResult: (err: any, statusCode: number, version: ReleaseManagementInterfaces.ArtifactVersionQueryResult) => void): void;
-	    getArtifactVersionsForSources(artifactSources: ReleaseManagementInterfaces.ArtifactSource[], project: string, onResult: (err: any, statusCode: number, version: ReleaseManagementInterfaces.ArtifactVersionQueryResult) => void): void;
-	    getReleaseWorkItemsRefs(project: string, releaseId: number, baseReleaseId: number, top: number, onResult: (err: any, statusCode: number, workitems: ReleaseManagementInterfaces.ReleaseWorkItemRef[]) => void): void;
+	    getRelease(project: string, releaseId: number, includeAllApprovals: boolean, onResult: (err: any, statusCode: number, release: ReleaseInterfaces.Release) => void): void;
+	    getReleaseDefinitionSummary(project: string, definitionId: number, releaseCount: number, includeArtifact: boolean, onResult: (err: any, statusCode: number, release: ReleaseInterfaces.ReleaseDefinitionSummary) => void): void;
+	    getReleases(project: string, definitionId: number, definitionEnvironmentId: number, searchText: string, createdBy: string, statusFilter: ReleaseInterfaces.ReleaseStatus, minCreatedTime: Date, maxCreatedTime: Date, queryOrder: ReleaseInterfaces.ReleaseQueryOrder, top: number, continuationToken: number, expand: ReleaseInterfaces.ReleaseExpands, artifactTypeId: string, artifactSourceId: number, artifactVersionId: string, onResult: (err: any, statusCode: number, releases: ReleaseInterfaces.Release[]) => void): void;
+	    updateRelease(release: ReleaseInterfaces.Release, project: string, releaseId: number, onResult: (err: any, statusCode: number, release: ReleaseInterfaces.Release) => void): void;
+	    updateReleaseResource(releaseUpdateMetadata: ReleaseInterfaces.ReleaseUpdateMetadata, project: string, releaseId: number, onResult: (err: any, statusCode: number, release: ReleaseInterfaces.Release) => void): void;
+	    getReleaseDefinitionHistory(project: string, definitionId: number, onResult: (err: any, statusCode: number, revisions: ReleaseInterfaces.ReleaseDefinitionRevision[]) => void): void;
+	    getReleaseDefinitionRevision(project: string, definitionId: number, revision: number, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
+	    getArtifactsSources(project: string, typeId: string, onResult: (err: any, statusCode: number, source: ReleaseInterfaces.ArtifactSourceIdsQueryResult) => void): void;
+	    getTasks(project: string, releaseId: number, environmentId: number, attemptId: number, onResult: (err: any, statusCode: number, tasks: ReleaseInterfaces.ReleaseTask[]) => void): void;
+	    getArtifactTypeDefinitions(project: string, onResult: (err: any, statusCode: number, types: ReleaseInterfaces.ArtifactTypeDefinition[]) => void): void;
+	    getArtifactVersions(project: string, releaseDefinitionId: number, onResult: (err: any, statusCode: number, version: ReleaseInterfaces.ArtifactVersionQueryResult) => void): void;
+	    getArtifactVersionsForSources(artifacts: ReleaseInterfaces.Artifact[], project: string, onResult: (err: any, statusCode: number, version: ReleaseInterfaces.ArtifactVersionQueryResult) => void): void;
+	    getReleaseWorkItemsRefs(project: string, releaseId: number, baseReleaseId: number, top: number, onResult: (err: any, statusCode: number, workitems: ReleaseInterfaces.ReleaseWorkItemRef[]) => void): void;
 	}
-	export interface IQReleaseManagementApi extends basem.QClientApiBase {
-	    getAgentArtifactDefinitions(project: string, releaseId: number): Q.Promise<ReleaseManagementInterfaces.AgentArtifactDefinition[]>;
-	    getApprovals(project: string, assignedToFilter?: string, statusFilter?: ReleaseManagementInterfaces.ApprovalStatus, releaseIdsFilter?: number[]): Q.Promise<ReleaseManagementInterfaces.ReleaseApproval[]>;
-	    getApprovalHistory(project: string, approvalStepId: number): Q.Promise<ReleaseManagementInterfaces.ReleaseApproval[]>;
-	    updateReleaseApproval(approvalUpdateMetadata: ReleaseManagementInterfaces.ApprovalUpdateMetadata, project: string, approvalId: number): Q.Promise<ReleaseManagementInterfaces.ReleaseApproval>;
-	    createArtifact(artifact: ReleaseManagementInterfaces.Artifact, project: string): Q.Promise<ReleaseManagementInterfaces.Artifact>;
-	    getArtifact(project: string, definitionId: number): Q.Promise<ReleaseManagementInterfaces.Artifact>;
-	    getArtifacts(project: string, typeId?: string, name?: string, sourceId?: string): Q.Promise<ReleaseManagementInterfaces.Artifact[]>;
-	    updateArtifacts(artifactDefinitions: ReleaseManagementInterfaces.ArtifactDefinition[], project: string): Q.Promise<ReleaseManagementInterfaces.ArtifactDefinition[]>;
-	    getReleaseChanges(project: string, releaseId: number, baseReleaseId?: number, top?: number): Q.Promise<ReleaseManagementInterfaces.Change[]>;
-	    createReleaseDefinition(releaseDefinition: ReleaseManagementInterfaces.ReleaseDefinition, project: string): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinition>;
+	export interface IQReleaseApi extends basem.QClientApiBase {
+	    getAgentArtifactDefinitions(project: string, releaseId: number): Q.Promise<ReleaseInterfaces.AgentArtifactDefinition[]>;
+	    getApprovals(project: string, assignedToFilter?: string, statusFilter?: ReleaseInterfaces.ApprovalStatus, releaseIdsFilter?: number[]): Q.Promise<ReleaseInterfaces.ReleaseApproval[]>;
+	    getApprovalHistory(project: string, approvalStepId: number): Q.Promise<ReleaseInterfaces.ReleaseApproval>;
+	    updateReleaseApproval(approval: ReleaseInterfaces.ReleaseApproval, project: string, approvalId: number): Q.Promise<ReleaseInterfaces.ReleaseApproval>;
+	    getReleaseChanges(project: string, releaseId: number, baseReleaseId?: number, top?: number): Q.Promise<ReleaseInterfaces.Change[]>;
+	    createReleaseDefinition(releaseDefinition: ReleaseInterfaces.ReleaseDefinition, project: string): Q.Promise<ReleaseInterfaces.ReleaseDefinition>;
 	    deleteReleaseDefinition(project: string, definitionId: number): Q.Promise<void>;
-	    getReleaseDefinition(project: string, definitionId: number): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinition>;
-	    getReleaseDefinitions(project: string, searchText?: string, artifactIdFilter?: number): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinition[]>;
-	    getReleaseDefinitionsForArtifactSource(project: string, artifactType: string, artifactSourceId: string): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinition[]>;
-	    updateReleaseDefinition(releaseDefinition: ReleaseManagementInterfaces.ReleaseDefinition, project: string): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinition>;
-	    createDefinitionEnvironmentTemplate(template: ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate, project: string): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate>;
+	    getReleaseDefinition(project: string, definitionId: number): Q.Promise<ReleaseInterfaces.ReleaseDefinition>;
+	    getReleaseDefinitions(project: string, searchText?: string, artifactIdFilter?: number, expand?: ReleaseInterfaces.ReleaseDefinitionExpands): Q.Promise<ReleaseInterfaces.ReleaseDefinition[]>;
+	    getReleaseDefinitionsForArtifactSource(project: string, artifactType: string, artifactSourceId: string, expand?: ReleaseInterfaces.ReleaseDefinitionExpands): Q.Promise<ReleaseInterfaces.ReleaseDefinition[]>;
+	    updateReleaseDefinition(releaseDefinition: ReleaseInterfaces.ReleaseDefinition, project: string): Q.Promise<ReleaseInterfaces.ReleaseDefinition>;
+	    getReleaseEnvironment(project: string, releaseId: number, environmentId: number): Q.Promise<ReleaseInterfaces.ReleaseEnvironment>;
+	    updateReleaseEnvironment(environmentUpdateData: any, project: string, releaseId: number, environmentId: number): Q.Promise<ReleaseInterfaces.ReleaseEnvironment>;
+	    createDefinitionEnvironmentTemplate(template: ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate, project: string): Q.Promise<ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate>;
 	    deleteDefinitionEnvironmentTemplate(project: string, templateId: string): Q.Promise<void>;
-	    getDefinitionEnvironmentTemplate(project: string, templateId: string): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate>;
-	    listDefinitionEnvironmentTemplates(project: string): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate[]>;
+	    getDefinitionEnvironmentTemplate(project: string, templateId: string): Q.Promise<ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate>;
+	    listDefinitionEnvironmentTemplates(project: string): Q.Promise<ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate[]>;
 	    getInputValues(query: FormInputInterfaces.InputValuesQuery, project: string): Q.Promise<FormInputInterfaces.InputValuesQuery>;
 	    getLogs(project: string, releaseId: number): Q.Promise<NodeJS.ReadableStream>;
 	    getLog(project: string, releaseId: number, environmentId: number, taskId: number, attemptId?: number): Q.Promise<NodeJS.ReadableStream>;
-	    createRelease(releaseStartMetadata: ReleaseManagementInterfaces.ReleaseStartMetadata, project: string): Q.Promise<ReleaseManagementInterfaces.Release>;
+	    createRelease(releaseStartMetadata: ReleaseInterfaces.ReleaseStartMetadata, project: string): Q.Promise<ReleaseInterfaces.Release>;
 	    deleteRelease(project: string, releaseId: number): Q.Promise<void>;
-	    getRelease(project: string, releaseId: number, includeAllApprovals?: boolean): Q.Promise<ReleaseManagementInterfaces.Release>;
-	    getReleaseDefinitionSummary(project: string, definitionId: number, releaseCount: number, includeArtifact?: boolean): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinitionSummary>;
-	    getReleases(project: string, definitionId?: number, searchText?: string, statusFilter?: ReleaseManagementInterfaces.ReleaseStatus, minCreatedTime?: Date, maxCreatedTime?: Date, queryOrder?: ReleaseManagementInterfaces.ReleaseQueryOrder, top?: number, continuationToken?: number): Q.Promise<ReleaseManagementInterfaces.Release[]>;
-	    updateRelease(release: ReleaseManagementInterfaces.Release, project: string, releaseId: number): Q.Promise<ReleaseManagementInterfaces.Release>;
-	    updateReleaseStatus(releaseUpdateMetadata: ReleaseManagementInterfaces.ReleaseUpdateMetadata, project: string, releaseId: number): Q.Promise<ReleaseManagementInterfaces.Release>;
-	    getReleaseDefinitionHistory(project: string, definitionId: number): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinitionRevision[]>;
-	    getReleaseDefinitionRevision(project: string, definitionId: number, revision: number): Q.Promise<any>;
-	    getArtifactsSources(project: string, typeId?: string): Q.Promise<ReleaseManagementInterfaces.ArtifactSourceIdsQueryResult>;
-	    getTasks(project: string, releaseId: number, environmentId: number, attemptId?: number): Q.Promise<ReleaseManagementInterfaces.ReleaseTask[]>;
-	    getArtifactTypeDefinitions(project: string): Q.Promise<ReleaseManagementInterfaces.ArtifactTypeDefinition[]>;
-	    getArtifactVersions(project: string, releaseDefinitionId: number): Q.Promise<ReleaseManagementInterfaces.ArtifactVersionQueryResult>;
-	    getArtifactVersionsForSources(artifactSources: ReleaseManagementInterfaces.ArtifactSource[], project: string): Q.Promise<ReleaseManagementInterfaces.ArtifactVersionQueryResult>;
-	    getReleaseWorkItemsRefs(project: string, releaseId: number, baseReleaseId?: number, top?: number): Q.Promise<ReleaseManagementInterfaces.ReleaseWorkItemRef[]>;
+	    getRelease(project: string, releaseId: number, includeAllApprovals?: boolean): Q.Promise<ReleaseInterfaces.Release>;
+	    getReleaseDefinitionSummary(project: string, definitionId: number, releaseCount: number, includeArtifact?: boolean): Q.Promise<ReleaseInterfaces.ReleaseDefinitionSummary>;
+	    getReleases(project: string, definitionId?: number, definitionEnvironmentId?: number, searchText?: string, createdBy?: string, statusFilter?: ReleaseInterfaces.ReleaseStatus, minCreatedTime?: Date, maxCreatedTime?: Date, queryOrder?: ReleaseInterfaces.ReleaseQueryOrder, top?: number, continuationToken?: number, expand?: ReleaseInterfaces.ReleaseExpands, artifactTypeId?: string, artifactSourceId?: number, artifactVersionId?: string): Q.Promise<ReleaseInterfaces.Release[]>;
+	    updateRelease(release: ReleaseInterfaces.Release, project: string, releaseId: number): Q.Promise<ReleaseInterfaces.Release>;
+	    updateReleaseResource(releaseUpdateMetadata: ReleaseInterfaces.ReleaseUpdateMetadata, project: string, releaseId: number): Q.Promise<ReleaseInterfaces.Release>;
+	    getReleaseDefinitionHistory(project: string, definitionId: number): Q.Promise<ReleaseInterfaces.ReleaseDefinitionRevision[]>;
+	    getReleaseDefinitionRevision(project: string, definitionId: number, revision: number): Q.Promise<NodeJS.ReadableStream>;
+	    getArtifactsSources(project: string, typeId?: string): Q.Promise<ReleaseInterfaces.ArtifactSourceIdsQueryResult>;
+	    getTasks(project: string, releaseId: number, environmentId: number, attemptId?: number): Q.Promise<ReleaseInterfaces.ReleaseTask[]>;
+	    getArtifactTypeDefinitions(project: string): Q.Promise<ReleaseInterfaces.ArtifactTypeDefinition[]>;
+	    getArtifactVersions(project: string, releaseDefinitionId: number): Q.Promise<ReleaseInterfaces.ArtifactVersionQueryResult>;
+	    getArtifactVersionsForSources(artifacts: ReleaseInterfaces.Artifact[], project: string): Q.Promise<ReleaseInterfaces.ArtifactVersionQueryResult>;
+	    getReleaseWorkItemsRefs(project: string, releaseId: number, baseReleaseId?: number, top?: number): Q.Promise<ReleaseInterfaces.ReleaseWorkItemRef[]>;
 	}
-	export class ReleaseManagementApi extends basem.ClientApiBase implements IReleaseManagementApi {
+	export class ReleaseApi extends basem.ClientApiBase implements IReleaseApi {
 	    constructor(baseUrl: string, handlers: VsoBaseInterfaces.IRequestHandler[]);
 	    /**
 	     * Returns the artifact details that automation agent requires
 	     *
 	     * @param {string} project - Project ID or project name
 	     * @param {number} releaseId
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.AgentArtifactDefinition[]
+	     * @param onResult callback function with the resulting ReleaseInterfaces.AgentArtifactDefinition[]
 	     */
-	    getAgentArtifactDefinitions(project: string, releaseId: number, onResult: (err: any, statusCode: number, agentartifacts: ReleaseManagementInterfaces.AgentArtifactDefinition[]) => void): void;
+	    getAgentArtifactDefinitions(project: string, releaseId: number, onResult: (err: any, statusCode: number, agentartifacts: ReleaseInterfaces.AgentArtifactDefinition[]) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {string} assignedToFilter
-	     * @param {ReleaseManagementInterfaces.ApprovalStatus} statusFilter
+	     * @param {ReleaseInterfaces.ApprovalStatus} statusFilter
 	     * @param {number[]} releaseIdsFilter
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ReleaseApproval[]
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseApproval[]
 	     */
-	    getApprovals(project: string, assignedToFilter: string, statusFilter: ReleaseManagementInterfaces.ApprovalStatus, releaseIdsFilter: number[], onResult: (err: any, statusCode: number, approvals: ReleaseManagementInterfaces.ReleaseApproval[]) => void): void;
+	    getApprovals(project: string, assignedToFilter: string, statusFilter: ReleaseInterfaces.ApprovalStatus, releaseIdsFilter: number[], onResult: (err: any, statusCode: number, approvals: ReleaseInterfaces.ReleaseApproval[]) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} approvalStepId
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ReleaseApproval[]
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseApproval
 	     */
-	    getApprovalHistory(project: string, approvalStepId: number, onResult: (err: any, statusCode: number, approvals: ReleaseManagementInterfaces.ReleaseApproval[]) => void): void;
+	    getApprovalHistory(project: string, approvalStepId: number, onResult: (err: any, statusCode: number, approval: ReleaseInterfaces.ReleaseApproval) => void): void;
 	    /**
-	     * @param {ReleaseManagementInterfaces.ApprovalUpdateMetadata} approvalUpdateMetadata
+	     * @param {ReleaseInterfaces.ReleaseApproval} approval
 	     * @param {string} project - Project ID or project name
 	     * @param {number} approvalId
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ReleaseApproval
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseApproval
 	     */
-	    updateReleaseApproval(approvalUpdateMetadata: ReleaseManagementInterfaces.ApprovalUpdateMetadata, project: string, approvalId: number, onResult: (err: any, statusCode: number, approval: ReleaseManagementInterfaces.ReleaseApproval) => void): void;
-	    /**
-	     * @param {ReleaseManagementInterfaces.Artifact} artifact
-	     * @param {string} project - Project ID or project name
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.Artifact
-	     */
-	    createArtifact(artifact: ReleaseManagementInterfaces.Artifact, project: string, onResult: (err: any, statusCode: number, artifact: ReleaseManagementInterfaces.Artifact) => void): void;
-	    /**
-	     * @param {string} project - Project ID or project name
-	     * @param {number} definitionId
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.Artifact
-	     */
-	    getArtifact(project: string, definitionId: number, onResult: (err: any, statusCode: number, artifact: ReleaseManagementInterfaces.Artifact) => void): void;
-	    /**
-	     * @param {string} project - Project ID or project name
-	     * @param {string} typeId
-	     * @param {string} name
-	     * @param {string} sourceId
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.Artifact[]
-	     */
-	    getArtifacts(project: string, typeId: string, name: string, sourceId: string, onResult: (err: any, statusCode: number, artifacts: ReleaseManagementInterfaces.Artifact[]) => void): void;
-	    /**
-	     * @param {ReleaseManagementInterfaces.ArtifactDefinition[]} artifactDefinitions
-	     * @param {string} project - Project ID or project name
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ArtifactDefinition[]
-	     */
-	    updateArtifacts(artifactDefinitions: ReleaseManagementInterfaces.ArtifactDefinition[], project: string, onResult: (err: any, statusCode: number, artifacts: ReleaseManagementInterfaces.ArtifactDefinition[]) => void): void;
+	    updateReleaseApproval(approval: ReleaseInterfaces.ReleaseApproval, project: string, approvalId: number, onResult: (err: any, statusCode: number, approval: ReleaseInterfaces.ReleaseApproval) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} releaseId
 	     * @param {number} baseReleaseId
 	     * @param {number} top
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.Change[]
+	     * @param onResult callback function with the resulting ReleaseInterfaces.Change[]
 	     */
-	    getReleaseChanges(project: string, releaseId: number, baseReleaseId: number, top: number, onResult: (err: any, statusCode: number, changes: ReleaseManagementInterfaces.Change[]) => void): void;
+	    getReleaseChanges(project: string, releaseId: number, baseReleaseId: number, top: number, onResult: (err: any, statusCode: number, changes: ReleaseInterfaces.Change[]) => void): void;
 	    /**
-	     * @param {ReleaseManagementInterfaces.ReleaseDefinition} releaseDefinition
+	     * @param {ReleaseInterfaces.ReleaseDefinition} releaseDefinition
 	     * @param {string} project - Project ID or project name
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ReleaseDefinition
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseDefinition
 	     */
-	    createReleaseDefinition(releaseDefinition: ReleaseManagementInterfaces.ReleaseDefinition, project: string, onResult: (err: any, statusCode: number, definition: ReleaseManagementInterfaces.ReleaseDefinition) => void): void;
+	    createReleaseDefinition(releaseDefinition: ReleaseInterfaces.ReleaseDefinition, project: string, onResult: (err: any, statusCode: number, definition: ReleaseInterfaces.ReleaseDefinition) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} definitionId
@@ -16319,35 +16411,52 @@ declare module 'vso-node-api/ReleaseManagementApi' {
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} definitionId
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ReleaseDefinition
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseDefinition
 	     */
-	    getReleaseDefinition(project: string, definitionId: number, onResult: (err: any, statusCode: number, definition: ReleaseManagementInterfaces.ReleaseDefinition) => void): void;
+	    getReleaseDefinition(project: string, definitionId: number, onResult: (err: any, statusCode: number, definition: ReleaseInterfaces.ReleaseDefinition) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {string} searchText
 	     * @param {number} artifactIdFilter
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ReleaseDefinition[]
+	     * @param {ReleaseInterfaces.ReleaseDefinitionExpands} expand
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseDefinition[]
 	     */
-	    getReleaseDefinitions(project: string, searchText: string, artifactIdFilter: number, onResult: (err: any, statusCode: number, definitions: ReleaseManagementInterfaces.ReleaseDefinition[]) => void): void;
+	    getReleaseDefinitions(project: string, searchText: string, artifactIdFilter: number, expand: ReleaseInterfaces.ReleaseDefinitionExpands, onResult: (err: any, statusCode: number, definitions: ReleaseInterfaces.ReleaseDefinition[]) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {string} artifactType
 	     * @param {string} artifactSourceId
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ReleaseDefinition[]
+	     * @param {ReleaseInterfaces.ReleaseDefinitionExpands} expand
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseDefinition[]
 	     */
-	    getReleaseDefinitionsForArtifactSource(project: string, artifactType: string, artifactSourceId: string, onResult: (err: any, statusCode: number, definitions: ReleaseManagementInterfaces.ReleaseDefinition[]) => void): void;
+	    getReleaseDefinitionsForArtifactSource(project: string, artifactType: string, artifactSourceId: string, expand: ReleaseInterfaces.ReleaseDefinitionExpands, onResult: (err: any, statusCode: number, definitions: ReleaseInterfaces.ReleaseDefinition[]) => void): void;
 	    /**
-	     * @param {ReleaseManagementInterfaces.ReleaseDefinition} releaseDefinition
+	     * @param {ReleaseInterfaces.ReleaseDefinition} releaseDefinition
 	     * @param {string} project - Project ID or project name
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ReleaseDefinition
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseDefinition
 	     */
-	    updateReleaseDefinition(releaseDefinition: ReleaseManagementInterfaces.ReleaseDefinition, project: string, onResult: (err: any, statusCode: number, definition: ReleaseManagementInterfaces.ReleaseDefinition) => void): void;
+	    updateReleaseDefinition(releaseDefinition: ReleaseInterfaces.ReleaseDefinition, project: string, onResult: (err: any, statusCode: number, definition: ReleaseInterfaces.ReleaseDefinition) => void): void;
 	    /**
-	     * @param {ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate} template
 	     * @param {string} project - Project ID or project name
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate
+	     * @param {number} releaseId
+	     * @param {number} environmentId
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseEnvironment
 	     */
-	    createDefinitionEnvironmentTemplate(template: ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate, project: string, onResult: (err: any, statusCode: number, environmenttemplate: ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate) => void): void;
+	    getReleaseEnvironment(project: string, releaseId: number, environmentId: number, onResult: (err: any, statusCode: number, environment: ReleaseInterfaces.ReleaseEnvironment) => void): void;
+	    /**
+	     * @param {any} environmentUpdateData
+	     * @param {string} project - Project ID or project name
+	     * @param {number} releaseId
+	     * @param {number} environmentId
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseEnvironment
+	     */
+	    updateReleaseEnvironment(environmentUpdateData: any, project: string, releaseId: number, environmentId: number, onResult: (err: any, statusCode: number, environment: ReleaseInterfaces.ReleaseEnvironment) => void): void;
+	    /**
+	     * @param {ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate} template
+	     * @param {string} project - Project ID or project name
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate
+	     */
+	    createDefinitionEnvironmentTemplate(template: ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate, project: string, onResult: (err: any, statusCode: number, environmenttemplate: ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {string} templateId
@@ -16357,14 +16466,14 @@ declare module 'vso-node-api/ReleaseManagementApi' {
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {string} templateId
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate
 	     */
-	    getDefinitionEnvironmentTemplate(project: string, templateId: string, onResult: (err: any, statusCode: number, environmenttemplate: ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate) => void): void;
+	    getDefinitionEnvironmentTemplate(project: string, templateId: string, onResult: (err: any, statusCode: number, environmenttemplate: ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate[]
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate[]
 	     */
-	    listDefinitionEnvironmentTemplates(project: string, onResult: (err: any, statusCode: number, environmenttemplates: ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate[]) => void): void;
+	    listDefinitionEnvironmentTemplates(project: string, onResult: (err: any, statusCode: number, environmenttemplates: ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate[]) => void): void;
 	    /**
 	     * @param {FormInputInterfaces.InputValuesQuery} query
 	     * @param {string} project - Project ID or project name
@@ -16387,11 +16496,11 @@ declare module 'vso-node-api/ReleaseManagementApi' {
 	     */
 	    getLog(project: string, releaseId: number, environmentId: number, taskId: number, attemptId: number, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
 	    /**
-	     * @param {ReleaseManagementInterfaces.ReleaseStartMetadata} releaseStartMetadata
+	     * @param {ReleaseInterfaces.ReleaseStartMetadata} releaseStartMetadata
 	     * @param {string} project - Project ID or project name
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.Release
+	     * @param onResult callback function with the resulting ReleaseInterfaces.Release
 	     */
-	    createRelease(releaseStartMetadata: ReleaseManagementInterfaces.ReleaseStartMetadata, project: string, onResult: (err: any, statusCode: number, release: ReleaseManagementInterfaces.Release) => void): void;
+	    createRelease(releaseStartMetadata: ReleaseInterfaces.ReleaseStartMetadata, project: string, onResult: (err: any, statusCode: number, release: ReleaseInterfaces.Release) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} releaseId
@@ -16402,99 +16511,105 @@ declare module 'vso-node-api/ReleaseManagementApi' {
 	     * @param {string} project - Project ID or project name
 	     * @param {number} releaseId
 	     * @param {boolean} includeAllApprovals
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.Release
+	     * @param onResult callback function with the resulting ReleaseInterfaces.Release
 	     */
-	    getRelease(project: string, releaseId: number, includeAllApprovals: boolean, onResult: (err: any, statusCode: number, release: ReleaseManagementInterfaces.Release) => void): void;
+	    getRelease(project: string, releaseId: number, includeAllApprovals: boolean, onResult: (err: any, statusCode: number, release: ReleaseInterfaces.Release) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} definitionId
 	     * @param {number} releaseCount
 	     * @param {boolean} includeArtifact
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ReleaseDefinitionSummary
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseDefinitionSummary
 	     */
-	    getReleaseDefinitionSummary(project: string, definitionId: number, releaseCount: number, includeArtifact: boolean, onResult: (err: any, statusCode: number, release: ReleaseManagementInterfaces.ReleaseDefinitionSummary) => void): void;
+	    getReleaseDefinitionSummary(project: string, definitionId: number, releaseCount: number, includeArtifact: boolean, onResult: (err: any, statusCode: number, release: ReleaseInterfaces.ReleaseDefinitionSummary) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} definitionId
+	     * @param {number} definitionEnvironmentId
 	     * @param {string} searchText
-	     * @param {ReleaseManagementInterfaces.ReleaseStatus} statusFilter
+	     * @param {string} createdBy
+	     * @param {ReleaseInterfaces.ReleaseStatus} statusFilter
 	     * @param {Date} minCreatedTime
 	     * @param {Date} maxCreatedTime
-	     * @param {ReleaseManagementInterfaces.ReleaseQueryOrder} queryOrder
+	     * @param {ReleaseInterfaces.ReleaseQueryOrder} queryOrder
 	     * @param {number} top
 	     * @param {number} continuationToken
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.Release[]
+	     * @param {ReleaseInterfaces.ReleaseExpands} expand
+	     * @param {string} artifactTypeId
+	     * @param {number} artifactSourceId
+	     * @param {string} artifactVersionId
+	     * @param onResult callback function with the resulting ReleaseInterfaces.Release[]
 	     */
-	    getReleases(project: string, definitionId: number, searchText: string, statusFilter: ReleaseManagementInterfaces.ReleaseStatus, minCreatedTime: Date, maxCreatedTime: Date, queryOrder: ReleaseManagementInterfaces.ReleaseQueryOrder, top: number, continuationToken: number, onResult: (err: any, statusCode: number, releases: ReleaseManagementInterfaces.Release[]) => void): void;
+	    getReleases(project: string, definitionId: number, definitionEnvironmentId: number, searchText: string, createdBy: string, statusFilter: ReleaseInterfaces.ReleaseStatus, minCreatedTime: Date, maxCreatedTime: Date, queryOrder: ReleaseInterfaces.ReleaseQueryOrder, top: number, continuationToken: number, expand: ReleaseInterfaces.ReleaseExpands, artifactTypeId: string, artifactSourceId: number, artifactVersionId: string, onResult: (err: any, statusCode: number, releases: ReleaseInterfaces.Release[]) => void): void;
 	    /**
-	     * @param {ReleaseManagementInterfaces.Release} release
+	     * @param {ReleaseInterfaces.Release} release
 	     * @param {string} project - Project ID or project name
 	     * @param {number} releaseId
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.Release
+	     * @param onResult callback function with the resulting ReleaseInterfaces.Release
 	     */
-	    updateRelease(release: ReleaseManagementInterfaces.Release, project: string, releaseId: number, onResult: (err: any, statusCode: number, release: ReleaseManagementInterfaces.Release) => void): void;
+	    updateRelease(release: ReleaseInterfaces.Release, project: string, releaseId: number, onResult: (err: any, statusCode: number, release: ReleaseInterfaces.Release) => void): void;
 	    /**
-	     * @param {ReleaseManagementInterfaces.ReleaseUpdateMetadata} releaseUpdateMetadata
+	     * @param {ReleaseInterfaces.ReleaseUpdateMetadata} releaseUpdateMetadata
 	     * @param {string} project - Project ID or project name
 	     * @param {number} releaseId
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.Release
+	     * @param onResult callback function with the resulting ReleaseInterfaces.Release
 	     */
-	    updateReleaseStatus(releaseUpdateMetadata: ReleaseManagementInterfaces.ReleaseUpdateMetadata, project: string, releaseId: number, onResult: (err: any, statusCode: number, release: ReleaseManagementInterfaces.Release) => void): void;
+	    updateReleaseResource(releaseUpdateMetadata: ReleaseInterfaces.ReleaseUpdateMetadata, project: string, releaseId: number, onResult: (err: any, statusCode: number, release: ReleaseInterfaces.Release) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} definitionId
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ReleaseDefinitionRevision[]
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseDefinitionRevision[]
 	     */
-	    getReleaseDefinitionHistory(project: string, definitionId: number, onResult: (err: any, statusCode: number, revisions: ReleaseManagementInterfaces.ReleaseDefinitionRevision[]) => void): void;
+	    getReleaseDefinitionHistory(project: string, definitionId: number, onResult: (err: any, statusCode: number, revisions: ReleaseInterfaces.ReleaseDefinitionRevision[]) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} definitionId
 	     * @param {number} revision
-	     * @param onResult callback function with the resulting any
+	     * @param onResult callback function with the resulting string
 	     */
-	    getReleaseDefinitionRevision(project: string, definitionId: number, revision: number, onResult: (err: any, statusCode: number, revision: any) => void): void;
+	    getReleaseDefinitionRevision(project: string, definitionId: number, revision: number, onResult: (err: any, statusCode: number, res: NodeJS.ReadableStream) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {string} typeId
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ArtifactSourceIdsQueryResult
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ArtifactSourceIdsQueryResult
 	     */
-	    getArtifactsSources(project: string, typeId: string, onResult: (err: any, statusCode: number, source: ReleaseManagementInterfaces.ArtifactSourceIdsQueryResult) => void): void;
+	    getArtifactsSources(project: string, typeId: string, onResult: (err: any, statusCode: number, source: ReleaseInterfaces.ArtifactSourceIdsQueryResult) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} releaseId
 	     * @param {number} environmentId
 	     * @param {number} attemptId
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ReleaseTask[]
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseTask[]
 	     */
-	    getTasks(project: string, releaseId: number, environmentId: number, attemptId: number, onResult: (err: any, statusCode: number, tasks: ReleaseManagementInterfaces.ReleaseTask[]) => void): void;
+	    getTasks(project: string, releaseId: number, environmentId: number, attemptId: number, onResult: (err: any, statusCode: number, tasks: ReleaseInterfaces.ReleaseTask[]) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ArtifactTypeDefinition[]
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ArtifactTypeDefinition[]
 	     */
-	    getArtifactTypeDefinitions(project: string, onResult: (err: any, statusCode: number, types: ReleaseManagementInterfaces.ArtifactTypeDefinition[]) => void): void;
+	    getArtifactTypeDefinitions(project: string, onResult: (err: any, statusCode: number, types: ReleaseInterfaces.ArtifactTypeDefinition[]) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} releaseDefinitionId
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ArtifactVersionQueryResult
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ArtifactVersionQueryResult
 	     */
-	    getArtifactVersions(project: string, releaseDefinitionId: number, onResult: (err: any, statusCode: number, version: ReleaseManagementInterfaces.ArtifactVersionQueryResult) => void): void;
+	    getArtifactVersions(project: string, releaseDefinitionId: number, onResult: (err: any, statusCode: number, version: ReleaseInterfaces.ArtifactVersionQueryResult) => void): void;
 	    /**
-	     * @param {ReleaseManagementInterfaces.ArtifactSource[]} artifactSources
+	     * @param {ReleaseInterfaces.Artifact[]} artifacts
 	     * @param {string} project - Project ID or project name
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ArtifactVersionQueryResult
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ArtifactVersionQueryResult
 	     */
-	    getArtifactVersionsForSources(artifactSources: ReleaseManagementInterfaces.ArtifactSource[], project: string, onResult: (err: any, statusCode: number, version: ReleaseManagementInterfaces.ArtifactVersionQueryResult) => void): void;
+	    getArtifactVersionsForSources(artifacts: ReleaseInterfaces.Artifact[], project: string, onResult: (err: any, statusCode: number, version: ReleaseInterfaces.ArtifactVersionQueryResult) => void): void;
 	    /**
 	     * @param {string} project - Project ID or project name
 	     * @param {number} releaseId
 	     * @param {number} baseReleaseId
 	     * @param {number} top
-	     * @param onResult callback function with the resulting ReleaseManagementInterfaces.ReleaseWorkItemRef[]
+	     * @param onResult callback function with the resulting ReleaseInterfaces.ReleaseWorkItemRef[]
 	     */
-	    getReleaseWorkItemsRefs(project: string, releaseId: number, baseReleaseId: number, top: number, onResult: (err: any, statusCode: number, workitems: ReleaseManagementInterfaces.ReleaseWorkItemRef[]) => void): void;
+	    getReleaseWorkItemsRefs(project: string, releaseId: number, baseReleaseId: number, top: number, onResult: (err: any, statusCode: number, workitems: ReleaseInterfaces.ReleaseWorkItemRef[]) => void): void;
 	}
-	export class QReleaseManagementApi extends basem.QClientApiBase implements IQReleaseManagementApi {
-	    api: ReleaseManagementApi;
+	export class QReleaseApi extends basem.QClientApiBase implements IQReleaseApi {
+	    api: ReleaseApi;
 	    constructor(baseUrl: string, handlers: VsoBaseInterfaces.IRequestHandler[]);
 	    /**
 	    * Returns the artifact details that automation agent requires
@@ -16502,59 +16617,37 @@ declare module 'vso-node-api/ReleaseManagementApi' {
 	    * @param {string} project - Project ID or project name
 	    * @param {number} releaseId
 	    */
-	    getAgentArtifactDefinitions(project: string, releaseId: number): Q.Promise<ReleaseManagementInterfaces.AgentArtifactDefinition[]>;
+	    getAgentArtifactDefinitions(project: string, releaseId: number): Q.Promise<ReleaseInterfaces.AgentArtifactDefinition[]>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {string} assignedToFilter
-	    * @param {ReleaseManagementInterfaces.ApprovalStatus} statusFilter
+	    * @param {ReleaseInterfaces.ApprovalStatus} statusFilter
 	    * @param {number[]} releaseIdsFilter
 	    */
-	    getApprovals(project: string, assignedToFilter?: string, statusFilter?: ReleaseManagementInterfaces.ApprovalStatus, releaseIdsFilter?: number[]): Q.Promise<ReleaseManagementInterfaces.ReleaseApproval[]>;
+	    getApprovals(project: string, assignedToFilter?: string, statusFilter?: ReleaseInterfaces.ApprovalStatus, releaseIdsFilter?: number[]): Q.Promise<ReleaseInterfaces.ReleaseApproval[]>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {number} approvalStepId
 	    */
-	    getApprovalHistory(project: string, approvalStepId: number): Q.Promise<ReleaseManagementInterfaces.ReleaseApproval[]>;
+	    getApprovalHistory(project: string, approvalStepId: number): Q.Promise<ReleaseInterfaces.ReleaseApproval>;
 	    /**
-	    * @param {ReleaseManagementInterfaces.ApprovalUpdateMetadata} approvalUpdateMetadata
+	    * @param {ReleaseInterfaces.ReleaseApproval} approval
 	    * @param {string} project - Project ID or project name
 	    * @param {number} approvalId
 	    */
-	    updateReleaseApproval(approvalUpdateMetadata: ReleaseManagementInterfaces.ApprovalUpdateMetadata, project: string, approvalId: number): Q.Promise<ReleaseManagementInterfaces.ReleaseApproval>;
-	    /**
-	    * @param {ReleaseManagementInterfaces.Artifact} artifact
-	    * @param {string} project - Project ID or project name
-	    */
-	    createArtifact(artifact: ReleaseManagementInterfaces.Artifact, project: string): Q.Promise<ReleaseManagementInterfaces.Artifact>;
-	    /**
-	    * @param {string} project - Project ID or project name
-	    * @param {number} definitionId
-	    */
-	    getArtifact(project: string, definitionId: number): Q.Promise<ReleaseManagementInterfaces.Artifact>;
-	    /**
-	    * @param {string} project - Project ID or project name
-	    * @param {string} typeId
-	    * @param {string} name
-	    * @param {string} sourceId
-	    */
-	    getArtifacts(project: string, typeId?: string, name?: string, sourceId?: string): Q.Promise<ReleaseManagementInterfaces.Artifact[]>;
-	    /**
-	    * @param {ReleaseManagementInterfaces.ArtifactDefinition[]} artifactDefinitions
-	    * @param {string} project - Project ID or project name
-	    */
-	    updateArtifacts(artifactDefinitions: ReleaseManagementInterfaces.ArtifactDefinition[], project: string): Q.Promise<ReleaseManagementInterfaces.ArtifactDefinition[]>;
+	    updateReleaseApproval(approval: ReleaseInterfaces.ReleaseApproval, project: string, approvalId: number): Q.Promise<ReleaseInterfaces.ReleaseApproval>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {number} releaseId
 	    * @param {number} baseReleaseId
 	    * @param {number} top
 	    */
-	    getReleaseChanges(project: string, releaseId: number, baseReleaseId?: number, top?: number): Q.Promise<ReleaseManagementInterfaces.Change[]>;
+	    getReleaseChanges(project: string, releaseId: number, baseReleaseId?: number, top?: number): Q.Promise<ReleaseInterfaces.Change[]>;
 	    /**
-	    * @param {ReleaseManagementInterfaces.ReleaseDefinition} releaseDefinition
+	    * @param {ReleaseInterfaces.ReleaseDefinition} releaseDefinition
 	    * @param {string} project - Project ID or project name
 	    */
-	    createReleaseDefinition(releaseDefinition: ReleaseManagementInterfaces.ReleaseDefinition, project: string): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinition>;
+	    createReleaseDefinition(releaseDefinition: ReleaseInterfaces.ReleaseDefinition, project: string): Q.Promise<ReleaseInterfaces.ReleaseDefinition>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {number} definitionId
@@ -16564,29 +16657,44 @@ declare module 'vso-node-api/ReleaseManagementApi' {
 	    * @param {string} project - Project ID or project name
 	    * @param {number} definitionId
 	    */
-	    getReleaseDefinition(project: string, definitionId: number): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinition>;
+	    getReleaseDefinition(project: string, definitionId: number): Q.Promise<ReleaseInterfaces.ReleaseDefinition>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {string} searchText
 	    * @param {number} artifactIdFilter
+	    * @param {ReleaseInterfaces.ReleaseDefinitionExpands} expand
 	    */
-	    getReleaseDefinitions(project: string, searchText?: string, artifactIdFilter?: number): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinition[]>;
+	    getReleaseDefinitions(project: string, searchText?: string, artifactIdFilter?: number, expand?: ReleaseInterfaces.ReleaseDefinitionExpands): Q.Promise<ReleaseInterfaces.ReleaseDefinition[]>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {string} artifactType
 	    * @param {string} artifactSourceId
+	    * @param {ReleaseInterfaces.ReleaseDefinitionExpands} expand
 	    */
-	    getReleaseDefinitionsForArtifactSource(project: string, artifactType: string, artifactSourceId: string): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinition[]>;
+	    getReleaseDefinitionsForArtifactSource(project: string, artifactType: string, artifactSourceId: string, expand?: ReleaseInterfaces.ReleaseDefinitionExpands): Q.Promise<ReleaseInterfaces.ReleaseDefinition[]>;
 	    /**
-	    * @param {ReleaseManagementInterfaces.ReleaseDefinition} releaseDefinition
+	    * @param {ReleaseInterfaces.ReleaseDefinition} releaseDefinition
 	    * @param {string} project - Project ID or project name
 	    */
-	    updateReleaseDefinition(releaseDefinition: ReleaseManagementInterfaces.ReleaseDefinition, project: string): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinition>;
+	    updateReleaseDefinition(releaseDefinition: ReleaseInterfaces.ReleaseDefinition, project: string): Q.Promise<ReleaseInterfaces.ReleaseDefinition>;
 	    /**
-	    * @param {ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate} template
+	    * @param {string} project - Project ID or project name
+	    * @param {number} releaseId
+	    * @param {number} environmentId
+	    */
+	    getReleaseEnvironment(project: string, releaseId: number, environmentId: number): Q.Promise<ReleaseInterfaces.ReleaseEnvironment>;
+	    /**
+	    * @param {any} environmentUpdateData
+	    * @param {string} project - Project ID or project name
+	    * @param {number} releaseId
+	    * @param {number} environmentId
+	    */
+	    updateReleaseEnvironment(environmentUpdateData: any, project: string, releaseId: number, environmentId: number): Q.Promise<ReleaseInterfaces.ReleaseEnvironment>;
+	    /**
+	    * @param {ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate} template
 	    * @param {string} project - Project ID or project name
 	    */
-	    createDefinitionEnvironmentTemplate(template: ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate, project: string): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate>;
+	    createDefinitionEnvironmentTemplate(template: ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate, project: string): Q.Promise<ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {string} templateId
@@ -16596,11 +16704,11 @@ declare module 'vso-node-api/ReleaseManagementApi' {
 	    * @param {string} project - Project ID or project name
 	    * @param {string} templateId
 	    */
-	    getDefinitionEnvironmentTemplate(project: string, templateId: string): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate>;
+	    getDefinitionEnvironmentTemplate(project: string, templateId: string): Q.Promise<ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    */
-	    listDefinitionEnvironmentTemplates(project: string): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinitionEnvironmentTemplate[]>;
+	    listDefinitionEnvironmentTemplates(project: string): Q.Promise<ReleaseInterfaces.ReleaseDefinitionEnvironmentTemplate[]>;
 	    /**
 	    * @param {FormInputInterfaces.InputValuesQuery} query
 	    * @param {string} project - Project ID or project name
@@ -16620,10 +16728,10 @@ declare module 'vso-node-api/ReleaseManagementApi' {
 	    */
 	    getLog(project: string, releaseId: number, environmentId: number, taskId: number, attemptId?: number): Q.Promise<NodeJS.ReadableStream>;
 	    /**
-	    * @param {ReleaseManagementInterfaces.ReleaseStartMetadata} releaseStartMetadata
+	    * @param {ReleaseInterfaces.ReleaseStartMetadata} releaseStartMetadata
 	    * @param {string} project - Project ID or project name
 	    */
-	    createRelease(releaseStartMetadata: ReleaseManagementInterfaces.ReleaseStartMetadata, project: string): Q.Promise<ReleaseManagementInterfaces.Release>;
+	    createRelease(releaseStartMetadata: ReleaseInterfaces.ReleaseStartMetadata, project: string): Q.Promise<ReleaseInterfaces.Release>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {number} releaseId
@@ -16634,82 +16742,88 @@ declare module 'vso-node-api/ReleaseManagementApi' {
 	    * @param {number} releaseId
 	    * @param {boolean} includeAllApprovals
 	    */
-	    getRelease(project: string, releaseId: number, includeAllApprovals?: boolean): Q.Promise<ReleaseManagementInterfaces.Release>;
+	    getRelease(project: string, releaseId: number, includeAllApprovals?: boolean): Q.Promise<ReleaseInterfaces.Release>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {number} definitionId
 	    * @param {number} releaseCount
 	    * @param {boolean} includeArtifact
 	    */
-	    getReleaseDefinitionSummary(project: string, definitionId: number, releaseCount: number, includeArtifact?: boolean): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinitionSummary>;
+	    getReleaseDefinitionSummary(project: string, definitionId: number, releaseCount: number, includeArtifact?: boolean): Q.Promise<ReleaseInterfaces.ReleaseDefinitionSummary>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {number} definitionId
+	    * @param {number} definitionEnvironmentId
 	    * @param {string} searchText
-	    * @param {ReleaseManagementInterfaces.ReleaseStatus} statusFilter
+	    * @param {string} createdBy
+	    * @param {ReleaseInterfaces.ReleaseStatus} statusFilter
 	    * @param {Date} minCreatedTime
 	    * @param {Date} maxCreatedTime
-	    * @param {ReleaseManagementInterfaces.ReleaseQueryOrder} queryOrder
+	    * @param {ReleaseInterfaces.ReleaseQueryOrder} queryOrder
 	    * @param {number} top
 	    * @param {number} continuationToken
+	    * @param {ReleaseInterfaces.ReleaseExpands} expand
+	    * @param {string} artifactTypeId
+	    * @param {number} artifactSourceId
+	    * @param {string} artifactVersionId
 	    */
-	    getReleases(project: string, definitionId?: number, searchText?: string, statusFilter?: ReleaseManagementInterfaces.ReleaseStatus, minCreatedTime?: Date, maxCreatedTime?: Date, queryOrder?: ReleaseManagementInterfaces.ReleaseQueryOrder, top?: number, continuationToken?: number): Q.Promise<ReleaseManagementInterfaces.Release[]>;
+	    getReleases(project: string, definitionId?: number, definitionEnvironmentId?: number, searchText?: string, createdBy?: string, statusFilter?: ReleaseInterfaces.ReleaseStatus, minCreatedTime?: Date, maxCreatedTime?: Date, queryOrder?: ReleaseInterfaces.ReleaseQueryOrder, top?: number, continuationToken?: number, expand?: ReleaseInterfaces.ReleaseExpands, artifactTypeId?: string, artifactSourceId?: number, artifactVersionId?: string): Q.Promise<ReleaseInterfaces.Release[]>;
 	    /**
-	    * @param {ReleaseManagementInterfaces.Release} release
+	    * @param {ReleaseInterfaces.Release} release
 	    * @param {string} project - Project ID or project name
 	    * @param {number} releaseId
 	    */
-	    updateRelease(release: ReleaseManagementInterfaces.Release, project: string, releaseId: number): Q.Promise<ReleaseManagementInterfaces.Release>;
+	    updateRelease(release: ReleaseInterfaces.Release, project: string, releaseId: number): Q.Promise<ReleaseInterfaces.Release>;
 	    /**
-	    * @param {ReleaseManagementInterfaces.ReleaseUpdateMetadata} releaseUpdateMetadata
+	    * @param {ReleaseInterfaces.ReleaseUpdateMetadata} releaseUpdateMetadata
 	    * @param {string} project - Project ID or project name
 	    * @param {number} releaseId
 	    */
-	    updateReleaseStatus(releaseUpdateMetadata: ReleaseManagementInterfaces.ReleaseUpdateMetadata, project: string, releaseId: number): Q.Promise<ReleaseManagementInterfaces.Release>;
+	    updateReleaseResource(releaseUpdateMetadata: ReleaseInterfaces.ReleaseUpdateMetadata, project: string, releaseId: number): Q.Promise<ReleaseInterfaces.Release>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {number} definitionId
 	    */
-	    getReleaseDefinitionHistory(project: string, definitionId: number): Q.Promise<ReleaseManagementInterfaces.ReleaseDefinitionRevision[]>;
+	    getReleaseDefinitionHistory(project: string, definitionId: number): Q.Promise<ReleaseInterfaces.ReleaseDefinitionRevision[]>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {number} definitionId
 	    * @param {number} revision
 	    */
-	    getReleaseDefinitionRevision(project: string, definitionId: number, revision: number): Q.Promise<any>;
+	    getReleaseDefinitionRevision(project: string, definitionId: number, revision: number): Q.Promise<NodeJS.ReadableStream>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {string} typeId
 	    */
-	    getArtifactsSources(project: string, typeId?: string): Q.Promise<ReleaseManagementInterfaces.ArtifactSourceIdsQueryResult>;
+	    getArtifactsSources(project: string, typeId?: string): Q.Promise<ReleaseInterfaces.ArtifactSourceIdsQueryResult>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {number} releaseId
 	    * @param {number} environmentId
 	    * @param {number} attemptId
 	    */
-	    getTasks(project: string, releaseId: number, environmentId: number, attemptId?: number): Q.Promise<ReleaseManagementInterfaces.ReleaseTask[]>;
+	    getTasks(project: string, releaseId: number, environmentId: number, attemptId?: number): Q.Promise<ReleaseInterfaces.ReleaseTask[]>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    */
-	    getArtifactTypeDefinitions(project: string): Q.Promise<ReleaseManagementInterfaces.ArtifactTypeDefinition[]>;
+	    getArtifactTypeDefinitions(project: string): Q.Promise<ReleaseInterfaces.ArtifactTypeDefinition[]>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {number} releaseDefinitionId
 	    */
-	    getArtifactVersions(project: string, releaseDefinitionId: number): Q.Promise<ReleaseManagementInterfaces.ArtifactVersionQueryResult>;
+	    getArtifactVersions(project: string, releaseDefinitionId: number): Q.Promise<ReleaseInterfaces.ArtifactVersionQueryResult>;
 	    /**
-	    * @param {ReleaseManagementInterfaces.ArtifactSource[]} artifactSources
+	    * @param {ReleaseInterfaces.Artifact[]} artifacts
 	    * @param {string} project - Project ID or project name
 	    */
-	    getArtifactVersionsForSources(artifactSources: ReleaseManagementInterfaces.ArtifactSource[], project: string): Q.Promise<ReleaseManagementInterfaces.ArtifactVersionQueryResult>;
+	    getArtifactVersionsForSources(artifacts: ReleaseInterfaces.Artifact[], project: string): Q.Promise<ReleaseInterfaces.ArtifactVersionQueryResult>;
 	    /**
 	    * @param {string} project - Project ID or project name
 	    * @param {number} releaseId
 	    * @param {number} baseReleaseId
 	    * @param {number} top
 	    */
-	    getReleaseWorkItemsRefs(project: string, releaseId: number, baseReleaseId?: number, top?: number): Q.Promise<ReleaseManagementInterfaces.ReleaseWorkItemRef[]>;
+	    getReleaseWorkItemsRefs(project: string, releaseId: number, baseReleaseId?: number, top?: number): Q.Promise<ReleaseInterfaces.ReleaseWorkItemRef[]>;
 	}
 
 }
@@ -16756,7 +16870,7 @@ declare module 'vso-node-api/WebApi' {
 	import testm = require('vso-node-api/TestApi');
 	import tfvcm = require('vso-node-api/TfvcApi');
 	import workitemtrackingm = require('vso-node-api/WorkItemTrackingApi');
-	import releasemanagementm = require('vso-node-api/ReleaseManagementApi');
+	import releasem = require('vso-node-api/ReleaseApi');
 	import apivm = require('vso-node-api/handlers/apiversion');
 	import basicm = require('vso-node-api/handlers/basiccreds');
 	import bearm = require('vso-node-api/handlers/bearertoken');
@@ -16797,8 +16911,8 @@ declare module 'vso-node-api/WebApi' {
 	    getQTfvcApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): tfvcm.IQTfvcApi;
 	    getWorkItemTrackingApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): workitemtrackingm.IWorkItemTrackingApi;
 	    getQWorkItemTrackingApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): workitemtrackingm.IQWorkItemTrackingApi;
-	    getReleaseManagemntApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): releasemanagementm.IReleaseManagementApi;
-	    getQReleaseManagemntApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): releasemanagementm.IQReleaseManagementApi;
+	    getReleaseApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): releasem.IReleaseApi;
+	    getQReleaseApi(serverUrl?: string, handlers?: VsoBaseInterfaces.IRequestHandler[]): releasem.IQReleaseApi;
 	}
 
 }
