@@ -47,7 +47,6 @@ export class AddAttachmentCommand implements cm.IAsyncCommand {
             }
 
             var projectId: string = this.executionContext.variables[ctxm.WellKnownVariables.projectId];
-            var buildId: number = parseInt(this.executionContext.variables[ctxm.WellKnownVariables.buildId]);
 
             var webapi = this.executionContext.getWebApi();
             var taskClient = webapi.getQTaskApi();
@@ -64,7 +63,7 @@ export class AddAttachmentCommand implements cm.IAsyncCommand {
                         headers,
                         stream,
                         projectId,
-                        "Build",
+                        this.executionContext.jobInfo.description,
                         this.executionContext.jobInfo.planId,
                         this.executionContext.jobInfo.timelineId,
                         this.executionContext.recordId,
