@@ -11,10 +11,12 @@ DEFAULT_NODE_VERSION="5.6.0"
 DEFAULT_TEE_VERSION="14.0.2-private"
 
 # overrides so you can create an offline install for Linux from an OSX machine, etc...
-# export platform_override=Darwin
-# export platform_override=Linux
-# export bit_override=x86
-# export bit_override=x86_64
+
+# Darwin | Linux
+platform=${1:-`uname`}
+
+# x86_64
+bitness=${2:-`uname -m`}
 
 #no version is latest
 DEFAULT_AGENT_VERSION=""
@@ -26,9 +28,18 @@ function failed()
    exit 1
 }
 
+function writeHeader() {
+    echo 
+    echo --------------------------------------
+    echo "     ${1} "
+    echo --------------------------------------
+    echo
+}
+
 uid=`id -u`
-platform=${platform_override:-`uname`}
-echo "Platform: $platform"
+
+writeHeader "Packaging $platform"
+
 if [ $uid -eq 0 ]; then
     failed "Install cannot be run as root.  Do not use sudo"
 fi
@@ -66,14 +77,6 @@ function warnRC() {
     fi
 }
 
-function writeHeader() {
-    echo 
-    echo --------------------------------------
-    echo "     ${1} "
-    echo --------------------------------------
-    echo
-}
-
 # password early in script
 mkdir -p _install
 
@@ -91,7 +94,7 @@ node_file='invalid'
 if [[ "$platform" == "Darwin" ]]; then
     node_file="node-v${node_version}-darwin-x64"
 elif [[ "$platform" == "Linux" ]]; then
-    bitness=${bit_override:-`uname -m`}
+    
     if [[ "$bitness" == "x86_64" ]]; then
         node_file="node-v${node_version}-linux-x64"
     else
@@ -123,12 +126,6 @@ cp -R ${node_file}/. runtime/node
 
 # ensure we use private node and npm for rest of script
 
-if  [[ -z "$platform_override" ]]; then
-    # if we're overriding the platform to create another platforms install, then use global npm
-    echo 'Setting internal node in path'
-    PATH=`pwd`/runtime/node/bin:$PATH
-fi
-
 echo "using node : `which node`"
 echo "using npm  : `which npm`"
 
@@ -157,73 +154,20 @@ fi
 mkdir -p runtime/tee
 cp -R ${tee_file}/. runtime/tee
 
-tf_path=`pwd`/runtime/tee/tf
-if [ -f "`which java`" ]; then
-   echo "Accepting Eula (${tf_path})"
-   `${tf_path} eula -accept`
-else
-   echo "Java not found in your path.  If you use tfsvc + tee, before use run:"
-   echo "${tf_path} eula -accept"
-fi
-
 # ------------------------------------------------------------
-# Install Agent
+# Create Agent
 # ------------------------------------------------------------
-
-writeHeader "Installing agent installer"
-echo "Cleaning up existing agent"
-
-if [ -f "package.json" ]; then
-    rm package.json
-    rm *.sh
-fi
-
-rm -rf agent
-rm -rf node_modules
-rm -rf _installer
-mkdir -p _installer/node_modules
-pushd _installer
-
-echo Installing...
-install_name=vsoagent-installer${agent_version}
-
-# support installing locally built agent
-# run script through curl and piping to sh will have dir of .
-# if you run from locally built 
-script_dir=$(dirname $0)
-echo script location: ${script_dir}
-if [ ${script_dir} != "." ] && [ ${script_dir} ]; then
-    echo Dev Install.  Using location ${script_dir}
-    install_name=${script_dir}
-fi
-
-echo installing ${install_name} ...
-npm install ${install_name} &> ../_install/npminstall.log
-checkRC "npm install"
 
 writeHeader "Creating agent"
-popd
-cp -R _installer/node_modules/vsoagent-installer/agent .
-cp -R _installer/node_modules/vsoagent-installer/*.sh .
-cp _installer/node_modules/vsoagent-installer/package.json .
-cp -R _installer/node_modules .
-rm -rf node_modules/vsoagent-installer
+cp -R ../vsoxplat/ .
 
 chmod 777 *.sh
-# rm -rf _installer
+
+npm install --production
 
 # logging info for troubleshooting
 find . > _install/layout.log
 ls -la > _install/ls.log
 cat package.json | grep "\"version" > _install/version.log
 
-writeHeader "Agent Installed! Next Steps:"
-echo Run and Configure Interactively:
-echo ./run.sh
-echo
-echo Configure Again:
-echo ./configure.sh
-echo
-echo "See documentation for more options"
-echo
 
