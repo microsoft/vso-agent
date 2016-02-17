@@ -8,7 +8,6 @@ import fs = require('fs');
 import Q = require('q');
 import cm = require('../../../common');
 import webapim = require('vso-node-api/WebApi');
-import releaseIfm = require('vso-node-api/interfaces/ReleaseManagementInterfaces');
 import buildIfm = require('vso-node-api/interfaces/BuildInterfaces')
 var shell = require('shelljs');
 

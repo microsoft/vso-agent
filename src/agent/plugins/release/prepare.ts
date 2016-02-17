@@ -5,7 +5,7 @@ import common = require('../../common');
 import utilm = require('../../utilities');
 import releaseCommon = require('./lib/common');
 import webapim = require('vso-node-api/WebApi');
-import releaseIfm = require('vso-node-api/interfaces/ReleaseManagementInterfaces');
+import releaseIfm = require('vso-node-api/interfaces/ReleaseInterfaces');
 import releaseVars = require('./lib/common');
 import artifactResolver = require('./artifact/artifactResolver');
 import path = require('path');
@@ -37,7 +37,7 @@ export function beforeJob(context: common.IExecutionContext, callback) {
     context.info('Artifacts folder:' + artifactsFolder);
 
     var serverUrl = context.jobInfo.jobMessage.environment.systemConnection.url;
-    var rmClient = new webapim.WebApi(serverUrl, context.jobInfo.systemAuthHandler).getQReleaseManagemntApi();
+    var rmClient = new webapim.WebApi(serverUrl, context.jobInfo.systemAuthHandler).getQReleaseApi();
     rmClient.getAgentArtifactDefinitions(teamProjectId, releaseId).then((artifactDefinitions: releaseIfm.AgentArtifactDefinition[]) => {
         if (skipArtifactDownload) {
             context.info('Skipping artifact download based on the setting specified.')
