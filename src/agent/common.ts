@@ -454,17 +454,18 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
             }
             else if (maskHint.type === agentifm.MaskType.Regex) {
                 indexFunctions.push((input: string) => {
+                    var stubInput: string = input;
                     var results: ReplacementPosition[] = [];
                     var actualIndex = 0;
-                    while (input.length > 0) {
-                        var match = input.match(maskHint.value);
+                    while (stubInput.length > 0) {
+                        var match = stubInput.match(maskHint.value);
                         if (match === null) {
                             break;
                         }
                         else {
                             var matchString = match.toString();
                             results.push({ start: actualIndex + match.index, length: matchString.length });
-                            input = input.substring(match.index + 1);
+                            stubInput = stubInput.substring(match.index + 1);
                             actualIndex = actualIndex + match.index + 1;
                         }
                     }
@@ -521,9 +522,8 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
             return charArray.join("");
         };
     }
-    else if (maskHints.length === 0) {
-        return noReplacement;
-    }
+
+    return noReplacement;
 }
 
 //
