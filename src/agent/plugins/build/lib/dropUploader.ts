@@ -141,12 +141,14 @@ function _uploadZip(filePath: string, fileSize: number, containerPath: string) {
 
 		var item: ifm.FileContainerItemInfo =  <ifm.FileContainerItemInfo>{
 	        fullPath: info.zipPath,
+			isGzipped: true,
+			uncompressedLength: fileSize,
+			compressedLength: zipSize,
 	        containerItem: <fcifm.FileContainerItem>{
 	            containerId: _containerId,
 	            itemType: fcifm.ContainerItemType.File,
 	            path: containerPath
-	        },
-			uploadHeaders: fchelperm.getUploadHeaders(true, fileSize, zipSize)
+	        }
 	    };
 	    _trace.state('item', item);
 
@@ -172,12 +174,12 @@ function _uploadFile(filePath) {
 		else {
 			var item: ifm.FileContainerItemInfo = <ifm.FileContainerItemInfo>{
 		        fullPath: filePath,
+				uncompressedLength: size,
 		        containerItem: <fcifm.FileContainerItem>{
 		            containerId: _containerId,
 		            itemType: fcifm.ContainerItemType.File,
 		            path: containerPath
-		        },
-				uploadHeaders: fchelperm.getUploadHeaders(false, size)
+		        }
 		    };
 
 		    _trace.state('item', item);

@@ -374,11 +374,17 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
         trace.state('containerItemTuple', containerItemTuple);
         var contentStream: NodeJS.ReadableStream = fs.createReadStream(containerItemTuple.fullPath);
 
-        return this._fileContainerApi.createItem(containerItemTuple.uploadHeaders, 
-            contentStream, 
+        var options = {
+            isGzipped: containerItemTuple.isGzipped,
+            compressedLength: containerItemTuple.compressedLength
+        };
+
+        return this._fileContainerApi.createItem(contentStream, 
+            containerItemTuple.uncompressedLength,
             containerId, 
             containerItemTuple.containerItem.path, 
-            this.jobInfo.variables[cm.vars.systemTeamProjectId]);
+            this.jobInfo.variables[cm.vars.systemTeamProjectId],
+            options);
     }  
 
     public postArtifact(projectId: string, buildId: number, artifact: buildifm.BuildArtifact): Q.Promise<buildifm.BuildArtifact> {
