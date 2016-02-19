@@ -103,7 +103,6 @@ export class CodeCoveragePublisher {
         var testRunId;
         var results;
         var summaryFile = this.command.properties["summaryfile"];
-        var reportDirectpory = this.command.properties["reportdirectory"]
 
         _this.readCodeCoverageSummary(summaryFile).then(function(codeCoverageData) {
             if (codeCoverageData) {

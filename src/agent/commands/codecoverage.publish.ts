@@ -6,7 +6,7 @@ import Q = require('q');
 
 //-----------------------------------------------------
 // Publishes results from a specified file to TFS server 
-// - CMD_PREFIX + "results.publish type=junit]" + testResultsFile
+// - CMD_PREFIX + "codecoverage.publish type=junit]" + testResultsFile
 //-----------------------------------------------------
 
 export function createAsyncCommand(executionContext: cm.IExecutionContext, command: cm.ITaskCommand) {
@@ -25,11 +25,8 @@ export class CodeCoveragePublishCommand implements cm.IAsyncCommand {
     public description: string;
 
     public runCommandAsync() {
-        var defer = Q.defer();
+        var defer = Q.defer();        
 
-        
-
-        var platform: string = this.command.properties['platform'];
         var codeCoverageTool: string = this.command.properties['codecoveragetool'];
 
         var reader;
