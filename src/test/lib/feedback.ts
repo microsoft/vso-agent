@@ -338,4 +338,8 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IServ
 
 		return this._records[recordId];
 	}
+    
+    public publishCodeCoverageSummary(coverageData:testifm.CodeCoverageData, project: string, buildId: number): Q.Promise<any> {
+         return null;
+    }
 }

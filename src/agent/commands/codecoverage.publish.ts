@@ -1,7 +1,7 @@
 import ctxm = require('../context');
 import cm = require('../common');
-import trp = require('../codecoveragepublisher');
-import trr = require('../codecoveragereader');
+import ccp = require('../codecoveragepublisher');
+import ccsr = require('../codecoveragesummaryreader');
 import Q = require('q');
 
 //-----------------------------------------------------
@@ -34,14 +34,14 @@ export class CodeCoveragePublishCommand implements cm.IAsyncCommand {
 
         var reader;
         if (codeCoverageTool == "jacoco") {
-            reader = new trr.JacocoSummaryReader(this.command);
+            reader = new ccsr.JacocoSummaryReader();
         }      
         else{ 
             this.command.warning("Publish code coverage of format '" + codeCoverageTool + "'' are not supported on this build agent");
         }
 
         if (reader != null) {
-            var testRunPublisher = new trp.CodeCoveragePublisher(this.executionContext, this.command, reader);
+            var testRunPublisher = new ccp.CodeCoveragePublisher(this.executionContext, this.command, reader);
             testRunPublisher.publishCodeCoverage()
                 .fail((err) => {
                     this.command.warning("Failed to publish code coverage summary " + err.message);

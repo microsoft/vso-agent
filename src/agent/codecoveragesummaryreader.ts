@@ -25,87 +25,100 @@ export class SummaryReader {
     constructor() {
     }
 
-    public readSummaryFile(summaryFile: string): string {
+    public readSummaryFile(summaryFile: string): Q.Promise<string> {
+        var defer = Q.defer();
+
         utilities.readFileContents(summaryFile, "utf-8").then(function(contents) {
             var xmlContent = contents.replace("\ufeff", ""); //replace BOM if exists to avoid xml read error
-            return xmlContent;
+            defer.resolve(xmlContent);
+        }).fail(function(err) {
+            defer.reject(err);
         });
-        
-        return null;
+
+        return defer.promise;
     }
 }
 
-export class JacocoSummaryReader extends SummaryReader implements ccp.ICodeCoverageReader{
-    public getCodeCoverageSummary(summaryFile: string) : testifm.CodeCoverageData{
-        
-        var xmlContent = this.readSummaryFile(summaryFile);
-        var codeCoverageStatics = this.readDataFromNodes(xmlContent);
-        
-        
-        return null;
-    }  
-    
-    private readDataFromNodes(xmlContent: string) : CodeCoverageSummary {
-                  
-         xmlreader.read(xmlContent, function (err, res) {
+export class JacocoSummaryReader extends SummaryReader implements ccp.ICodeCoverageReader {
+    public getCodeCoverageSummary(summaryFile: string): Q.Promise<testifm.CodeCoverageData> {
+        var defer = Q.defer();
+
+        this.readSummaryFile(summaryFile).then(function(xmlContent) {
+            var codeCoverageSummary = this.readDataFromNodes(xmlContent);
+            var coverageData: testifm.CodeCoverageData = <testifm.CodeCoverageData>{
+                coverageStats: codeCoverageSummary
+            }
+
+            defer.resolve(coverageData);
+        }).fail(function(err) {
+            defer.reject(err);
+        });
+
+        return defer.promise;
+    }
+
+    private readDataFromNodes(xmlContent: string): Q.Promise<CodeCoverageSummary> {
+        var defer = Q.defer();
+
+        xmlreader.read(xmlContent, function(err, res) {
             if (err) {
-                return null;
+                defer.reject(err);
             }
             else {
                 try {
-                    return this.parseJacocoXmlReport(res);
+                    defer.resolve(this.parseJacocoXmlReport(res));
                 }
                 catch (ex) {
-                    return null;
+                    defer.reject(err);
                 }
             }
         });
-        
-         return null;
+
+        return defer.promise;
     }
-    
-    private getCoveragePriorityOrder(label: string) : Number {
-        if(label.toLowerCase() == 'instruction'){
+
+    private getCoveragePriorityOrder(label: string): Number {
+        if (label.toLowerCase() == 'instruction') {
             return 5;
         }
-        else if(label.toLowerCase() == 'line'){
+        else if (label.toLowerCase() == 'line') {
             return 4;
         }
-        else if(label.toLowerCase() == 'method'){
+        else if (label.toLowerCase() == 'method') {
             return 3;
         }
-        else if(label.toLowerCase() == 'complexity'){
+        else if (label.toLowerCase() == 'complexity') {
             return 2;
         }
-        else if(label.toLowerCase() == 'class'){
+        else if (label.toLowerCase() == 'class') {
             return 1;
         }
         return 6;
     }
-    
-    private parseJacocoXmlReport(res) : CodeCoverageSummary{
-        if(!res.report || res.report.at(0)){
+
+    private parseJacocoXmlReport(res): CodeCoverageSummary {
+        if (!res.report || res.report.at(0)) {
             return null;
         }
         var coverage = new CodeCoverageSummary();
         var reportNode = res.report.at(0);
-        
+
         var counterNodeList = reportNode.counter.count();
         var coverageStats = []
-        for(var i=0;i<counterNodeList;i++){
+        for (var i = 0; i < counterNodeList; i++) {
             var counterNode = counterNodeList.at(i);
-            
+
             var coverageStat: testifm.CodeCoverageStatistics = <testifm.CodeCoverageStatistics>{
                 label: counterNode.attributes().type,
                 covered: counterNode.attributes().covered,
-                total: Number(counterNode.attributes().covered)+Number(counterNode.attributes().missed),
+                total: Number(counterNode.attributes().covered) + Number(counterNode.attributes().missed),
                 position: this.getCoveragePriorityOrder(counterNode.attributes().type)
             }
-            
+
             coverageStats.concat(coverageStat);
         }
         coverage.addResults(coverageStats);
-        
+
         return coverage;
     }
 
