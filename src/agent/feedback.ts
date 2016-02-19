@@ -401,6 +401,12 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
 
         return this._issues[recordId];
     }
+    
+    // CodeCoverage section
+     public publishCodeCoverageSummary(coverageData:testifm.CodeCoverageData, project: string, buildId: number): Q.Promise<any> {
+         trace.enter('servicechannel:publishCodeCoverageSummary');
+        return this._testApi.updateCodeCoverageSummary(coverageData, project, buildId);
+    }
 
     //------------------------------------------------------------------
     // Test publishing Items
