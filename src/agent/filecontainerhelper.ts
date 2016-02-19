@@ -102,7 +102,7 @@ export class FileContainerHelper {
 			else {
 				var item: ifm.FileContainerItemInfo = <ifm.FileContainerItemInfo>{
 					fullPath: filePath,
-					uncompressedSize: size,
+					uncompressedLength: size,
 		            containerItem: <fcifm.FileContainerItem>{
 						containerId: containerId,
 			            itemType: fcifm.ContainerItemType.File,
