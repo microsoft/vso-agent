@@ -23,57 +23,76 @@ export class CodeCoverageSummary {
 
 export class SummaryReader {
     constructor() {
+        
     }
-
+    
     public readSummaryFile(summaryFile: string): Q.Promise<string> {
         var defer = Q.defer();
-
+      
         utilities.readFileContents(summaryFile, "utf-8").then(function(contents) {
             var xmlContent = contents.replace("\ufeff", ""); //replace BOM if exists to avoid xml read error
+            
+           
             defer.resolve(xmlContent);
         }).fail(function(err) {
             defer.reject(err);
         });
-
+        
         return defer.promise;
     }
 }
 
 export class JacocoSummaryReader extends SummaryReader implements ccp.ICodeCoverageReader {
+    
+    constructor() {
+        super();
+    }
+    
+   
     public getCodeCoverageSummary(summaryFile: string): Q.Promise<testifm.CodeCoverageData> {
         var defer = Q.defer();
-
+        var _this = this;
+       
         this.readSummaryFile(summaryFile).then(function(xmlContent) {
-            var codeCoverageSummary = this.readDataFromNodes(xmlContent);
-            var coverageData: testifm.CodeCoverageData = <testifm.CodeCoverageData>{
-                coverageStats: codeCoverageSummary
-            }
+            _this.readDataFromNodes(xmlContent).then(function(coverageSummary) {
+                var coverageData: testifm.CodeCoverageData = <testifm.CodeCoverageData>{
+                    buildFlavor: "test",
+                    buildPlatform: "linux",
+                    coverageStats: coverageSummary.results
+                }
 
-            defer.resolve(coverageData);
+                defer.resolve(coverageData);
+            }).fail(function(err) {
+                defer.reject(err);
+            });
         }).fail(function(err) {
             defer.reject(err);
         });
 
+    
         return defer.promise;
     }
 
     private readDataFromNodes(xmlContent: string): Q.Promise<CodeCoverageSummary> {
         var defer = Q.defer();
-
+        var _this = this;
+        
+        
         xmlreader.read(xmlContent, function(err, res) {
             if (err) {
                 defer.reject(err);
             }
             else {
                 try {
-                    defer.resolve(this.parseJacocoXmlReport(res));
+                    
+                    defer.resolve(_this.parseJacocoXmlReport(res));
                 }
                 catch (ex) {
                     defer.reject(err);
                 }
             }
         });
-
+       
         return defer.promise;
     }
 
@@ -97,17 +116,19 @@ export class JacocoSummaryReader extends SummaryReader implements ccp.ICodeCover
     }
 
     private parseJacocoXmlReport(res): CodeCoverageSummary {
-        if (!res.report || res.report.at(0)) {
+     
+        
+        if (!res.report || !res.report.at(0)) {
+            
             return null;
         }
         var coverage = new CodeCoverageSummary();
         var reportNode = res.report.at(0);
-
-        var counterNodeList = reportNode.counter.count();
+        
+        var nodeLength = reportNode.counter.count();
         var coverageStats = []
-        for (var i = 0; i < counterNodeList; i++) {
-            var counterNode = counterNodeList.at(i);
-
+        for (var i = 0; i < nodeLength; i++) {
+            var counterNode = reportNode.counter.at(i);
             var coverageStat: testifm.CodeCoverageStatistics = <testifm.CodeCoverageStatistics>{
                 label: counterNode.attributes().type,
                 covered: counterNode.attributes().covered,
@@ -115,10 +136,10 @@ export class JacocoSummaryReader extends SummaryReader implements ccp.ICodeCover
                 position: this.getCoveragePriorityOrder(counterNode.attributes().type)
             }
 
-            coverageStats.concat(coverageStat);
+            coverageStats.push(coverageStat);
         }
         coverage.addResults(coverageStats);
-
+        
         return coverage;
     }
 

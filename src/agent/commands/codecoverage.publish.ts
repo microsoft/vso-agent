@@ -24,29 +24,27 @@ export class CodeCoveragePublishCommand implements cm.IAsyncCommand {
     public executionContext: cm.IExecutionContext;
     public description: string;
 
-    public runCommandAsync() {
-        var defer = Q.defer();        
+    public runCommandAsync() : Q.Promise<any> {
+        var defer = Q.defer();
 
         var codeCoverageTool: string = this.command.properties['codecoveragetool'];
 
         var reader;
-        if (codeCoverageTool == "jacoco") {
+        if (codeCoverageTool == "JaCoCo") {
             reader = new ccsr.JacocoSummaryReader();
-        }      
-        else{ 
-            this.command.warning("Publish code coverage of format '" + codeCoverageTool + "'' are not supported on this build agent");
         }
 
         if (reader != null) {
             var testRunPublisher = new ccp.CodeCoveragePublisher(this.executionContext, this.command, reader);
-            testRunPublisher.publishCodeCoverage()
-                .fail((err) => {
-                    this.command.warning("Failed to publish code coverage summary " + err.message);
-                    defer.resolve(null);
-                });
+            testRunPublisher.publishCodeCoverage().then(function(response) {
+               defer.resolve("Success");
+            }).fail((err) => {
+                defer.reject(err);
+            });
         }
         else {
-            defer.resolve(null);
+            var err = new Error("Code coverage tool not supported");
+            defer.reject(err);
         }
 
         return defer.promise;

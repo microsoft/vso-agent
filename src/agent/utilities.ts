@@ -6,7 +6,6 @@
 import Q = require('q');
 import ctxm = require('./context');
 import fs = require('fs');
-
 var shell = require('shelljs');
 var path = require('path');
 
@@ -42,7 +41,6 @@ export function ensurePathExists(path: string): Q.Promise<void> {
 
 export function readFileContents(filePath: string, encoding: string) : Q.Promise<string> {
     var defer = Q.defer<string>();
-
     fs.readFile(filePath, encoding, (err, data) => {
         if(err) {
             defer.reject(new Error('Could not read file (' + filePath + '): ' + err.message));

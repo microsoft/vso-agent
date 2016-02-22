@@ -1,3 +1,4 @@
+
 import ifm = require('./interfaces');
 import testifm = require('vso-node-api/interfaces/TestInterfaces');
 import ctxm = require('./context');
@@ -6,6 +7,7 @@ import utilities = require('./utilities');
 import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 import fc = require('./filecontainerhelper');
 
+var tl = require('vsts-task-lib/task');
 var async = require('async');
 var fs = require('fs');
 var path = require("path");
@@ -48,10 +50,8 @@ export class CodeCoveragePublisher {
     //-----------------------------------------------------    
     private readCodeCoverageSummary(file: string): Q.Promise<testifm.CodeCoverageData> {
         var defer = Q.defer();
-
-        var codeCoverageStatistics: testifm.CodeCoverageData;
-
-        this.codeCoverageReader.getCodeCoverageSummary(file).then(function(codeCoverageStatistics) {
+        var _this = this;
+        _this.codeCoverageReader.getCodeCoverageSummary(file).then(function(codeCoverageStatistics) {
             defer.resolve(codeCoverageStatistics);
         }).fail(function(err) {
             defer.reject(err);
@@ -70,35 +70,50 @@ export class CodeCoveragePublisher {
         _this.executionContext.service.publishCodeCoverageSummary(codeCoverageResults, _this.project, _this.buildId);
     }
 
-    public publishCodeCoverageFiles() {
-        var reportDirectory = this.command.properties["reportdirectory"];
-        var containerId = parseInt(this.executionContext.variables[ctxm.WellKnownVariables.containerId]);
-        var artifactName = "Code Coverage Report_" + this.buildId;
-        if (reportDirectory) {
-
-            fc.copyToFileContainer(this.executionContext, reportDirectory, containerId, artifactName).then((artifactLocation: string) => {
-                this.command.info('Associating artifact ' + artifactLocation + ' ...');
-
-                var artifact: buildifm.BuildArtifact = <buildifm.BuildArtifact>{
-                    name: artifactName,
-                    resource: {
-                        type: "container",
-                        data: artifactLocation
-                    }
-                };
-
-                this.executionContext.service.postArtifact(this.project, this.buildId, artifact);
-            });
-        }
+    public publishCodeCoverageFiles(): Q.Promise<any> {
+        var defer = Q.defer();
+        var _this = this;
+        var reportDirectory = _this.command.properties["reportdirectory"];
+        var containerId = parseInt(_this.executionContext.variables[ctxm.WellKnownVariables.containerId]);
+        var artifactName = "Code Coverage Report_" + _this.buildId;
+        var data = {
+        artifacttype: "container",
+        artifactname: artifactName
+    };
+       
+    // upload or copy
+   
+        data["containerfolder"] = artifactName;
+            
+        // add localpath to ##vso command's properties for back compat of old Xplat agent
+        data["localpath"] = reportDirectory;
+        tl.command("artifact.upload", data, reportDirectory);
+        // if (reportDirectory) {
+        //     fc.copyToFileContainer(_this.executionContext, reportDirectory, containerId, artifactName).then((artifactLocation: string) => {
+        //         var artifact: buildifm.BuildArtifact = <buildifm.BuildArtifact>{
+        //             name: artifactName,
+        //             resource: {
+        //                 type: "container",
+        //                 data: artifactLocation
+        //             }
+        //         };
+        //         _this.executionContext.service.postArtifact(_this.project, _this.buildId, artifact);
+        //     }).fail(function(err){
+        //         defer.reject(err);
+        //     });
+        // }
+        
+        defer.resolve("Success");
+        return defer.promise;
     }
     
     //-----------------------------------------------------
     // Publish a test run
     // - resultFilePath: string - Path to the results file
     //-----------------------------------------------------
-    public publishCodeCoverage(): Q.Promise<testifm.TestRun> {
+    public publishCodeCoverage(): Q.Promise<any> {
         var defer = Q.defer();
-
+        
         var _this = this;
         var testRunId;
         var results;
@@ -112,7 +127,7 @@ export class CodeCoveragePublisher {
             return false;
         }).then(function(isCodeCoverageSummaryPublished) {
             if (isCodeCoverageSummaryPublished) {
-                _this.publishCodeCoverageFiles();
+                 defer.resolve(_this.publishCodeCoverageFiles());
             }
         }).fail(function(err) {
             defer.reject(err);

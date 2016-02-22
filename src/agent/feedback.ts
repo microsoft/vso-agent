@@ -404,7 +404,8 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
     
     // CodeCoverage section
      public publishCodeCoverageSummary(coverageData:testifm.CodeCoverageData, project: string, buildId: number): Q.Promise<any> {
-         trace.enter('servicechannel:publishCodeCoverageSummary');
+                  
+        this._testApi = new webapim.WebApi(this.jobInfo.variables[cm.AutomationVariables.systemTfCollectionUri], this.jobInfo.systemAuthHandler).getQTestApi();
         return this._testApi.updateCodeCoverageSummary(coverageData, project, buildId);
     }
 
