@@ -49,6 +49,10 @@ To install preview version (usually master), use:
 curl -skSL http://aka.ms/previewxplat | bash
 ```
 
+If you have issues with this, fully realized zips are available.
+
+Go to the [releases section on github](https://github.com/Microsoft/vso-agent/releases) and download the linux or OSX (Darwin) package.
+
 ### Configure on first run
 
 >> TIPS:
@@ -96,6 +100,4 @@ to ensure the agent survives reboots.
 
 If you have Server and Agent without internet access, it's possible to download and agent to a thumbdrive from a computer that has internet access (you need it to download :)) and then then use that to stamp out agents on your private network agent machines.
 
-Run the Install steps above and simply copy that created folder to a thumbdrive.  From the private agent, copy that folder and then follow the steps after Install to configure the agent.
-
-After copying the folder from the thumbdrive, ensure the logged on account has rwx permissions
+Go to the [releases section on github](https://github.com/Microsoft/vso-agent/releases) and download the linux or OSX (Darwin) package.

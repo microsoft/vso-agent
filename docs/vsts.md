@@ -47,6 +47,10 @@ curl -skSL http://aka.ms/previewxplat | bash
 
 Your output should look [similar to this](sampleoutput.md)
 
+If you have issues with this, fully realized zips are available.
+
+Go to the [releases section on github](https://github.com/Microsoft/vso-agent/releases) and download the linux or OSX (Darwin) package.
+
 ### Configure on first run
 
 >> TIPS:
