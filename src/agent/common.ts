@@ -430,10 +430,13 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
     var envMasks = jobEnvironment.mask || [];
     var maskHints = [];
     envMasks.forEach((maskHint: agentifm.MaskHint) => {
-        if ((maskHint.type === agentifm.MaskType.Variable || maskHint.type === agentifm.MaskType.Regex) && maskHint.value) {
+        if (maskHint.type === agentifm.MaskType.Variable && maskHint.value) {
             if (jobEnvironment.variables[maskHint.value]) {
                 maskHints.push(maskHint);
             }
+        }
+        else if (maskHint.type === agentifm.MaskType.Regex && maskHint.value) {
+            maskHints.push(maskHint);
         }
     });
 
