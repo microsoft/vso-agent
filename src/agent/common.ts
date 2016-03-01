@@ -221,6 +221,9 @@ export interface IServiceChannel extends NodeJS.EventEmitter {
     endTestRun(testRunId: number): Q.Promise<testifm.TestRun>;
     createTestRunResult(testRunId: number, testRunResults: testifm.TestResultCreateModel[]): Q.Promise<testifm.TestCaseResult[]>;
     createTestRunAttachment(testRunId: number, fileName: string, contents: string): Q.Promise<any>;
+    
+    //code coverage publishing
+    publishCodeCoverageSummary(coverageData:testifm.CodeCoverageData, project: string, buildId: number): Q.Promise<any>;
 }
 
 export interface IAsyncCommandQueue {

@@ -199,6 +199,13 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IServ
 
 		return false;
 	}
+    
+    //------------------------------------------------------------------
+    // Code coverage items
+    //------------------------------------------------------------------
+     public publishCodeCoverageSummary(coverageData:testifm.CodeCoverageData, project: string, buildId: number): Q.Promise<any> {
+          return null;
+     }
 
     //------------------------------------------------------------------
     // Test publishing Items

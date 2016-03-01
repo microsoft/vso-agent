@@ -401,7 +401,16 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
 
         return this._issues[recordId];
     }
-
+    
+    //------------------------------------------------------------------
+    // Code coverage items
+    //------------------------------------------------------------------
+     public publishCodeCoverageSummary(coverageData:testifm.CodeCoverageData, project: string, buildId: number): Q.Promise<any> {
+                  
+        this._testApi = new webapim.WebApi(this.jobInfo.variables[cm.AutomationVariables.systemTfCollectionUri], this.jobInfo.systemAuthHandler).getQTestApi();
+        return this._testApi.updateCodeCoverageSummary(coverageData, project, buildId);
+    }
+    
     //------------------------------------------------------------------
     // Test publishing Items
     //------------------------------------------------------------------  
