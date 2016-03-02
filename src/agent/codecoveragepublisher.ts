@@ -45,36 +45,26 @@ export class CodeCoveragePublisher {
         }
 
         return defer.promise;
-    }  
-
-    //-----------------------------------------------------
-    // publish code coverage results to server
-    // - codeCoverageResults: code coverage data to publish  
-    //-----------------------------------------------------
-    public publishCodeCoverageSummary(codeCoverageResults: testifm.CodeCoverageData) {
-        var _this = this;
-        _this.executionContext.service.publishCodeCoverageSummary(codeCoverageResults, _this.project, _this.buildId);
-    }
+    } 
     
     //-----------------------------------------------------
     // publish code coverage files to server
     // - reportDirectory: code coverage report directory
     // - additionalCodeCoverageFiles: additional code coverage files
     //-----------------------------------------------------
-    public publishCodeCoverageFiles(reportDirectory: string, additionalCodeCoverageFiles: string) {
-        
-        var _this = this;            
-        
-        if(reportDirectory) {
-            var containerId = parseInt(_this.executionContext.variables[ctxm.WellKnownVariables.containerId]);
-            var artifactName = "Code Coverage Report_" + _this.buildId;
-            var containerFolder = "/" + artifactName;
-            
-            _this.executionContext.verbose("came to publish1");
-            return fc.copyToFileContainer(_this.executionContext, reportDirectory, containerId, containerFolder).then((artifactLocation: string) => {
-			//_this.command.info('Associating artifact ' + artifactLocation + ' ...');
-		    _this.executionContext.verbose("came to publish");
-			var buildId: number = parseInt(_this.executionContext.variables[ctxm.WellKnownVariables.buildId]);
+    public publishCodeCoverageFiles(): Q.Promise<any> {
+      var defer = Q.defer();  
+      var containerId = parseInt(this.executionContext.variables[ctxm.WellKnownVariables.containerId]);
+      var summaryFile = this.command.properties["summaryfile"];
+      var reportDirectory = this.command.properties["reportdirectory"]; 
+      var additionalCodeCoverageFiles = this.command.properties["additionalcodecoveragefiles"];
+      
+      if(reportDirectory){
+        var artifactName = "Code Coverage Report_" + this.buildId; 
+        var ret = fc.copyToFileContainer(this.executionContext, reportDirectory, containerId, "/" + reportDirectory).then((artifactLocation: string) => {
+            this.command.info('Associating artifact ' + artifactLocation + ' ...');
+		
+			var buildId: number = this.buildId;
 			var artifact: buildifm.BuildArtifact = <buildifm.BuildArtifact>{
 				name: artifactName,
 				resource: {
@@ -83,60 +73,32 @@ export class CodeCoveragePublisher {
 				}
 			};
 			
-			var webapi = _this.executionContext.getWebApi();
+			var webapi = this.executionContext.getWebApi();
 			var buildClient = webapi.getQBuildApi();
-			return buildClient.createArtifact(artifact, buildId, _this.executionContext.variables[ctxm.WellKnownVariables.projectId]);
-		  });
-        }
-        // if (reportDirectory) {
-        //     var containerId = parseInt(_this.executionContext.variables[ctxm.WellKnownVariables.containerId]);
-        //     var artifactName = "Code Coverage Report_" + _this.buildId;
-        //     var data = {
-        //         artifacttype: "container",
-        //         artifactname: artifactName
-        //     };   
-        //     
-        //     fc.copyToFileContainer(_this.executionContext, reportDirectory, containerId, artifactName).then((artifactLocation: string) => {
-        //         var artifact: buildifm.BuildArtifact = <buildifm.BuildArtifact>{
-        //             name: artifactName,
-        //             resource: {
-        //                 type: "container",
-        //                 data: artifactLocation
-        //             }
-        //         };
-        //         _this.executionContext.service.postArtifact(_this.project, _this.buildId, artifact);
-        //     }).fail(function(err){
-        //         defer.reject(err);
-        //     });
-        // }        
+			return buildClient.createArtifact(artifact, buildId, this.executionContext.variables[ctxm.WellKnownVariables.projectId]);
+		}).fail(function(err) {
+            defer.reject(err);
+        });  
+      }
+      
+      defer.resolve(ret);
+      return defer.promise;      
     }
     
     //-----------------------------------------------------
     // Publish code coverage
     //-----------------------------------------------------
-    public publishCodeCoverage(): Q.Promise<any> {
-        var defer = Q.defer();        
+    public publishCodeCoverageSummary(): Q.Promise<boolean> {
+        var defer = Q.defer<boolean>();        
         var _this = this;
-        var testRunId;
-        var results;
         var summaryFile = _this.command.properties["summaryfile"];
-        var reportDirectory = _this.command.properties["reportdirectory"]; 
-        var additionalCodeCoverageFiles = _this.command.properties["additionalcodecoveragefiles"];
-		
+       
         _this.readCodeCoverageSummary(summaryFile).then(function(codeCoverageData) {
             if (codeCoverageData) {
-                _this.publishCodeCoverageSummary(codeCoverageData);
-                return true;
+                _this.executionContext.service.publishCodeCoverageSummary(codeCoverageData, _this.project, _this.buildId);
+                defer.resolve(true);
             }
-            return false;
-        }).then(function(isCodeCoverageSummaryPublished) {
-            if (isCodeCoverageSummaryPublished) {  
-                 _this.publishCodeCoverageFiles(reportDirectory, additionalCodeCoverageFiles);               
-                 defer.resolve("Success");
-            }
-            else{
-                defer.resolve(null);
-            }
+            defer.resolve(false);
         }).fail(function(err) {
             defer.reject(err);
         });

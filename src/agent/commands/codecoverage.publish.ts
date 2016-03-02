@@ -2,6 +2,9 @@ import cm = require('../common');
 import ccp = require('../codecoveragepublisher');
 import ccsr = require('../codecoveragesummaryreader');
 import Q = require('q');
+import fc = require('../filecontainerhelper');
+import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
+import ctxm = require('../context');
 
 //-----------------------------------------------------
 // Publishes results from a specified file to TFS server 
@@ -27,7 +30,7 @@ export class CodeCoveragePublishCommand implements cm.IAsyncCommand {
         var defer = Q.defer();
 
         var codeCoverageTool: string = this.command.properties['codecoveragetool'];
-
+       
         var reader;
         if(!codeCoverageTool)
         {
@@ -50,13 +53,18 @@ export class CodeCoveragePublishCommand implements cm.IAsyncCommand {
                 defer.reject(err);
         }
         
-        var testRunPublisher = new ccp.CodeCoveragePublisher(this.executionContext, this.command, reader);
-        testRunPublisher.publishCodeCoverage().then(function(response) {
-            defer.resolve("Success");
+        var codeCoveragePublisher = new ccp.CodeCoveragePublisher(this.executionContext, this.command, reader);        
+        var summaryPublished = codeCoveragePublisher.publishCodeCoverageSummary().then(function(response) {            
+            return response;            
         }).fail((err) => {
             defer.reject(err);
         });       
-
+        
+        if(summaryPublished) {
+            return codeCoveragePublisher.publishCodeCoverageFiles();
+        }
+        
+        defer.resolve(null);
         return defer.promise;
     }
 }
