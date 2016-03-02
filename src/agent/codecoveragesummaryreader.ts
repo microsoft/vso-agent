@@ -44,25 +44,21 @@ export class JacocoSummaryReader implements ccp.ICodeCoverageReader {
     
     private parseJacocoXmlReport(xmlContent): CodeCoverageSummary {     
         
-        if (!xmlContent.report || !xmlContent.report.at(0)) {
-            
+        if (!xmlContent.report || !xmlContent.report.at(0) || !xmlContent.report.at(0).counter) {            
             return null;
         }
         var coverage = new CodeCoverageSummary();
         var reportNode = xmlContent.report.at(0);
         
         var nodeLength = reportNode.counter.count();
-        var coverageStats = []
+        var coverageStats = [];
         for (var i = 0; i < nodeLength; i++) {
             var counterNode = reportNode.counter.at(i);
-            var coverageStat: testifm.CodeCoverageStatistics = <testifm.CodeCoverageStatistics>{
-                label: counterNode.attributes().type,
-                covered: counterNode.attributes().covered,
-                total: Number(counterNode.attributes().covered) + Number(counterNode.attributes().missed),
-                position: SummaryReaderUtilities.getCoveragePriorityOrder(counterNode.attributes().type)
-            }
-
-            coverageStats.push(coverageStat);
+			var attributes = counterNode.attributes();
+			if(attributes && attributes.type && attributes.covered && attributes.missed){
+				var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics(attributes.type, attributes.covered, Number(attributes.covered) + Number(attributes.missed), attributes.type);
+				coverageStats.push(coverageStat);
+			}
         }
         coverage.addResults(coverageStats);
         
@@ -95,13 +91,13 @@ export class CoberturaSummaryReader implements ccp.ICodeCoverageReader {
     
     private parseCoberturaXmlReport(xmlContent): CodeCoverageSummary {     
         
-        if (!xmlContent.coverage || !xmlContent.coverage.at(0)) {
-            
+        if (!xmlContent.coverage || !xmlContent.coverage.at(0) || !xmlContent.coverage.at(0).attributes()) {            
             return null;
         }
+		
+		var coverageStats = [];
         var coverage = new CodeCoverageSummary();
-        var coverageNode = xmlContent.coverage.at(0);
-        var coverageStats = []
+        var coverageNode = xmlContent.coverage.at(0);        
 		var attributes = coverageNode.attributes();
          
         var linesTotal = attributes['lines-valid'];
@@ -111,25 +107,13 @@ export class CoberturaSummaryReader implements ccp.ICodeCoverageReader {
         
         if(linesTotal && linesCovered)
         {
-            var coverageStat: testifm.CodeCoverageStatistics = <testifm.CodeCoverageStatistics>{
-                label: "Lines",
-                covered: linesCovered,
-                total: linesTotal,
-                position: SummaryReaderUtilities.getCoveragePriorityOrder("line")
-            }
-
+		    var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics("Lines", linesCovered, linesTotal, "line");
             coverageStats.push(coverageStat);
         }
         
         if(branchesCovered && branchesTotal)
         {
-            var coverageStat: testifm.CodeCoverageStatistics = <testifm.CodeCoverageStatistics>{
-                label: "Branches",
-                covered: branchesCovered,
-                total: branchesTotal,
-                position: SummaryReaderUtilities.getCoveragePriorityOrder("branch")
-            }
-
+			var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics("Branches", branchesCovered, branchesTotal, "branch");
             coverageStats.push(coverageStat);
         }
         
@@ -137,7 +121,6 @@ export class CoberturaSummaryReader implements ccp.ICodeCoverageReader {
         
         return coverage;
     }
-     
 }
 
 export class SummaryReaderUtilities {
@@ -166,7 +149,22 @@ export class SummaryReaderUtilities {
         return defer.promise;
     }
     
+	public static getCodeCoverageStatistics(label:string, covered:number, total: number, priorityTag: string): testifm.CodeCoverageStatistics
+	{
+		var coverageStat: testifm.CodeCoverageStatistics = <testifm.CodeCoverageStatistics>{
+            label: label,
+            covered: covered,
+            total: total,
+            position: SummaryReaderUtilities.getCoveragePriorityOrder(priorityTag)
+        }
+		return coverageStat;
+	}
+	
     public static getCodeCoverageData(codeCoverageSummary: CodeCoverageSummary): testifm.CodeCoverageData{
+		if(!codeCoverageSummary){
+			return null;
+		}
+		
         var codeCoverageData: testifm.CodeCoverageData = <testifm.CodeCoverageData>{
                 // <todo: Bug 402783> We are currently passing BuildFlavor and BuildPlatform = "" There value are required be passed to commandlet
                 buildFlavor: "",
@@ -176,7 +174,7 @@ export class SummaryReaderUtilities {
         return codeCoverageData;
     }
     
-     public static getCoveragePriorityOrder(label: string): Number {
+    public static getCoveragePriorityOrder(label: string): Number {
         if (label.toLowerCase() == 'instruction') {
             return 5;
         }
