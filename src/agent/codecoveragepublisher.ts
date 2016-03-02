@@ -100,8 +100,10 @@ export class CodeCoveragePublisher {
         var _this = this;
         var testRunId;
         var results;
-        var summaryFile = this.command.properties["summaryfile"];
-
+        var summaryFile = _this.command.properties["summaryfile"];
+        var reportDirectory = _this.command.properties["reportdirectory"]; 
+        var additionalCodeCoverageFiles = _this.command.properties["additionalcodecoveragefiles"];
+		
         _this.readCodeCoverageSummary(summaryFile).then(function(codeCoverageData) {
             if (codeCoverageData) {
                 _this.publishCodeCoverageSummary(codeCoverageData);
@@ -109,10 +111,8 @@ export class CodeCoveragePublisher {
             }
             return false;
         }).then(function(isCodeCoverageSummaryPublished) {
-            if (isCodeCoverageSummaryPublished) {
-                 var reportDirectory = this.command.properties["reportdirectory"]; 
-                 var additionalCodeCoverageFiles = this.command.properties["additionalcodecoveragefiles"];
-                 defer.resolve(_this.publishCodeCoverageFiles(reportDirectory, additionalCodeCoverageFiles));
+            if (isCodeCoverageSummaryPublished) {                 
+                 defer.resolve(null);
             }
             else{
                 defer.resolve(null);

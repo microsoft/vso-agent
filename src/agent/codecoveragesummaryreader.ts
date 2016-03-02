@@ -101,26 +101,42 @@ export class CoberturaSummaryReader implements ccp.ICodeCoverageReader {
         }
         var coverage = new CodeCoverageSummary();
         var coverageNode = xmlContent.coverage.at(0);
-        
-        //lines
-      //  var linesCovered = coverageNode.attributes().lines-covered
-        //branches
         var coverageStats = []
-//         for (var i = 0; i < nodeLength; i++) {
-//             var counterNode = reportNode.counter.at(i);
-//             var coverageStat: testifm.CodeCoverageStatistics = <testifm.CodeCoverageStatistics>{
-//                 label: counterNode.attributes().type,
-//                 covered: counterNode.attributes().covered,
-//                 total: Number(counterNode.attributes().covered) + Number(counterNode.attributes().missed),
-//                 position: SummaryReaderUtilities.getCoveragePriorityOrder(counterNode.attributes().type)
-//             }
-// 
-//             coverageStats.push(coverageStat);
-//         }
-//         coverage.addResults(coverageStats);
+		var attributes = coverageNode.attributes();
+         
+        var linesTotal = attributes['lines-valid'];
+        var linesCovered = attributes['lines-covered'];
+        var branchesCovered = attributes['branches-covered'];
+        var branchesTotal = attributes['branches-valid'];
+        
+        if(linesTotal && linesCovered)
+        {
+            var coverageStat: testifm.CodeCoverageStatistics = <testifm.CodeCoverageStatistics>{
+                label: "Lines",
+                covered: linesCovered,
+                total: linesTotal,
+                position: SummaryReaderUtilities.getCoveragePriorityOrder("line")
+            }
+
+            coverageStats.push(coverageStat);
+        }
+        
+        if(branchesCovered && branchesTotal)
+        {
+            var coverageStat: testifm.CodeCoverageStatistics = <testifm.CodeCoverageStatistics>{
+                label: "Branches",
+                covered: branchesCovered,
+                total: branchesTotal,
+                position: SummaryReaderUtilities.getCoveragePriorityOrder("branch")
+            }
+
+            coverageStats.push(coverageStat);
+        }
+        
+        coverage.addResults(coverageStats);
         
         return coverage;
-    }  
+    }
      
 }
 

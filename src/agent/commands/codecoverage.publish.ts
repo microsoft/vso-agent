@@ -41,8 +41,10 @@ export class CodeCoveragePublishCommand implements cm.IAsyncCommand {
         {
             case "jacoco":
                 reader = new ccsr.JacocoSummaryReader(this.command);
+				break;
             case "cobertura":
                 reader = new ccsr.CoberturaSummaryReader(this.command);
+				break;
             default :
                 // print an error message and return
                 var err = new Error("Code coverage tool not supported");
