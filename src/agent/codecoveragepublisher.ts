@@ -4,8 +4,7 @@ import cm = require('./common');
 import utilities = require('./utilities');
 import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 import fc = require('./filecontainerhelper');
-
-var Q = require('q');
+import Q = require('q');
 
 export class CodeCoveragePublisher {
    
@@ -32,7 +31,7 @@ export class CodeCoveragePublisher {
     // - codeCoverageSummaryFile: string () - location of the code coverage summary file 
     //-----------------------------------------------------    
     private readCodeCoverageSummary(codeCoverageSummaryFile: string): Q.Promise<testifm.CodeCoverageData> {
-        var defer = Q.defer();
+        var defer = Q.defer<testifm.CodeCoverageData>();
         var _this = this;
         if(codeCoverageSummaryFile){
             _this.codeCoverageReader.getCodeCoverageSummary(codeCoverageSummaryFile).then(function(codeCoverageStatistics) {
@@ -62,10 +61,33 @@ export class CodeCoveragePublisher {
     // - reportDirectory: code coverage report directory
     // - additionalCodeCoverageFiles: additional code coverage files
     //-----------------------------------------------------
-    public publishCodeCoverageFiles(reportDirectory: string, additionalCodeCoverageFiles: string): Q.Promise<any> {
-        var defer = Q.defer();
+    public publishCodeCoverageFiles(reportDirectory: string, additionalCodeCoverageFiles: string) {
+        
         var _this = this;            
         
+        if(reportDirectory) {
+            var containerId = parseInt(_this.executionContext.variables[ctxm.WellKnownVariables.containerId]);
+            var artifactName = "Code Coverage Report_" + _this.buildId;
+            var containerFolder = "/" + artifactName;
+            
+            _this.executionContext.verbose("came to publish1");
+            return fc.copyToFileContainer(_this.executionContext, reportDirectory, containerId, containerFolder).then((artifactLocation: string) => {
+			//_this.command.info('Associating artifact ' + artifactLocation + ' ...');
+		    _this.executionContext.verbose("came to publish");
+			var buildId: number = parseInt(_this.executionContext.variables[ctxm.WellKnownVariables.buildId]);
+			var artifact: buildifm.BuildArtifact = <buildifm.BuildArtifact>{
+				name: artifactName,
+				resource: {
+					type: "container",
+					data: artifactLocation
+				}
+			};
+			
+			var webapi = _this.executionContext.getWebApi();
+			var buildClient = webapi.getQBuildApi();
+			return buildClient.createArtifact(artifact, buildId, _this.executionContext.variables[ctxm.WellKnownVariables.projectId]);
+		  });
+        }
         // if (reportDirectory) {
         //     var containerId = parseInt(_this.executionContext.variables[ctxm.WellKnownVariables.containerId]);
         //     var artifactName = "Code Coverage Report_" + _this.buildId;
@@ -86,10 +108,7 @@ export class CodeCoveragePublisher {
         //     }).fail(function(err){
         //         defer.reject(err);
         //     });
-        // }
-        
-        defer.resolve("Success");
-        return defer.promise;
+        // }        
     }
     
     //-----------------------------------------------------
@@ -111,8 +130,9 @@ export class CodeCoveragePublisher {
             }
             return false;
         }).then(function(isCodeCoverageSummaryPublished) {
-            if (isCodeCoverageSummaryPublished) {                 
-                 defer.resolve(null);
+            if (isCodeCoverageSummaryPublished) {  
+                 _this.publishCodeCoverageFiles(reportDirectory, additionalCodeCoverageFiles);               
+                 defer.resolve("Success");
             }
             else{
                 defer.resolve(null);

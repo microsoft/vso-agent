@@ -3,8 +3,8 @@ import testifm = require('vso-node-api/interfaces/TestInterfaces');
 import ccp = require('./codecoveragepublisher');
 import utilities = require('./utilities');
 import cm = require('./common');
+import Q = require('q');
 
-var Q = require('q');
 var xmlreader = require('xmlreader');
 
 export class CodeCoverageSummary {
@@ -28,7 +28,7 @@ export class JacocoSummaryReader implements ccp.ICodeCoverageReader {
     }
 
     public getCodeCoverageSummary(summaryFilePath: string): Q.Promise<testifm.CodeCoverageData> {
-        var defer = Q.defer();
+        var defer = Q.defer<testifm.CodeCoverageData>();
         var _this = this;
         
         SummaryReaderUtilities.getXmlContent(summaryFilePath).then(function(xmlContents) {
@@ -75,7 +75,7 @@ export class CoberturaSummaryReader implements ccp.ICodeCoverageReader {
     }
 
     public getCodeCoverageSummary(summaryFilePath: string): Q.Promise<testifm.CodeCoverageData> {
-        var defer = Q.defer();
+        var defer = Q.defer<testifm.CodeCoverageData>();
         var _this = this;
         
         SummaryReaderUtilities.getXmlContent(summaryFilePath).then(function(xmlContents) {

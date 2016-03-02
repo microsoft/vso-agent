@@ -1,8 +1,7 @@
 import cm = require('../common');
 import ccp = require('../codecoveragepublisher');
 import ccsr = require('../codecoveragesummaryreader');
-
-var Q = require('q');
+import Q = require('q');
 
 //-----------------------------------------------------
 // Publishes results from a specified file to TFS server 
