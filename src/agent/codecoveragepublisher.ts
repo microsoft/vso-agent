@@ -5,6 +5,8 @@ import utilities = require('./utilities');
 import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 import fc = require('./filecontainerhelper');
 import Q = require('q');
+var shell = require('shelljs');
+var path = require('path');
 
 export class CodeCoveragePublisher {
    
@@ -59,9 +61,17 @@ export class CodeCoveragePublisher {
       var reportDirectory = this.command.properties["reportdirectory"]; 
       var additionalCodeCoverageFiles = this.command.properties["additionalcodecoveragefiles"];
       
+      if(!reportDirectory){
+          reportDirectory = path.join(shell.tempdir(), "CodeCoverageReport_" + this.buildId);
+          shell.mkdir('-p', reportDirectory);
+      }
+      
+      // copy the summary file into report directory
+      shell.cp('-f', summaryFile, reportDirectory);
+      
       if(reportDirectory){
         var artifactName = "Code Coverage Report_" + this.buildId; 
-        var ret = fc.copyToFileContainer(this.executionContext, reportDirectory, containerId, "/" + reportDirectory).then((artifactLocation: string) => {
+        var ret = fc.copyToFileContainer(this.executionContext, reportDirectory, containerId, "/" + artifactName).then((artifactLocation: string) => {
             this.command.info('Associating artifact ' + artifactLocation + ' ...');
 		
 			var buildId: number = this.buildId;
