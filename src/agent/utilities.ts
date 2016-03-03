@@ -14,6 +14,33 @@ export interface GetOrCreateResult<T> {
     created: boolean;
     result: T;
 }
+   
+// returns a substring that is common from first. For example, for "abcd" and "abdf", "ab" is returned.
+export function  sharedSubString(string1: string, string2: string): string{
+    var ret  = "";
+    var index = 1;
+    while(string1.substring(0, index) == string2.substring(0, index)){
+        ret = string1.substring(0, index);
+        index++;
+    }
+    return ret;
+}
+    
+// sorts string array in ascending order
+export function sortStringArray(list): string[]{
+    var sortedFiles : string[] = list.sort((a, b) =>{
+        if(a > b){
+            return 1;
+        }
+        else if(a < b){
+            return -1;
+        }
+        else{
+            return 0;
+        }
+    });
+    return sortedFiles;
+}
 
 // TODO: offer these module level context-less helper functions in utilities below
 export function ensurePathExists(path: string): Q.Promise<void> {
@@ -239,7 +266,7 @@ export class Utilities {
         }
         return args;
     }
-
+    
     // spawn a process with stdout/err piped to context's logger
     // callback(err)
     public spawn(name: string, args: string[], options, callback: (err: any, returnCode: number) => void) {

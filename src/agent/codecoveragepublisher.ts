@@ -71,36 +71,37 @@ export class CodeCoveragePublisher {
       // copy the summary file into report directory
       shell.cp('-f', summaryFile, newReportDirectory);
       
-      var ret = this.uploadArtifact(reportDirectory, codeCoverageArtifactName, containerId);
+      var ret = this.uploadArtifact(newReportDirectory, codeCoverageArtifactName, containerId);
+      defer.resolve(ret);
       
       if(additionalCodeCoverageFiles){
-          this.command.info("here");
           var rawFilesDirectory = path.join(shell.tempdir(), "CodeCoverageFiles_" + this.buildId);
           shell.mkdir('-p', rawFilesDirectory);
           var rawFiles : string[] = additionalCodeCoverageFiles.split(",");
           this.copyRawFiles(rawFiles, rawFilesDirectory);
           var rawFilesArtfactName = "Code Coverage Files_" + this.buildId
-          ret = this.uploadArtifact(rawFilesDirectory, rawFilesArtfactName, containerId);
+          var ret2 = this.uploadArtifact(rawFilesDirectory, rawFilesArtfactName, containerId);
+          defer.resolve(ret2);
       }
       
       // clean generated directories
       if(!reportDirectory){
-          shell.rm('-rf', newReportDirectory);
+         // shell.rm('-rf', newReportDirectory);
       }
       
       if(additionalCodeCoverageFiles){
-          shell.rm('rf', rawFilesDirectory);
+         // shell.rm('-rf', rawFilesDirectory);
       }
       
-      defer.resolve(ret);
+      
       return defer.promise;      
     }
     
     private copyRawFiles(additionalCodeCoverageFiles : string[], rawFilesDirectory : string){
         if(additionalCodeCoverageFiles.length >1){
-            additionalCodeCoverageFiles = this.sortStringArray(additionalCodeCoverageFiles); 
+            additionalCodeCoverageFiles = utilities.sortStringArray(additionalCodeCoverageFiles); 
             var numberOfFiles = additionalCodeCoverageFiles.length; 
-            var commonPath = this.sharedSubString(additionalCodeCoverageFiles[0], additionalCodeCoverageFiles[numberOfFiles-1] )  
+            var commonPath = utilities.sharedSubString(additionalCodeCoverageFiles[0], additionalCodeCoverageFiles[numberOfFiles-1] )  
         }
         
         additionalCodeCoverageFiles.forEach(file => {
@@ -115,31 +116,6 @@ export class CodeCoveragePublisher {
             shell.mkdir('-p', path.dirname(newFile));
             shell.cp('-f', file, newFile)
         });
-    }
-    
-    private sharedSubString(string1: string, string2: string): string{
-        var ret  = "";
-        var index = 1;
-        while(string1.substring(0, index) == string2.substring(0, index)){
-            ret = string1.substring(0, index);
-            index++;
-        }
-        return ret;
-    }
-    
-    private sortStringArray(files): string[]{
-        var sortedFiles : string[] = files.sort((a, b) =>{
-            if(a > b){
-                return 1;
-            }
-            else if(a < b){
-                return -1;
-            }
-            else{
-                return 0;
-            }
-        });
-        return sortedFiles;
     }
     
     private uploadArtifact(path :string, artifactName: string, containerId : number) : Q.Promise<any> {
@@ -162,6 +138,8 @@ export class CodeCoveragePublisher {
 		}).fail(function(err) {
             defer.reject(err);
         });  
+        
+        return defer.promise;
     }
     
     

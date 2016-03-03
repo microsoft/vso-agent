@@ -5,6 +5,7 @@ import Q = require('q');
 import fc = require('../filecontainerhelper');
 import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 import ctxm = require('../context');
+import fs = require('fs');
 
 //-----------------------------------------------------
 // Publishes results from a specified file to TFS server 
@@ -26,44 +27,54 @@ export class CodeCoveragePublishCommand implements cm.IAsyncCommand {
     public executionContext: cm.IExecutionContext;
     public description: string;
 
-    public runCommandAsync() : Q.Promise<any> {
+    public runCommandAsync(): Q.Promise<any> {
         var defer = Q.defer();
 
         var codeCoverageTool: string = this.command.properties['codecoveragetool'];
-       
+
         var reader;
-        if(!codeCoverageTool)
-        {
-            // print an error message and return
+        if (!codeCoverageTool) {
             var err = new Error("No code coverage tool provided");
             defer.reject(err);
         }
-        
-        switch(codeCoverageTool.toLowerCase())
-        {
+
+        var summaryFile = this.command.properties["summaryfile"];
+        if (!summaryFile) {
+            var err = new Error("No code coverage summary file provided");
+            defer.reject(err);
+        }
+
+        fs.exists(summaryFile, (exists: boolean) => {
+            if (!exists) {
+                var err = new Error("Code coverage summary file doesnot exist. Summary file : " + summaryFile);
+                defer.reject(err);
+            }
+        })
+
+        switch (codeCoverageTool.toLowerCase()) {
             case "jacoco":
                 reader = new ccsr.JacocoSummaryReader(this.command);
-				break;
+                break;
             case "cobertura":
                 reader = new ccsr.CoberturaSummaryReader(this.command);
-				break;
-            default :
+                break;
+            default:
                 // print an error message and return
                 var err = new Error("Code coverage tool not supported");
                 defer.reject(err);
         }
-        
-        var codeCoveragePublisher = new ccp.CodeCoveragePublisher(this.executionContext, this.command, reader);        
-        var summaryPublished = codeCoveragePublisher.publishCodeCoverageSummary().then(function(response) {            
-            return response;            
+
+        var codeCoveragePublisher = new ccp.CodeCoveragePublisher(this.executionContext, this.command, reader);
+        var summaryPublished = codeCoveragePublisher.publishCodeCoverageSummary().then(function(response) {
+            return response;
         }).fail((err) => {
             defer.reject(err);
-        });       
-        
-        if(summaryPublished) {
+        });
+
+        if (summaryPublished) {
             return codeCoveragePublisher.publishCodeCoverageFiles();
         }
-        
+
         defer.resolve(null);
         return defer.promise;
     }
