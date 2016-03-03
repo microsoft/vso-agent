@@ -6,6 +6,7 @@ import fc = require('../filecontainerhelper');
 import buildifm = require('vso-node-api/interfaces/BuildInterfaces');
 import ctxm = require('../context');
 import fs = require('fs');
+import utilities = require('../utilities');
 
 //-----------------------------------------------------
 // Publishes results from a specified file to TFS server 
@@ -44,12 +45,12 @@ export class CodeCoveragePublishCommand implements cm.IAsyncCommand {
             defer.reject(err);
         }
 
-        fs.exists(summaryFile, (exists: boolean) => {
-            if (!exists) {
-                var err = new Error("Code coverage summary file doesnot exist. Summary file : " + summaryFile);
+        utilities.isPathExists(summaryFile).then(function(result) {
+            if (!result) {
+                var err = new Error("Code coverage summary file '" + summaryFile+  "' doesnot exist." );
                 defer.reject(err);
             }
-        })
+        });
 
         switch (codeCoverageTool.toLowerCase()) {
             case "jacoco":
