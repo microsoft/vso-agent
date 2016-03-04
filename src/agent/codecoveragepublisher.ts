@@ -39,17 +39,22 @@ export class CodeCoveragePublisher {
         var summaryFile = _this.command.properties["summaryfile"];
 
         _this.readCodeCoverageSummary(summaryFile).then(function(codeCoverageData) {
-            if (codeCoverageData) {
-                _this.executionContext.service.publishCodeCoverageSummary(codeCoverageData, _this.project, _this.buildId);
-                _this.command.info("PublishCodeCoverageSummary : Code coverage summary published successfully.");
-                defer.resolve(true);
+            if (codeCoverageData && codeCoverageData.coverageStats && codeCoverageData.coverageStats.length > 0) {
+                _this.executionContext.service.publishCodeCoverageSummary(codeCoverageData, _this.project, _this.buildId)
+                    .then(function(result) {
+                        _this.command.info("PublishCodeCoverageSummary : Code coverage summary published successfully.");
+                        defer.resolve(true);
+                    }).fail(function(error) {
+                        _this.command.warning("PublishCodeCoverageSummary : Error occured while publishing code coverage summary. Error: " + error);
+                        defer.reject(error);
+                    });
             }
             else {
                 _this.command.warning("PublishCodeCoverageSummary : No code coverage data found to publish.");
                 defer.resolve(false);
             }
         }).fail(function(err) {
-            _this.command.warning("PublishCodeCoverageSummary : Error occured while publishing code coverage summary.");
+            _this.command.warning("PublishCodeCoverageSummary : Error occured while reading code coverage summary. Error : " + err);
             defer.reject(err);
         });
 
@@ -155,7 +160,6 @@ export class CodeCoveragePublisher {
             var buildClient = webapi.getQBuildApi();
             return buildClient.createArtifact(artifact, buildId, this.executionContext.variables[ctxm.WellKnownVariables.projectId]);
         }).fail(function(err) {
-            this.command.warning("uploadArtifact : Error occured while uploading artifact Error : " + err);
             defer.reject(err);
         });
 
@@ -174,7 +178,6 @@ export class CodeCoveragePublisher {
             _this.codeCoverageReader.getCodeCoverageSummary(codeCoverageSummaryFile).then(function(codeCoverageStatistics) {
                 defer.resolve(codeCoverageStatistics);
             }).fail(function(err) {
-                this.command.warning("readCodeCoverageSummary : Error occured while fetching code coverage summary. Error : " + err);
                 defer.reject(err);
             });
         }

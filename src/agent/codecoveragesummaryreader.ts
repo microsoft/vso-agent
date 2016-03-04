@@ -34,7 +34,9 @@ export class JacocoSummaryReader implements ccp.ICodeCoverageReader {
         SummaryReaderUtilities.getXmlContent(summaryFilePath).then(function(xmlContents) {
             _this.parseJacocoXmlReport(xmlContents).then(function(codeCoverageSummary) {
                 defer.resolve(SummaryReaderUtilities.getCodeCoverageData(codeCoverageSummary));
-            })
+            }).fail(function(err) {
+                defer.reject(err);
+            });
         }).fail(function(err) {
             defer.reject(err);
         });
@@ -47,7 +49,7 @@ export class JacocoSummaryReader implements ccp.ICodeCoverageReader {
         this.command.info("parseJacocoXmlReport: Parsing summary file.");
         var defer = Q.defer<CodeCoverageSummary>();
         if (!xmlContent.report || !xmlContent.report.at(0) || !xmlContent.report.at(0).counter) {
-            return null;
+            defer.resolve(null);
         }
         try {
             var coverage = new CodeCoverageSummary();
@@ -59,8 +61,8 @@ export class JacocoSummaryReader implements ccp.ICodeCoverageReader {
                 var counterNode = reportNode.counter.at(i);
                 var attributes = counterNode.attributes();
                 if (attributes && attributes.type && attributes.covered && attributes.missed) {
-                    var total = Number(attributes.covered) + Number(attributes.missed) ;
-                    this.command.info(attributes.type + " : "+ attributes.covered + "/" + total + " covered.");
+                    var total = Number(attributes.covered) + Number(attributes.missed);
+                    this.command.info(attributes.type + " : " + attributes.covered + "/" + total + " covered.");
                     var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics(attributes.type, attributes.covered, total, attributes.type);
                     coverageStats.push(coverageStat);
                 }
@@ -68,7 +70,6 @@ export class JacocoSummaryReader implements ccp.ICodeCoverageReader {
             coverage.addResults(coverageStats);
         }
         catch (error) {
-            this.command.warning("parseJacocoXmlReport: Error occured while parsing summary file. Error: " + error);
             defer.reject(error);
         }
 
@@ -92,7 +93,9 @@ export class CoberturaSummaryReader implements ccp.ICodeCoverageReader {
         SummaryReaderUtilities.getXmlContent(summaryFilePath).then(function(xmlContents) {
             _this.parseCoberturaXmlReport(xmlContents).then(function(codeCoverageSummary) {
                 defer.resolve(SummaryReaderUtilities.getCodeCoverageData(codeCoverageSummary));
-            })
+            }).fail(function(err) {
+                defer.reject(err);
+            });
         }).fail(function(err) {
             defer.reject(err);
         });
@@ -106,7 +109,7 @@ export class CoberturaSummaryReader implements ccp.ICodeCoverageReader {
         var defer = Q.defer<CodeCoverageSummary>();
 
         if (!xmlContent.coverage || !xmlContent.coverage.at(0) || !xmlContent.coverage.at(0).attributes()) {
-            return null;
+            defer.resolve(null);
         }
 
         var coverageStats = [];
@@ -121,13 +124,13 @@ export class CoberturaSummaryReader implements ccp.ICodeCoverageReader {
             var branchesTotal = attributes['branches-valid'];
 
             if (linesTotal && linesCovered) {
-                this.command.info("Lines : "+ linesCovered + "/" + linesTotal + " covered.");
+                this.command.info("Lines : " + linesCovered + "/" + linesTotal + " covered.");
                 var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics("Lines", linesCovered, linesTotal, "line");
                 coverageStats.push(coverageStat);
             }
 
             if (branchesCovered && branchesTotal) {
-                this.command.info("Branches : "+ branchesCovered + "/" + branchesTotal + " covered.");
+                this.command.info("Branches : " + branchesCovered + "/" + branchesTotal + " covered.");
                 var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics("Branches", branchesCovered, branchesTotal, "branch");
                 coverageStats.push(coverageStat);
             }
@@ -135,7 +138,6 @@ export class CoberturaSummaryReader implements ccp.ICodeCoverageReader {
             coverage.addResults(coverageStats);
         }
         catch (error) {
-            this.command.warning("parseCoberturaXmlReport: Error occured while parsing summary file. Error: " + error);
             defer.reject(error);
         }
 
@@ -152,7 +154,6 @@ export class SummaryReaderUtilities {
         utilities.readFileContents(summaryFile, "utf-8").then(function(contents) {
             xmlreader.read(contents, function(err, res) {
                 if (err) {
-                    this.command.warning("getXmlContent: Error occured while reading xml file. file : '" + summaryFile + "' Error: " + err);
                     defer.reject(err);
                 }
                 else {
@@ -165,7 +166,6 @@ export class SummaryReaderUtilities {
                 }
             });
         }).fail(function(err) {
-            this.command.warning("getXmlContent: Error occured while reading xml file. file : '" + summaryFile + "' Error: " + err);
             defer.reject(err);
         });
 
