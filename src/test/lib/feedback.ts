@@ -204,7 +204,12 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IServ
     // Code coverage items
     //------------------------------------------------------------------
      public publishCodeCoverageSummary(coverageData:testifm.CodeCoverageData, project: string, buildId: number): Q.Promise<any> {
-          return null;
+         var defer = Q.defer();
+          if(coverageData == null || !project || project.length == 0 || buildId < 0){
+              defer.reject("Error in the data provided");
+          }
+          defer.resolve(null);
+          return defer.promise;
      }
 
     //------------------------------------------------------------------
