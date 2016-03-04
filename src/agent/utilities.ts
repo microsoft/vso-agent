@@ -42,21 +42,6 @@ export function sortStringArray(list): string[] {
     return sortedFiles;
 }
 
-// returns true if path exists else false
-export function isPathExists(path: string): Q.Promise<boolean> {
-    var defer = Q.defer<boolean>();
-    
-    if (fs.exists(path, (exists) => {
-        if (!exists) {
-            defer.resolve(true);
-        }
-        else {
-            defer.resolve(false);
-        }
-    }));
-    return defer.promise;
-}
-
 // TODO: offer these module level context-less helper functions in utilities below
 export function ensurePathExists(path: string): Q.Promise<void> {
     var defer = Q.defer<void>();

@@ -45,12 +45,10 @@ export class CodeCoveragePublishCommand implements cm.IAsyncCommand {
             defer.reject(err);
         }
 
-        utilities.isPathExists(summaryFile).then(function(result) {
-            if (!result) {
-                var err = new Error("Code coverage summary file '" + summaryFile+  "' doesnot exist." );
-                defer.reject(err);
-            }
-        });
+        if (!fs.existsSync(summaryFile)) {
+            var err = new Error("Code coverage summary file '" + summaryFile + "' doesnot exist.");
+            defer.reject(err);
+        }
 
         switch (codeCoverageTool.toLowerCase()) {
             case "jacoco":

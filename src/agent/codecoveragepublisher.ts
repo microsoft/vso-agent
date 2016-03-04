@@ -41,10 +41,15 @@ export class CodeCoveragePublisher {
         _this.readCodeCoverageSummary(summaryFile).then(function(codeCoverageData) {
             if (codeCoverageData) {
                 _this.executionContext.service.publishCodeCoverageSummary(codeCoverageData, _this.project, _this.buildId);
+                _this.command.info("PublishCodeCoverageSummary : Code coverage summary published successfully.");
                 defer.resolve(true);
             }
-            defer.resolve(false);
+            else {
+                _this.command.warning("PublishCodeCoverageSummary : No code coverage data found to publish.");
+                defer.resolve(false);
+            }
         }).fail(function(err) {
+            _this.command.warning("PublishCodeCoverageSummary : Error occured while publishing code coverage summary.");
             defer.reject(err);
         });
 
@@ -66,16 +71,13 @@ export class CodeCoveragePublisher {
         var reportDirectoryExists = false;
         var newReportDirectory = reportDirectory;
 
-
         if (reportDirectory && reportDirectory.length > 0) {
-            utilities.isPathExists(reportDirectory).then(function(result) {
-                if (result) {
-                    reportDirectoryExists = true;
-                }
-                else {
-                    this.command.warning("Report directory '" + reportDirectory + "' doesnot exist");
-                }
-            });
+            if (fs.existsSync(reportDirectory) && fs.lstatSync(reportDirectory).isDirectory()) {
+                reportDirectoryExists = true;
+            }
+            else {
+                this.command.warning("Report directory '" + reportDirectory + "' doesnot exist or it is not a directory.");
+            }
         }
 
         if (!reportDirectoryExists) {
@@ -86,6 +88,7 @@ export class CodeCoveragePublisher {
         // copy the summary file into report directory
         shell.cp('-f', summaryFile, newReportDirectory);
 
+        this.command.info("PublishCodeCoverageFiles : Publishing code coverage report '" + newReportDirectory + "'");
         var ret = this.uploadArtifact(newReportDirectory, codeCoverageArtifactName, containerId);
 
         if (additionalCodeCoverageFiles) {
@@ -94,7 +97,8 @@ export class CodeCoveragePublisher {
                 var rawFilesDirectory = path.join(shell.tempdir(), "CodeCoverageFiles_" + this.buildId);
                 shell.mkdir('-p', rawFilesDirectory);
                 this.copyRawFiles(rawFiles, rawFilesDirectory);
-                var rawFilesArtifactName = "Code Coverage Files_" + this.buildId
+                var rawFilesArtifactName = "Code Coverage Files_" + this.buildId;
+                this.command.info("PublishCodeCoverageFiles : Publishing additional code coverage files '" + rawFilesDirectory + "'");
                 var ret2 = this.uploadArtifact(rawFilesDirectory, rawFilesArtifactName, containerId);
             }
         }
@@ -151,6 +155,7 @@ export class CodeCoveragePublisher {
             var buildClient = webapi.getQBuildApi();
             return buildClient.createArtifact(artifact, buildId, this.executionContext.variables[ctxm.WellKnownVariables.projectId]);
         }).fail(function(err) {
+            this.command.warning("uploadArtifact : Error occured while uploading artifact Error : " + err);
             defer.reject(err);
         });
 
@@ -169,6 +174,7 @@ export class CodeCoveragePublisher {
             _this.codeCoverageReader.getCodeCoverageSummary(codeCoverageSummaryFile).then(function(codeCoverageStatistics) {
                 defer.resolve(codeCoverageStatistics);
             }).fail(function(err) {
+                this.command.warning("readCodeCoverageSummary : Error occured while fetching code coverage summary. Error : " + err);
                 defer.reject(err);
             });
         }
