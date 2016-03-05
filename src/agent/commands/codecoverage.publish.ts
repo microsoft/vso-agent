@@ -31,25 +31,27 @@ export class CodeCoveragePublishCommand implements cm.IAsyncCommand {
     public runCommandAsync(): Q.Promise<any> {
         var defer = Q.defer();
 
-        var codeCoverageTool: string = this.command.properties['codecoveragetool'];
-
-        var reader;
+        var codeCoverageTool = this.command.properties["codecoveragetool"];
         if (!codeCoverageTool) {
-            var err = new Error("No code coverage tool provided");
+            var err = new Error("No code coverage tool is provided.");
             defer.reject(err);
+            return defer.promise;
         }
 
         var summaryFile = this.command.properties["summaryfile"];
         if (!summaryFile) {
-            var err = new Error("No code coverage summary file provided");
+            var err = new Error("No code coverage summary file is provided.");
             defer.reject(err);
+            return defer.promise;
         }
 
         if (!fs.existsSync(summaryFile)) {
             var err = new Error("Code coverage summary file '" + summaryFile + "' doesnot exist.");
             defer.reject(err);
+            return defer.promise;
         }
 
+        var reader;
         switch (codeCoverageTool.toLowerCase()) {
             case "jacoco":
                 reader = new ccsr.JacocoSummaryReader(this.command);
@@ -58,9 +60,9 @@ export class CodeCoveragePublishCommand implements cm.IAsyncCommand {
                 reader = new ccsr.CoberturaSummaryReader(this.command);
                 break;
             default:
-                // print an error message and return
-                var err = new Error("Code coverage tool not supported");
+                var err = new Error("Code coverage tool '" + codeCoverageTool + "' is not supported.");
                 defer.reject(err);
+                return defer.promise;
         }
 
         var codeCoveragePublisher = new ccp.CodeCoveragePublisher(this.executionContext, this.command, reader);
@@ -78,7 +80,7 @@ export class CodeCoveragePublishCommand implements cm.IAsyncCommand {
         }).fail(function(err) {
             defer.reject(err);
         });
-        
+
         return defer.promise;
     }
 }
