@@ -15,6 +15,7 @@ import testifm = require('vso-node-api/interfaces/TestInterfaces');
 import tc = require('./lib/testcommand');
 import ctxm = require('../agent/context');
 
+var shell = require('shelljs');
 var jobInf = require('./lib/testJobInfo');
 
 describe('CodeCoveragePublisherTests', function() {
@@ -25,7 +26,9 @@ describe('CodeCoveragePublisherTests', function() {
     var invalidCoberturaSummaryFile = path.resolve(__dirname, './codecoveragefiles/invalidcobertura.xml');
     var emptyJacocoSummaryFile = path.resolve(__dirname, './codecoveragefiles/emptyjacoco.xml');
     var emptyCoberturaSummaryFile = path.resolve(__dirname, './codecoveragefiles/emptycobertura.xml');
-
+    var reportDirectory = path.join(shell.tempdir(), "report");
+    shell.mkdir('-p', reportDirectory);
+    shell.cp('-r', path.resolve(__dirname, './codecoveragefiles'), reportDirectory);
     var testExecutionContext;
 
     it('codecoverage.publish : publish jacoco summary successfully', function(done) {
@@ -245,6 +248,167 @@ describe('CodeCoveragePublisherTests', function() {
         },
             function(err) {
                 assert(false, 'CodeCoveragePublish Task Failed! Details : ' + err.message);
+            });
+    })
+
+    it('codecoverage.publish : publish code coverage files without report directory and additional files', function(done) {
+        this.timeout(2000);
+
+        var properties: { [name: string]: string } = { "summaryfile": coberturaSummaryFile, "reportdirectory": "", "additionalcodecoveragefiles": "" };
+        var command: cm.ITaskCommand = new tc.TestCommand(null, null, null);
+        command.properties = properties;
+        var coberturaSummaryReader = new csr.CoberturaSummaryReader(command);
+        var jobInfo = new jobInf.TestJobInfo({});
+        jobInfo.variables = { "agent.workingDirectory": __dirname, "build.buildId": "1" };
+        testExecutionContext = new tec.TestExecutionContext(jobInfo);
+
+        var codeCoveragePublisher = new ccp.CodeCoveragePublisher(testExecutionContext, command, coberturaSummaryReader);
+
+        codeCoveragePublisher.publishCodeCoverageFiles().then(function(result) {
+            assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
+            assert(testExecutionContext.service.containerItems.length == 1);
+            assert(testExecutionContext.service.artifactNames.length == 1);
+            assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1")
+            done();
+        },
+            function(err) {
+                assert(false, 'CodeCoveragePublish Task Failed! Details : ' + err.message);
+                done();
+            });
+    })
+
+    it('codecoverage.publish : publish code coverage files with report directory and without additional files', function(done) {
+        this.timeout(2000);
+
+        var properties: { [name: string]: string } = { "summaryfile": coberturaSummaryFile, "reportdirectory": reportDirectory, "additionalcodecoveragefiles": "" };
+        var command: cm.ITaskCommand = new tc.TestCommand(null, null, null);
+        command.properties = properties;
+        var coberturaSummaryReader = new csr.CoberturaSummaryReader(command);
+        var jobInfo = new jobInf.TestJobInfo({});
+        jobInfo.variables = { "agent.workingDirectory": __dirname, "build.buildId": "1" };
+        testExecutionContext = new tec.TestExecutionContext(jobInfo);
+
+        var codeCoveragePublisher = new ccp.CodeCoveragePublisher(testExecutionContext, command, coberturaSummaryReader);
+
+        codeCoveragePublisher.publishCodeCoverageFiles().then(function(result) {
+            assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
+            assert(testExecutionContext.service.containerItems.length == 8);
+            assert(testExecutionContext.service.artifactNames.length == 1);
+            assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1")
+            done();
+        },
+            function(err) {
+                assert(false, 'CodeCoveragePublish Task Failed! Details : ' + err.message);
+                done();
+            });
+    })
+
+    it('codecoverage.publish : publish code coverage files with report directory and additional files', function(done) {
+        this.timeout(2000);
+
+        var properties: { [name: string]: string } = { "summaryfile": coberturaSummaryFile, "reportdirectory": reportDirectory, "additionalcodecoveragefiles": jacocoSummaryFile + "," + coberturaSummaryFile };
+        var command: cm.ITaskCommand = new tc.TestCommand(null, null, null);
+        command.properties = properties;
+        var coberturaSummaryReader = new csr.CoberturaSummaryReader(command);
+        var jobInfo = new jobInf.TestJobInfo({});
+        jobInfo.variables = { "agent.workingDirectory": __dirname, "build.buildId": "1" };
+        testExecutionContext = new tec.TestExecutionContext(jobInfo);
+
+        var codeCoveragePublisher = new ccp.CodeCoveragePublisher(testExecutionContext, command, coberturaSummaryReader);
+
+        codeCoveragePublisher.publishCodeCoverageFiles().then(function(result) {
+            assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
+            assert(testExecutionContext.service.containerItems.length == 10);
+            assert(testExecutionContext.service.artifactNames.length == 2);
+            assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1")
+            assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1")
+            done();
+        },
+            function(err) {
+                assert(false, 'CodeCoveragePublish Task Failed! Details : ' + err.message);
+                done();
+            });
+    })
+    
+    it('codecoverage.publish : publish code coverage files with out report directory and with additional files', function(done) {
+        this.timeout(2000);
+
+        var properties: { [name: string]: string } = { "summaryfile": coberturaSummaryFile, "reportdirectory": "", "additionalcodecoveragefiles": jacocoSummaryFile + "," + coberturaSummaryFile };
+        var command: cm.ITaskCommand = new tc.TestCommand(null, null, null);
+        command.properties = properties;
+        var coberturaSummaryReader = new csr.CoberturaSummaryReader(command);
+        var jobInfo = new jobInf.TestJobInfo({});
+        jobInfo.variables = { "agent.workingDirectory": __dirname, "build.buildId": "1" };
+        testExecutionContext = new tec.TestExecutionContext(jobInfo);
+
+        var codeCoveragePublisher = new ccp.CodeCoveragePublisher(testExecutionContext, command, coberturaSummaryReader);
+
+        codeCoveragePublisher.publishCodeCoverageFiles().then(function(result) {
+            assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
+            assert(testExecutionContext.service.containerItems.length == 3);
+            assert(testExecutionContext.service.artifactNames.length == 2);
+            assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1")
+            assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1")
+            done();
+        },
+            function(err) {
+                assert(false, 'CodeCoveragePublish Task Failed! Details : ' + err.message);
+                done();
+            });
+    })
+    
+    it('codecoverage.publish : publish code coverage files when publishing report directory fails', function(done) {
+        this.timeout(2000);
+
+        var properties: { [name: string]: string } = { "summaryfile": coberturaSummaryFile, "reportdirectory": reportDirectory, "additionalcodecoveragefiles": jacocoSummaryFile + "," + coberturaSummaryFile };
+        var command: cm.ITaskCommand = new tc.TestCommand(null, null, null);
+        command.properties = properties;
+        var coberturaSummaryReader = new csr.CoberturaSummaryReader(command);
+        var jobInfo = new jobInf.TestJobInfo({});
+        jobInfo.variables = { "agent.workingDirectory": __dirname, "build.buildId": "1" };
+        testExecutionContext = new tec.TestExecutionContext(jobInfo);
+        testExecutionContext.service.failingArtifactName = "Code Coverage Report_1";
+
+        var codeCoveragePublisher = new ccp.CodeCoveragePublisher(testExecutionContext, command, coberturaSummaryReader);
+
+        codeCoveragePublisher.publishCodeCoverageFiles().then(function(result) {
+            assert(false, 'Publish code coverage Task did not fail as expected')
+            done();
+        },
+            function(err) {
+                assert(testExecutionContext.service.containerItems.length == 8);
+                assert(testExecutionContext.service.artifactNames.length == 1);
+                assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1")
+                assert(err == "Error: Error occured while publishing artifact")
+                done();
+            });
+    })
+    
+    it('codecoverage.publish : publish code coverage files when publishing raw directory fails', function(done) {
+        this.timeout(2000);
+
+        var properties: { [name: string]: string } = { "summaryfile": coberturaSummaryFile, "reportdirectory": reportDirectory, "additionalcodecoveragefiles": jacocoSummaryFile + "," + coberturaSummaryFile };
+        var command: cm.ITaskCommand = new tc.TestCommand(null, null, null);
+        command.properties = properties;
+        var coberturaSummaryReader = new csr.CoberturaSummaryReader(command);
+        var jobInfo = new jobInf.TestJobInfo({});
+        jobInfo.variables = { "agent.workingDirectory": __dirname, "build.buildId": "1" };
+        testExecutionContext = new tec.TestExecutionContext(jobInfo);
+        testExecutionContext.service.failingArtifactName = "Code Coverage Files_1";
+
+        var codeCoveragePublisher = new ccp.CodeCoveragePublisher(testExecutionContext, command, coberturaSummaryReader);
+
+        codeCoveragePublisher.publishCodeCoverageFiles().then(function(result) {
+            assert(false, 'Publish code coverage Task did not fail as expected')
+            done();
+        },
+            function(err) {
+                assert(testExecutionContext.service.containerItems.length == 10);
+                assert(testExecutionContext.service.artifactNames.length == 2);
+                assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
+                assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1")
+                assert(err == "Error: Error occured while publishing artifact")
+                done();
             });
     })
 });	

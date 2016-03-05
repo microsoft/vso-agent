@@ -46,6 +46,9 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IServ
     public taskApi: taskm.ITaskApi;
     public jobInfo: cm.IJobInfo;
     public enabled: boolean;
+    public containerItems : string[];
+    public artifactNames : string[];
+    public failingArtifactName : string;
 
     private _webConsole: string[];
     private _records: any;
@@ -56,6 +59,8 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IServ
         this._webConsole = [];
         this._records = {};
         this._logPages = {};
+        this.containerItems = [];
+        this.artifactNames = [];
     }
 
     public getWebApi(): webapi.WebApi {
@@ -163,10 +168,16 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IServ
     }
 
     public uploadFileToContainer(containerId: number, containerItemTuple: ifm.FileContainerItemInfo): Q.Promise<any> {
+        this.containerItems.push(containerItemTuple.fullPath);
         return Q(containerItemTuple);
     }
 
     public postArtifact(projectId: string, buildId: number, artifact: buildifm.BuildArtifact): Q.Promise<buildifm.BuildArtifact> {
+        this.artifactNames.push(artifact.name);
+        if(this.failingArtifactName == artifact.name)
+        {
+            throw new Error("Error occured while publishing artifact");
+        }
         return Q(artifact);
     }
 

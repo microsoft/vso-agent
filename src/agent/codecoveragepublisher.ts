@@ -68,11 +68,12 @@ export class CodeCoveragePublisher {
     //-----------------------------------------------------
     public publishCodeCoverageFiles(): Q.Promise<any> {
         var defer = Q.defer();
-        var containerId = parseInt(this.executionContext.variables[ctxm.WellKnownVariables.containerId]);
-        var summaryFile = this.command.properties["summaryfile"];
-        var reportDirectory = this.command.properties["reportdirectory"];
-        var additionalCodeCoverageFiles = this.command.properties["additionalcodecoveragefiles"];
-        var codeCoverageArtifactName = "Code Coverage Report_" + this.buildId;
+        var _this = this;
+        var containerId = parseInt(_this.executionContext.variables[ctxm.WellKnownVariables.containerId]);
+        var summaryFile = _this.command.properties["summaryfile"];
+        var reportDirectory = _this.command.properties["reportdirectory"];
+        var additionalCodeCoverageFiles = _this.command.properties["additionalcodecoveragefiles"];
+        var codeCoverageArtifactName = "Code Coverage Report_" + _this.buildId;
         var reportDirectoryExists = false;
         var newReportDirectory = reportDirectory;
 
@@ -81,43 +82,59 @@ export class CodeCoveragePublisher {
                 reportDirectoryExists = true;
             }
             else {
-                this.command.warning("Report directory '" + reportDirectory + "' doesnot exist or it is not a directory.");
+                _this.command.warning("Report directory '" + reportDirectory + "' doesnot exist or it is not a directory.");
             }
         }
 
         if (!reportDirectoryExists) {
-            newReportDirectory = path.join(shell.tempdir(), "CodeCoverageReport_" + this.buildId);
+            newReportDirectory = path.join(shell.tempdir(), "CodeCoverageReport_" + _this.buildId);
             shell.mkdir('-p', newReportDirectory);
         }
       
         // copy the summary file into report directory
         shell.cp('-f', summaryFile, newReportDirectory);
 
-        this.command.info("PublishCodeCoverageFiles : Publishing code coverage report '" + newReportDirectory + "'");
-        var ret = this.uploadArtifact(newReportDirectory, codeCoverageArtifactName, containerId);
+        _this.command.info("PublishCodeCoverageFiles : Publishing code coverage report '" + newReportDirectory + "'");
 
-        if (additionalCodeCoverageFiles) {
-            var rawFiles: string[] = additionalCodeCoverageFiles.split(",");
-            if (rawFiles && rawFiles.length > 0) {
-                var rawFilesDirectory = path.join(shell.tempdir(), "CodeCoverageFiles_" + this.buildId);
-                shell.mkdir('-p', rawFilesDirectory);
-                this.copyRawFiles(rawFiles, rawFilesDirectory);
-                var rawFilesArtifactName = "Code Coverage Files_" + this.buildId;
-                this.command.info("PublishCodeCoverageFiles : Publishing additional code coverage files '" + rawFilesDirectory + "'");
-                var ret2 = this.uploadArtifact(rawFilesDirectory, rawFilesArtifactName, containerId);
+        _this.uploadArtifact(newReportDirectory, codeCoverageArtifactName, containerId).then(function() {
+
+            try {
+                if (!reportDirectoryExists) {
+                    shell.rm('-rf', newReportDirectory);
+                }
+
+                if (additionalCodeCoverageFiles) {
+                    var rawFiles: string[] = additionalCodeCoverageFiles.split(",");
+                    if (rawFiles && rawFiles.length > 0) {
+                        var rawFilesDirectory = path.join(shell.tempdir(), "CodeCoverageFiles_" + _this.buildId);
+                        shell.mkdir('-p', rawFilesDirectory);
+                        _this.copyRawFiles(rawFiles, rawFilesDirectory);
+                        var rawFilesArtifactName = "Code Coverage Files_" + _this.buildId;
+                        _this.command.info("PublishCodeCoverageFiles : Publishing additional code coverage files '" + rawFilesDirectory + "'");
+                        _this.uploadArtifact(rawFilesDirectory, rawFilesArtifactName, containerId).then(function() {
+                            shell.rm('-rf', rawFilesDirectory);
+                            defer.resolve(null);
+                        })
+                            .fail(function(error) {
+                                defer.reject(error);
+                            })
+                    }
+                    else {
+                        defer.resolve(null);
+                    }
+                }
+                else {
+                    defer.resolve(null);
+                }
             }
-        }
-      
-        // clean generated directories
-        if (!reportDirectoryExists) {
-            // shell.rm('-rf', newReportDirectory);
-        }
+            catch (err) {
+                defer.reject(err);
+            }
 
-        if (additionalCodeCoverageFiles) {
-            //shell.rm('-rf', rawFilesDirectory);
-        }
+        }).fail(function(error) {
+            defer.reject(error);
+        });
 
-        defer.resolve(ret);
         return defer.promise;
     }
 
@@ -144,21 +161,26 @@ export class CodeCoveragePublisher {
 
     private uploadArtifact(path: string, artifactName: string, containerId: number): Q.Promise<any> {
         var defer = Q.defer();
-        return fc.copyToFileContainer(this.executionContext, path, containerId, "/" + artifactName).then((artifactLocation: string) => {
-            this.command.info('Associating artifact ' + artifactLocation + ' ...');
+        fc.copyToFileContainer(this.executionContext, path, containerId, "/" + artifactName).then((artifactLocation: string) => {
+            try {
+                this.command.info('Associating artifact ' + artifactLocation + ' ...');
+                var artifact: buildifm.BuildArtifact = <buildifm.BuildArtifact>{
+                    name: artifactName,
+                    resource: {
+                        type: "container",
+                        data: artifactLocation
+                    }
+                };
 
-            var buildId: number = this.buildId;
-            var artifact: buildifm.BuildArtifact = <buildifm.BuildArtifact>{
-                name: artifactName,
-                resource: {
-                    type: "container",
-                    data: artifactLocation
-                }
-            };
+                this.executionContext.service.postArtifact(this.project, this.buildId, artifact).fail(function(err) {
+                    defer.reject(err);
+                })
+                defer.resolve(null);
+            }
+            catch (error) {
+                defer.reject(error);
+            }
 
-            var webapi = this.executionContext.getWebApi();
-            var buildClient = webapi.getQBuildApi();
-            return buildClient.createArtifact(artifact, buildId, this.executionContext.variables[ctxm.WellKnownVariables.projectId]);
         }).fail(function(err) {
             defer.reject(err);
         });

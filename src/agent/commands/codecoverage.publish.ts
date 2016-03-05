@@ -64,17 +64,21 @@ export class CodeCoveragePublishCommand implements cm.IAsyncCommand {
         }
 
         var codeCoveragePublisher = new ccp.CodeCoveragePublisher(this.executionContext, this.command, reader);
-        var summaryPublished = codeCoveragePublisher.publishCodeCoverageSummary().then(function(response) {
-            return response;
-        }).fail((err) => {
+        codeCoveragePublisher.publishCodeCoverageSummary().then(function(codeCoveragePublished) {
+            if (codeCoveragePublished) {
+                codeCoveragePublisher.publishCodeCoverageFiles().then(function() {
+                    defer.resolve(null);
+                }).fail(function(error) {
+                    defer.reject(error);
+                });
+            }
+            else {
+                defer.resolve(null);
+            }
+        }).fail(function(err) {
             defer.reject(err);
         });
-
-        if (summaryPublished) {
-            return codeCoveragePublisher.publishCodeCoverageFiles();
-        }
-
-        defer.resolve(null);
+        
         return defer.promise;
     }
 }
