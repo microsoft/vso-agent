@@ -174,6 +174,7 @@ export class CodeCoveragePublisher {
 
                 this.executionContext.service.postArtifact(this.project, this.buildId, artifact).fail(function(err) {
                     defer.reject(err);
+                    return defer.promise;
                 })
                 defer.resolve(null);
             }

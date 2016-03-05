@@ -71,6 +71,7 @@ export class JacocoSummaryReader implements ccp.ICodeCoverageReader {
         }
         catch (error) {
             defer.reject(error);
+            return defer.promise;
         }
 
         defer.resolve(coverage);
@@ -139,6 +140,7 @@ export class CoberturaSummaryReader implements ccp.ICodeCoverageReader {
         }
         catch (error) {
             defer.reject(error);
+            return defer.promise;
         }
 
         defer.resolve(coverage);
