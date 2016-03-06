@@ -230,6 +230,7 @@ describe('CodeCoveragePublisherTests', function() {
         codeCoveragePublishCommand.runCommandAsync().then(function(result) {
             assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
             assert(!result);
+            assert(testExecutionContext.service.containerItems.length == 0);
             done();
         },
             function(err) {
@@ -250,6 +251,7 @@ describe('CodeCoveragePublisherTests', function() {
         codeCoveragePublishCommand.runCommandAsync().then(function(result) {
             assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
             assert(!result);
+            assert(testExecutionContext.service.containerItems.length == 0);
             done();
         },
             function(err) {
@@ -348,7 +350,8 @@ describe('CodeCoveragePublisherTests', function() {
             assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
             assert(testExecutionContext.service.containerItems.length == 1);
             assert(testExecutionContext.service.artifactNames.length == 1);
-            assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1")
+            assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
+            assert(result);
             done();
         },
             function(err) {
@@ -374,6 +377,7 @@ describe('CodeCoveragePublisherTests', function() {
             assert(testExecutionContext.service.containerItems.length == 8);
             assert(testExecutionContext.service.artifactNames.length == 1);
             assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1")
+            assert(result);
             done();
         },
             function(err) {
@@ -400,6 +404,7 @@ describe('CodeCoveragePublisherTests', function() {
             assert(testExecutionContext.service.artifactNames.length == 2);
             assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1")
             assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1")
+            assert(result);
             done();
         },
             function(err) {
@@ -424,8 +429,42 @@ describe('CodeCoveragePublisherTests', function() {
             assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
             assert(testExecutionContext.service.containerItems.length == 3);
             assert(testExecutionContext.service.artifactNames.length == 2);
-            assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1")
-            assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1")
+            assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
+            assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1");
+            assert(result);
+            done();
+        },
+            function(err) {
+                assert(false, 'CodeCoveragePublish Task Failed! Details : ' + err.message);
+                done();
+            });
+    })
+
+    it('codecoverage.publish : publish code coverage files with additional files having same file name', function(done) {
+        this.timeout(2000);
+        var additionalFileDirectory = path.join(shell.tempdir(), "files");
+        var duplicateDirectory = path.join(additionalFileDirectory, "duplicate");
+        shell.mkdir('-p', additionalFileDirectory);
+        shell.mkdir('-p', duplicateDirectory);
+        shell.cp('-f', path.resolve(__dirname, './codecoveragefiles/jacoco.xml'), additionalFileDirectory);
+        shell.cp('-f', path.resolve(__dirname, './codecoveragefiles/jacoco.xml'), duplicateDirectory);
+
+        var properties: { [name: string]: string } = { "summaryfile": coberturaSummaryFile, "codecoveragetool": "Cobertura", "reportdirectory": "", "additionalcodecoveragefiles": path.join(additionalFileDirectory, "jacoco.xml") + "," + path.join(duplicateDirectory, "jacoco.xml") };
+        var command: cm.ITaskCommand = new tc.TestCommand(null, null, null);
+        command.properties = properties;
+        var coberturaSummaryReader = new csr.CoberturaSummaryReader(command);
+        var jobInfo = new jobInf.TestJobInfo({});
+        jobInfo.variables = { "agent.workingDirectory": __dirname, "build.buildId": "1" };
+        testExecutionContext = new tec.TestExecutionContext(jobInfo);
+
+        var codeCoveragePublishCommand = new cpc.CodeCoveragePublishCommand(testExecutionContext, command);
+        codeCoveragePublishCommand.runCommandAsync().then(function(result) {
+            assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
+            assert(testExecutionContext.service.containerItems.length == 3);
+            assert(testExecutionContext.service.artifactNames.length == 2);
+            assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
+            assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1");
+            assert(result);
             done();
         },
             function(err) {

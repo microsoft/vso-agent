@@ -69,13 +69,13 @@ export class CodeCoveragePublishCommand implements cm.IAsyncCommand {
         codeCoveragePublisher.publishCodeCoverageSummary().then(function(codeCoveragePublished) {
             if (codeCoveragePublished) {
                 codeCoveragePublisher.publishCodeCoverageFiles().then(function() {
-                    defer.resolve(null);
+                    defer.resolve(true);
                 }).fail(function(error) {
                     defer.reject(error);
                 });
             }
             else {
-                defer.resolve(null);
+                defer.resolve(false);
             }
         }).fail(function(err) {
             defer.reject(err);
