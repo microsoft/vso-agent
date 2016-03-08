@@ -106,7 +106,26 @@ describe('CodeCoveragePublisherTests', function() {
             done();
         },
             function(err) {
-                var expectedMessage = "Error: Code coverage summary file '" + summaryFile + "' doesnot exist.";
+                var expectedMessage = "Error: Code coverage summary file '" + summaryFile + "' doesnot exist or it is not a valid file.";
+                assert(err == expectedMessage);
+                done();
+            });
+    })
+
+    it('codecoverage.publish : publish summary fails when summary xml is not a valid file', function(done) {
+        this.timeout(2000);
+        var properties: { [name: string]: string } = { "summaryfile": reportDirectory, "codecoveragetool": "JaCoCo" };
+        var command: cm.ITaskCommand = new tc.TestCommand(null, null, null);
+        command.properties = properties;
+        testExecutionContext = new tec.TestExecutionContext(new jobInf.TestJobInfo({}));
+
+        var codeCoveragePublishCommand = new cpc.CodeCoveragePublishCommand(testExecutionContext, command);
+        codeCoveragePublishCommand.runCommandAsync().then(function(result) {
+            assert(false, 'Publish code coverage Task did not fail as expected')
+            done();
+        },
+            function(err) {
+                var expectedMessage = "Error: Code coverage summary file '" + reportDirectory + "' doesnot exist or it is not a valid file.";
                 assert(err == expectedMessage);
                 done();
             });
@@ -439,7 +458,7 @@ describe('CodeCoveragePublisherTests', function() {
                 done();
             });
     })
-    
+
     it('codecoverage.publish : publish code coverage files with non existing report directory and with additional files', function(done) {
         this.timeout(2000);
 
