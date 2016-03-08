@@ -42,6 +42,17 @@ export function sortStringArray(list): string[] {
     return sortedFiles;
 }
 
+// returns true if path exists else fasle.
+export function isPathExists(path: string): boolean {
+    try {
+        fs.statSync(path);
+    }
+    catch (error) {
+        return false;
+    }
+    return true;
+}
+
 // TODO: offer these module level context-less helper functions in utilities below
 export function ensurePathExists(path: string): Q.Promise<void> {
     var defer = Q.defer<void>();

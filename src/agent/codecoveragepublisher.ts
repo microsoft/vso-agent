@@ -78,7 +78,7 @@ export class CodeCoveragePublisher {
         var newReportDirectory = reportDirectory;
 
         if (reportDirectory && reportDirectory.length > 0) {
-            if (fs.existsSync(reportDirectory) && fs.lstatSync(reportDirectory).isDirectory()) {
+            if (utilities.isPathExists(reportDirectory) && fs.lstatSync(reportDirectory).isDirectory()) {
                 reportDirectoryExists = true;
             }
             else {

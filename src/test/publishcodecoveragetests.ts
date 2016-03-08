@@ -439,6 +439,33 @@ describe('CodeCoveragePublisherTests', function() {
                 done();
             });
     })
+    
+    it('codecoverage.publish : publish code coverage files with non existing report directory and with additional files', function(done) {
+        this.timeout(2000);
+
+        var properties: { [name: string]: string } = { "summaryfile": coberturaSummaryFile, "codecoveragetool": "Cobertura", "reportdirectory": "\\users\\report", "additionalcodecoveragefiles": jacocoSummaryFile + "," + coberturaSummaryFile };
+        var command: cm.ITaskCommand = new tc.TestCommand(null, null, null);
+        command.properties = properties;
+        var coberturaSummaryReader = new csr.CoberturaSummaryReader(command);
+        var jobInfo = new jobInf.TestJobInfo({});
+        jobInfo.variables = { "agent.workingDirectory": __dirname, "build.buildId": "1" };
+        testExecutionContext = new tec.TestExecutionContext(jobInfo);
+
+        var codeCoveragePublishCommand = new cpc.CodeCoveragePublishCommand(testExecutionContext, command);
+        codeCoveragePublishCommand.runCommandAsync().then(function(result) {
+            assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
+            assert(testExecutionContext.service.containerItems.length == 3);
+            assert(testExecutionContext.service.artifactNames.length == 2);
+            assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
+            assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1");
+            assert(result);
+            done();
+        },
+            function(err) {
+                assert(false, 'CodeCoveragePublish Task Failed! Details : ' + err.message);
+                done();
+            });
+    })
 
     it('codecoverage.publish : publish code coverage files with additional files having same file name', function(done) {
         this.timeout(2000);

@@ -45,7 +45,7 @@ export class CodeCoveragePublishCommand implements cm.IAsyncCommand {
             return defer.promise;
         }
 
-        if (!fs.existsSync(summaryFile)) {
+        if (!utilities.isPathExists(summaryFile)) {
             var err = new Error("Code coverage summary file '" + summaryFile + "' doesnot exist.");
             defer.reject(err);
             return defer.promise;
