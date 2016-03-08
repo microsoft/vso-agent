@@ -97,35 +97,36 @@ export class CodeCoveragePublisher {
         _this.command.info("PublishCodeCoverageFiles : Publishing code coverage report '" + newReportDirectory + "'");
 
         _this.uploadArtifact(newReportDirectory, codeCoverageArtifactName, containerId).then(function() {
-
             try {
+                 _this.command.info("PublishCodeCoverageFiles : Code coverage report published successfully.");
+
+                // clean the temporary report directory created.
                 if (!reportDirectoryExists) {
                     shell.rm('-rf', newReportDirectory);
                 }
 
-                if (additionalCodeCoverageFiles) {
-                    var rawFiles: string[] = additionalCodeCoverageFiles.split(",");
-                    if (rawFiles && rawFiles.length > 0) {
-                        var rawFilesDirectory = path.join(shell.tempdir(), "CodeCoverageFiles_" + _this.buildId);
-                        shell.mkdir('-p', rawFilesDirectory);
-                        _this.copyRawFiles(rawFiles, rawFilesDirectory);
-                        var rawFilesArtifactName = "Code Coverage Files_" + _this.buildId;
-                        _this.command.info("PublishCodeCoverageFiles : Publishing additional code coverage files '" + rawFilesDirectory + "'");
-                        _this.uploadArtifact(rawFilesDirectory, rawFilesArtifactName, containerId).then(function() {
-                            shell.rm('-rf', rawFilesDirectory);
-                            defer.resolve(null);
-                        })
-                            .fail(function(error) {
-                                defer.reject(error);
-                            })
-                    }
-                    else {
-                        defer.resolve(null);
-                    }
-                }
-                else {
+                if (!additionalCodeCoverageFiles || !(additionalCodeCoverageFiles.split(",")) || additionalCodeCoverageFiles.split(",").length <= 0) {
+                    _this.command.info("PublishCodeCoverageFiles : No additional codecoverage files found to publish.");
                     defer.resolve(null);
+                    return defer.promise;   
                 }
+                
+                var rawFiles: string[] = additionalCodeCoverageFiles.split(",");
+                var rawFilesDirectory = path.join(shell.tempdir(), "CodeCoverageFiles_" + _this.buildId);
+                shell.mkdir('-p', rawFilesDirectory);
+                _this.copyRawFiles(rawFiles, rawFilesDirectory);
+                var rawFilesArtifactName = "Code Coverage Files_" + _this.buildId;
+                
+                _this.command.info("PublishCodeCoverageFiles : Publishing additional code coverage files '" + rawFilesDirectory + "'");
+                _this.uploadArtifact(rawFilesDirectory, rawFilesArtifactName, containerId).then(function() {
+                    // clean the temporary additional files folder created.
+                    shell.rm('-rf', rawFilesDirectory);
+                    
+                    _this.command.info("PublishCodeCoverageFiles : Additional code coverage files published successfully.");
+                    defer.resolve(null);
+                }).fail(function(error) {
+                    defer.reject(error);
+                });
             }
             catch (err) {
                 defer.reject(err);
@@ -138,6 +139,11 @@ export class CodeCoveragePublisher {
         return defer.promise;
     }
 
+    //-----------------------------------------------------
+    // copies all the additionalcodecoveragefiles into rawFilesDirectory
+    // if there are files with the same name both are copied by maintaining distinguishing directory structure
+    // For example, usr/admin/a.xml and usr/admin2/a.xml are copied as admin/a.xml and admin2/a.xml into rawFilesDirectory
+    //-----------------------------------------------------
     private copyRawFiles(additionalCodeCoverageFiles: string[], rawFilesDirectory: string) {
         if (additionalCodeCoverageFiles.length > 1) {
             additionalCodeCoverageFiles = utilities.sortStringArray(additionalCodeCoverageFiles);
@@ -159,6 +165,12 @@ export class CodeCoveragePublisher {
         });
     }
 
+    //-----------------------------------------------------
+    // Helper function to upload artifact to server
+    // - path: Path of the directory to uploaded to server
+    // - artifactName: name of teh artifact
+    // - containerId: containerId 
+    //-----------------------------------------------------
     private uploadArtifact(path: string, artifactName: string, containerId: number): Q.Promise<any> {
         var defer = Q.defer();
         fc.copyToFileContainer(this.executionContext, path, containerId, "/" + artifactName).then((artifactLocation: string) => {
@@ -192,7 +204,7 @@ export class CodeCoveragePublisher {
     
     //-----------------------------------------------------
     // Read code coverage results from summary file.
-    // - codeCoverageSummaryFile: string () - location of the code coverage summary file 
+    // - codeCoverageSummaryFile: string  - location of the code coverage summary file 
     //-----------------------------------------------------    
     private readCodeCoverageSummary(codeCoverageSummaryFile: string): Q.Promise<testifm.CodeCoverageData> {
         var defer = Q.defer<testifm.CodeCoverageData>();

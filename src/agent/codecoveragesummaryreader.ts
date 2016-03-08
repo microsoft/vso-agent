@@ -27,6 +27,10 @@ export class JacocoSummaryReader implements ccp.ICodeCoverageReader {
         this.command = command;
     }
 
+    //-----------------------------------------------------
+    // Get code coverage summary object given a jacoco summary file
+    // - summaryFilePath: string - location of the code coverage summary file 
+    //-----------------------------------------------------   
     public getCodeCoverageSummary(summaryFilePath: string): Q.Promise<testifm.CodeCoverageData> {
         var defer = Q.defer<testifm.CodeCoverageData>();
         var _this = this;
@@ -44,12 +48,17 @@ export class JacocoSummaryReader implements ccp.ICodeCoverageReader {
         return defer.promise;
     }
 
+    //-----------------------------------------------------
+    // Parses xmlContent to read jacoco code coverage and returns codeCoverageSummary object
+    // - xmlContent: any - xml content to be parsed
+    //-----------------------------------------------------   
     private parseJacocoXmlReport(xmlContent): Q.Promise<CodeCoverageSummary> {
 
         this.command.info("parseJacocoXmlReport: Parsing summary file.");
         var defer = Q.defer<CodeCoverageSummary>();
-        if (!xmlContent.report || !xmlContent.report.at(0) || !xmlContent.report.at(0).counter) {
+        if (!xmlContent || !xmlContent.report || !xmlContent.report.at(0) || !xmlContent.report.at(0).counter) {
             defer.resolve(null);
+            return defer.promise;
         }
         try {
             var coverage = new CodeCoverageSummary();
@@ -87,6 +96,10 @@ export class CoberturaSummaryReader implements ccp.ICodeCoverageReader {
         this.command = command;
     }
 
+    //-----------------------------------------------------
+    // Get code coverage summary object given a cobertura summary file
+    // - summaryFilePath: string - location of the code coverage summary file 
+    //-----------------------------------------------------   
     public getCodeCoverageSummary(summaryFilePath: string): Q.Promise<testifm.CodeCoverageData> {
         var defer = Q.defer<testifm.CodeCoverageData>();
         var _this = this;
@@ -104,13 +117,19 @@ export class CoberturaSummaryReader implements ccp.ICodeCoverageReader {
         return defer.promise;
     }
 
+
+    //-----------------------------------------------------
+    // Parses xmlContent to read cobertura code coverage and returns codeCoverageSummary object
+    // - xmlContent: any - xml content to be parsed
+    //-----------------------------------------------------  
     private parseCoberturaXmlReport(xmlContent): Q.Promise<CodeCoverageSummary> {
 
         this.command.info("parseCoberturaXmlReport: Parsing summary file.");
         var defer = Q.defer<CodeCoverageSummary>();
 
-        if (!xmlContent.coverage || !xmlContent.coverage.at(0) || !xmlContent.coverage.at(0).attributes()) {
+        if (!xmlContent || !xmlContent.coverage || !xmlContent.coverage.at(0) || !xmlContent.coverage.at(0).attributes()) {
             defer.resolve(null);
+            return defer.promise;
         }
 
         var coverageStats = [];
@@ -118,25 +137,26 @@ export class CoberturaSummaryReader implements ccp.ICodeCoverageReader {
         try {
             var coverageNode = xmlContent.coverage.at(0);
             var attributes = coverageNode.attributes();
+            if (attributes) {
+                var linesTotal = attributes['lines-valid'];
+                var linesCovered = attributes['lines-covered'];
+                var branchesCovered = attributes['branches-covered'];
+                var branchesTotal = attributes['branches-valid'];
 
-            var linesTotal = attributes['lines-valid'];
-            var linesCovered = attributes['lines-covered'];
-            var branchesCovered = attributes['branches-covered'];
-            var branchesTotal = attributes['branches-valid'];
+                if (linesTotal && linesCovered) {
+                    this.command.info("Lines : " + linesCovered + "/" + linesTotal + " covered.");
+                    var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics("Lines", linesCovered, linesTotal, "line");
+                    coverageStats.push(coverageStat);
+                }
 
-            if (linesTotal && linesCovered) {
-                this.command.info("Lines : " + linesCovered + "/" + linesTotal + " covered.");
-                var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics("Lines", linesCovered, linesTotal, "line");
-                coverageStats.push(coverageStat);
+                if (branchesCovered && branchesTotal) {
+                    this.command.info("Branches : " + branchesCovered + "/" + branchesTotal + " covered.");
+                    var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics("Branches", branchesCovered, branchesTotal, "branch");
+                    coverageStats.push(coverageStat);
+                }
+
+                coverage.addResults(coverageStats);
             }
-
-            if (branchesCovered && branchesTotal) {
-                this.command.info("Branches : " + branchesCovered + "/" + branchesTotal + " covered.");
-                var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics("Branches", branchesCovered, branchesTotal, "branch");
-                coverageStats.push(coverageStat);
-            }
-
-            coverage.addResults(coverageStats);
         }
         catch (error) {
             defer.reject(error);
@@ -150,6 +170,9 @@ export class CoberturaSummaryReader implements ccp.ICodeCoverageReader {
 
 export class SummaryReaderUtilities {
 
+    //-----------------------------------------------------
+    // reads the file and returns the xml content
+    //-----------------------------------------------------   
     public static getXmlContent(summaryFile: string): Q.Promise<any> {
         var defer = Q.defer();
 
@@ -174,6 +197,13 @@ export class SummaryReaderUtilities {
         return defer.promise;
     }
 
+    //-----------------------------------------------------
+    // returns a CodeCoverageStatistics object 
+    // label : name of code coverage statistic
+    // covered : number of units covered
+    // total : total number of units
+    // priorityTag : name required to assign the position to the statistic
+    //-----------------------------------------------------   
     public static getCodeCoverageStatistics(label: string, covered: number, total: number, priorityTag: string): testifm.CodeCoverageStatistics {
         var coverageStat: testifm.CodeCoverageStatistics = <testifm.CodeCoverageStatistics>{
             label: label,
@@ -183,7 +213,7 @@ export class SummaryReaderUtilities {
         }
         return coverageStat;
     }
-
+    
     public static getCodeCoverageData(codeCoverageSummary: CodeCoverageSummary): testifm.CodeCoverageData {
         if (!codeCoverageSummary) {
             return null;
@@ -197,7 +227,10 @@ export class SummaryReaderUtilities {
         }
         return codeCoverageData;
     }
-
+    
+    //-----------------------------------------------------
+    // Returns a priority number based on the label
+    //-----------------------------------------------------   
     public static getCoveragePriorityOrder(label: string): Number {
         if (label.toLowerCase() == 'instruction') {
             return 5;
