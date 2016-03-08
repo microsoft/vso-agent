@@ -734,6 +734,7 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
 // Job Renewal
 export class LockRenewer extends TimedWorker {
     constructor(jobInfo: cm.IJobInfo, poolId: number) {
+        super(LOCK_DELAY);
         trace.enter('LockRenewer');
 
         // finished is initially a resolved promise, because a renewal is not in progress
@@ -742,8 +743,6 @@ export class LockRenewer extends TimedWorker {
         this._jobInfo = jobInfo;
         this._poolId = poolId;
         trace.write('_poolId: ' + this._poolId);
-
-        super(LOCK_DELAY);
     }
 
     private _poolId: number;
