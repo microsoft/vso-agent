@@ -15,11 +15,11 @@ var shell = require('shelljs');
 // in addition to those declared through the VSO_AGENT_IGNORE environment variable:
 // export VSO_AGENT_IGNORE=envvar1,envvar2
 var ignore = [
-    'TERM_PROGRAM', 
-    'TERM', 
-    'TERM_PROGRAM_VERSION', 
-    'SHLVL', 
-    'ls_colors', 
+    'TERM_PROGRAM',
+    'TERM',
+    'TERM_PROGRAM_VERSION',
+    'SHLVL',
+    'ls_colors',
     'comp_wordbreaks'
 ];
 
@@ -32,7 +32,7 @@ var getFilteredEnv = function(): { [key: string]: string } {
     if (process.env[cm.envIgnore]) {
         filter = filter.concat(process.env[cm.envIgnore].split(','));
     }
-    
+
     // Get filtered env vars
     var filtered: { [key: string]: string } = {};
     for (var envvar in process.env) {
@@ -67,11 +67,11 @@ export function ensureEnvFile(envPath): Q.Promise<void> {
             }
             else {
                 defer.resolve(null);
-            } 
+            }
         });
-    });  
+    });
 
-    return defer.promise; 
+    return defer.promise;
 }
 
 // Gets the environment that the agent and worker will use when running as a service.
@@ -102,11 +102,11 @@ export function getEnv(envPath: string, complete: (err: any, env: {[key: string]
                 }
 
                 complete(null, env);
-            });         
+            });
         }
         else {
             complete(null, null);
-        }   
+        }
     });
 }
 
@@ -193,7 +193,19 @@ export function getCapabilities(): cm.IStringDictionary {
     resolveCapability(filteredEnv, 'git');
     resolveCapability(filteredEnv, 'java');
     resolveCapability(filteredEnv, 'make');
-    resolveCapability(filteredEnv, { name: 'mdtool', paths: ['/Applications/Xamarin Studio.app/Contents/MacOS/mdtool'] }, 'Xamarin.iOS');
+    resolveCapability(filteredEnv, 'xbuild', 'MSBuild');
+    resolveCapability(filteredEnv, {
+        name: 'mdtool',
+        paths: ['/Applications/Xamarin Studio.app/Contents/MacOS/mdtool']
+    }, 'Xamarin.iOS');
+    resolveCapability(filteredEnv, {
+        name: 'mandroid',
+        paths: ['/Library/Frameworks/Xamarin.Android.framework/Commands/mandroid']
+    }, 'Xamarin.Android');
+    resolveCapability(filteredEnv, {
+        name: 'android',
+        paths: [process.env.ANDROID_STUDIO + '/tools/android', process.env.HOME + '/Library/Developer/Xamarin/android-sdk-macosx/tools/android']
+    }, 'AndroidSDK');
     resolveCapability(filteredEnv, 'mvn', 'maven');
     resolveCapability(filteredEnv, 'node', 'node.js');
     resolveCapability(filteredEnv, 'nodejs', 'node.js');
