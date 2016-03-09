@@ -26,20 +26,18 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
 
     public runCommandAsync() {
         var defer = Q.defer();
-
         var teamProject = this.executionContext.variables["system.teamProject"];
-        var resultFilePath: string = this.command.message;
-
         var resultType: string = this.command.properties['type'];
         if (resultType) {
             resultType = resultType.toLowerCase();
         }
-
         var platform: string = this.command.properties['platform'];
         var config: string = this.command.properties['config'];
         var runTitle: string = this.command.properties['runTitle'];
         var fileNumber: string = this.command.properties['fileNumber'];
         var publishRunAttachments: boolean = (this.command.properties['publishRunAttachments'] === "true");
+        var resultFiles = this.command.properties['resultFiles'];
+        var mergeResults: boolean = (this.command.properties['mergeResults'] === 'true');
         var command = this.command;
 
         var testRunContext: trp.TestRunContext = {
@@ -50,10 +48,10 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
             platform: platform,
             config: config,
             runTitle: runTitle,
-            fileNumber: fileNumber,
+            //fileNumber: fileNumber,
             publishRunAttachments: publishRunAttachments
         };
-
+        
         var reader;
         if (resultType == "junit") {
             reader = new trr.JUnitResultReader(this.command);
@@ -70,13 +68,24 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
 
         if (reader != null) {
             var testRunPublisher = new trp.TestRunPublisher(this.executionContext.service, command, teamProject, testRunContext, reader);
-            testRunPublisher.publishTestRun(resultFilePath).then(function (createdTestRun) {
-                defer.resolve(null);
-            })
-                .fail((err) => {
-                    this.command.warning("Failed to publish test results: " + err.message);
+
+            if (!mergeResults) {
+                for (var i = 0; i < resultFiles.length; i++) {
+                    testRunPublisher.publishTestRun(resultFiles[i]).then(function(createdTestRun) {
+                        defer.resolve(null);
+                    }).fail((err) => {
+                        this.command.warning("Failed to publish test result for file" + resultFiles[i] + ": " + err.message);
+                        defer.resolve(null);
+                    });
+                }
+            } else {
+                testRunPublisher.publishMergedTestRun(resultFiles).then(function(createdTestRun) {
+                    defer.resolve(null);
+                }).fail((err) => {
+                    this.command.warning("Failed to publish test result for file" + resultFiles[i] + ": " + err.message);
                     defer.resolve(null);
                 });
+            }
         }
         else {
             defer.resolve(null);
