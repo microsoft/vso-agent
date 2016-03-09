@@ -192,6 +192,7 @@ export function getCapabilities(): cm.IStringDictionary {
     resolveCapability(filteredEnv, 'curl');
     resolveCapability(filteredEnv, 'git');
     resolveCapability(filteredEnv, 'java');
+    resolveCapability(filteredEnv, 'javac', 'JDK');
     resolveCapability(filteredEnv, 'make');
     resolveCapability(filteredEnv, 'xbuild', 'MSBuild');
     resolveCapability(filteredEnv, {
