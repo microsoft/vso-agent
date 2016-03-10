@@ -15,29 +15,6 @@ export function copyToFileContainer(executionContext: cm.IExecutionContext, loca
 	return fc.copyToFileContainer(localPath, containerId, containerFolder);
 }
 
-export function getUploadHeaders(isGzipped: boolean, 
-	uncompressedLength: number, 
-	compressedLength?: number, 
-	contentIdentifier?: Buffer): { [header: string]: any; } {
-
-    var addtlHeaders: { [header: string]: any; } = {};
-    var byteLengthToSend = isGzipped ? compressedLength : uncompressedLength;
-
-    addtlHeaders["Content-Range"] = "bytes 0-" + (byteLengthToSend - 1) + "/" + byteLengthToSend;
-    addtlHeaders["Content-Length"] = byteLengthToSend;
-
-    if (isGzipped) {
-        addtlHeaders["Accept-Encoding"] = "gzip";
-        addtlHeaders["Content-Encoding"] = "gzip";
-        addtlHeaders["x-tfs-filelength"] = uncompressedLength;
-    }
-
-    if (contentIdentifier) {
-        addtlHeaders["x-vso-contentId"] = contentIdentifier.toString("base64");
-    }
-	return addtlHeaders;
-}
-
 export class FileContainerHelper {	
 	private _executionContext: cm.IExecutionContext;
 	private _tempFolder: string;
@@ -125,7 +102,7 @@ export class FileContainerHelper {
 			else {
 				var item: ifm.FileContainerItemInfo = <ifm.FileContainerItemInfo>{
 					fullPath: filePath,
-					uploadHeaders: getUploadHeaders(false, size),
+					uncompressedLength: size,
 		            containerItem: <fcifm.FileContainerItem>{
 						containerId: containerId,
 			            itemType: fcifm.ContainerItemType.File,
@@ -190,7 +167,9 @@ export class FileContainerHelper {
 	
 			var item: ifm.FileContainerItemInfo =  <ifm.FileContainerItemInfo>{
 	            fullPath: info.zipPath,
-				uploadHeaders: getUploadHeaders(true, fileSize, zipSize),
+				uncompressedLength: fileSize,
+				isGzipped: true,
+				compressedLength: zipSize,
 				containerItem: <fcifm.FileContainerItem>{
 					containerId: containerId,
 		            itemType: fcifm.ContainerItemType.File,
