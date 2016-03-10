@@ -18,7 +18,9 @@ import testifm = require('vso-node-api/interfaces/TestInterfaces');
 export interface FileContainerItemInfo {
     fullPath: string;
     containerItem?: fcifm.FileContainerItem;
-    uploadHeaders?: { [header: string]: any; };
+    isGzipped?: boolean;
+    uncompressedLength?: number;
+    compressedLength?: number;
 }
 
 // ---------------------------------------------------------------------------
