@@ -43,12 +43,6 @@ curl -skSL http://aka.ms/xplatagent | bash
 ```
 Your output should look [similar to this](sampleoutput.md)
 
-To install preview version (usually master), use:
-
-```bash
-curl -skSL http://aka.ms/previewxplat | bash
-```
-
 If you have issues with this, fully realized zips are available.
 
 Go to the [releases section on github](https://github.com/Microsoft/vso-agent/releases) and download the linux or OSX (Darwin) package.
