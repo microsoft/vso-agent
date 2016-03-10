@@ -48,10 +48,10 @@ export interface ISvnExecOptions {
 
 export class SvnWrapper extends events.EventEmitter {
     constructor(ctx: cm.IExecutionContext) {
+        super();
         this.svnPath = shell.which('svn', false);
         this.endpoint = <ISvnConnectionEndpoint>{};
         this.ctx = ctx;
-        super();
     }
 
     public svnPath: string;
@@ -367,9 +367,9 @@ export class SvnWrapper extends events.EventEmitter {
 
         var quotedArgs = this._getQuotedArgsWithDefaults(args);
         // args
-        if (quotedArgs.map((arg: string) => {
+        quotedArgs.map((arg: string) => {
             svn.arg(arg, true); // raw arg
-        }));
+        });
 
         options = options || <ISvnExecOptions>{};
         var ops: any = {
