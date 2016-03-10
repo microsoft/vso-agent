@@ -89,44 +89,59 @@ export class TestRunPublisher {
             // so as to make sure that any server jobs that acts on the uploaded data (like CoverAn job does for Coverage files)  
             // have a fully published test run results, in case it wants to iterate over results 
             if (_this.runContext.publishRunAttachments === true) {
-                var resultFile = resultFilePath;
-                
                 if (publishArchive) {
-                    var filesToArchive: string[];
-                    for (var i = 0; i < resultFilePath.length; i++) {
-                        filesToArchive.push(resultFilePath[i]);
-                    }
+                    var filesToArchive = resultFilePath.split(",");
                     utilities.archiveFiles(filesToArchive, "attachments.zip").then(function(zipFile) {
-                        resultFile = zipFile;
+                        _this.publishTestRunFiles(testRunId, zipFile).then(function(res) {
+                            defer.resolve(endedTestRun);
+                        }).fail(function(err) {
+                            defer.resolve(endedTestRun);
+                        })
                     });
+                } else {
+                    _this.publishTestRunFiles(testRunId, resultFilePath).then(function(res) {
+                        defer.resolve(endedTestRun);
+                    }).fail(function(err) {
+                        defer.resolve(endedTestRun);
+                    })
                 }
-
-                utilities.readFileContents(resultFile, "ascii").then(function(res) {
-                    var contents = new Buffer(res).toString('base64');
-                    _this.service.createTestRunAttachment(testRunId, path.basename(resultFilePath), contents).then(
-                        function(attachment) {
-                            defer.resolve(endedTestRun);
-                        },
-                        function(err) {
-                            // We can skip attachment publishing if it fails to upload
-                            if (_this.command) {
-                                _this.command.warning("Skipping attachment : " + resultFilePath + ". " + err.statusCode + " - " + err.message);
-                            }
-
-                            defer.resolve(endedTestRun);
-                        });
-                },
-                    function(err) {
-                        defer.reject(err);
-                    });
             }
             else {
                 defer.resolve(endedTestRun);
             }
-        },
-            function(err) {
-                defer.reject(err);
-            });
+        }).fail(function(err) {
+            defer.reject(err);
+        });
+        
+        return defer.promise;
+    }
+    
+     //-----------------------------------------------------
+    // Stop a test run - mark it completed
+    // - testRun: TestRun - test run to be published  
+    //-----------------------------------------------------
+    public publishTestRunFiles(testRunId: number, resultFile: string): Q.Promise<any> {
+        var defer = Q.defer();
+        var _this = this;
+
+        utilities.readFileContents(resultFile, "utf8").then(function(res) {
+            var contents = new Buffer(res).toString('base64');
+            _this.service.createTestRunAttachment(testRunId, path.basename(resultFile), contents).then(
+                function(attachment) {
+                    defer.resolve(attachment);
+                },
+                function(err) {
+                    // We can skip attachment publishing if it fails to upload
+                    if (_this.command) {
+                        _this.command.warning("Skipping attachment : " + resultFile + ". " + err.statusCode + " - " + err.message);
+                    }
+
+                    defer.resolve(null);
+                });
+        }).fail(function(err) {
+            defer.reject(err);
+        });
+        
         return defer.promise;
     }
 
@@ -202,38 +217,49 @@ export class TestRunPublisher {
     // Publish a test run
     // - resultFiles: string - Path to the results files
     //-----------------------------------------------------
-    public publishMergedTestRun(resultFiles: string): Q.Promise<testifm.TestRun> {
+    public publishMergedTestRun(resultFiles: string[]): Q.Promise<testifm.TestRun> {
         var defer = Q.defer();
         
         var _this = this;
         var testRunId;
 
-        var totalTestCaseDuration: Number = 0;
-        var totalTestResults: testifm.TestResultCreateModel[];
-        //var totalTestAttachments: string[];
+        var totalTestCaseDuration: number = 0;
+        var totalTestResults: testifm.TestResultCreateModel[] = [];
+        var testName;
+        var currentTime = Date.now();
 
         for (var i = 0; i < resultFiles.length; i++) {
-            //totalTestAttachments.push(resultFiles[i]);
             var report = _this.readResults(resultFiles[i]).then(function (res){
                 res.testResults.forEach(tr => {
-                    totalTestCaseDuration = +tr.durationInMs;
-                    //totalTestResults.push(tr);
+                    totalTestCaseDuration += +tr.durationInMs;
                 });
-                totalTestResults.concat(res.testResults);
+                totalTestResults = totalTestResults.concat(res.testResults);
             });
             
         }
         
+        var startDate = new Date(currentTime);
+        var completedDate = new Date(currentTime + totalTestCaseDuration);
+        
         //create test run data
         var testRun = <testifm.RunCreateModel>{
-            
+            name: "name",
+            startDate: startDate.toISOString(),
+            completeDate: completedDate.toISOString(),
+            state: "InProgress",
+            automated: true,
+            buildPlatform: this.runContext.platform,
+            buildFlavor: this.runContext.config,
+            build: { id: this.runContext.buildId },
+            releaseUri: this.runContext.releaseUri,
+            releaseEnvironmentUri: this.runContext.releaseEnvironmentUri
         };
        
         _this.startTestRun(testRun).then(function(res) {
             testRunId = res.id;
             return _this.addResults(testRunId, totalTestResults);
         }).then(function(res) {
-            return _this.endTestRun(testRunId, resultFiles, true);
+            return _this.endTestRun(testRunId, resultFiles.join(","), true);
         }).then(function(res) {
             defer.resolve(res);
         }).fail(function(err) {

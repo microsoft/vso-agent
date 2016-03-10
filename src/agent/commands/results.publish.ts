@@ -36,7 +36,7 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
         var runTitle: string = this.command.properties['runTitle'];
         var fileNumber: string = this.command.properties['fileNumber'];
         var publishRunAttachments: boolean = (this.command.properties['publishRunAttachments'] === "true");
-        var resultFiles = this.command.properties['resultFiles'];
+        var resultFilesPath = this.command.properties['resultFiles'];
         var mergeResults: boolean = (this.command.properties['mergeResults'] === 'true');
         var command = this.command;
 
@@ -68,8 +68,8 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
 
         if (reader != null) {
             var testRunPublisher = new trp.TestRunPublisher(this.executionContext.service, command, teamProject, testRunContext, reader);
-
-            if (!mergeResults) {
+            var resultFiles = resultFilesPath.split(",");
+            if (!mergeResults) {   
                 for (var i = 0; i < resultFiles.length; i++) {
                     testRunPublisher.publishTestRun(resultFiles[i]).then(function(createdTestRun) {
                         defer.resolve(null);
@@ -82,7 +82,7 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
                 testRunPublisher.publishMergedTestRun(resultFiles).then(function(createdTestRun) {
                     defer.resolve(null);
                 }).fail((err) => {
-                    this.command.warning("Failed to publish test result for file" + resultFiles[i] + ": " + err.message);
+                    this.command.warning("Failed to publish test result for file" + resultFilesPath + ": " + err.message);
                     defer.resolve(null);
                 });
             }

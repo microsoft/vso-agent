@@ -218,7 +218,8 @@ export function readDirectory(directory: string, includeFiles: boolean, includeF
 }
 
 export function archiveFiles(files: string[], archiveName: string): Q.Promise<string> {
-
+    var defer = Q.defer<string>();
+    
     var archive = path.join(shell.tempdir(), archiveName);
     var output = fs.createWriteStream(archive);
 
@@ -226,10 +227,12 @@ export function archiveFiles(files: string[], archiveName: string): Q.Promise<st
     zipArchive.bulk([{ src: files, expand: true }]);
     zipArchive.finalize(function(err, bytes) {
         if (err)
-            throw err;
+            defer.reject(err);
+            return defer.promise;
     });
-
-    return archive;
+    
+    defer.resolve(archive);
+    return defer.promise;
 }
 
 //
