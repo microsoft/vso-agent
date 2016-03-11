@@ -281,7 +281,7 @@ export interface TestRunContext {
     config: string;
     runTitle: string;
     publishRunAttachments: boolean;
-    // fileNumber: string;
+    fileNumber: string;
     releaseUri: string;
     releaseEnvironmentUri: string;
 };

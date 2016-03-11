@@ -34,7 +34,6 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
         var platform: string = this.command.properties['platform'];
         var config: string = this.command.properties['config'];
         var runTitle: string = this.command.properties['runTitle'];
-        var fileNumber: string = this.command.properties['fileNumber'];
         var publishRunAttachments: boolean = (this.command.properties['publishRunAttachments'] === "true");
         var resultFilesPath = this.command.properties['resultFiles'];
         var mergeResults: boolean = (this.command.properties['mergeResults'] === 'true');
@@ -48,7 +47,7 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
             platform: platform,
             config: config,
             runTitle: runTitle,
-            //fileNumber: fileNumber,
+            fileNumber: "1",
             publishRunAttachments: publishRunAttachments
         };
 
@@ -72,6 +71,7 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
 
             if (!mergeResults) {
                 for (var i = 0; i < resultFiles.length; i++) {
+                    testRunContext.fileNumber = i.toString();
                     testRunPublisher.publishTestRun(resultFiles[i]).then(function(createdTestRun) {
                         defer.resolve(null);
                     }).fail((err) => {

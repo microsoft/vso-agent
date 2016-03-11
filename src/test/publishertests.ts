@@ -21,7 +21,7 @@ describe('PublisherTests', function() {
         config: "debug",
         runTitle: "My Title",
         publishRunAttachments: true,
-        //fileNumber: "3",
+        fileNumber: "3",
         releaseUri: "abc",
         releaseEnvironmentUri: "xyz"
     };
@@ -167,7 +167,7 @@ describe('PublisherTests', function() {
         var testRun;
 
         runContext.runTitle = "";
-        //runContext.fileNumber = "0";
+        runContext.fileNumber = "0";
 
         readerJUnit.readResults(resultsFileJUnit, runContext).then(function(res) {
             testRun = res.testRun;
@@ -201,7 +201,7 @@ describe('PublisherTests', function() {
         var testRun;
 
         runContext.runTitle = "My Title";
-        // runContext.fileNumber = "0";
+        runContext.fileNumber = "0";
 
         readerJUnit.readResults(resultsFileJUnit, runContext).then(function(res) {
             testRun = res.testRun;
@@ -220,7 +220,7 @@ describe('PublisherTests', function() {
 
         var testRun;
 
-        //runContext.fileNumber = "3";
+        runContext.fileNumber = "3";
 
         readerJUnit.readResults(resultsFileJUnit, runContext).then(function(res) {
             testRun = res.testRun;
@@ -241,7 +241,7 @@ describe('PublisherTests', function() {
         var testRun;
 
         runContext.runTitle = "";
-        //runContext.fileNumber = "0";
+        runContext.fileNumber = "0";
 
         readerNUnit.readResults(resultsFileNUnit, runContext).then(function(res) {
             testRun = res.testRun;
@@ -276,7 +276,7 @@ describe('PublisherTests', function() {
         var testRun;
 
         runContext.runTitle = "My Title";
-        //runContext.fileNumber = "0";
+        runContext.fileNumber = "0";
 
         readerNUnit.readResults(resultsFileNUnit, runContext).then(function(res) {
             testRun = res.testRun;
@@ -294,7 +294,7 @@ describe('PublisherTests', function() {
     it('results.publish : NUnit reader sanity check with run title and file number', function(done) {
 
         var testRun;
-        //runContext.fileNumber = "3";
+        runContext.fileNumber = "3";
 
         readerNUnit.readResults(resultsFileNUnit, runContext).then(function(res) {
             testRun = res.testRun;
@@ -316,7 +316,7 @@ describe('PublisherTests', function() {
         var testRun;
 
         runContext.runTitle = "";
-        // runContext.fileNumber = "0";
+        runContext.fileNumber = "0";
 
         readerXUnit.readResults(resultsFileXUnit, runContext).then(function(res) {
             testRun = res.testRun;
@@ -351,7 +351,7 @@ describe('PublisherTests', function() {
         var testRun;
 
         runContext.runTitle = "My Title";
-        // runContext.fileNumber = "0";
+        runContext.fileNumber = "0";
 
         readerXUnit.readResults(resultsFileXUnit, runContext).then(function(res) {
             testRun = res.testRun;
@@ -370,7 +370,7 @@ describe('PublisherTests', function() {
 
         var testRun;
 
-        // runContext.fileNumber = "3";
+        runContext.fileNumber = "3";
         readerXUnit.readResults(resultsFileXUnit, runContext).then(function(res) {
             testRun = res.testRun;
 
