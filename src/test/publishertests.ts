@@ -419,7 +419,7 @@ describe('PublisherTests', function() {
             });
     })
 
-    it('results.publish : JUnit results file with merge support', function(done) {
+    it('results.publish : XUnit results file with merge support', function(done) {
         this.timeout(2000);
 
         feedbackChannel = new fm.TestFeedbackChannel();
