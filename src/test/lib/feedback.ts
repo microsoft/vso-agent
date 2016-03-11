@@ -59,6 +59,8 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IServ
         this._webConsole = [];
         this._records = {};
         this._logPages = {};
+        this.containerItems = [];
+        this.artifactNames = [];
     }
 
     public getWebApi(): webapi.WebApi {
