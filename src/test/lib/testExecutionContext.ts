@@ -6,6 +6,7 @@ import ifm = require('../../agent/interfaces');
 import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 import webapi = require('vso-node-api/WebApi');
 import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
+import fm = require('../lib/feedback');
 
 export class TestExecutionContext implements cm.IExecutionContext {
 
@@ -14,6 +15,7 @@ export class TestExecutionContext implements cm.IExecutionContext {
         this.variables = jobInfo.variables;
         this.taskDefinitions = {};
         this.workingDirectory = this.variables[cm.vars.agentWorkingDirectory];
+        this.service = new fm.TestFeedbackChannel()
     }
 
     public recordId: string;
