@@ -368,9 +368,9 @@ describe('CodeCoveragePublisherTests', function() {
         codeCoveragePublishCommand.runCommandAsync().then(function(result) {
             assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
             assert(testExecutionContext.service.containerItems.length == 1);
-            //assert(testExecutionContext.service.artifactNames.length == 1);
-           // assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
-           // assert(result);
+            assert(testExecutionContext.service.artifactNames.length == 1);
+            assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
+            assert(result);
             done();
         },
             function(err) {
