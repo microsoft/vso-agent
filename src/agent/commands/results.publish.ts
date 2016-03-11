@@ -69,6 +69,7 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
         if (reader != null) {
             var testRunPublisher = new trp.TestRunPublisher(this.executionContext.service, command, teamProject, testRunContext, reader);
             var resultFiles = resultFilesPath.split(",");
+            
             if (!mergeResults) {   
                 for (var i = 0; i < resultFiles.length; i++) {
                     testRunPublisher.publishTestRun(resultFiles[i]).then(function(createdTestRun) {
@@ -79,6 +80,10 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
                     });
                 }
             } else {
+                //Fix the run title if it's not given by user. 
+                if (!runTitle) {
+                    testRunContext.runTitle = resultType + "_TestResults_" + testRunContext.buildId;
+                }
                 testRunPublisher.publishMergedTestRun(resultFiles).then(function(createdTestRun) {
                     defer.resolve(null);
                 }).fail((err) => {

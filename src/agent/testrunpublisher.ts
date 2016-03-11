@@ -4,13 +4,13 @@ import ctxm = require('./context');
 import cm = require('./common');
 import utilities = require('./utilities');
 
-
 var async = require('async');
 var fs = require('fs');
 var path = require("path");
 var xmlreader = require('xmlreader');
 var Q = require('q');
 var archiver = require('archiver');
+var shell = require("shelljs");
 
 export class TestRunPublisher {
     //-----------------------------------------------------
@@ -97,6 +97,7 @@ export class TestRunPublisher {
                         }).fail(function(err) {
                             defer.resolve(endedTestRun);
                         })
+                        shell.rm('-rf', zipFile);
                     });
                 } else {
                     _this.publishTestRunFiles(testRunId, resultFilePath).then(function(res) {
@@ -243,7 +244,7 @@ export class TestRunPublisher {
         
         //create test run data
         var testRun = <testifm.RunCreateModel>{
-            name: "name",
+            name: this.runContext.runTitle,
             startDate: startDate.toISOString(),
             completeDate: completedDate.toISOString(),
             state: "InProgress",
