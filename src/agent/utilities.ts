@@ -9,7 +9,7 @@ import fs = require('fs');
 
 var shell = require('shelljs');
 var path = require('path');
-var archiver =  require('archiver');
+var archiver = require('archiver');
 var zipArchive = archiver('zip');
 
 export interface GetOrCreateResult<T> {
@@ -42,11 +42,11 @@ export function ensurePathExists(path: string): Q.Promise<void> {
     return defer.promise;
 }
 
-export function readFileContents(filePath: string, encoding: string) : Q.Promise<string> {
+export function readFileContents(filePath: string, encoding: string): Q.Promise<string> {
     var defer = Q.defer<string>();
 
     fs.readFile(filePath, encoding, (err, data) => {
-        if(err) {
+        if (err) {
             defer.reject(new Error('Could not read file (' + filePath + '): ' + err.message));
         }
         else {
@@ -59,11 +59,11 @@ export function readFileContents(filePath: string, encoding: string) : Q.Promise
 
 export function fileExists(filePath: string): Q.Promise<boolean> {
     var defer = Q.defer<boolean>();
-    
+
     fs.exists(filePath, (exists) => {
         defer.resolve(exists);
     });
-    
+
     return <Q.Promise<boolean>>defer.promise;
 }
 export function objectToFile(filePath: string, obj: any): Q.Promise<void> {
@@ -81,7 +81,7 @@ export function objectToFile(filePath: string, obj: any): Q.Promise<void> {
     return defer.promise;
 }
 
-export function objectFromFile(filePath: string, defObj?:any): Q.Promise<any> {
+export function objectFromFile(filePath: string, defObj?: any): Q.Promise<any> {
     var defer = Q.defer<any>();
 
     fs.exists(filePath, (exists) => {
@@ -100,7 +100,7 @@ export function objectFromFile(filePath: string, defObj?:any): Q.Promise<any> {
                     var obj: any = JSON.parse(contents.toString());
                     defer.resolve(obj);
                 }
-            });            
+            });
         }
     })
 
@@ -109,7 +109,7 @@ export function objectFromFile(filePath: string, defObj?:any): Q.Promise<any> {
 
 export function getOrCreateObjectFromFile<T>(filePath: string, defObj: T): Q.Promise<GetOrCreateResult<T>> {
     var defer = Q.defer<GetOrCreateResult<T>>();
-    
+
     fs.exists(filePath, (exists) => {
         if (!exists) {
             fs.writeFile(filePath, JSON.stringify(defObj, null, 2), (err) => {
@@ -136,7 +136,7 @@ export function getOrCreateObjectFromFile<T>(filePath: string, defObj: T): Q.Pro
                         result: obj
                     });
                 }
-            });            
+            });
         }
     })
 
@@ -148,7 +148,7 @@ export function exec(cmdLine: string): Q.Promise<any> {
     var defer = Q.defer<any>();
 
     shell.exec(cmdLine, (code, output) => {
-        defer.resolve({code: code, output: output});
+        defer.resolve({ code: code, output: output });
     });
 
     return defer.promise;
@@ -219,7 +219,7 @@ export function readDirectory(directory: string, includeFiles: boolean, includeF
 
 export function archiveFiles(files: string[], archiveName: string): Q.Promise<string> {
     var defer = Q.defer<string>();
-    
+
     var archive = path.join(shell.tempdir(), archiveName);
     var output = fs.createWriteStream(archive);
 
@@ -228,9 +228,9 @@ export function archiveFiles(files: string[], archiveName: string): Q.Promise<st
     zipArchive.finalize(function(err, bytes) {
         if (err)
             defer.reject(err);
-            return defer.promise;
+        return defer.promise;
     });
-    
+
     defer.resolve(archive);
     return defer.promise;
 }

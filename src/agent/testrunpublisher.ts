@@ -34,10 +34,10 @@ export class TestRunPublisher {
 
     // used for logging warnings, errors  
     private command: cm.ITaskCommand;
-    
+
     // for identifying context(buildId, platform, config, etc), which is needed while publishing 
     private runContext: TestRunContext;
-    
+
     // for reading different(junit, nunit) result files 
     private reader: IResultReader;
 
@@ -50,14 +50,14 @@ export class TestRunPublisher {
 
         var testRun: ifm.TestRunWithResults;
 
-        this.reader.readResults(file, this.runContext).then(function (testRun) {
+        this.reader.readResults(file, this.runContext).then(function(testRun) {
             defer.resolve(testRun);
-        }).fail(function (err) {
+        }).fail(function(err) {
             defer.reject(err);
         });
 
         return defer.promise;
-    }  
+    }
 
     //-----------------------------------------------------
     // Start a test run - create a test run entity on the server, and marks it in progress
@@ -68,14 +68,14 @@ export class TestRunPublisher {
         var defer = Q.defer();
 
         var _this = this;
-        
-        _this.service.createTestRun(testRun).then(function (createdTestRun) {
-             defer.resolve(createdTestRun);     
-        }, function (err) {
-            defer.reject(err);  
+
+        _this.service.createTestRun(testRun).then(function(createdTestRun) {
+            defer.resolve(createdTestRun);
+        }, function(err) {
+            defer.reject(err);
         });
         return defer.promise;
-     }
+    }
 
     //-----------------------------------------------------
     // Stop a test run - mark it completed
@@ -113,11 +113,11 @@ export class TestRunPublisher {
         }).fail(function(err) {
             defer.reject(err);
         });
-        
+
         return defer.promise;
     }
-    
-     //-----------------------------------------------------
+
+    //-----------------------------------------------------
     // Stop a test run - mark it completed
     // - testRun: TestRun - test run to be published  
     //-----------------------------------------------------
@@ -142,7 +142,7 @@ export class TestRunPublisher {
         }).fail(function(err) {
             defer.reject(err);
         });
-        
+
         return defer.promise;
     }
 
@@ -151,19 +151,19 @@ export class TestRunPublisher {
     // - testrunID: number - runId against which results are to be published 
     // - testRunResults: TestRunResult[] - testresults to be published  
     //-----------------------------------------------------
-    public addResults(testRunId: number, testResults: testifm.TestResultCreateModel[]) : Q.Promise<testifm.TestCaseResult[]> {
+    public addResults(testRunId: number, testResults: testifm.TestResultCreateModel[]): Q.Promise<testifm.TestCaseResult[]> {
         var defer = Q.defer();
         var _this = this;
 
         var i = 0;
-        var batchSize = 100; 
+        var batchSize = 100;
         var returnedResults;
         async.whilst(
-            function () {
-                return i < testResults.length; 
+            function() {
+                return i < testResults.length;
             },
-            function (callback) {
-                var noOfResultsToBePublished = batchSize; 
+            function(callback) {
+                var noOfResultsToBePublished = batchSize;
                 if (i + batchSize >= testResults.length) {
                     noOfResultsToBePublished = testResults.length - i;
                 }
@@ -171,20 +171,20 @@ export class TestRunPublisher {
                 i = i + batchSize;
 
                 var _callback = callback;
-                _this.service.createTestRunResult(testRunId, currentBatch).then(function (createdTestResults) {
+                _this.service.createTestRunResult(testRunId, currentBatch).then(function(createdTestResults) {
                     returnedResults = createdTestResults;
                     setTimeout(_callback, 10);
                 },
-                function (err) {
-                    defer.reject(err);
-                }); 
+                    function(err) {
+                        defer.reject(err);
+                    });
             },
-            function (err) {
-                defer.resolve(returnedResults); 
-        });
+            function(err) {
+                defer.resolve(returnedResults);
+            });
 
         return defer.promise;
-    } 
+    }
 
     //-----------------------------------------------------
     // Publish a test run
@@ -192,35 +192,35 @@ export class TestRunPublisher {
     //-----------------------------------------------------
     public publishTestRun(resultFilePath: string): Q.Promise<testifm.TestRun> {
         var defer = Q.defer();
-        
+
         var _this = this;
         var testRunId;
-        var results; 
+        var results;
 
-        _this.readResults(resultFilePath).then(function (res) {
+        _this.readResults(resultFilePath).then(function(res) {
             results = res.testResults;
             return _this.startTestRun(res.testRun);
-        }).then(function (res) {
+        }).then(function(res) {
             testRunId = res.id;
             return _this.addResults(testRunId, results);
-        }).then(function (res) {
+        }).then(function(res) {
             return _this.endTestRun(testRunId, resultFilePath);
-        }).then(function (res) {
+        }).then(function(res) {
             defer.resolve(res);
-        }).fail(function (err) {
+        }).fail(function(err) {
             defer.reject(err);
-        }); 
+        });
 
         return defer.promise;
     }
-    
+
     //-----------------------------------------------------
     // Publish a test run
     // - resultFiles: string - Path to the results files
     //-----------------------------------------------------
     public publishMergedTestRun(resultFiles: string[]): Q.Promise<testifm.TestRun> {
         var defer = Q.defer();
-        
+
         var _this = this;
         var testRunId;
 
@@ -230,18 +230,18 @@ export class TestRunPublisher {
         var currentTime = Date.now();
 
         for (var i = 0; i < resultFiles.length; i++) {
-            var report = _this.readResults(resultFiles[i]).then(function (res){
+            var report = _this.readResults(resultFiles[i]).then(function(res) {
                 res.testResults.forEach(tr => {
                     totalTestCaseDuration += +tr.durationInMs;
                 });
                 totalTestResults = totalTestResults.concat(res.testResults);
             });
-            
+
         }
-        
+
         var startDate = new Date(currentTime);
         var completedDate = new Date(currentTime + totalTestCaseDuration);
-        
+
         //create test run data
         var testRun = <testifm.RunCreateModel>{
             name: this.runContext.runTitle,
@@ -255,7 +255,7 @@ export class TestRunPublisher {
             releaseUri: this.runContext.releaseUri,
             releaseEnvironmentUri: this.runContext.releaseEnvironmentUri
         };
-       
+
         _this.startTestRun(testRun).then(function(res) {
             testRunId = res.id;
             return _this.addResults(testRunId, totalTestResults);
@@ -265,7 +265,7 @@ export class TestRunPublisher {
             defer.resolve(res);
         }).fail(function(err) {
             defer.reject(err);
-        }); 
+        });
 
         return defer.promise;
     }
@@ -281,7 +281,7 @@ export interface TestRunContext {
     config: string;
     runTitle: string;
     publishRunAttachments: boolean;
-   // fileNumber: string;
+    // fileNumber: string;
     releaseUri: string;
     releaseEnvironmentUri: string;
 };
@@ -291,5 +291,5 @@ export interface TestRunContext {
 //-----------------------------------------------------
 export interface IResultReader {
     // Reads a test results file from disk  
-    readResults(filePath: string, runContext: TestRunContext): Q.Promise<ifm.TestRunWithResults>; 
+    readResults(filePath: string, runContext: TestRunContext): Q.Promise<ifm.TestRunWithResults>;
 }

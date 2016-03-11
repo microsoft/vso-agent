@@ -51,7 +51,7 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
             //fileNumber: fileNumber,
             publishRunAttachments: publishRunAttachments
         };
-        
+
         var reader;
         if (resultType == "junit") {
             reader = new trr.JUnitResultReader(this.command);
@@ -69,8 +69,8 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
         if (reader != null) {
             var testRunPublisher = new trp.TestRunPublisher(this.executionContext.service, command, teamProject, testRunContext, reader);
             var resultFiles = resultFilesPath.split(",");
-            
-            if (!mergeResults) {   
+
+            if (!mergeResults) {
                 for (var i = 0; i < resultFiles.length; i++) {
                     testRunPublisher.publishTestRun(resultFiles[i]).then(function(createdTestRun) {
                         defer.resolve(null);
