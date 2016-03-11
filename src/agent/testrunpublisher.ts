@@ -119,7 +119,8 @@ export class TestRunPublisher {
 
     //-----------------------------------------------------
     // Stop a test run - mark it completed
-    // - testRun: TestRun - test run to be published  
+    // - testRunId: number - test run id to be published
+    // - resultFile: string - test run file name
     //-----------------------------------------------------
     public publishTestRunFiles(testRunId: number, resultFile: string): Q.Promise<any> {
         var defer = Q.defer();
@@ -194,7 +195,7 @@ export class TestRunPublisher {
         var defer = Q.defer();
 
         var _this = this;
-        var testRunId;
+        var testRunId: number;
         var results;
 
         _this.readResults(resultFilePath).then(function(res) {
@@ -222,17 +223,15 @@ export class TestRunPublisher {
         var defer = Q.defer();
 
         var _this = this;
-        var testRunId;
-
+        var testRunId: number;
         var totalTestCaseDuration: number = 0;
         var totalTestResults: testifm.TestResultCreateModel[] = [];
-        var testName;
-        var currentTime = Date.now();
 
         _this.readTestReports(resultFiles).then(function(res) {
             totalTestResults = totalTestResults.concat(res.totalTestResults);
             totalTestCaseDuration += res.totalTestCaseDuration;
 
+            var currentTime = Date.now();
             var startDate = new Date(currentTime);
             var completedDate = new Date(currentTime + totalTestCaseDuration);
 
