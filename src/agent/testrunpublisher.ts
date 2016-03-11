@@ -91,7 +91,7 @@ export class TestRunPublisher {
             if (_this.runContext.publishRunAttachments === true) {
                 if (publishArchive) {
                     var filesToArchive = resultFilePath.split(",");
-                    utilities.archiveFiles(filesToArchive, "testrunfiles" + _this.runContext.buildId + ".zip").then(function(zipFile) {
+                    utilities.archiveFiles(filesToArchive, "TestResults_" + _this.runContext.buildId + ".zip").then(function(zipFile) {
                         _this.publishTestRunFiles(testRunId, zipFile).then(function(res) {
                             defer.resolve(endedTestRun);
                         }).fail(function(err) {
