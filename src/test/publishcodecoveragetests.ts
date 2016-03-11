@@ -393,7 +393,7 @@ describe('CodeCoveragePublisherTests', function() {
         var codeCoveragePublishCommand = new cpc.CodeCoveragePublishCommand(testExecutionContext, command);
         codeCoveragePublishCommand.runCommandAsync().then(function(result) {
             assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
-            assert(testExecutionContext.service.containerItems.length == 8);
+            assert(testExecutionContext.service.containerItems.length == 7);
             assert(testExecutionContext.service.artifactNames.length == 1);
             assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1")
             assert(result);
@@ -419,7 +419,7 @@ describe('CodeCoveragePublisherTests', function() {
         var codeCoveragePublishCommand = new cpc.CodeCoveragePublishCommand(testExecutionContext, command);
         codeCoveragePublishCommand.runCommandAsync().then(function(result) {
             assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
-            assert(testExecutionContext.service.containerItems.length == 10);
+            assert(testExecutionContext.service.containerItems.length == 9);
             assert(testExecutionContext.service.artifactNames.length == 2);
             assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1")
             assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1")
@@ -537,7 +537,7 @@ describe('CodeCoveragePublisherTests', function() {
             done();
         },
             function(err) {
-                assert(testExecutionContext.service.containerItems.length == 8);
+                assert(testExecutionContext.service.containerItems.length == 7);
                 assert(testExecutionContext.service.artifactNames.length == 1);
                 assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1")
                 assert(err == "Error: Error occured while publishing artifact")
@@ -563,7 +563,7 @@ describe('CodeCoveragePublisherTests', function() {
             done();
         },
             function(err) {
-                assert(testExecutionContext.service.containerItems.length == 10);
+                assert(testExecutionContext.service.containerItems.length == 9);
                 assert(testExecutionContext.service.artifactNames.length == 2);
                 assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
                 assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1")

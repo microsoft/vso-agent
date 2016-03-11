@@ -61,7 +61,8 @@ gulp.task('testPrep', function () {
 						'src/test/projects/**',
 						'src/test/tasks/**',
 						'src/test/scripts/**',
-						'src/test/testresults/**', 
+						'src/test/testresults/**',
+                        'src/test/codecoveragefiles/**',
 						'src/vso-task-lib/**', 
 						'!src/test/definitions'];
 	
