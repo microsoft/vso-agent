@@ -32,9 +32,12 @@ describe('PublisherTests', function() {
     var readerXUnit = new trr.XUnitResultReader(command);
 
     var resultsFileJUnit = path.resolve(__dirname, './testresults/junitresults1.xml');
+    var resultsFileJUnit2 = path.resolve(__dirname, './testresults/junitresults2.xml');
     var resultstFileJUnitMultiNode = path.resolve(__dirname, './testresults/Junit_test2.xml');
     var resultsFileNUnit = path.resolve(__dirname, './testresults/nunitresults.xml');
+    var resultsFileNUnit2 = path.resolve(__dirname, './testresults/nunitresults.1.xml');
     var resultsFileXUnit = path.resolve(__dirname, './testresults/xunitresults.xml');
+    var resultsFileXUnit2 = path.resolve(__dirname, './testresults/xunitresults.1.xml');
 
     var feedbackChannel;
     var testRunPublisher;
@@ -384,6 +387,50 @@ describe('PublisherTests', function() {
             }).fail(function(err) {
                 assert(false, 'XUnit Reader Failed! Details : ' + err.message);
                 done(err);
+            });
+    })
+
+    it('results.publish : JUnit results file with merge support', function(done) {
+        this.timeout(2000);
+        feedbackChannel = new fm.TestFeedbackChannel();
+        testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerJUnit);
+
+        testRunPublisher.publishMergedTestRun([resultsFileJUnit, resultsFileJUnit2]).then(function(createdTestRun) {
+            assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
+            done();
+        },
+            function(err) {
+                assert(false, 'ResultPublish Task Failed! Details : ' + err.message);
+            });
+    })
+
+    it('results.publish : NUnit results file with merge support', function(done) {
+        this.timeout(2000);
+
+        feedbackChannel = new fm.TestFeedbackChannel();
+        testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerNUnit);
+
+        testRunPublisher.publishMergedTestRun([resultsFileNUnit, resultsFileNUnit2]).then(function(createdTestRun) {
+            assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
+            done();
+        },
+            function(err) {
+                assert(false, 'ResultPublish Task Failed! Details : ' + err.message);
+            });
+    })
+
+    it('results.publish : JUnit results file with merge support', function(done) {
+        this.timeout(2000);
+
+        feedbackChannel = new fm.TestFeedbackChannel();
+        testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerXUnit);
+
+        testRunPublisher.publishMergedTestRun([resultsFileXUnit, resultsFileXUnit2]).then(function(createdTestRun) {
+            assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
+            done();
+        },
+            function(err) {
+                assert(false, 'ResultPublish Task Failed! Details : ' + err.message);
             });
     })
 });	

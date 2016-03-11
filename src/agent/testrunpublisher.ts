@@ -91,7 +91,7 @@ export class TestRunPublisher {
             if (_this.runContext.publishRunAttachments === true) {
                 if (publishArchive) {
                     var filesToArchive = resultFilePath.split(",");
-                    utilities.archiveFiles(filesToArchive, "attachments.zip").then(function(zipFile) {
+                    utilities.archiveFiles(filesToArchive, "testrunfiles" + _this.runContext.buildId + ".zip").then(function(zipFile) {
                         _this.publishTestRunFiles(testRunId, zipFile).then(function(res) {
                             defer.resolve(endedTestRun);
                         }).fail(function(err) {
@@ -229,43 +229,74 @@ export class TestRunPublisher {
         var testName;
         var currentTime = Date.now();
 
+        _this.readTestReports(resultFiles).then(function(res) {
+            totalTestResults = totalTestResults.concat(res.totalTestResults);
+            totalTestCaseDuration += res.totalTestCaseDuration;
+
+            var startDate = new Date(currentTime);
+            var completedDate = new Date(currentTime + totalTestCaseDuration);
+
+            //create test run data
+            var testRun = <testifm.RunCreateModel>{
+                name: _this.runContext.runTitle,
+                startDate: startDate.toISOString(),
+                completeDate: completedDate.toISOString(),
+                state: "InProgress",
+                automated: true,
+                buildPlatform: _this.runContext.platform,
+                buildFlavor: _this.runContext.config,
+                build: { id: _this.runContext.buildId },
+                releaseUri: _this.runContext.releaseUri,
+                releaseEnvironmentUri: _this.runContext.releaseEnvironmentUri
+            };
+
+            _this.startTestRun(testRun).then(function(res) {
+                testRunId = res.id;
+                return _this.addResults(testRunId, totalTestResults);
+            }).then(function(res) {
+                return _this.endTestRun(testRunId, resultFiles.join(","), true);
+            }).then(function(res) {
+                defer.resolve(testRun);
+            }).fail(function(err) {
+                defer.reject(err);
+            });
+        }).fail(function(err) {
+            defer.reject(err);
+        });
+
+        return defer.promise;
+    }
+
+    public readTestReports(resultFiles: string[]): Q.Promise<testifm.TestRunDetails> {
+        var _this = this;
+        var defer = Q.defer();
+        var totalTestCaseDuration: number = 0;
+        var totalTestResults: testifm.TestResultCreateModel[] = [];
+        var j = 0;
+
+        if (resultFiles.length == 0) {
+            defer.resolve(null);
+        }
+
         for (var i = 0; i < resultFiles.length; i++) {
             var report = _this.readResults(resultFiles[i]).then(function(res) {
                 res.testResults.forEach(tr => {
                     totalTestCaseDuration += +tr.durationInMs;
                 });
                 totalTestResults = totalTestResults.concat(res.testResults);
+
+                //This little hack make sures that we are returning once reading of all files is completed in async.
+                j++;
+                if (j == resultFiles.length) {
+                    var testRunDetails = <testifm.TestRunDetails>{
+                        totalTestResults: totalTestResults,
+                        totalTestCaseDuration: totalTestCaseDuration
+                    };
+                    defer.resolve(testRunDetails);
+                    return defer.promise;
+                }
             });
-
         }
-
-        var startDate = new Date(currentTime);
-        var completedDate = new Date(currentTime + totalTestCaseDuration);
-
-        //create test run data
-        var testRun = <testifm.RunCreateModel>{
-            name: this.runContext.runTitle,
-            startDate: startDate.toISOString(),
-            completeDate: completedDate.toISOString(),
-            state: "InProgress",
-            automated: true,
-            buildPlatform: this.runContext.platform,
-            buildFlavor: this.runContext.config,
-            build: { id: this.runContext.buildId },
-            releaseUri: this.runContext.releaseUri,
-            releaseEnvironmentUri: this.runContext.releaseEnvironmentUri
-        };
-
-        _this.startTestRun(testRun).then(function(res) {
-            testRunId = res.id;
-            return _this.addResults(testRunId, totalTestResults);
-        }).then(function(res) {
-            return _this.endTestRun(testRunId, resultFiles.join(","), true);
-        }).then(function(res) {
-            defer.resolve(res);
-        }).fail(function(err) {
-            defer.reject(err);
-        });
 
         return defer.promise;
     }

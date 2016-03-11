@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!--This file represents the results of running a test suite-->
+<test-results name="/Volumes/Data/xamarin/workspaces/android-csharp-test-job-c2a0f46d-7bf3-4ba8-97ce-ce8a8fdd1c4720150429-96377-8lrqzf/CreditCardValidation.Tests.dll" total="4" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2015-04-29" time="16:49:41">
+  <culture-info current-culture="en-US" current-uiculture="en-US" />
+  <test-suite type="Assembly" name="/Volumes/Data/xamarin/workspaces/android-csharp-test-job-c2a0f46d-7bf3-4ba8-97ce-ce8a8fdd1c4720150429-96377-8lrqzf/CreditCardValidation.Tests.dll" executed="True" result="Success" success="True" time="164.921" asserts="0">
+    <results>
+      <test-suite type="Namespace" name="CreditCardValidation" executed="True" result="Success" success="True" time="164.915" asserts="0">
+        <results>
+          <test-suite type="Namespace" name="Tests" executed="True" result="Success" success="True" time="164.914" asserts="0">
+            <results>
+              <test-suite type="TestFixture" name="ValidateCreditCardTests" executed="True" result="Success" success="True" time="164.913" asserts="0">
+                <results>
+                  <test-suite type="ParameterizedTest" name="CreditCardNumber_CorrectSize_DisplaySuccessScreen" executed="True" result="Success" success="True" time="41.982" asserts="0">
+                    <results>
+                      <test-case name="CreditCardValidation.Tests.ValidateCreditCardTests.CreditCardNumber_CorrectSize_DisplaySuccessScreen(Android)_lg_nexus_5_4_4_4" executed="True" result="Success" success="True" time="36.305" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="CreditCardNumber_IsBlank_DisplayErrorMessage" executed="True" result="Success" success="True" time="41.656" asserts="0">
+                    <results>
+                      <test-case name="CreditCardValidation.Tests.ValidateCreditCardTests.CreditCardNumber_IsBlank_DisplayErrorMessage(Android)_lg_nexus_5_4_4_4" executed="True" result="Success" success="True" time="36.770" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="CreditCardNumber_TooLong_DisplayErrorMessage" executed="True" result="Success" success="True" time="40.515" asserts="0">
+                    <results>
+                      <test-case name="CreditCardValidation.Tests.ValidateCreditCardTests.CreditCardNumber_TooLong_DisplayErrorMessage(Android)_lg_nexus_5_4_4_4" executed="True" result="Success" success="True" time="35.480" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="CreditCardNumber_TooShort_DisplayErrorMessage" executed="True" result="Success" success="True" time="40.748" asserts="0">
+                    <results>
+                      <test-case name="CreditCardValidation.Tests.ValidateCreditCardTests.CreditCardNumber_TooShort_DisplayErrorMessage(Android)_lg_nexus_5_4_4_4" executed="True" result="Success" success="True" time="35.967" asserts="1" />
+                    </results>
+                  </test-suite>
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>
