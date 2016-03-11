@@ -213,7 +213,7 @@ export class SummaryReaderUtilities {
         }
         return coverageStat;
     }
-    
+
     public static getCodeCoverageData(codeCoverageSummary: CodeCoverageSummary): testifm.CodeCoverageData {
         if (!codeCoverageSummary) {
             return null;

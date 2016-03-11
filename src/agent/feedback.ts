@@ -101,9 +101,9 @@ function ensureTrace(writer: cm.ITraceWriter) {
 
 export class ServiceChannel extends events.EventEmitter implements cm.IServiceChannel {
     constructor(agentUrl: string,
-                collectionUrl: string,
-                jobInfo: cm.IJobInfo,
-                hostContext: ctxm.HostContext) {
+        collectionUrl: string,
+        jobInfo: cm.IJobInfo,
+        hostContext: ctxm.HostContext) {
         super();
 
         ensureTrace(hostContext);
@@ -147,8 +147,8 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
                 else {
                     this.taskApi.updateRecords(
                         { value: values, count: values.length },
-                        this.jobInfo.variables[cm.vars.systemTeamProjectId], 
-                        this.jobInfo.description, 
+                        this.jobInfo.variables[cm.vars.systemTeamProjectId],
+                        this.jobInfo.description,
                         this.jobInfo.planId,
                         this.jobInfo.timelineId,
                         (err, status, records) => {
@@ -175,7 +175,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
     public enabled: boolean;
     public agentUrl: string;
     public collectionUrl: string;
-    
+
     public hostContext: ctxm.HostContext;
     public jobInfo: cm.IJobInfo;
 
@@ -234,7 +234,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
         if (line.length > 512) {
             line = line.substring(0, 509) + '...';
         }
-                
+
         trace.write('qline: ' + line);
         this._consoleQueue.push(line);
     }
@@ -248,17 +248,17 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
         trace.enter('servicechannel:updateJobRequest');
         trace.write('poolId: ' + poolId);
         trace.write('lockToken: ' + lockToken);
-        
+
         process.send({
             messageType: 'updateJobRequest',
             poolId: poolId,
             lockToken: lockToken,
             jobRequest: jobRequest
         });
-        
+
         return Q.resolve(null);
     }
-    
+
     public finishJobRequest(poolId: number, lockToken: string, jobRequest: agentifm.TaskAgentJobRequest): Q.Promise<any> {
         trace.enter('servicechannel:finishJobRequest');
         
@@ -269,7 +269,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
         // wait for the lock renewer to finish. this is only really meaningful if it's actually in the middle of an HTTP request
         return this._lockRenewer.finished.then(() => {
             trace.write('lock renewer shut down');
-            return this.updateJobRequest(poolId, lockToken, jobRequest); 
+            return this.updateJobRequest(poolId, lockToken, jobRequest);
         });
     }
 
@@ -286,7 +286,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
         var current = this._getIssues(recordId);
         var record = this._getFromBatch(recordId);
         if (current.errorCount < process.env.VSO_ERROR_COUNT ? process.env.VSO_ERROR_COUNT : 10) {
-            var error = <agentifm.Issue> {};
+            var error = <agentifm.Issue>{};
             error.category = category;
             error.type = agentifm.IssueType.Error;
             error.message = message;
@@ -303,7 +303,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
         var current = this._getIssues(recordId);
         var record = this._getFromBatch(recordId);
         if (current.warningCount < process.env.VSO_WARNING_COUNT ? process.env.VSO_WARNING_COUNT : 10) {
-            var warning = <agentifm.Issue> {};
+            var warning = <agentifm.Issue>{};
             warning.category = category;
             warning.type = agentifm.IssueType.Error;
             warning.message = message;
@@ -374,12 +374,12 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
         trace.state('containerItemTuple', containerItemTuple);
         var contentStream: NodeJS.ReadableStream = fs.createReadStream(containerItemTuple.fullPath);
 
-        return this._fileContainerApi.createItem(containerItemTuple.uploadHeaders, 
-            contentStream, 
-            containerId, 
-            containerItemTuple.containerItem.path, 
+        return this._fileContainerApi.createItem(containerItemTuple.uploadHeaders,
+            contentStream,
+            containerId,
+            containerItemTuple.containerItem.path,
             this.jobInfo.variables[cm.vars.systemTeamProjectId]);
-    }  
+    }
 
     public postArtifact(projectId: string, buildId: number, artifact: buildifm.BuildArtifact): Q.Promise<buildifm.BuildArtifact> {
         trace.state('artifact', artifact);
@@ -405,8 +405,8 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
     //------------------------------------------------------------------
     // Code coverage items
     //------------------------------------------------------------------
-     public publishCodeCoverageSummary(coverageData:testifm.CodeCoverageData, project: string, buildId: number): Q.Promise<any> {
-                  
+    public publishCodeCoverageSummary(coverageData: testifm.CodeCoverageData, project: string, buildId: number): Q.Promise<any> {
+
         this._testApi = new webapim.WebApi(this.jobInfo.variables[cm.AutomationVariables.systemTfCollectionUri], this.jobInfo.systemAuthHandler).getQTestApi();
         return this._testApi.updateCodeCoverageSummary(coverageData, project, buildId);
     }
@@ -425,9 +425,9 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
         return this._testApi.createTestRun(testRun, this._projectName);
     }
 
-    public endTestRun(testRunId: number) : Q.Promise<testifm.TestRun> {
+    public endTestRun(testRunId: number): Q.Promise<testifm.TestRun> {
         trace.enter('servicechannel:endTestRun');
-        var endedRun: testifm.RunUpdateModel = <testifm.RunUpdateModel> {
+        var endedRun: testifm.RunUpdateModel = <testifm.RunUpdateModel>{
             state: "Completed"
         };
         return this._testApi.updateTestRun(endedRun, this._projectName, testRunId);
@@ -519,8 +519,8 @@ export class WebConsoleQueue extends BaseQueue<string> {
         else {
             this._taskApi.appendTimelineRecordFeed(
                 { value: values, count: values.length },
-                this._jobInfo.variables[cm.vars.systemTeamProjectId], 
-                this._jobInfo.description, 
+                this._jobInfo.variables[cm.vars.systemTeamProjectId],
+                this._jobInfo.description,
                 this._jobInfo.planId,
                 this._jobInfo.timelineId,
                 this._jobInfo.jobId,
@@ -551,43 +551,43 @@ export class AsyncCommandQueue extends BaseQueue<cm.IAsyncCommand> implements cm
             callback(null);
         }
         else {
-            async.forEachSeries(commands, 
+            async.forEachSeries(commands,
                 (asyncCmd: cm.IAsyncCommand, done: (err: any) => void) => {
 
-                if (this.failed) {
-                    done(null);
-                    return;
-                }
-
-                var outputLines = function (asyncCmd: cm.IAsyncCommand) {
-                    asyncCmd.executionContext.info(' ');
-                    asyncCmd.executionContext.info('Start: ' + asyncCmd.description);
-                    asyncCmd.command.lines.forEach(function (line) {
-                        asyncCmd.executionContext.info(line);
-                    });
-                    asyncCmd.executionContext.info('End: ' + asyncCmd.description);
-                    asyncCmd.executionContext.info(' ');
-                }
-
-                asyncCmd.runCommandAsync()
-                    .then(() => {
-                        outputLines(asyncCmd);
-                    })
-                    .fail((err) => {  
-                        this.failed = true;
-                        this.errorMessage = err.message;
-                        outputLines(asyncCmd);
-                        asyncCmd.executionContext.error(this.errorMessage);
-                        asyncCmd.executionContext.info('Failing task since command failed.')                    
-                    })
-                    .fin(function() {
+                    if (this.failed) {
                         done(null);
-                    })
+                        return;
+                    }
 
-            }, (err: any) => {
-                // queue never fails - we simply don't process items once one has failed.
-                callback(null);
-            });
+                    var outputLines = function(asyncCmd: cm.IAsyncCommand) {
+                        asyncCmd.executionContext.info(' ');
+                        asyncCmd.executionContext.info('Start: ' + asyncCmd.description);
+                        asyncCmd.command.lines.forEach(function(line) {
+                            asyncCmd.executionContext.info(line);
+                        });
+                        asyncCmd.executionContext.info('End: ' + asyncCmd.description);
+                        asyncCmd.executionContext.info(' ');
+                    }
+
+                    asyncCmd.runCommandAsync()
+                        .then(() => {
+                            outputLines(asyncCmd);
+                        })
+                        .fail((err) => {
+                            this.failed = true;
+                            this.errorMessage = err.message;
+                            outputLines(asyncCmd);
+                            asyncCmd.executionContext.error(this.errorMessage);
+                            asyncCmd.executionContext.info('Failing task since command failed.')
+                        })
+                        .fin(function() {
+                            done(null);
+                        })
+
+                }, (err: any) => {
+                    // queue never fails - we simply don't process items once one has failed.
+                    callback(null);
+                });
         }
     }
 }
@@ -646,8 +646,8 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
                                     serverLogPath = 'logs\\' + recordId; // FCS expects \
                                     this._taskApi.createLog(
                                         <agentifm.TaskLog>{ path: serverLogPath },
-                                        this._jobInfo.variables[cm.vars.systemTeamProjectId], 
-                                        this._jobInfo.description, 
+                                        this._jobInfo.variables[cm.vars.systemTeamProjectId],
+                                        this._jobInfo.description,
                                         planId,
                                         (err: any, statusCode: number, log: agentifm.TaskLog) => {
                                             if (err) {
@@ -730,7 +730,7 @@ export class LockRenewer extends TimedWorker {
 
         // finished is initially a resolved promise, because a renewal is not in progress
         this.finished = Q(null);
-        
+
         this._jobInfo = jobInfo;
         this._poolId = poolId;
         trace.write('_poolId: ' + this._poolId);
@@ -756,14 +756,14 @@ export class LockRenewer extends TimedWorker {
         // create a new, unresolved "finished" promise
         var deferred: Q.Deferred<any> = Q.defer();
         this.finished = deferred.promise;
-        
+
         process.send({
             messageType: 'updateJobRequest',
             poolId: this._poolId,
             lockToken: this._jobInfo.lockToken,
             jobRequest: jobRequest
         });
-        
+
         deferred.resolve(null);
         return deferred.promise;
     }

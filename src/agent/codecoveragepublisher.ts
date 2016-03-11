@@ -98,7 +98,7 @@ export class CodeCoveragePublisher {
 
         _this.uploadArtifact(newReportDirectory, codeCoverageArtifactName, containerId).then(function() {
             try {
-                 _this.command.info("PublishCodeCoverageFiles : Code coverage report published successfully.");
+                _this.command.info("PublishCodeCoverageFiles : Code coverage report published successfully.");
 
                 // clean the temporary report directory created.
                 if (!reportDirectoryExists) {
@@ -108,20 +108,20 @@ export class CodeCoveragePublisher {
                 if (!additionalCodeCoverageFiles || !(additionalCodeCoverageFiles.split(",")) || additionalCodeCoverageFiles.split(",").length <= 0) {
                     _this.command.info("PublishCodeCoverageFiles : No additional codecoverage files found to publish.");
                     defer.resolve(null);
-                    return defer.promise;   
+                    return defer.promise;
                 }
-                
+
                 var rawFiles: string[] = additionalCodeCoverageFiles.split(",");
                 var rawFilesDirectory = path.join(shell.tempdir(), "CodeCoverageFiles_" + _this.buildId);
                 shell.mkdir('-p', rawFilesDirectory);
                 _this.copyRawFiles(rawFiles, rawFilesDirectory);
                 var rawFilesArtifactName = "Code Coverage Files_" + _this.buildId;
-                
+
                 _this.command.info("PublishCodeCoverageFiles : Publishing additional code coverage files '" + rawFilesDirectory + "'");
                 _this.uploadArtifact(rawFilesDirectory, rawFilesArtifactName, containerId).then(function() {
                     // clean the temporary additional files folder created.
                     shell.rm('-rf', rawFilesDirectory);
-                    
+
                     _this.command.info("PublishCodeCoverageFiles : Additional code coverage files published successfully.");
                     defer.resolve(null);
                 }).fail(function(error) {
