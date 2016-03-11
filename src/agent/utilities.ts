@@ -57,7 +57,7 @@ export function isPathExists(path: string): boolean {
 export function ensurePathExists(path: string): Q.Promise<void> {
     var defer = Q.defer<void>();
 
-    if (fs.exists(path, (exists) => {
+    fs.exists(path, (exists) => {
         if (!exists) {
             shell.mkdir('-p', path);
 
@@ -73,7 +73,7 @@ export function ensurePathExists(path: string): Q.Promise<void> {
         else {
             defer.resolve(null);
         }
-    }));
+    });
 
     return defer.promise;
 }

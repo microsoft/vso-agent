@@ -374,12 +374,18 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
         trace.state('containerItemTuple', containerItemTuple);
         var contentStream: NodeJS.ReadableStream = fs.createReadStream(containerItemTuple.fullPath);
 
-        return this._fileContainerApi.createItem(containerItemTuple.uploadHeaders,
-            contentStream,
-            containerId,
-            containerItemTuple.containerItem.path,
-            this.jobInfo.variables[cm.vars.systemTeamProjectId]);
-    }
+        var options = {
+            isGzipped: containerItemTuple.isGzipped,
+            compressedLength: containerItemTuple.compressedLength
+        };
+
+        return this._fileContainerApi.createItem(contentStream, 
+            containerItemTuple.uncompressedLength,
+            containerId, 
+            containerItemTuple.containerItem.path, 
+            this.jobInfo.variables[cm.vars.systemTeamProjectId],
+            options);
+    }  
 
     public postArtifact(projectId: string, buildId: number, artifact: buildifm.BuildArtifact): Q.Promise<buildifm.BuildArtifact> {
         trace.state('artifact', artifact);
@@ -726,6 +732,7 @@ export class LogPageQueue extends BaseQueue<cm.ILogPageInfo> {
 // Job Renewal
 export class LockRenewer extends TimedWorker {
     constructor(jobInfo: cm.IJobInfo, poolId: number) {
+        super(LOCK_DELAY);
         trace.enter('LockRenewer');
 
         // finished is initially a resolved promise, because a renewal is not in progress
@@ -734,8 +741,6 @@ export class LockRenewer extends TimedWorker {
         this._jobInfo = jobInfo;
         this._poolId = poolId;
         trace.write('_poolId: ' + this._poolId);
-
-        super(LOCK_DELAY);
     }
 
     private _poolId: number;

@@ -22,12 +22,11 @@ export class MessageListener extends events.EventEmitter {
     private _sessionRetryCount;
 
     constructor(agentapi: agentm.ITaskAgentApi, agent: agentifm.TaskAgent, poolId: number) {
+        super();
         this.agentapi = agentapi;
         this.agent = agent;
         this.poolId = poolId;
         this._sessionRetryCount = 0;
-
-        super();
     }
 
     getMessages(callback: (message: agentifm.TaskAgentMessage) => void, onError: (err: any) => void): void {

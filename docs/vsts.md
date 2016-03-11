@@ -39,12 +39,6 @@ cd my agent
 curl -skSL http://aka.ms/xplatagent | bash
 ```
 
-To install preview version (usually master), use:
-
-```bash
-curl -skSL http://aka.ms/previewxplat | bash
-```
-
 Your output should look [similar to this](sampleoutput.md)
 
 If you have issues with this, fully realized zips are available.
