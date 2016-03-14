@@ -31,7 +31,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
 
     var job: agentifm.JobRequestMessage = executionContext.jobInfo.jobMessage;
     var variables: {[key: string]: string} = job.environment.variables;
-    
+
     //
     // Get the valid scm providers and filter endpoints
     //
@@ -42,13 +42,13 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         supported.push(path.basename(provPath, '.js'));
     })
     executionContext.debug('valid scm providers: ' + supported);
-    
+
     var endpoints: agentifm.ServiceEndpoint[] = job.environment.endpoints;
     var srcendpoints = endpoints.filter(function (endpoint: agentifm.ServiceEndpoint) {
         if (!endpoint.type) {
             return false;
         }
-        
+
         executionContext.info('Repository type: ' + endpoint.type);
         return (supported.indexOf(endpoint.type.toLowerCase()) >= 0);
     });
@@ -57,7 +57,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         callback(new Error('Unsupported SCM system.  Supported: ' + supported.toString()));
         return;
     }
-    
+
     // only support 1 SCM system
     var endpoint: agentifm.ServiceEndpoint = srcendpoints[0];
 
@@ -68,32 +68,32 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
     var providerType = endpoint.type.toLowerCase();
     executionContext.info('using source provider: ' + providerType);
 
-    try {        
+    try {
         var provPath = path.join(executionContext.scmPath, providerType);
         executionContext.info('loading: ' + provPath);
         scmm = require(provPath);
     }
     catch(err) {
         callback(new Error('Source Provider failed to load: ' + providerType));
-        return;        
+        return;
     }
-    
+
     if (!scmm.getProvider) {
         callback(new Error('SCM Provider does not implement getProvider: ' + providerType));
         return;
     }
-    
+
     var scmProvider: cm.IScmProvider = scmm.getProvider(executionContext, endpoint);
     scmProvider.initialize();
     scmProvider.debugOutput = executionContext.debugOutput;
     var hashKey: string = scmProvider.hashKey;
-    
+
     //
     // Get source mappings and set variables
     //
     var workingFolder = variables[cm.vars.agentWorkingDirectory];
     var repoPath: string;
-    
+
     var sm: smm.SourceMappings = new smm.SourceMappings(workingFolder, executionContext.hostContext);
     sm.supportsLegacyPaths = endpoint.type !== 'tfsversioncontrol';
     sm.getSourceMapping(hashKey, job, endpoint)
@@ -102,10 +102,10 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
 
         //
         // Variables
-        //        
+        //
         // back compat
-        variables['build.sourceDirectory'] = repoPath;     
-                
+        variables['build.sourceDirectory'] = repoPath;
+
         variables[cm.vars.buildSourcesDirectory] = repoPath;
         variables[cm.vars.systemDefaultWorkingDirectory] = repoPath;
         variables[cm.vars.buildArtifactStagingDirectory] = path.join(workingFolder, srcMap.build_artifactstagingdirectory);
@@ -114,10 +114,10 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         variables[cm.vars.buildStagingDirectory] = variables[cm.vars.buildArtifactStagingDirectory];
 
         variables[cm.vars.commonTestResultsDirectory] = path.join(workingFolder, srcMap.common_testresultsdirectory);
-        var bd = variables[cm.vars.agentBuildDirectory] = path.join(workingFolder, srcMap.agent_builddirectory);
+        var bd = variables[cm.vars.agentBuildDirectory] = variables[cm.vars.buildBinariesDirectory] = path.join(workingFolder, srcMap.agent_builddirectory);
         shell.mkdir('-p', bd);
         shell.cd(bd);
-        
+
         //
         // Do the work, optionally clean and get sources
         //
@@ -130,7 +130,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
             }
             else {
                 executionContext.info('running clean');
-                return scmProvider.clean();                
+                return scmProvider.clean();
             }
         }
         else {
@@ -158,16 +158,16 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
             if (!taskDef) {
                 throw new Error('Task definition for ' + task.id + ' not found.');
             }
-            
+
             // find the filePath inputs
             var filePathInputs: { [key: string]: boolean } = {};
             taskDef.inputs.forEach((input: agentifm.TaskInputDefinition) => {
                 if (input.type === 'filePath') {
                     filePathInputs[input.name] = true;
-                    trace.write('filePath input: ' + input.name);                       
+                    trace.write('filePath input: ' + input.name);
                 }
             });
-            
+
             // scan dictionary of input/val for pathInputs
             for (var key in task.inputs) {
                 if (filePathInputs.hasOwnProperty(key)) {
@@ -177,7 +177,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
                     trace.write('rewriting ' + key + ' to ' + resolvedPath);
                     task.inputs[key] = resolvedPath;
                 }
-            }    
+            }
         });
 
         return 0;
@@ -186,7 +186,7 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
         executionContext.info('CD: ' + repoPath);
         shell.cd(repoPath);
         callback();
-    })    
+    })
     .fail((err) => {
         callback(err);
         return;

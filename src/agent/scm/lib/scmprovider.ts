@@ -69,10 +69,28 @@ export class ScmProvider implements cm.IScmProvider {
 		
 		return paramValue;
 	}
+
+	private repoRootInFilePath(filePathInput : string) : boolean {
+		filePathInput = filePathInput.toLowerCase();
+		if(filePathInput.indexOf(cm.vars.buildSourcesDirectory.toLowerCase()) > -1 ||
+			filePathInput.indexOf(cm.vars.buildArtifactStagingDirectory.toLowerCase()) > -1 ||
+			filePathInput.indexOf(cm.vars.buildStagingDirectory.toLowerCase()) > -1 ||
+			filePathInput.indexOf(cm.vars.buildBinariesDirectory.toLowerCase()) > -1 ||
+			filePathInput.indexOf(cm.vars.systemDefaultWorkingDirectory.toLowerCase()) > -1 ||
+			filePathInput.indexOf(cm.vars.commonTestResultsDirectory.toLowerCase()) > -1 ||
+			filePathInput.indexOf(cm.vars.agentBuildDirectory.toLowerCase()) > -1 )  {
+			return true;
+		}
+		return false;
+	}
 	
     // override if more complex than appending to root of repo
     public resolveInputPath(inputPath: string) {
-        return path.resolve(this.targetPath, inputPath);
+		if (!this.repoRootInFilePath(inputPath)) {
+			return path.resolve(this.targetPath, inputPath);
+		} else {
+			return inputPath;
+		}
     }
     
 	// virtual - must override
