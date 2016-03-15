@@ -228,6 +228,82 @@ export class ResultReader {
         var testSuiteSummary = new TestSuiteSummary();
         var totalRunDuration = 0;
         var totalTestCaseDuration = 0;
+        
+        function extractTestResult(testCaseNode): testifm.TestResultCreateModel {
+            function pickFirst(type: string) {
+                if (testCaseNode[type].count() > 1) {
+                    if (this.command) {                        
+                        this.command.info("Multiple " + type + "s in the test case: " + testName + ". Picking the first for publishing!");
+                    }
+                    return testCaseNode[type].at(0);
+                } else {
+                    return testCaseNode[type];
+                }                
+            }
+                        
+            //testcase name and type
+            var testName = "";
+            if (testCaseNode.attributes().name) {
+                testName = testCaseNode.attributes().name;
+            }
+
+            var testStorage = "";
+            if (testCaseNode.attributes().classname) {
+                testStorage = testCaseNode.attributes().classname;
+            }
+
+            //testcase duration
+            var testCaseDuration = 0; //in seconds
+            if (testCaseNode.attributes().time) {
+                testCaseDuration = parseFloat(testCaseNode.attributes().time);
+                totalTestCaseDuration += testCaseDuration;
+            }
+            
+            //testcase outcome
+            var outcome = "Passed";
+            var errorMessage = "";
+            var stackTrace = "";
+            if (testCaseNode.failure) {
+                outcome = "Failed";
+                var testNode = pickFirst.call(this, 'failure');
+                if (testNode.text) {
+                    stackTrace = testNode.text();
+                }
+                if (testNode.attributes().message) {
+                    errorMessage = testNode.attributes().message;
+                }
+            }
+            else if (testCaseNode.error) {
+                outcome = "Failed";
+                var testNode = pickFirst.call(this, 'error');
+                if (testNode.text) {
+                    stackTrace = testNode.text();
+                }
+                if (testNode.attributes().message) {
+                    errorMessage = testNode.attributes().message;
+                }
+            }
+            else if (testCaseNode.skipped) {
+                outcome = "NotExecuted";
+                errorMessage = testCaseNode.skipped.text();
+            }
+
+            return <testifm.TestResultCreateModel>{
+                state: "Completed",
+                computerName: testSuiteSummary.host,
+                testCasePriority: "1",
+                automatedTestName: testName,
+                automatedTestStorage: testStorage,
+                automatedTestType: "JUnit",
+                owner: { id: buildRequestedFor },
+                runBy: { id: buildRequestedFor },
+                testCaseTitle: testName,
+                outcome: outcome,
+                errorMessage: errorMessage,
+                durationInMs: "" + Math.round(testCaseDuration * 1000), //convert to milliseconds and round to nearest whole number since server can't handle decimals for test case duration
+                stackTrace: stackTrace
+            };
+        }
 
         if (runTitle && 0 !== runTitle.length) {
             testSuiteSummary.name = this.fileNumberToTitle(runTitle, parseInt(fileNumber));
@@ -258,96 +334,11 @@ export class ResultReader {
         //find test case nodes in JUnit result xml
         var testResults = [];
 
-        for (var i = 0; i < rootNode.testcase.count(); i++) {
-            var testCaseNode = rootNode.testcase.at(i);
-
-            //testcase name and type
-            var testName = "";
-            if (testCaseNode.attributes().name) {
-                testName = testCaseNode.attributes().name;
+        if (rootNode.testcase) {
+            for (var i = 0; i < rootNode.testcase.count(); i++) {
+                var testCaseNode = rootNode.testcase.at(i);
+                testResults.push(extractTestResult.call(this, testCaseNode));
             }
-
-            var testStorage = "";
-            if (testCaseNode.attributes().classname) {
-                testStorage = testCaseNode.attributes().classname;
-            }
-
-            //testcase duration
-            var testCaseDuration = 0; //in seconds
-            if (testCaseNode.attributes().time) {
-                testCaseDuration = parseFloat(testCaseNode.attributes().time);
-                totalTestCaseDuration += testCaseDuration;
-            }
-            
-            //testcase outcome
-            var outcome = "Passed";
-            var errorMessage = "";
-            var stackTrace = "";
-            if (testCaseNode.failure) {
-                outcome = "Failed";
-                var testNode;
-
-                if (testCaseNode.failure.count() > 1) {
-                    if (this.command) {
-                        this.command.info("Multiple failures in the test case: " + testName + ". Picking the first for publishing!");
-                    }
-                    testNode = testCaseNode.failure.at(0);
-                }
-                else {
-                    testNode = testCaseNode.failure;
-                }
-
-                if (testNode.text) {
-                    stackTrace = testNode.text();
-                }
-
-                if (testNode.attributes().message) {
-                    errorMessage = testNode.attributes().message;
-                }
-            }
-            else if (testCaseNode.error) {
-                outcome = "Failed";
-                var testNode;
-
-                if (testCaseNode.error.count() > 1) {
-                    if (this.command) {
-                        this.command.info("Multiple errors in the test case: " + testName + ". Picking the first for publishing!");
-                    }
-                    testNode = testCaseNode.error.at(0);
-                }
-                else {
-                    testNode = testCaseNode.error;
-                }
-
-                if (testNode.text) {
-                    stackTrace = testNode.text();
-                }
-                if (testNode.attributes().message) {
-                    errorMessage = testNode.attributes().message;
-                }
-            }
-            else if (testCaseNode.skipped) {
-                outcome = "NotExecuted";
-                errorMessage = testCaseNode.skipped.text();
-            }
-
-            var testResult: testifm.TestResultCreateModel = <testifm.TestResultCreateModel>{
-                state: "Completed",
-                computerName: testSuiteSummary.host,
-                testCasePriority: "1",
-                automatedTestName: testName,
-                automatedTestStorage: testStorage,
-                automatedTestType: "JUnit",
-                owner: { id: buildRequestedFor },
-                runBy: { id: buildRequestedFor },
-                testCaseTitle: testName,
-                outcome: outcome,
-                errorMessage: errorMessage,
-                durationInMs: "" + Math.round(testCaseDuration * 1000), //convert to milliseconds and round to nearest whole number since server can't handle decimals for test case duration
-                stackTrace: stackTrace
-            };
-
-            testResults.push(testResult);
         }
 
         if (totalRunDuration < totalTestCaseDuration) {

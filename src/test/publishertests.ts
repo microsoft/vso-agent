@@ -33,6 +33,7 @@ describe('PublisherTests', function () {
 
     var resultsFileJUnit = path.resolve(__dirname, './testresults/junitresults1.xml');
     var resultstFileJUnitMultiNode = path.resolve(__dirname, './testresults/Junit_test2.xml');
+    var resultsFileJUnitEmptySuite = path.resolve(__dirname, './testresults/junit_with_empty_suite.xml');
     var resultsFileNUnit = path.resolve(__dirname, './testresults/nunitresults.xml');
     var resultsFileXUnit = path.resolve(__dirname, './testresults/xunitresults.xml');
 
@@ -66,6 +67,20 @@ describe('PublisherTests', function () {
         },
             function (err) {
                 assert(false, 'ResultPublish Task Failed! Details : ' + err.message);
+            });
+    })
+    
+    it('results.publish : JUnit results file with empty suites', function (done) {
+        feedbackChannel = new fm.TestFeedbackChannel();
+        testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerJUnit);
+
+        testRunPublisher.publishTestRun(resultsFileJUnitEmptySuite).then(function (createdTestRun) {
+            assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
+            done();
+        },
+            function (err) {
+                assert(false, 'ResultPublish Task Failed! Details : ' + err.message);
+                done();
             });
     })
 
