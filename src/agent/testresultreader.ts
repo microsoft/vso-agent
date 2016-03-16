@@ -138,7 +138,6 @@ export class ResultReader {
         else {
             return null;
         }
-
     }
 
     private parseJUnitXml(res, runContext, file) {
@@ -231,7 +230,9 @@ export class ResultReader {
         
         function extractTestResult(testCaseNode): testifm.TestResultCreateModel {
             function pickFirst(type: string) {
-                if (testCaseNode[type].count() > 1) {
+                if (!testCaseNode.hasOwnProperty(type)) {
+                    throw new Error("Cannot pick first element of type " + type);
+                } else if (testCaseNode[type].count() > 1) {
                     if (this.command) {                        
                         this.command.info("Multiple " + type + "s in the test case: " + testName + ". Picking the first for publishing!");
                     }
