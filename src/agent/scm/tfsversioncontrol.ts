@@ -14,7 +14,8 @@ export function getProvider(ctx: cm.IExecutionContext, endpoint: agentifm.Servic
 }
 
 export class TfsvcScmProvider extends scmm.ScmProvider {
-    constructor(ctx: cm.IExecutionContext, endpoint: agentifm.ServiceEndpoint) {
+    constructor(ctx: cm.IExecutionContext, endpoint: agentifm.ServiceEndpoint) {        
+        super(ctx, endpoint);
         this.tfvcw = new tfvcwm.TfvcWrapper();
         this.tfvcw.on('stdout', (data) => {
             ctx.info(data.toString());
@@ -23,9 +24,7 @@ export class TfsvcScmProvider extends scmm.ScmProvider {
         this.tfvcw.on('stderr', (data) => {
             ctx.info(data.toString());
         });
-
-        super(ctx, endpoint);
-
+        
         this.version = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceVersion'];
         this.shelveset = this.ctx.jobInfo.jobMessage.environment.variables['build.sourceTfvcShelveset'];
     }
