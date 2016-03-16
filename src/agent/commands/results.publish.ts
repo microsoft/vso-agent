@@ -65,7 +65,7 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
             this.command.warning("Test results of format '" + resultType + "'' are not supported on this build agent");
         }
 
-        if (reader != null) {
+        if (reader != null && resultFilesPath) {
             var testRunPublisher = new trp.TestRunPublisher(this.executionContext.service, command, teamProject, testRunContext, reader);
             var resultFiles = resultFilesPath.split(",");
 
