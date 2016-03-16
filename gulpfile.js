@@ -55,7 +55,7 @@ gulp.task('build', ['copy'], function () {
         .pipe(gulp.dest(buildPath));
 });
 
-gulp.task('testPrep', function () {
+gulp.task('testPrep', ['build'], function () {
     var buildSrc = gulp.src([path.join(buildPath, '**')]);
     var testSrcPaths = ['src/test/messages/**',
         'src/test/projects/**',
@@ -99,4 +99,4 @@ gulp.task('clean', function (done) {
     del([buildRoot, tarRoot, packageRoot, testRoot], done);
 });
 
-gulp.task('default', ['tar']);
+gulp.task('default', ['tar', 'test']);
