@@ -297,7 +297,7 @@ describe('PublisherTests', function () {
 
         return testRunPublisher.publishMergedTestRun([resultsFileJUnit, resultsFileJUnit2]).then(createTestRun => {
             assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
-        }).catch(err => console.log("ERROR", err));
+        });
     })
 
     it('results.publish : NUnit results file with merge support', () => {
