@@ -9,6 +9,7 @@ import fs = require('fs');
 
 var shell = require('shelljs');
 var path = require('path');
+var archiver = require('archiver');
 
 export interface GetOrCreateResult<T> {
     created: boolean;
@@ -251,6 +252,30 @@ export function readDirectory(directory: string, includeFiles: boolean, includeF
         });
 
     return deferred.promise;
+}
+
+export function archiveFiles(files: string[], archiveName: string): Q.Promise<string> {
+    var defer = Q.defer<string>();
+    var archive = path.join(shell.tempdir(), archiveName);
+    var output = fs.createWriteStream(archive);
+    var zipper = archiver('zip');
+
+    output.on('close', function() {
+        defer.resolve(archive);
+    });
+    zipper.on('error', function(err) {
+        defer.reject(err);
+    });
+
+    zipper.pipe(output);
+    zipper.bulk([{ src: files, expand: true }]);
+    zipper.finalize(function(err, bytes) {
+        if (err) {
+            defer.reject(err);
+        }
+    });
+
+    return defer.promise;
 }
 
 //

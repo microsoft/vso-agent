@@ -33,13 +33,15 @@ describe('PublisherTests', function () {
     const readerJUnit = new trr.JUnitResultReader(command);
     const readerNUnit = new trr.NUnitResultReader(command);
     const readerXUnit = new trr.XUnitResultReader(command);
-
     const resultsFileJUnit = resultFile('junitresults1.xml');
+    const resultsFileJUnit2 = resultFile('junitresults2.xml');
     const resultstFileJUnitMultiNode = resultFile('Junit_test2.xml');
     const resultsFileJUnitNoTestCases = resultFile('junit_with_no_test_cases.xml');
     const resultsFileJUnitNoTestSuites = resultFile('junit_with_no_test_suites.xml');
     const resultsFileNUnit = resultFile('nunitresults.xml');
+    const resultsFileNUnit2 = resultFile('nunitresults.1.xml');
     const resultsFileXUnit = resultFile('xunitresults.xml');
+    const resultsFileXUnit2 = resultFile('xunitresults.1.xml');
 
     it('results.publish : JUnit results file', () => {
         const feedbackChannel = new fm.TestFeedbackChannel();
@@ -53,7 +55,6 @@ describe('PublisherTests', function () {
     it('results.publish : JUnit results file with multiple test suite nodes (karma format)', () => {
         const feedbackChannel = new fm.TestFeedbackChannel();
         const testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerJUnit);
-
         return testRunPublisher.publishTestRun(resultstFileJUnitMultiNode).then(createdTestRun => {
             assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
         });
@@ -62,7 +63,6 @@ describe('PublisherTests', function () {
     it('results.publish : JUnit results file with a suite and no cases', () => {
         const feedbackChannel = new fm.TestFeedbackChannel();
         const testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerJUnit);
-
         return testRunPublisher.publishTestRun(resultsFileJUnitNoTestCases).then(createdTestRun => {
             assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
         });
@@ -138,7 +138,7 @@ describe('PublisherTests', function () {
         return readerJUnit.readResults(resultsFileJUnit, runContext).then(res => {
             testRun = res.testRun;
             results = res.testResults;
-            
+
             //Verifying the test run details
             assert.strictEqual("JUnitXmlReporter", testRun.name);
             assert.equal("debug", testRun.buildFlavor);
@@ -146,9 +146,9 @@ describe('PublisherTests', function () {
             assert.equal("abc", testRun.releaseUri);
             assert.equal("xyz", testRun.releaseEnvironmentUri);
             assert.equal(21, testRun.build.id);
-            assert.strictEqual(true, testRun.automated);			
-            
-            
+            assert.strictEqual(true, testRun.automated);
+
+
             //Verifying Test Results
             assert.strictEqual(3, results.length);
             assert.strictEqual("should default path to an empty string", results[0].automatedTestName);
@@ -165,7 +165,7 @@ describe('PublisherTests', function () {
 
         return readerJUnit.readResults(resultsFileJUnit, runContext).then(res => {
             testRun = res.testRun;
-            
+
             //Verifying the test run details
             assert.strictEqual("My Title", testRun.name);
         });
@@ -173,12 +173,10 @@ describe('PublisherTests', function () {
 
     it('results.publish : JUnit reader sanity check with run title and file number', () => {
         var testRun;
-
         runContext.fileNumber = "3";
-
         return readerJUnit.readResults(resultsFileJUnit, runContext).then(res => {
             testRun = res.testRun;
-            
+
             //Verifying the test run details
             assert.strictEqual("My Title 3", testRun.name);
         });
@@ -194,7 +192,7 @@ describe('PublisherTests', function () {
         return readerNUnit.readResults(resultsFileNUnit, runContext).then(res => {
             testRun = res.testRun;
             results = res.testResults;
-            
+
             //Verifying the test run details
             assert.strictEqual("/Volumes/Data/xamarin/workspaces/android-csharp-test-job-c2a0f46d-7bf3-4ba8-97ce-ce8a8fdd1c4720150429-96377-8lrqzf/CreditCardValidation.Tests.dll", testRun.name);
             assert.equal("debug", testRun.buildFlavor);
@@ -202,9 +200,9 @@ describe('PublisherTests', function () {
             assert.equal("abc", testRun.releaseUri);
             assert.equal("xyz", testRun.releaseEnvironmentUri);
             assert.equal(21, testRun.build.id);
-            assert.strictEqual(true, testRun.automated);			
-            
-            
+            assert.strictEqual(true, testRun.automated);
+
+
             //Verifying Test Results
             assert.strictEqual(4, results.length);
             assert.strictEqual("CreditCardValidation.Tests.ValidateCreditCardTests.CreditCardNumber_CorrectSize_DisplaySuccessScreen(Android)_lg_nexus_5_4_4_4", results[0].automatedTestName);
@@ -216,13 +214,11 @@ describe('PublisherTests', function () {
 
     it('results.publish : NUnit reader sanity check with run title', () => {
         var testRun;
-
         runContext.runTitle = "My Title";
         runContext.fileNumber = "0";
-
         return readerNUnit.readResults(resultsFileNUnit, runContext).then(res => {
             testRun = res.testRun;
-            
+
             //Verifying the test run details
             assert.strictEqual("My Title", testRun.name);
         });
@@ -234,12 +230,11 @@ describe('PublisherTests', function () {
 
         return readerNUnit.readResults(resultsFileNUnit, runContext).then(res => {
             testRun = res.testRun;
-            
+
             //Verifying the test run details
             assert.strictEqual("My Title 3", testRun.name);
         });
     });
-
 
     it('results.publish : XUnit reader sanity check without run title', () => {
         var results;
@@ -247,11 +242,10 @@ describe('PublisherTests', function () {
 
         runContext.runTitle = "";
         runContext.fileNumber = "0";
-
         return readerXUnit.readResults(resultsFileXUnit, runContext).then(res => {
             testRun = res.testRun;
             results = res.testResults;
-            
+
             //Verifying the test run details
             assert.strictEqual("XUnit Test Run debug mac", testRun.name);
             assert.equal("debug", testRun.buildFlavor);
@@ -259,9 +253,9 @@ describe('PublisherTests', function () {
             assert.equal("abc", testRun.releaseUri);
             assert.equal("xyz", testRun.releaseEnvironmentUri);
             assert.equal(21, testRun.build.id);
-            assert.strictEqual(true, testRun.automated);			
-            
-            
+            assert.strictEqual(true, testRun.automated);
+
+
             //Verifying Test Results
             assert.strictEqual(4, results.length);
             assert.strictEqual("FailingTest", results[0].automatedTestName);
@@ -279,7 +273,7 @@ describe('PublisherTests', function () {
 
         return readerXUnit.readResults(resultsFileXUnit, runContext).then(res => {
             testRun = res.testRun;
-            
+
             //Verifying the test run details
             assert.strictEqual("My Title", testRun.name);
         });
@@ -291,9 +285,36 @@ describe('PublisherTests', function () {
         runContext.fileNumber = "3";
         return readerXUnit.readResults(resultsFileXUnit, runContext).then(res => {
             testRun = res.testRun;
-            
+
             //Verifying the test run details
             assert.strictEqual("My Title 3", testRun.name);
         });
     });
+
+    it('results.publish : JUnit results file with merge support', () => {
+        const feedbackChannel = new fm.TestFeedbackChannel();
+        const testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerJUnit);
+
+        return testRunPublisher.publishMergedTestRun([resultsFileJUnit, resultsFileJUnit2]).then(createTestRun => {
+            assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
+        }).catch(err => console.log("ERROR", err));
+    })
+
+    it('results.publish : NUnit results file with merge support', () => {
+        const feedbackChannel = new fm.TestFeedbackChannel();
+        const testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerNUnit);
+
+        return testRunPublisher.publishMergedTestRun([resultsFileNUnit, resultsFileNUnit2]).then(createdTestRun => {
+            assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
+        });
+    })
+
+    it('results.publish : XUnit results file with merge support', () => {
+        const feedbackChannel = new fm.TestFeedbackChannel();
+        const testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerXUnit);
+
+        return testRunPublisher.publishMergedTestRun([resultsFileXUnit, resultsFileXUnit2]).then(createdTestRun => {
+            assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
+        });
+    })
 });	
