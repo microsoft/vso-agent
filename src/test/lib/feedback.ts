@@ -228,19 +228,19 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IServ
     //------------------------------------------------------------------  
     public initializeTestManagement(projectName: string): void {
         var record = this._getFromBatch("1.createTestRun");
-        record.result = agentifm.TaskResult.Failed;
+        record.result = agentifm.TaskResult.Succeeded;
         record.state = agentifm.TimelineRecordState.Completed;
 
         var record = this._getFromBatch("2.createTestRunAttachment");
-        record.result = agentifm.TaskResult.Failed;
+        record.result = agentifm.TaskResult.Succeeded;
         record.state = agentifm.TimelineRecordState.Completed;
 
         var record = this._getFromBatch("3.createTestRunResult");
-        record.result = agentifm.TaskResult.Failed;
+        record.result = agentifm.TaskResult.Succeeded;
         record.state = agentifm.TimelineRecordState.Completed;
 
         var record = this._getFromBatch("4.endTestRun");
-        record.result = agentifm.TaskResult.Failed;
+        record.result = agentifm.TaskResult.Succeeded;
         record.state = agentifm.TimelineRecordState.Completed;
     }
 
