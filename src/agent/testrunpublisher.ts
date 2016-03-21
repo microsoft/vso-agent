@@ -273,31 +273,32 @@ export class TestRunPublisher {
         var totalTestResults: testifm.TestResultCreateModel[] = [];
         var j = 0;
 
-        if (resultFiles.length == 0) {
+        if (!resultFiles || resultFiles.length == 0) {
             defer.resolve(null);
         }
 
-        for (var i = 0; i < resultFiles.length; i++) {
-            var report = _this.readResults(resultFiles[i]).then(function(res) {
-                res.testResults.forEach(tr => {
-                    totalTestCaseDuration += +tr.durationInMs;
+        var promises = resultFiles.map(function(file) {
+            return _this.readResults(file)
+                .then(function(res) {
+                    res.testResults.forEach(tr => {
+                        totalTestCaseDuration += +tr.durationInMs;
+                    });
+                    totalTestResults = totalTestResults.concat(res.testResults);
                 });
-                totalTestResults = totalTestResults.concat(res.testResults);
+        });
 
-                //This little hack make sures that we are returning once reading of all files is completed in async.
-                j++;
-                if (j == resultFiles.length) {
-                    var testRunDetails = <testifm.TestRunDetails>{
-                        totalTestResults: totalTestResults,
-                        totalTestCaseDuration: totalTestCaseDuration
-                    };
-                    defer.resolve(testRunDetails);
-                    return defer.promise;
-                }
-            });
-        }
-
+        Q.all(promises).finally(function() {
+            var testRunDetails = _this.createTestRunDetails(totalTestResults, totalTestCaseDuration);
+            defer.resolve(testRunDetails);
+        });
         return defer.promise;
+    }
+
+    private createTestRunDetails(totalTestResults: testifm.TestResultCreateModel[], totalTestCaseDuration: number) {
+        return <testifm.TestRunDetails>{
+            totalTestResults: totalTestResults,
+            totalTestCaseDuration: totalTestCaseDuration
+        };
     }
 }
 
