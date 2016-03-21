@@ -33,6 +33,7 @@ describe('PublisherTests', function () {
     const readerJUnit = new trr.JUnitResultReader(command);
     const readerNUnit = new trr.NUnitResultReader(command);
     const readerXUnit = new trr.XUnitResultReader(command);
+    const emptyFile = resultFile('empty.xml');
     const resultsFileJUnit = resultFile('junitresults1.xml');
     const resultsFileJUnit2 = resultFile('junitresults2.xml');
     const resultstFileJUnitMultiNode = resultFile('Junit_test2.xml');
@@ -314,6 +315,15 @@ describe('PublisherTests', function () {
         const testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerXUnit);
 
         return testRunPublisher.publishMergedTestRun([resultsFileXUnit, resultsFileXUnit2]).then(createdTestRun => {
+            assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
+        });
+    })
+    
+    it('results.publish : JUnit results file with merge support with one invalid xml file', () => {
+        const feedbackChannel = new fm.TestFeedbackChannel();
+        const testRunPublisher = new trp.TestRunPublisher(feedbackChannel, null, "teamProject", runContext, readerXUnit);
+
+        return testRunPublisher.publishMergedTestRun([resultsFileJUnit, resultsFileJUnit2, emptyFile]).then(createdTestRun => {
             assert(feedbackChannel.jobsCompletedSuccessfully(), 'ResultPublish Task Failed! Details : ' + feedbackChannel.getRecordsString());
         });
     })
