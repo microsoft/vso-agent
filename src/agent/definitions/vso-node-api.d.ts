@@ -11645,6 +11645,10 @@ declare module 'vso-node-api/interfaces/TestInterfaces' {
 	    state: string;
 	    testRun: ShallowReference;
 	}
+    export interface TestRunDetails {
+        totalTestResults: TestResultCreateModel[];
+        totalTestCaseDuration: number;    
+    }
 	export enum TestRunState {
 	    /**
 	     * Only used during an update to preserve the existing value.

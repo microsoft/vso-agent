@@ -14,7 +14,8 @@ export function getProvider(ctx: cm.IExecutionContext, endpoint: agentifm.Servic
 }
 
 export class SvnScmProvider extends scmprovider.ScmProvider {
-    constructor(ctx: cm.IExecutionContext, endpoint: agentifm.ServiceEndpoint) {
+    constructor(ctx: cm.IExecutionContext, endpoint: agentifm.ServiceEndpoint) {        
+        super(ctx, endpoint);
         this.svnw = new sw.SvnWrapper(ctx);
         this.svnw.on('stdout', (data) => {
             ctx.info(data.toString());
@@ -25,8 +26,6 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
         });
         
         this.environmentVariables = this._getEnvironmentVariables(ctx);
-
-        super(ctx, endpoint);
     }
 
     public svnw: sw.SvnWrapper;

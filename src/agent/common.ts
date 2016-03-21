@@ -130,8 +130,8 @@ export var DEFAULT_LOG_LINESPERFILE = 5000;
 export var DEFAULT_LOG_MAXFILES = 5;
 
 export class WorkerMessageTypes {
-     static Abandoned = "abandoned";
-     static Job = "job";
+    static Abandoned = "abandoned";
+    static Job = "job";
 }
 
 //-----------------------------------------------------------
@@ -181,7 +181,7 @@ export interface IServiceChannel extends NodeJS.EventEmitter {
     collectionUrl: string;
     jobInfo: IJobInfo;
     enabled: boolean;
-    
+
     getWebApi(): webapi.WebApi;
 
     // lifetime
@@ -221,6 +221,9 @@ export interface IServiceChannel extends NodeJS.EventEmitter {
     endTestRun(testRunId: number): Q.Promise<testifm.TestRun>;
     createTestRunResult(testRunId: number, testRunResults: testifm.TestResultCreateModel[]): Q.Promise<testifm.TestCaseResult[]>;
     createTestRunAttachment(testRunId: number, fileName: string, contents: string): Q.Promise<any>;
+    
+    //code coverage publishing
+    publishCodeCoverageSummary(coverageData: testifm.CodeCoverageData, project: string, buildId: number): Q.Promise<any>;
 }
 
 export interface IAsyncCommandQueue {
@@ -261,7 +264,7 @@ export interface IOutputChannel {
 
 export interface IHostContext extends IOutputChannel, ITraceWriter {
     config: IConfiguration;
-    workFolder: string;    
+    workFolder: string;
 }
 
 export interface IExecutionContext extends IOutputChannel, ITraceWriter {
@@ -360,16 +363,16 @@ export interface IWorkerMessage {
 //-----------------------------------------------------------
 
 export function execAll(func: (item: any, state: any) => any, items: any[], state: any): Q.IPromise<any> {
-	var initialState = state;
+    var initialState = state;
     var current = Q(null);
 
-	items.forEach((item) => {
-		current = current.then(function(state) {
-			return func(item, state || initialState);
-		});	
-	});
+    items.forEach((item) => {
+        current = current.then(function(state) {
+            return func(item, state || initialState);
+        });
+    });
 
-	return current;
+    return current;
 }
 
 //
@@ -583,7 +586,7 @@ export function getWorkerDiagPath(config: IConfiguration) {
 }
 
 export function getWorkerLogsPath(config: IConfiguration) {
-    return path.join(getWorkPath(config), '_logs');    
+    return path.join(getWorkPath(config), '_logs');
 }
 
 //-----------------------------------------------------------

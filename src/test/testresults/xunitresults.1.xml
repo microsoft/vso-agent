@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<assemblies>
+  <assembly name="C:\Users\kaadhina\Source\Workspaces\p1\ClassLibrary2\ClassLibrary2\bin\Debug\ClassLibrary2.DLL" environment="64-bit .NET 4.0.30319.42000 [collection-per-class, parallel]" test-framework="xUnit.net 2.0.0.2929" run-date="2015-08-18" run-time="06:17:15" config-file="C:\Users\kaadhina\Source\Workspaces\p1\ClassLibrary2\packages\xunit.runner.console.2.0.0\tools\xunit.console.exe.Config" total="2" passed="1" failed="1" skipped="0" time="0.233" errors="0">
+    <errors />
+    <collection total="2" passed="1" failed="1" skipped="0" name="Test collection for MyFirstUnitTests.Class1" time="0.044">
+      <test name="MyFirstUnitTests.Class1.FailingTest" type="MyFirstUnitTests.Class1" method="FailingTest" time="0.0422319" result="Fail">
+        <failure exception-type="Xunit.Sdk.EqualException">
+          <message><![CDATA[Assert.Equal() Failure
+Expected: 5
+Actual:   4]]></message>
+          <stack-trace><![CDATA[   at MyFirstUnitTests.Class1.FailingTest() in C:\Users\kaadhina\Source\Workspaces\p1\ClassLibrary2\ClassLibrary2\Class1.cs:line 17]]></stack-trace>
+        </failure>
+      </test>
+      <test name="MyFirstUnitTests.Class1.PassingTest" type="MyFirstUnitTests.Class1" method="PassingTest" time="0.0014979" result="Pass">
+        <traits>
+          <trait name="priority" value="0" />
+        </traits>
+      </test>
+    </collection>
+  </assembly>
+  <assembly name="C:\Users\kaadhina\Source\Workspaces\p1\ClassLibrary2\ClassLibrary1\bin\Debug\ClassLibrary1.DLL" environment="64-bit .NET 4.0.30319.42000 [collection-per-class, parallel]" test-framework="xUnit.net 2.0.0.2929" run-date="2015-08-18" run-time="06:17:16" config-file="C:\Users\kaadhina\Source\Workspaces\p1\ClassLibrary2\packages\xunit.runner.console.2.0.0\tools\xunit.console.exe.Config" total="2" passed="2" failed="0" skipped="0" time="0.152" errors="0">
+    <errors />
+    <collection total="2" passed="2" failed="0" skipped="0" name="Test collection for MyFirstUnitTests.Class2" time="0.006">
+      <test name="MyFirstUnitTests.Class2.tset2" type="MyFirstUnitTests.Class2" method="tset2" time="0.0056931" result="Skip" />
+      <test name="MyFirstUnitTests.Class2.test1" type="MyFirstUnitTests.Class2" method="test1" time="0.0001093" result="Pass">
+        <traits>
+          <trait name="priority" value="0" />
+        </traits>
+      </test>
+    </collection>
+  </assembly>
+</assemblies>
