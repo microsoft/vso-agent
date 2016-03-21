@@ -11,7 +11,7 @@ export class ScmProvider implements cm.IScmProvider {
 		this.ctx = ctx;
         this.endpoint = endpoint;
         this.job = ctx.jobInfo.jobMessage;
-        this.variables = this.job.environment.variables       
+        this.variables = this.job.environment.variables
 	}
 
 	public ctx: cm.IExecutionContext;
@@ -20,7 +20,7 @@ export class ScmProvider implements cm.IScmProvider {
 	public job: agentifm.JobRequestMessage;
     public variables: {[key: string]: string};
     public hashKey: string;
-    
+
 	// full path of final root of enlistment
 	public targetPath: string;
 
@@ -32,17 +32,17 @@ export class ScmProvider implements cm.IScmProvider {
 	public setAuthorization(authorization: agentifm.EndpointAuthorization) {
 
 	}
-    
+
     // override if it's more complex than just hashing the url
     public getHashKey() {
         var hash = null;
-        
+
         if (this.endpoint.url) {
             var hashProvider = crypto.createHash("sha256");
             hashProvider.update(this.endpoint.url, 'utf8');
-            hash = hashProvider.digest('hex');            
+            hash = hashProvider.digest('hex');
         }
- 
+
         return hash;
     }
 
@@ -50,13 +50,13 @@ export class ScmProvider implements cm.IScmProvider {
 		if (!this.ctx) {
 			throw (new Error('executionContext null initializing git scm provider'));
 		}
-                
+
 		if (!this.endpoint) {
 			throw (new Error('endpoint null initializing git scm provider'));
 		}
 
         this.setAuthorization(this.endpoint.authorization);
-        
+
         this.hashKey = this.getHashKey();
 	}
 
@@ -64,17 +64,35 @@ export class ScmProvider implements cm.IScmProvider {
 		var paramValue = null;
 
 		if (authorization && authorization['parameters']) {
-			paramValue = authorization['parameters'][paramName];	
+			paramValue = authorization['parameters'][paramName];
 		}
-		
+
 		return paramValue;
 	}
-	
+
+	private repoRootInFilePath(filePathInput : string) : boolean {
+		filePathInput = filePathInput.toLowerCase();
+		if(filePathInput.startsWith('$(' + cm.vars.buildSourcesDirectory.toLowerCase()) ||
+			filePathInput.startsWith('$(' + cm.vars.buildArtifactStagingDirectory.toLowerCase()) ||
+			filePathInput.startsWith('$(' + cm.vars.buildStagingDirectory.toLowerCase()) ||
+			filePathInput.startsWith('$(' + cm.vars.buildBinariesDirectory.toLowerCase())  ||
+			filePathInput.startsWith('$(' + cm.vars.systemDefaultWorkingDirectory.toLowerCase())  ||
+			filePathInput.startsWith('$(' + cm.vars.commonTestResultsDirectory.toLowerCase())  ||
+			filePathInput.startsWith('$(' + cm.vars.agentBuildDirectory.toLowerCase())  )  {
+			return true;
+		}
+		return false;
+	}
+
     // override if more complex than appending to root of repo
     public resolveInputPath(inputPath: string) {
-        return path.resolve(this.targetPath, inputPath);
+		if (!this.repoRootInFilePath(inputPath)) {
+			return path.resolve(this.targetPath, inputPath);
+		} else {
+			return inputPath;
+		}
     }
-    
+
 	// virtual - must override
 	public getCode(): Q.Promise<number> {
 		var defer = Q.defer<number>();
@@ -87,5 +105,5 @@ export class ScmProvider implements cm.IScmProvider {
 		var defer = Q.defer<number>();
 		defer.reject(new Error('Must override the clean method'));
 		return defer.promise;
-	}	
+	}
 }
