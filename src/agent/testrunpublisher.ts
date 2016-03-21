@@ -273,7 +273,7 @@ export class TestRunPublisher {
         var totalTestResults: testifm.TestResultCreateModel[] = [];
         var j = 0;
 
-        if (resultFiles.length == 0) {
+        if (!resultFiles || resultFiles.length == 0) {
             defer.resolve(null);
         }
 
