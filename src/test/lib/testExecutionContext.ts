@@ -5,7 +5,7 @@ import cm = require('../../agent/common');
 import ifm = require('../../agent/interfaces');
 import baseifm = require('vso-node-api/interfaces/common/VsoBaseInterfaces');
 import webapi = require('vso-node-api/WebApi');
-import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces')
+import agentifm = require('vso-node-api/interfaces/TaskAgentInterfaces');
 import fm = require('../lib/feedback');
 
 export class TestExecutionContext implements cm.IExecutionContext {

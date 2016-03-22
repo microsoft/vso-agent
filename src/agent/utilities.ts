@@ -15,7 +15,7 @@ export interface GetOrCreateResult<T> {
     created: boolean;
     result: T;
 }
-   
+
 // returns a substring that is common from first. For example, for "abcd" and "abdf", "ab" is returned.
 export function sharedSubString(string1: string, string2: string): string {
     var ret = "";
@@ -43,10 +43,21 @@ export function sortStringArray(list): string[] {
     return sortedFiles;
 }
 
-// returns true if path exists else fasle.
-export function isPathExists(path: string): boolean {
+// returns true if path exists and it is a directory else false.
+export function isDirectoryExists(path: string): boolean {
+   try {
+        return fs.lstatSync(path).isDirectory();
+    }
+    catch (error) {
+        return false;
+    }
+    return true;
+}
+
+// returns true if path exists and it is a file else false.
+export function isFileExists(path: string): boolean {
     try {
-        fs.statSync(path);
+        return fs.lstatSync(path).isFile();
     }
     catch (error) {
         return false;

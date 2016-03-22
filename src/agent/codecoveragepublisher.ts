@@ -78,7 +78,7 @@ export class CodeCoveragePublisher {
         var newReportDirectory = reportDirectory;
 
         if (reportDirectory && reportDirectory.length > 0) {
-            if (utilities.isPathExists(reportDirectory) && fs.lstatSync(reportDirectory).isDirectory()) {
+            if (utilities.isDirectoryExists(reportDirectory)) {
                 reportDirectoryExists = true;
             }
             else {
@@ -92,11 +92,11 @@ export class CodeCoveragePublisher {
         }
       
         // copy the summary file into report directory
-        shell.cp('-f', summaryFile, newReportDirectory);
+        shell.cp(summaryFile, newReportDirectory);
 
         _this.command.info("PublishCodeCoverageFiles : Publishing code coverage report '" + newReportDirectory + "'");
-
-        _this.uploadArtifact(newReportDirectory, codeCoverageArtifactName, containerId).then(function() {
+        
+        _this.uploadArtifact(newReportDirectory, codeCoverageArtifactName, containerId, _this.isReportDirectoryBrowsable(newReportDirectory)).then(function() {
             try {
                 _this.command.info("PublishCodeCoverageFiles : Code coverage report published successfully.");
 
@@ -118,7 +118,7 @@ export class CodeCoveragePublisher {
                 var rawFilesArtifactName = "Code Coverage Files_" + _this.buildId;
 
                 _this.command.info("PublishCodeCoverageFiles : Publishing additional code coverage files '" + rawFilesDirectory + "'");
-                _this.uploadArtifact(rawFilesDirectory, rawFilesArtifactName, containerId).then(function() {
+                _this.uploadArtifact(rawFilesDirectory, rawFilesArtifactName, containerId, "False").then(function() {
                     // clean the temporary additional files folder created.
                     shell.rm('-rf', rawFilesDirectory);
 
@@ -171,8 +171,10 @@ export class CodeCoveragePublisher {
     // - artifactName: name of teh artifact
     // - containerId: containerId 
     //-----------------------------------------------------
-    private uploadArtifact(path: string, artifactName: string, containerId: number): Q.Promise<any> {
+    private uploadArtifact(path: string, artifactName: string, containerId: number, browsable: string): Q.Promise<any> {
         var defer = Q.defer();
+        var properties = {};
+        properties["browsable"] = browsable;
         fc.copyToFileContainer(this.executionContext, path, containerId, "/" + artifactName).then((artifactLocation: string) => {
             try {
                 this.command.info('Associating artifact ' + artifactLocation + ' ...');
@@ -180,8 +182,9 @@ export class CodeCoveragePublisher {
                     name: artifactName,
                     resource: {
                         type: "container",
-                        data: artifactLocation
-                    }
+                        data: artifactLocation,
+                        properties: properties
+                    },
                 };
 
                 this.executionContext.service.postArtifact(this.project, this.buildId, artifact).fail(function(err) {
@@ -201,6 +204,17 @@ export class CodeCoveragePublisher {
         return defer.promise;
     }
     
+    //-----------------------------------------------------
+    // Finds if the report directory has index.html
+    // - reportDirectory: string  - report directory 
+    //-----------------------------------------------------    
+    private isReportDirectoryBrowsable(reportDirectory: string): string {
+        var defaultIndexFile = path.join(reportDirectory, "index.html");
+        if(utilities.isFileExists(defaultIndexFile)){
+            return "True";
+        }
+        return "False";
+    }
     
     //-----------------------------------------------------
     // Read code coverage results from summary file.

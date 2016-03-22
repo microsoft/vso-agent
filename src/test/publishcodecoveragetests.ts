@@ -30,6 +30,7 @@ describe('CodeCoveragePublisherTests', function() {
     var reportDirectory = path.join(shell.tempdir(), "report");
     shell.mkdir('-p', reportDirectory);
     shell.cp('-r', path.resolve(__dirname, './codecoveragefiles'), reportDirectory);
+    shell.cp('-r', path.resolve(__dirname, './codecoveragefiles/index.html'), reportDirectory);
     var testExecutionContext;
 
     it('codecoverage.publish : publish summary fails when code coverage tool is invalid', function(done) {
@@ -370,6 +371,7 @@ describe('CodeCoveragePublisherTests', function() {
             assert(testExecutionContext.service.containerItems.length == 1);
             assert(testExecutionContext.service.artifactNames.length == 1);
             assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
+            assert(testExecutionContext.service.browsableArtifacts.length == 0);
             assert(result);
             done();
         },
@@ -393,9 +395,11 @@ describe('CodeCoveragePublisherTests', function() {
         var codeCoveragePublishCommand = new cpc.CodeCoveragePublishCommand(testExecutionContext, command);
         codeCoveragePublishCommand.runCommandAsync().then(function(result) {
             assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
-            assert(testExecutionContext.service.containerItems.length == 7);
+            assert(testExecutionContext.service.containerItems.length == 9);
             assert(testExecutionContext.service.artifactNames.length == 1);
-            assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1")
+            assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
+            assert(testExecutionContext.service.browsableArtifacts.length == 1);
+            assert(testExecutionContext.service.browsableArtifacts[0] == "Code Coverage Report_1");
             assert(result);
             done();
         },
@@ -419,10 +423,12 @@ describe('CodeCoveragePublisherTests', function() {
         var codeCoveragePublishCommand = new cpc.CodeCoveragePublishCommand(testExecutionContext, command);
         codeCoveragePublishCommand.runCommandAsync().then(function(result) {
             assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
-            assert(testExecutionContext.service.containerItems.length == 9);
+            assert(testExecutionContext.service.containerItems.length == 11);
             assert(testExecutionContext.service.artifactNames.length == 2);
-            assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1")
-            assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1")
+            assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
+            assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1");
+            assert(testExecutionContext.service.browsableArtifacts.length == 1);
+            assert(testExecutionContext.service.browsableArtifacts[0] == "Code Coverage Report_1");
             assert(result);
             done();
         },
@@ -450,6 +456,7 @@ describe('CodeCoveragePublisherTests', function() {
             assert(testExecutionContext.service.artifactNames.length == 2);
             assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
             assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1");
+            assert(testExecutionContext.service.browsableArtifacts.length == 0);
             assert(result);
             done();
         },
@@ -477,6 +484,7 @@ describe('CodeCoveragePublisherTests', function() {
             assert(testExecutionContext.service.artifactNames.length == 2);
             assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
             assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1");
+            assert(testExecutionContext.service.browsableArtifacts.length == 0);
             assert(result);
             done();
         },
@@ -510,6 +518,7 @@ describe('CodeCoveragePublisherTests', function() {
             assert(testExecutionContext.service.artifactNames.length == 2);
             assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
             assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1");
+            assert(testExecutionContext.service.browsableArtifacts.length == 0);
             assert(result);
             done();
         },
@@ -533,14 +542,16 @@ describe('CodeCoveragePublisherTests', function() {
 
         var codeCoveragePublishCommand = new cpc.CodeCoveragePublishCommand(testExecutionContext, command);
         codeCoveragePublishCommand.runCommandAsync().then(function(result) {
-            assert(false, 'Publish code coverage Task did not fail as expected')
+            assert(false, 'Publish code coverage Task did not fail as expected');
             done();
         },
             function(err) {
-                assert(testExecutionContext.service.containerItems.length == 7);
+                assert(testExecutionContext.service.containerItems.length == 9);
                 assert(testExecutionContext.service.artifactNames.length == 1);
-                assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1")
-                assert(err == "Error: Error occured while publishing artifact")
+                assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
+                assert(testExecutionContext.service.browsableArtifacts.length == 1);
+                assert(testExecutionContext.service.browsableArtifacts[0] == "Code Coverage Report_1");
+                assert(err == "Error: Error occured while publishing artifact");
                 done();
             });
     })
@@ -563,10 +574,12 @@ describe('CodeCoveragePublisherTests', function() {
             done();
         },
             function(err) {
-                assert(testExecutionContext.service.containerItems.length == 9);
+                assert(testExecutionContext.service.containerItems.length == 11);
                 assert(testExecutionContext.service.artifactNames.length == 2);
                 assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
-                assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1")
+                assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1");
+                assert(testExecutionContext.service.browsableArtifacts.length == 1);
+                assert(testExecutionContext.service.browsableArtifacts[0] == "Code Coverage Report_1");
                 assert(err == "Error: Error occured while publishing artifact")
                 done();
             });
