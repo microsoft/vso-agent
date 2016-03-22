@@ -13,27 +13,27 @@ import events = require('events');
 import webapi = require('vso-node-api/WebApi');
 
 export class TestCmdQueue implements cm.IAsyncCommandQueue {
-	constructor() {
-		this.descriptions = [];
-		this.failed = false;
-		this.errorMessage = '';
-	}
+    constructor() {
+        this.descriptions = [];
+        this.failed = false;
+        this.errorMessage = '';
+    }
 
-	public descriptions: string[];
+    public descriptions: string[];
     public push(cmd: cm.IAsyncCommand) {
-    	this.descriptions.push(cmd.description);
+        this.descriptions.push(cmd.description);
     }
 
-    public finishAdding() {}
+    public finishAdding() { }
     public waitForEmpty(): Q.Promise<any> {
-    	var defer = Q.defer();
-    	defer.resolve(null);
-    	return defer.promise;
+        var defer = Q.defer();
+        defer.resolve(null);
+        return defer.promise;
     }
 
-    public startProcessing() {}
+    public startProcessing() { }
     public _processQueue(values: cm.IAsyncCommand[], callback: (err: any) => void) {
-    	callback(null);
+        callback(null);
     }
 
     public failed: boolean;
@@ -41,301 +41,324 @@ export class TestCmdQueue implements cm.IAsyncCommandQueue {
 }
 
 export class TestFeedbackChannel extends events.EventEmitter implements cm.IServiceChannel {
-	public agentUrl: string;
-	public collectionUrl: string;
-	public taskApi: taskm.ITaskApi;
-	public jobInfo: cm.IJobInfo;	
-	public enabled: boolean;
+    public agentUrl: string;
+    public collectionUrl: string;
+    public taskApi: taskm.ITaskApi;
+    public jobInfo: cm.IJobInfo;
+    public enabled: boolean;
+    public containerItems: string[];
+    public artifactNames: string[];
+    public failingArtifactName: string;
+    public browsableArtifacts: string[];
 
-	private _webConsole: string[];
-	private _records: any;
-	private _logPages: any;
+    private _webConsole: string[];
+    private _records: any;
+    private _logPages: any;
 
-	constructor() {
-		super();
-		this._webConsole = [];
-		this._records = {};
-		this._logPages = {};
-	}
+    constructor() {
+        super();
+        this._webConsole = [];
+        this._records = {};
+        this._logPages = {};
+        this.containerItems = [];
+        this.artifactNames = [];
+        this.browsableArtifacts = [];
+    }
 
-	public getWebApi(): webapi.WebApi {
-		return null;
-	}
+    public getWebApi(): webapi.WebApi {
+        return null;
+    }
 
-	public drain(): Q.Promise<any> {
-		return Q(null);
-	}
+    public drain(): Q.Promise<any> {
+        return Q(null);
+    }
 
-	public queueLogPage(page: cm.ILogPageInfo): void {
-		if (!this._logPages.hasOwnProperty(page.logInfo.recordId)) {
-			this._logPages[page.logInfo.recordId] = [];
-		}
+    public queueLogPage(page: cm.ILogPageInfo): void {
+        if (!this._logPages.hasOwnProperty(page.logInfo.recordId)) {
+            this._logPages[page.logInfo.recordId] = [];
+        }
 
-		this._logPages[page.logInfo.recordId].push(page);
-	}
+        this._logPages[page.logInfo.recordId].push(page);
+    }
 
-	public queueConsoleLine(line: string): void {
-		this._webConsole.push(line);
-	}
+    public queueConsoleLine(line: string): void {
+        this._webConsole.push(line);
+    }
 
-	public queueConsoleSection(line: string): void {
-		this._webConsole.push('[section] ' + line);
-	}
+    public queueConsoleSection(line: string): void {
+        this._webConsole.push('[section] ' + line);
+    }
 
     public createAsyncCommandQueue(taskCtx: cm.IExecutionContext): cm.IAsyncCommandQueue {
         return new TestCmdQueue();
-    }	
+    }
 
-	public addError(recordId: string, category: string, message: string, data: any): void {
-		var record = this._getFromBatch(recordId);
-		if (record.errorCount < 10) {
-			var error = <agentifm.Issue> {};
-			error.category = category;
-			error.type = agentifm.IssueType.Error;
-			error.message = message;
-			error.data = data;
-			record.issues.push(error);
-		}
+    public addError(recordId: string, category: string, message: string, data: any): void {
+        var record = this._getFromBatch(recordId);
+        if (record.errorCount < 10) {
+            var error = <agentifm.Issue>{};
+            error.category = category;
+            error.type = agentifm.IssueType.Error;
+            error.message = message;
+            error.data = data;
+            record.issues.push(error);
+        }
 
-		record.errorCount++;
-	}
+        record.errorCount++;
+    }
 
-	public addWarning(recordId: string, category: string, message: string, data: any): void {
-		var record = this._getFromBatch(recordId);
-		if (record.warningCount < 10) {
-			var warning = <agentifm.Issue> {};
-			warning.category = category;
-			warning.type = agentifm.IssueType.Error;
-			warning.message = message;
-			warning.data = data;
-			record.issues.push(warning);
-		}
+    public addWarning(recordId: string, category: string, message: string, data: any): void {
+        var record = this._getFromBatch(recordId);
+        if (record.warningCount < 10) {
+            var warning = <agentifm.Issue>{};
+            warning.category = category;
+            warning.type = agentifm.IssueType.Error;
+            warning.message = message;
+            warning.data = data;
+            record.issues.push(warning);
+        }
 
-		record.warningCount++;
-	}
+        record.warningCount++;
+    }
 
-	public setCurrentOperation(recordId: string, operation: string): void {
-		this._getFromBatch(recordId).currentOperation = operation;
-	}
+    public setCurrentOperation(recordId: string, operation: string): void {
+        this._getFromBatch(recordId).currentOperation = operation;
+    }
 
-	public setName(recordId: string, name: string): void {
-		this._getFromBatch(recordId).name = name;
-	}
+    public setName(recordId: string, name: string): void {
+        this._getFromBatch(recordId).name = name;
+    }
 
-	public setStartTime(recordId: string, startTime: Date): void {
-		this._getFromBatch(recordId).startTime = startTime;
-	}
+    public setStartTime(recordId: string, startTime: Date): void {
+        this._getFromBatch(recordId).startTime = startTime;
+    }
 
-	public setFinishTime(recordId: string, finishTime: Date): void {
-		this._getFromBatch(recordId).finishTime = finishTime;
-	}
+    public setFinishTime(recordId: string, finishTime: Date): void {
+        this._getFromBatch(recordId).finishTime = finishTime;
+    }
 
-	public setState(recordId: string, state: agentifm.TimelineRecordState): void {
-		this._getFromBatch(recordId).state = state;
-	}
+    public setState(recordId: string, state: agentifm.TimelineRecordState): void {
+        this._getFromBatch(recordId).state = state;
+    }
 
-	public setResult(recordId: string, result: agentifm.TaskResult): void {
-		this._getFromBatch(recordId).result = result;
-	}
+    public setResult(recordId: string, result: agentifm.TaskResult): void {
+        this._getFromBatch(recordId).result = result;
+    }
 
-	public setType(recordId: string, type: string): void {
-		this._getFromBatch(recordId).type = type;
-	}
+    public setType(recordId: string, type: string): void {
+        this._getFromBatch(recordId).type = type;
+    }
 
-	public setParentId(recordId: string, parentId: string): void {
-		this._getFromBatch(recordId).parentId = parentId;
-	}
+    public setParentId(recordId: string, parentId: string): void {
+        this._getFromBatch(recordId).parentId = parentId;
+    }
 
-	public setWorkerName(recordId: string, workerName: string): void {
-		this._getFromBatch(recordId).workerName = workerName;
-	}
+    public setWorkerName(recordId: string, workerName: string): void {
+        this._getFromBatch(recordId).workerName = workerName;
+    }
 
-	public setLogId(recordId: string, logRef: agentifm.TaskLogReference): void {
-		this._getFromBatch(recordId).log = logRef;
-	}
+    public setLogId(recordId: string, logRef: agentifm.TaskLogReference): void {
+        this._getFromBatch(recordId).log = logRef;
+    }
 
-	public setOrder(recordId: string, order: number): void {
-		this._getFromBatch(recordId).order = order;
-	}
+    public setOrder(recordId: string, order: number): void {
+        this._getFromBatch(recordId).order = order;
+    }
 
-	public finishJobRequest(poolId: number, lockToken: string, jobRequest: agentifm.TaskAgentJobRequest): Q.Promise<any> {
-		return Q(null);
-	}
+    public finishJobRequest(poolId: number, lockToken: string, jobRequest: agentifm.TaskAgentJobRequest): Q.Promise<any> {
+        return Q(null);
+    }
 
     public uploadFileToContainer(containerId: number, containerItemTuple: ifm.FileContainerItemInfo): Q.Promise<any> {
-    	return Q(containerItemTuple);
-    }  
+        this.containerItems.push(containerItemTuple.fullPath);
+        return Q(containerItemTuple);
+    }
 
     public postArtifact(projectId: string, buildId: number, artifact: buildifm.BuildArtifact): Q.Promise<buildifm.BuildArtifact> {
+        this.artifactNames.push(artifact.name);
+        
+        if (artifact.resource.properties["browsable"] == "True") {
+            this.browsableArtifacts.push(artifact.name);
+        }
+        
+        if (this.failingArtifactName == artifact.name) {
+            throw new Error("Error occured while publishing artifact");
+        }
         return Q(artifact);
-    }	
+    }
 
-	public getRecordsString(): string {
-		return JSON.stringify(this._records);
-	}
+    public getRecordsString(): string {
+        return JSON.stringify(this._records);
+    }
 
-	public jobsCompletedSuccessfully(): boolean {
-		for(var id in this._records) {
-			if (this._records.hasOwnProperty(id)) {
-				var record = this._records[id];
-				if (record.state != agentifm.TimelineRecordState.Completed) {
-					return false;
-				} else if(record.result != agentifm.TaskResult.Succeeded) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
+    public jobsCompletedSuccessfully(): boolean {
+        for (var id in this._records) {
+            if (this._records.hasOwnProperty(id)) {
+                var record = this._records[id];
+                if (record.state != agentifm.TimelineRecordState.Completed) {
+                    return false;
+                } else if (record.result != agentifm.TaskResult.Succeeded) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 
-	public confirmFailure(recordId: string): boolean {
-		if (!this._records.hasOwnProperty(recordId)) {
-			var record = this._records[recordId];
+    public confirmFailure(recordId: string): boolean {
+        if (!this._records.hasOwnProperty(recordId)) {
+            var record = this._records[recordId];
 
-			if (record.result && record.result == agentifm.TaskResult.Failed) {
-				return true;
-			}
-		}
+            if (record.result && record.result == agentifm.TaskResult.Failed) {
+                return true;
+            }
+        }
 
-		return false;
-	}
+        return false;
+    }
 
+    //------------------------------------------------------------------
+    // Code coverage items
+    //------------------------------------------------------------------
+    public publishCodeCoverageSummary(coverageData: testifm.CodeCoverageData, project: string, buildId: number): Q.Promise<any> {
+        var defer = Q.defer();
+        if (buildId < 0) {
+            defer.reject("Error in the data provided");
+        }
+        defer.resolve(null);
+        return defer.promise;
+    }
+    
     //------------------------------------------------------------------
     // Test publishing Items
     //------------------------------------------------------------------  
     public initializeTestManagement(projectName: string): void {
-		var record = this._getFromBatch("1.createTestRun");
-		record.result = agentifm.TaskResult.Failed;
-		record.state = agentifm.TimelineRecordState.Completed;
+        var record = this._getFromBatch("1.createTestRun");
+        record.result = agentifm.TaskResult.Failed;
+        record.state = agentifm.TimelineRecordState.Completed;
 
-		var record = this._getFromBatch("2.createTestRunAttachment");
-		record.result = agentifm.TaskResult.Failed;
-		record.state = agentifm.TimelineRecordState.Completed;
+        var record = this._getFromBatch("2.createTestRunAttachment");
+        record.result = agentifm.TaskResult.Failed;
+        record.state = agentifm.TimelineRecordState.Completed;
 
-		var record = this._getFromBatch("3.createTestRunResult");
-		record.result = agentifm.TaskResult.Failed;
-		record.state = agentifm.TimelineRecordState.Completed;
+        var record = this._getFromBatch("3.createTestRunResult");
+        record.result = agentifm.TaskResult.Failed;
+        record.state = agentifm.TimelineRecordState.Completed;
 
-		var record = this._getFromBatch("4.endTestRun");
-		record.result = agentifm.TaskResult.Failed;
-		record.state = agentifm.TimelineRecordState.Completed;
+        var record = this._getFromBatch("4.endTestRun");
+        record.result = agentifm.TaskResult.Failed;
+        record.state = agentifm.TimelineRecordState.Completed;
     }
 
     public createTestRun(testRun: testifm.RunCreateModel): Q.Promise<testifm.TestRun> {
-		var defer = Q.defer();
+        var defer = Q.defer();
 
-		this._getFromBatch("1.createTestRun").result = agentifm.TaskResult.Succeeded;
+        this._getFromBatch("1.createTestRun").result = agentifm.TaskResult.Succeeded;
 
-        var createdTestRun: testifm.TestRun = <testifm.TestRun> {
+        var createdTestRun: testifm.TestRun = <testifm.TestRun>{
             name: testRun.name,
-        	id: 99
+            id: 99
         };
 
         // fail the create test run step, whenever id = -1, and validate from testcode that error is propagated back   
-        if (createdTestRun.id && createdTestRun.id == -1)
-        {
+        if (createdTestRun.id && createdTestRun.id == -1) {
             var err = {
-		        message: "Too bad - createTestRun failed",
-	    	    statusCode: "400"
-        	};
-        	defer.reject(err);
+                message: "Too bad - createTestRun failed",
+                statusCode: "400"
+            };
+            defer.reject(err);
         }
-        else 
-        {
-        	defer.resolve(createdTestRun);
+        else {
+            defer.resolve(createdTestRun);
         }
-            
-        return <Q.Promise<testifm.TestRun>>defer.promise;  
+
+        return <Q.Promise<testifm.TestRun>>defer.promise;
     }
 
-    public endTestRun(testRunId: number) : Q.Promise<testifm.TestRun> {
-		var defer = Q.defer();
+    public endTestRun(testRunId: number): Q.Promise<testifm.TestRun> {
+        var defer = Q.defer();
 
-		this._getFromBatch("4.endTestRun").result = agentifm.TaskResult.Succeeded;
+        this._getFromBatch("4.endTestRun").result = agentifm.TaskResult.Succeeded;
 
-		var createdTestRun: testifm.TestRun = <testifm.TestRun> {
-        	id: 99,
-        	state: "Completed"
+        var createdTestRun: testifm.TestRun = <testifm.TestRun>{
+            id: 99,
+            state: "Completed"
         };
 
         // fail the end test run step, whenever id = -1, and validate from testcode that error is propagated back   
-        if (testRunId == -1)
-        {
+        if (testRunId == -1) {
             var err = {
-		        message: "Too bad - endTestRun failed",
-	    	    statusCode: "400"
-        	};
-        	defer.reject(err);
+                message: "Too bad - endTestRun failed",
+                statusCode: "400"
+            };
+            defer.reject(err);
         }
-        else 
-        {
-        	defer.resolve(createdTestRun);
+        else {
+            defer.resolve(createdTestRun);
         }
-            
-        return <Q.Promise<testifm.TestRun>>defer.promise;  
-	}
+
+        return <Q.Promise<testifm.TestRun>>defer.promise;
+    }
 
     public createTestRunResult(testRunId: number, testRunResults: testifm.TestResultCreateModel[]): Q.Promise<testifm.TestCaseResult[]> {
-		var defer = Q.defer();
+        var defer = Q.defer();
 
-		this._getFromBatch("3.createTestRunResult").result = agentifm.TaskResult.Succeeded;
+        this._getFromBatch("3.createTestRunResult").result = agentifm.TaskResult.Succeeded;
 
         var createdTestResults = [];
-	    var testResult : testifm.TestResultCreateModel = <testifm.TestResultCreateModel> {
+        var testResult: testifm.TestResultCreateModel = <testifm.TestResultCreateModel>{
             state: "Completed",
             computerName: "localhost",
             testCasePriority: "1",
             automatedTestName: "testName",
             automatedTestStorage: "testStorage",
             automatedTestType: "JUnit",
-            owner: { id: "buildRequestedFor" }, 
+            owner: { id: "buildRequestedFor" },
             runBy: { id: "buildRequestedFor" },
             testCaseTitle: "testName",
             outcome: 'Failed',
             errorMessage: "errorMessage",
             durationInMs: "1000"
-	    };
-    	
-    	createdTestResults.push(testResult);
+        };
+
+        createdTestResults.push(testResult);
 
         // fail the add results step, whenever id = -1, and validate from testcode that error is propagated back   
-        if (testRunId == -1)
-        {
+        if (testRunId == -1) {
             var err = {
-		        message: "Too bad",
-	    	    statusCode: "400"
-        	};
-        	defer.reject(err);
+                message: "Too bad",
+                statusCode: "400"
+            };
+            defer.reject(err);
         }
-        else 
-        {
-        	defer.resolve(createdTestResults);
+        else {
+            defer.resolve(createdTestResults);
         }
 
-        return <Q.Promise<testifm.TestCaseResult[]>>defer.promise;  
+        return <Q.Promise<testifm.TestCaseResult[]>>defer.promise;
     }
 
     public createTestRunAttachment(testRunId: number, fileName: string, contents: string): Q.Promise<any> {
-		var defer = Q.defer();
+        var defer = Q.defer();
 
-		this._getFromBatch("2.createTestRunAttachment").result = agentifm.TaskResult.Succeeded;
+        this._getFromBatch("2.createTestRunAttachment").result = agentifm.TaskResult.Succeeded;
 
         // always fail attachment upload; and validate from testcode that, the task still succeeds 
         // - failure to upload an atatchment (say because of size > 100MB, etc), should not stop publishing of test results 
-		var err = {
-	        message: "Too bad",
-    	    statusCode: "400"
+        var err = {
+            message: "Too bad",
+            statusCode: "400"
         };
         defer.reject(err);
 
-        return <Q.Promise<any>>defer.promise;  
+        return <Q.Promise<any>>defer.promise;
     }
 
-	private _getFromBatch(recordId: string) {
-		if (!this._records.hasOwnProperty(recordId)) {
-			this._records[recordId] = {};
-		}
+    private _getFromBatch(recordId: string) {
+        if (!this._records.hasOwnProperty(recordId)) {
+            this._records[recordId] = {};
+        }
 
-		return this._records[recordId];
-	}
+        return this._records[recordId];
+    }
 }

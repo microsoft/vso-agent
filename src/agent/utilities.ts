@@ -15,6 +15,55 @@ export interface GetOrCreateResult<T> {
     result: T;
 }
 
+// returns a substring that is common from first. For example, for "abcd" and "abdf", "ab" is returned.
+export function sharedSubString(string1: string, string2: string): string {
+    var ret = "";
+    var index = 1;
+    while (string1.substring(0, index) == string2.substring(0, index)) {
+        ret = string1.substring(0, index);
+        index++;
+    }
+    return ret;
+}
+    
+// sorts string array in ascending order
+export function sortStringArray(list): string[] {
+    var sortedFiles: string[] = list.sort((a, b) => {
+        if (a > b) {
+            return 1;
+        }
+        else if (a < b) {
+            return -1;
+        }
+        else {
+            return 0;
+        }
+    });
+    return sortedFiles;
+}
+
+// returns true if path exists and it is a directory else false.
+export function isDirectoryExists(path: string): boolean {
+   try {
+        return fs.lstatSync(path).isDirectory();
+    }
+    catch (error) {
+        return false;
+    }
+    return true;
+}
+
+// returns true if path exists and it is a file else false.
+export function isFileExists(path: string): boolean {
+    try {
+        return fs.lstatSync(path).isFile();
+    }
+    catch (error) {
+        return false;
+    }
+    return true;
+}
+
 // TODO: offer these module level context-less helper functions in utilities below
 export function ensurePathExists(path: string): Q.Promise<void> {
     var defer = Q.defer<void>();
@@ -40,11 +89,11 @@ export function ensurePathExists(path: string): Q.Promise<void> {
     return defer.promise;
 }
 
-export function readFileContents(filePath: string, encoding: string) : Q.Promise<string> {
+export function readFileContents(filePath: string, encoding: string): Q.Promise<string> {
     var defer = Q.defer<string>();
 
     fs.readFile(filePath, encoding, (err, data) => {
-        if(err) {
+        if (err) {
             defer.reject(new Error('Could not read file (' + filePath + '): ' + err.message));
         }
         else {
@@ -57,11 +106,11 @@ export function readFileContents(filePath: string, encoding: string) : Q.Promise
 
 export function fileExists(filePath: string): Q.Promise<boolean> {
     var defer = Q.defer<boolean>();
-    
+
     fs.exists(filePath, (exists) => {
         defer.resolve(exists);
     });
-    
+
     return <Q.Promise<boolean>>defer.promise;
 }
 export function objectToFile(filePath: string, obj: any): Q.Promise<void> {
@@ -79,7 +128,7 @@ export function objectToFile(filePath: string, obj: any): Q.Promise<void> {
     return defer.promise;
 }
 
-export function objectFromFile(filePath: string, defObj?:any): Q.Promise<any> {
+export function objectFromFile(filePath: string, defObj?: any): Q.Promise<any> {
     var defer = Q.defer<any>();
 
     fs.exists(filePath, (exists) => {
@@ -98,7 +147,7 @@ export function objectFromFile(filePath: string, defObj?:any): Q.Promise<any> {
                     var obj: any = JSON.parse(contents.toString());
                     defer.resolve(obj);
                 }
-            });            
+            });
         }
     })
 
@@ -107,7 +156,7 @@ export function objectFromFile(filePath: string, defObj?:any): Q.Promise<any> {
 
 export function getOrCreateObjectFromFile<T>(filePath: string, defObj: T): Q.Promise<GetOrCreateResult<T>> {
     var defer = Q.defer<GetOrCreateResult<T>>();
-    
+
     fs.exists(filePath, (exists) => {
         if (!exists) {
             fs.writeFile(filePath, JSON.stringify(defObj, null, 2), (err) => {
@@ -134,7 +183,7 @@ export function getOrCreateObjectFromFile<T>(filePath: string, defObj: T): Q.Pro
                         result: obj
                     });
                 }
-            });            
+            });
         }
     })
 
@@ -146,7 +195,7 @@ export function exec(cmdLine: string): Q.Promise<any> {
     var defer = Q.defer<any>();
 
     shell.exec(cmdLine, (code, output) => {
-        defer.resolve({code: code, output: output});
+        defer.resolve({ code: code, output: output });
     });
 
     return defer.promise;
