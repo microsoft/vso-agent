@@ -99,4 +99,4 @@ gulp.task('clean', function (done) {
     del([buildRoot, tarRoot, packageRoot, testRoot], done);
 });
 
-gulp.task('default', ['tar', 'test']);
+gulp.task('default', ['tar']);

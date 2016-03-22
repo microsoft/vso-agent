@@ -51,7 +51,6 @@ export function isDirectoryExists(path: string): boolean {
     catch (error) {
         return false;
     }
-    return true;
 }
 
 // returns true if path exists and it is a file else false.
@@ -62,7 +61,6 @@ export function isFileExists(path: string): boolean {
     catch (error) {
         return false;
     }
-    return true;
 }
 
 
