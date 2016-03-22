@@ -78,7 +78,7 @@ export class CodeCoveragePublisher {
         var newReportDirectory = reportDirectory;
 
         if (reportDirectory && reportDirectory.length > 0) {
-            if (utilities.isPathExists(reportDirectory) && fs.lstatSync(reportDirectory).isDirectory()) {
+            if (utilities.isDirectoryExists(reportDirectory)) {
                 reportDirectoryExists = true;
             }
             else {
@@ -92,7 +92,7 @@ export class CodeCoveragePublisher {
         }
       
         // copy the summary file into report directory
-        shell.cp('-f', summaryFile, newReportDirectory);
+        shell.cp(summaryFile, newReportDirectory);
 
         _this.command.info("PublishCodeCoverageFiles : Publishing code coverage report '" + newReportDirectory + "'");
         
@@ -210,7 +210,7 @@ export class CodeCoveragePublisher {
     //-----------------------------------------------------    
     private isReportDirectoryBrowsable(reportDirectory: string): string {
         var defaultIndexFile = path.join(reportDirectory, "index.html");
-        if(utilities.isPathExists(defaultIndexFile) && fs.lstatSync(defaultIndexFile).isFile()){
+        if(utilities.isFileExists(defaultIndexFile)){
             return "True";
         }
         return "False";
