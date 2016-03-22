@@ -49,6 +49,7 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IServ
     public containerItems: string[];
     public artifactNames: string[];
     public failingArtifactName: string;
+    public browsableArtifacts: string[];
 
     private _webConsole: string[];
     private _records: any;
@@ -61,6 +62,7 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IServ
         this._logPages = {};
         this.containerItems = [];
         this.artifactNames = [];
+        this.browsableArtifacts = [];
     }
 
     public getWebApi(): webapi.WebApi {
@@ -174,6 +176,11 @@ export class TestFeedbackChannel extends events.EventEmitter implements cm.IServ
 
     public postArtifact(projectId: string, buildId: number, artifact: buildifm.BuildArtifact): Q.Promise<buildifm.BuildArtifact> {
         this.artifactNames.push(artifact.name);
+        
+        if (artifact.resource.properties["browsable"] == "True") {
+            this.browsableArtifacts.push(artifact.name);
+        }
+        
         if (this.failingArtifactName == artifact.name) {
             throw new Error("Error occured while publishing artifact");
         }
