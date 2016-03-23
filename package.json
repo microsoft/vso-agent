@@ -12,7 +12,7 @@
   },
   "scripts": {
     "start": "./bin/install.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "gulp test"
   },
   "repository": {
     "type": "git",
@@ -29,6 +29,7 @@
   "license": "MIT",
   "dependencies": {
     "adm-zip": "0.4.x",
+    "archiver": "^0.21.0",
     "async": "0.2.9",
     "glob": "^6.0.0",
     "iniparser": "~1.0.5",

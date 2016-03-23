@@ -28,8 +28,8 @@ var _gitLocalPath = path.join(__dirname, process.platform, 'libgit_host');
 // TODO: move into vso-task-lib??
 export class GitWrapper extends events.EventEmitter {
     constructor() {
-        this.gitInstalled = shell.which('git', false) !== null;
         super();
+        this.gitInstalled = shell.which('git', false) !== null;
     }
 
     public username: string;
@@ -101,7 +101,6 @@ export class GitWrapper extends events.EventEmitter {
         var gitPath = options.useGitExe || process.env['AGENT_USEGITEXE'] ? shell.which('git', false) : _gitLocalPath;
         if (!gitPath) {
             throw (new Error('git not found.  ensure installed and in the path'));
-            return;
         }
 
         var git = new tl.ToolRunner(gitPath);
@@ -141,9 +140,9 @@ export class GitWrapper extends events.EventEmitter {
             git.arg('credential.helper=' + credHelper, true); // raw arg
         }
 
-        if (args.map((arg: string) => {
+        args.map((arg: string) => {
             git.arg(arg, true); // raw arg
-        }));
+        });
 
         options = options || <IGitExecOptions>{};
         var ops: any = {

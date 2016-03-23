@@ -40,6 +40,7 @@ export interface ITfvcExecOptions {
 
 export class TfvcWrapper extends events.EventEmitter {
     constructor() {
+        super();
         var tfp = shell.which('tf', false);
         var internalTf = path.join(process.env['AGENT_HOMEDIRECTORY'], '..', 'runtime', 'tee', 'tf');
         try{
@@ -56,7 +57,6 @@ export class TfvcWrapper extends events.EventEmitter {
         }        
         this.tfPath = tfp;
         this.connOptions = <ITfvcConnOptions>{};
-        super();
     }
 
     public tfPath: string;
@@ -180,9 +180,9 @@ export class TfvcWrapper extends events.EventEmitter {
 
         var quotedArgs = this._getQuotedArgsWithDefaults(args);
         // args
-        if (quotedArgs.map((arg: string) => {
+        quotedArgs.map((arg: string) => {
             tf.arg(arg, true); // raw arg
-        }));
+        });
         
         return tf;
     }

@@ -9,6 +9,7 @@ import fs = require('fs');
 
 var shell = require('shelljs');
 var path = require('path');
+var archiver = require('archiver');
 
 export interface GetOrCreateResult<T> {
     created: boolean;
@@ -50,7 +51,6 @@ export function isDirectoryExists(path: string): boolean {
     catch (error) {
         return false;
     }
-    return true;
 }
 
 // returns true if path exists and it is a file else false.
@@ -61,14 +61,13 @@ export function isFileExists(path: string): boolean {
     catch (error) {
         return false;
     }
-    return true;
 }
 
 // TODO: offer these module level context-less helper functions in utilities below
 export function ensurePathExists(path: string): Q.Promise<void> {
     var defer = Q.defer<void>();
 
-    if (fs.exists(path, (exists) => {
+    fs.exists(path, (exists) => {
         if (!exists) {
             shell.mkdir('-p', path);
 
@@ -84,7 +83,7 @@ export function ensurePathExists(path: string): Q.Promise<void> {
         else {
             defer.resolve(null);
         }
-    }));
+    });
 
     return defer.promise;
 }
@@ -264,6 +263,30 @@ export function readDirectory(directory: string, includeFiles: boolean, includeF
     return deferred.promise;
 }
 
+export function archiveFiles(files: string[], archiveName: string): Q.Promise<string> {
+    var defer = Q.defer<string>();
+    var archive = path.join(shell.tempdir(), archiveName);
+    var output = fs.createWriteStream(archive);
+    var zipper = archiver('zip');
+
+    output.on('close', function() {
+        defer.resolve(archive);
+    });
+    zipper.on('error', function(err) {
+        defer.reject(err);
+    });
+
+    zipper.pipe(output);
+    zipper.bulk([{ src: files, expand: true }]);
+    zipper.finalize(function(err, bytes) {
+        if (err) {
+            defer.reject(err);
+        }
+    });
+
+    return defer.promise;
+}
+
 //
 // Utilities passed to each task
 // which provides contextual logging to server etc...
@@ -288,7 +311,7 @@ export class Utilities {
         }
         return args;
     }
-
+    
     // spawn a process with stdout/err piped to context's logger
     // callback(err)
     public spawn(name: string, args: string[], options, callback: (err: any, returnCode: number) => void) {
