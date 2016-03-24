@@ -277,6 +277,7 @@ export interface IExecutionContext extends IOutputChannel, ITraceWriter {
     getWebApi(): webapi.WebApi;
     
     // inputs
+    processVariables(): void;
     jobInfo: IJobInfo;
     inputs: ifm.TaskInputs;
     variables: { [key: string]: string };

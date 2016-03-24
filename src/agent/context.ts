@@ -177,18 +177,23 @@ export class ExecutionContext extends Context implements cm.IExecutionContext {
         ensureTrace(hostContext);
         trace.enter('ExecutionContext');
         
-        function createLogger() {
-            const debugOutput = jobInfo.variables[cm.vars.systemDebug] == 'true';        
-            const logger: lm.PagingLogger = new lm.PagingLogger(logFolder, logData);
-            logger.level =  debugOutput ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info;
-            logger.on('pageComplete', (info: cm.ILogPageInfo) => {
-                service.queueLogPage(info);
-            });
-            return logger;
-        }
-        
-        super([createLogger()]);
+        var wd = jobInfo.variables[cm.vars.agentWorkingDirectory];
+        var logFolder = path.join(wd, '_logs');
 
+        var logData = <cm.ILogMetadata>{};
+        logData.jobInfo = jobInfo;
+        logData.recordId = recordId;
+        var debugOutput = jobInfo.variables[cm.vars.systemDebug] == 'true'; 
+
+        var logger: lm.PagingLogger = new lm.PagingLogger(logFolder, logData);
+        logger.level =  debugOutput ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info;
+        logger.on('pageComplete', (info: cm.ILogPageInfo) => {
+            service.queueLogPage(info);
+        });
+        
+        super([logger]);
+
+        this.workingDirectory = wd;
         this.jobInfo = jobInfo;
         this.authHandler = authHandler;
         this.traceWriter = hostContext;
@@ -199,13 +204,6 @@ export class ExecutionContext extends Context implements cm.IExecutionContext {
         this.service = service;
         this.config = hostContext.config;
         this.taskDefinitions = {};
-
-        this.workingDirectory = this.variables[cm.vars.agentWorkingDirectory];
-        var logFolder = path.join(this.workingDirectory, '_logs');
-
-        var logData = <cm.ILogMetadata>{};
-        logData.jobInfo = jobInfo;
-        logData.recordId = recordId;
 
         this.debugOutput = this.variables[cm.vars.systemDebug] == 'true';
         this.util = new um.Utilities(this);
@@ -227,6 +225,38 @@ export class ExecutionContext extends Context implements cm.IExecutionContext {
     public inputs: ifm.TaskInputs;
     public result: agentifm.TaskResult;
     public resultMessage: string;
+
+    public processVariables() {
+        trace.enter('processVariables');
+
+        // replace variables in inputs
+        var vars = this.jobInfo.jobMessage.environment.variables;
+        if (vars) {
+            // we don't want vars to be case sensitive
+            var lowerVars = {};
+            for (var varName in vars) {
+                lowerVars[varName.toLowerCase()] = vars[varName];
+            }
+
+            this.jobInfo.jobMessage.tasks.forEach((task) => {
+                trace.write(task.name);
+                for (var key in task.inputs) {
+                    if (task.inputs[key]) {
+                        task.inputs[key] = task.inputs[key].replaceVars(lowerVars);    
+                    }
+                }
+            });
+
+            // set env vars
+            for (var variable in vars) {
+                var envVarName = variable.replace(".", "_").toUpperCase();
+                process.env[envVarName] = vars[variable];
+            }
+            trace.state('variables', process.env);     
+        }
+
+        trace.state('tasks', this.jobInfo.jobMessage.tasks);
+    }
 
     public getWebApi(): wapim.WebApi {
         return this.service.getWebApi();

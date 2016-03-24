@@ -115,6 +115,8 @@ export function beforeJob(executionContext: cm.IExecutionContext, callback) {
 
         variables[cm.vars.commonTestResultsDirectory] = path.join(workingFolder, srcMap.common_testresultsdirectory);
         var bd = variables[cm.vars.agentBuildDirectory] = variables[cm.vars.buildBinariesDirectory] = path.join(workingFolder, srcMap.agent_builddirectory);
+
+        executionContext.processVariables();
         shell.mkdir('-p', bd);
         shell.cd(bd);
 

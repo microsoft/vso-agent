@@ -43,46 +43,14 @@ export class JobRunner {
 
     private _job: agentifm.JobRequestMessage;
 
-    private _processVariables() {
-        this._hostContext.info('_processVariables');
-
-        // replace variables in inputs
-        var vars = this._job.environment.variables;
-        if (vars) {
-            // we don't want vars to be case sensitive
-            var lowerVars = {};
-            for (var varName in vars) {
-                lowerVars[varName.toLowerCase()] = vars[varName];
-            }
-
-            this._job.tasks.forEach((task) => {
-                trace.write(task.name);
-                for (var key in task.inputs) {
-                    if (task.inputs[key]) {
-                        task.inputs[key] = task.inputs[key].replaceVars(lowerVars);    
-                    }
-                }
-            });
-
-            // set env vars
-            for (var variable in vars) {
-                var envVarName = variable.replace(".", "_").toUpperCase();
-                process.env[envVarName] = vars[variable];
-            }
-            trace.state('variables', process.env);     
-        }
-
-        trace.state('tasks', this._job.tasks);
-    }
-
     public run(complete: (err: any, result: agentifm.TaskResult) => void) {
         trace.enter('run');
 
         var hostContext = this._hostContext;
-        this._processVariables();
 
         var _this: JobRunner = this;
         var executionContext: cm.IExecutionContext = this._executionContext;
+        executionContext.processVariables();
 
         //
         // default directory is the working directory.
@@ -174,7 +142,7 @@ export class JobRunner {
                                         trace.state('variables after plugins:', _this._job.environment.variables);
 
                                         // plugins can contribute to vars so replace again
-                                        _this._processVariables();
+                                        executionContext.processVariables();
 
                                         jobResult = !err && success ? agentifm.TaskResult.Succeeded : agentifm.TaskResult.Failed;
                                         trace.write('jobResult: ' + jobResult);

@@ -29,6 +29,7 @@ export class TestExecutionContext implements cm.IExecutionContext {
     }
     
     // inputs
+    public processVariables(): void {}
     public jobInfo: cm.IJobInfo;
     public inputs: ifm.TaskInputs;
     public variables: { [key: string]: string };
