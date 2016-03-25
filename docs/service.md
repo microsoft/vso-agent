@@ -1,11 +1,11 @@
 # Microsoft Cross Platform Build Agent
 
-Running interactively is good for testing and trying it out.  But, in production the agent should be run as a service
-to ensure the agent survives reboots.
+Running interactively is good for testing and trying it out, but in production,
+the agent should be run as a service to ensure the agent survives reboots.
 
 ## Run as a Service
 
-> OSX only for right now. Linux soon
+> This is currently only supported on Mac OSX. Linux support is coming soon.
 
 ### Install Service
 
