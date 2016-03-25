@@ -1,4 +1,4 @@
-# Microsoft Visual Studio Team Services  Cross-platform Build & Release Agent
+# Microsoft Visual Studio Team Services Cross-platform Build & Release Agent
 
 A cross-platform build agent for Visual Studio Team Services (VSTS) and Team Foundation Server (TFS).  Supported on Mac OSX and Linux.
 
