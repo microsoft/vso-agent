@@ -231,6 +231,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
     }
 
     public queueConsoleLine(line: string): void {
+        line = this.jobInfo.mask(line);
         if (line.length > 512) {
             line = line.substring(0, 509) + '...';
         }
@@ -240,6 +241,7 @@ export class ServiceChannel extends events.EventEmitter implements cm.IServiceCh
     }
 
     public queueConsoleSection(line: string): void {
+        line = this.jobInfo.mask(line);
         trace.enter('servicechannel:queueConsoleSection: ' + line);
         this._consoleQueue.section(line);
     }
@@ -511,11 +513,11 @@ export class WebConsoleQueue extends BaseQueue<string> {
     }
 
     public section(line: string): void {
-        this.push('[section] ' + this._jobInfo.mask(line));
+        this.push('[section] ' + line);
     }
 
     public push(line: string): void {
-        super.push(this._jobInfo.mask(line));
+        super.push(line);
     }
 
     public _processQueue(values: string[], callback: (err: any) => void) {
