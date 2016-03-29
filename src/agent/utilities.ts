@@ -10,12 +10,13 @@ import fs = require('fs');
 var shell = require('shelljs');
 var path = require('path');
 var archiver = require('archiver');
+var str = require('string');
 
 export interface GetOrCreateResult<T> {
     created: boolean;
     result: T;
 }
-   
+
 // returns a substring that is common from first. For example, for "abcd" and "abdf", "ab" is returned.
 export function sharedSubString(string1: string, string2: string): string {
     var ret = "";
@@ -26,7 +27,7 @@ export function sharedSubString(string1: string, string2: string): string {
     }
     return ret;
 }
-    
+
 // sorts string array in ascending order
 export function sortStringArray(list): string[] {
     var sortedFiles: string[] = list.sort((a, b) => {
@@ -45,7 +46,7 @@ export function sortStringArray(list): string[] {
 
 // returns true if path exists and it is a directory else false.
 export function isDirectoryExists(path: string): boolean {
-   try {
+    try {
         return fs.lstatSync(path).isDirectory();
     }
     catch (error) {
@@ -288,6 +289,68 @@ export function archiveFiles(files: string[], archiveName: string): Q.Promise<st
     return defer.promise;
 }
 
+export function isNullOrWhitespace(input) {
+    if (typeof input == 'undefined' || input == null) {
+        return true;
+    }
+    return input.replace(/\s/g, '').length < 1;
+}
+
+export function trimToEmptyString(input) {
+    if (typeof input == 'undefined' || input == null) {
+        return "";
+    }
+    return input.trim();
+}
+
+export function appendTextToFileSync(filePath: string, fileContent: string) {
+    if (isFileExists(filePath)) {
+        fs.appendFileSync(filePath, fileContent);
+    }
+}
+
+export function prependTextToFileSync(filePath: string, fileContent: string) {
+    if (isFileExists(filePath)) {
+        var data = fs.readFileSync(filePath); //read existing contents into data
+        var fd = fs.openSync(filePath, 'w+');
+        var buffer = new Buffer(fileContent);
+        fs.writeSync(fd, buffer, 0, buffer.length, 0); //write new data
+        fs.writeSync(fd, data, 0, data.length, 0); //append old data
+        fs.close(fd);
+    }
+}
+
+export function insertTextToFileSync(filePath: string, prependFileContent?: string, appendFileContent?: string) {
+    if (isFileExists(filePath) && (prependFileContent || appendFileContent)) {
+        var existingData = fs.readFileSync(filePath); //read existing contents into data
+        var fd = fs.openSync(filePath, 'w+');
+        var preTextLength = prependFileContent ? prependFileContent.length : 0;
+
+        if (prependFileContent) {
+            var prependBuffer = new Buffer(prependFileContent);
+            fs.writeSync(fd, prependBuffer, 0, prependBuffer.length, 0); //write new data
+        }
+        fs.writeSync(fd, existingData, 0, existingData.length, preTextLength); //append old data
+        if (appendFileContent) {
+            var appendBuffer = new Buffer(appendFileContent);
+            fs.writeSync(fd, appendBuffer, 0, appendBuffer.length, existingData.length + preTextLength);
+        }
+        fs.close(fd);
+    }
+}
+
+export function trimEnd(data: string, trimChar: string) {
+    if (!trimChar || !data) {
+        return data;
+    }
+
+    if (str(data).endsWith(trimChar)) {
+        return data.substring(0, data.length - trimChar.length);
+    } else {
+        return data;
+    }
+}
+
 //
 // Utilities passed to each task
 // which provides contextual logging to server etc...
@@ -312,7 +375,7 @@ export class Utilities {
         }
         return args;
     }
-    
+
     // spawn a process with stdout/err piped to context's logger
     // callback(err)
     public spawn(name: string, args: string[], options, callback: (err: any, returnCode: number) => void) {

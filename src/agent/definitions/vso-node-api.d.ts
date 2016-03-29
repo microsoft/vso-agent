@@ -18312,3 +18312,16 @@ declare module 'vso-node-api/WebApi' {
 	}
 
 }
+
+declare module 'vso-node-api/interfaces/CodeCoverageInterfaces' {
+	export interface CodeCoverageProperties {
+        codeCoverageTool: string,
+        buildTool: string,
+        summaryFile: string,
+        isMultiModule: boolean,
+        buildFile: string,
+        reportDir: string,
+        classFileDirs: string,
+        classFilter: string,
+    }
+}
