@@ -263,7 +263,7 @@ export class JobRunner {
                 });
 
                 if (item.enabled) {
-                    taskContext.setTaskStarted(item.name);
+                    taskContext.setTaskStarted(item.displayName);
 
                     _this.runTask(item, taskContext, (err) => {
                         var taskResult: agentifm.TaskResult = taskContext.result;
@@ -279,7 +279,7 @@ export class JobRunner {
                         }
 
                         trace.write('taskResult: ' + taskResult);
-                        taskContext.setTaskResult(item.name, taskResult);
+                        taskContext.setTaskResult(item.displayName, taskResult);
 
                         taskContext.end();
                         done(err);
@@ -289,7 +289,7 @@ export class JobRunner {
                     var err = '';
                     var taskResult: agentifm.TaskResult = agentifm.TaskResult.Skipped;
                     trace.write('taskResult: ' + taskResult);
-                    taskContext.setTaskResult(item.name, taskResult);
+                    taskContext.setTaskResult(item.displayName, taskResult);
                     done(err);
                 }
             }, function (err) {
