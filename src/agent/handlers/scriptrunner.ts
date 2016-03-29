@@ -95,6 +95,12 @@ export function run(scriptEngine: string, scriptPath: string, executionContext: 
     //
     // Endpoints
     //
+    env['ENDPOINT_URL_SYSTEMVSSCONNECTION'] = jobMessage.environment.systemConnection.url;
+    _trace.write('ENDPOINT_URL_SYSTEMVSSCONNECTION=' + env['ENDPOINT_URL_SYSTEMVSSCONNECTION']);
+    env['ENDPOINT_AUTH_SYSTEMVSSCONNECTION'] = JSON.stringify(jobMessage.environment.systemConnection.authorization);
+    _trace.state('ENDPOINT_AUTH_SYSTEMVSSCONNECTION', JSON.parse(env['ENDPOINT_AUTH_SYSTEMVSSCONNECTION']));
+
+    //external    
     var endpoints = jobMessage.environment.endpoints;
     if (endpoints) {
         for (var i=0; i < endpoints.length; i++) {
