@@ -150,20 +150,16 @@ export class HostContext extends Context implements cm.IHostContext {
     public workFolder: string;
     
     constructor(config: cm.IConfiguration, fileWriter: cm.IDiagnosticWriter, consoleOutput: boolean) {
-        this.config = config;
-        this.workFolder = cm.getWorkPath(config);
-        
-        ensureTrace(this);
-        
-        this._fileWriter = fileWriter;
-        
-        var writers: cm.IDiagnosticWriter[] = [this._fileWriter];
-        
+        var writers: cm.IDiagnosticWriter[] = [fileWriter];
         if (consoleOutput) {
             writers.push(new dm.DiagnosticConsoleWriter(cm.DiagnosticLevel.Status));
-        }
-        
+        }        
         super(writers);
+        
+        this.config = config;
+        this.workFolder = cm.getWorkPath(config);
+        this._fileWriter = fileWriter;        
+        ensureTrace(this);
     }
     
     public trace(message: string): void {
@@ -180,7 +176,24 @@ export class ExecutionContext extends Context implements cm.IExecutionContext {
 
         ensureTrace(hostContext);
         trace.enter('ExecutionContext');
+        
+        var wd = jobInfo.variables[cm.vars.agentWorkingDirectory];
+        var logFolder = path.join(wd, '_logs');
 
+        var logData = <cm.ILogMetadata>{};
+        logData.jobInfo = jobInfo;
+        logData.recordId = recordId;
+        var debugOutput = jobInfo.variables[cm.vars.systemDebug] == 'true'; 
+
+        var logger: lm.PagingLogger = new lm.PagingLogger(logFolder, logData);
+        logger.level =  debugOutput ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info;
+        logger.on('pageComplete', (info: cm.ILogPageInfo) => {
+            service.queueLogPage(info);
+        });
+        
+        super([logger]);
+
+        this.workingDirectory = wd;
         this.jobInfo = jobInfo;
         this.authHandler = authHandler;
         this.traceWriter = hostContext;
@@ -192,27 +205,9 @@ export class ExecutionContext extends Context implements cm.IExecutionContext {
         this.config = hostContext.config;
         this.taskDefinitions = {};
 
-        this.workingDirectory = this.variables[cm.vars.agentWorkingDirectory];
-        var logFolder = path.join(this.workingDirectory, '_logs');
-
-        var logData = <cm.ILogMetadata>{};
-        logData.jobInfo = jobInfo;
-        logData.recordId = recordId;
-
         this.debugOutput = this.variables[cm.vars.systemDebug] == 'true';
-        var logger: lm.PagingLogger = new lm.PagingLogger(logFolder, logData);
-
-        logger.level =  this.debugOutput ? cm.DiagnosticLevel.Verbose : cm.DiagnosticLevel.Info;
-
-        logger.on('pageComplete', (info: cm.ILogPageInfo) => {
-            service.queueLogPage(info);
-        });
-
         this.util = new um.Utilities(this);
-
         this.scmPath = path.join(__dirname, 'scm');
-
-        super([logger]);
     }
 
     public traceWriter: cm.ITraceWriter;

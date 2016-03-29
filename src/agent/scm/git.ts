@@ -28,6 +28,8 @@ function _translateRef(ref) {
 
 export class GitScmProvider extends scmm.ScmProvider {
 	constructor(ctx: cm.IExecutionContext, endpoint: agentifm.ServiceEndpoint) {
+        super(ctx, endpoint);
+        
 		this.gitw = new gitwm.GitWrapper();
 		this.gitw.on('stdout', (data) => {
 			ctx.info(data.toString());
@@ -36,8 +38,6 @@ export class GitScmProvider extends scmm.ScmProvider {
 		this.gitw.on('stderr', (data) => {
 			ctx.info(data.toString());
 		});
-
-		super(ctx, endpoint);
 	}
 
 	public username: string;
