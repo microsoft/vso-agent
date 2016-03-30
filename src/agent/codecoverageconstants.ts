@@ -20,7 +20,7 @@ subprojects {
 		
 		reports {
 			html.enabled = true
-			html.destination "\${buildDir}/jacocoHtml
+			html.destination "\${buildDir}/jacocoHtml/"
             xml.enabled = true    
 	        xml.destination "\${buildDir}/summary.xml"
         }
@@ -41,12 +41,12 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
 	
 	doFirst {
 		subprojects.each {
-			if (new File("\${it.sourceSets.main.output.classesDir}).exists()) {
-				logger.info("Class directory exists in sub project: \${it.name})
-				logger.info("Adding class files \${it.sourceSets.main.output.classesDir})
-				classDirectories += fileTree(dir: \${it.sourceSets.main.output.classesDir}, includes: jacocoIncludes, excludes: jacocoExcludes)
+			if (new File("\${it.sourceSets.main.output.classesDir}").exists()) {
+				logger.info("Class directory exists in sub project: \${it.name}")
+				logger.info("Adding class files \${it.sourceSets.main.output.classesDir}")
+				classDirectories += fileTree(dir: "\${it.sourceSets.main.output.classesDir}", includes: jacocoIncludes, excludes: jacocoExcludes)
 			} else {
-				logger.error("Class directory does not exist in sub project: \${it.name})
+				logger.error("Class directory does not exist in sub project: \${it.name}")
 			}
 		}
 	}
@@ -122,7 +122,7 @@ allprojects {
 
 cobertura {
     coverageDirs = ["${classDir}"]
-    coverageSourceDirs = "${sourceDir}"
+    coverageSourceDirs = ${sourceDir}
     coverageReportDir = new File('${reportDir}')
     coverageFormats = ['xml', 'html']
 }`;
