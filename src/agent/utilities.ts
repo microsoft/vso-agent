@@ -15,6 +15,14 @@ export interface GetOrCreateResult<T> {
     created: boolean;
     result: T;
 }
+
+//converts inputString to titleCase string. For example, "abc def" is converted to "Abc Def"
+export function toTitleCase(inputString: string): string {
+    if (inputString) {
+        return inputString.replace(/\w\S*/g, function(str) { return str.charAt(0).toUpperCase() + str.substr(1).toLowerCase(); });
+    }
+    return inputString;
+}
    
 // returns a substring that is common from first. For example, for "abcd" and "abdf", "ab" is returned.
 export function sharedSubString(string1: string, string2: string): string {
@@ -45,7 +53,7 @@ export function sortStringArray(list): string[] {
 
 // returns true if path exists and it is a directory else false.
 export function isDirectoryExists(path: string): boolean {
-   try {
+    try {
         return fs.lstatSync(path).isDirectory();
     }
     catch (error) {
