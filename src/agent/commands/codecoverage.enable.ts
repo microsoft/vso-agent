@@ -116,12 +116,6 @@ export class CodeCoverageEnableCommand implements cm.IAsyncCommand {
             throw new Error("Class file directory is not provided.");
         }
 
-        /*
-                if (!utilities.isFileExists(summaryFile)) {
-                    throw new Error("Code coverage summary file '" + summaryFile + "' doesnot exist or it is not a valid file.");
-                }
-                */
-
         if (!utilities.isFileExists(ccProps.buildFile)) {
             throw new Error("Build file '" + ccProps.buildFile + "' doesnot exist or it is not a valid file.");
         }
