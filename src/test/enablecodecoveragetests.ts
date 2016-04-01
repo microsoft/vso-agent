@@ -357,20 +357,4 @@ describe('CodeCoverageEnablerTests', function() {
         });
     })
     // Cobertura-Gralde specific test cases - END
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 });	
