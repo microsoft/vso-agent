@@ -70,10 +70,18 @@ export class JacocoSummaryReader implements ccp.ICodeCoverageReader {
                 var counterNode = reportNode.counter.at(i);
                 var attributes = counterNode.attributes();
                 if (attributes && attributes.type && attributes.covered && attributes.missed) {
-                    var total = Number(attributes.covered) + Number(attributes.missed);
-                    this.command.info(attributes.type + " : " + attributes.covered + "/" + total + " covered.");
-                    var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics(attributes.type, attributes.covered, total, attributes.type);
-                    coverageStats.push(coverageStat);
+                    var covered = parseInt(attributes.covered);
+                    var missed = parseInt(attributes.missed);
+                    if (!isNaN(covered) && !isNaN(missed)) {
+                        var total = covered + missed;
+                        this.command.info(attributes.type + " : " + covered + "/" + total + " covered.");
+                        var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics(utilities.toTitleCase(attributes.type), covered, total, attributes.type);
+                        coverageStats.push(coverageStat);
+                    }
+                    else {
+                        defer.reject(new Error("Unable to retreive value for '" + attributes.type + "' from summary file. Verify the summary file is well formed and try again."));
+                        return defer.promise;
+                    }
                 }
             }
             coverage.addResults(coverageStats);
@@ -144,15 +152,31 @@ export class CoberturaSummaryReader implements ccp.ICodeCoverageReader {
                 var branchesTotal = attributes['branches-valid'];
 
                 if (linesTotal && linesCovered) {
-                    this.command.info("Lines : " + linesCovered + "/" + linesTotal + " covered.");
-                    var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics("Lines", linesCovered, linesTotal, "line");
-                    coverageStats.push(coverageStat);
+                    linesTotal = parseInt(linesTotal);
+                    linesCovered = parseInt(linesCovered);
+                    if (!isNaN(linesTotal) && !isNaN(linesCovered)) {
+                        this.command.info("Lines : " + linesCovered + "/" + linesTotal + " covered.");
+                        var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics("Lines", linesCovered, linesTotal, "line");
+                        coverageStats.push(coverageStat);
+                    }
+                    else {
+                        defer.reject(new Error("Unable to retreive value for 'lines' from summary file. Verify the summary file is well formed and try again."));
+                        return defer.promise;
+                    }
                 }
 
                 if (branchesCovered && branchesTotal) {
-                    this.command.info("Branches : " + branchesCovered + "/" + branchesTotal + " covered.");
-                    var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics("Branches", branchesCovered, branchesTotal, "branch");
-                    coverageStats.push(coverageStat);
+                    branchesCovered = parseInt(branchesCovered);
+                    branchesTotal = parseInt(branchesTotal);
+                    if (!isNaN(branchesCovered) && !isNaN(branchesTotal)) {
+                        this.command.info("Branches : " + branchesCovered + "/" + branchesTotal + " covered.");
+                        var coverageStat = SummaryReaderUtilities.getCodeCoverageStatistics("Branches", branchesCovered, branchesTotal, "branch");
+                        coverageStats.push(coverageStat);
+                    }
+                    else {
+                        defer.reject(new Error("Unable to retreive value for 'branches' from summary file. Verify the summary file is well formed and try again."));
+                        return defer.promise;
+                    }
                 }
 
                 coverage.addResults(coverageStats);

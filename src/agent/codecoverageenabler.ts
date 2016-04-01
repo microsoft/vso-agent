@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 import ccifm = require('vso-node-api/interfaces/CodeCoverageInterfaces');
 import ctxm = require('./context');
 import cm = require('./common');

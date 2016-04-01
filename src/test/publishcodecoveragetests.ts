@@ -295,8 +295,8 @@ describe('CodeCoveragePublisherTests', function() {
                         assert(result.coverageStats[i].position == 4);
                         break;
                     case "Branches":
-                        assert(result.coverageStats[i].covered == 2.4);
-                        assert(result.coverageStats[i].total == 8.8);
+                        assert(result.coverageStats[i].covered == 2);
+                        assert(result.coverageStats[i].total == 8);
                         assert(result.coverageStats[i].position == 6);
                         break;
                     default: assert(false, "Unexpected code coverage stat . label : " + result.coverageStats[i].label)
@@ -319,27 +319,27 @@ describe('CodeCoveragePublisherTests', function() {
             assert(result.coverageStats.length == 5);
             for (var i = 0; i < result.coverageStats.length; i++) {
                 switch (result.coverageStats[i].label) {
-                    case "INSTRUCTION":
+                    case "Instruction":
                         assert(result.coverageStats[i].covered == 8);
                         assert(result.coverageStats[i].total == 22);
                         assert(result.coverageStats[i].position == 5);
                         break;
-                    case "LINE":
+                    case "Line":
                         assert(result.coverageStats[i].covered == 2);
                         assert(result.coverageStats[i].total == 7);
                         assert(result.coverageStats[i].position == 4);
                         break;
-                    case "COMPLEXITY":
+                    case "Complexity":
                         assert(result.coverageStats[i].covered == 2);
                         assert(result.coverageStats[i].total == 6);
                         assert(result.coverageStats[i].position == 2);
                         break;
-                    case "METHOD":
+                    case "Method":
                         assert(result.coverageStats[i].covered == 2);
                         assert(result.coverageStats[i].total == 6);
                         assert(result.coverageStats[i].position == 3);
                         break;
-                    case "CLASS":
+                    case "Class":
                         assert(result.coverageStats[i].covered == 2);
                         assert(result.coverageStats[i].total == 2);
                         assert(result.coverageStats[i].position == 1);
@@ -351,6 +351,38 @@ describe('CodeCoveragePublisherTests', function() {
         },
             function(err) {
                 assert(false, 'CodeCoveragePublish Task Failed! Details : ' + err.message);
+            });
+    })
+
+    it('codecoverage.publish : read jacoco code coverage summary with invalid data', function(done) {
+        this.timeout(2000);
+
+        var summaryFile = path.resolve(__dirname, './codecoveragefiles/jacocoWithInvalidData.xml');
+        var command: cm.ITaskCommand = new tc.TestCommand(null, null, null);
+        var coberturaSummaryReader = new csr.JacocoSummaryReader(command);
+        coberturaSummaryReader.getCodeCoverageSummary(summaryFile).then(function(result) {
+            assert(false, 'Publish code coverage Task did not fail as expected');
+            done();
+        },
+            function(err) {
+                assert(err == "Error: Unable to retreive value for 'INSTRUCTION' from summary file. Verify the summary file is well formed and try again.");
+                done();
+            });
+    })
+
+    it('codecoverage.publish : read cobertura code coverage summary with invalid data', function(done) {
+        this.timeout(2000);
+
+        var summaryFile = path.resolve(__dirname, './codecoveragefiles/coberturaWithInvalidData.xml');
+        var command: cm.ITaskCommand = new tc.TestCommand(null, null, null);
+        var coberturaSummaryReader = new csr.CoberturaSummaryReader(command);
+        coberturaSummaryReader.getCodeCoverageSummary(summaryFile).then(function(result) {
+            assert(false, 'Publish code coverage Task did not fail as expected');
+            done();
+        },
+            function(err) {
+                assert(err == "Error: Unable to retreive value for 'lines' from summary file. Verify the summary file is well formed and try again.");
+                done();
             });
     })
 
@@ -395,7 +427,7 @@ describe('CodeCoveragePublisherTests', function() {
         var codeCoveragePublishCommand = new cpc.CodeCoveragePublishCommand(testExecutionContext, command);
         codeCoveragePublishCommand.runCommandAsync().then(function(result) {
             assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
-            assert(testExecutionContext.service.containerItems.length == 9);
+            assert(testExecutionContext.service.containerItems.length == 11);
             assert(testExecutionContext.service.artifactNames.length == 1);
             assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
             assert(testExecutionContext.service.browsableArtifacts.length == 1);
@@ -423,7 +455,7 @@ describe('CodeCoveragePublisherTests', function() {
         var codeCoveragePublishCommand = new cpc.CodeCoveragePublishCommand(testExecutionContext, command);
         codeCoveragePublishCommand.runCommandAsync().then(function(result) {
             assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
-            assert(testExecutionContext.service.containerItems.length == 11);
+            assert(testExecutionContext.service.containerItems.length == 13);
             assert(testExecutionContext.service.artifactNames.length == 2);
             assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
             assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1");
@@ -546,7 +578,7 @@ describe('CodeCoveragePublisherTests', function() {
             done();
         },
             function(err) {
-                assert(testExecutionContext.service.containerItems.length == 9);
+                assert(testExecutionContext.service.containerItems.length == 11);
                 assert(testExecutionContext.service.artifactNames.length == 1);
                 assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
                 assert(testExecutionContext.service.browsableArtifacts.length == 1);
@@ -574,7 +606,7 @@ describe('CodeCoveragePublisherTests', function() {
             done();
         },
             function(err) {
-                assert(testExecutionContext.service.containerItems.length == 11);
+                assert(testExecutionContext.service.containerItems.length == 13);
                 assert(testExecutionContext.service.artifactNames.length == 2);
                 assert(testExecutionContext.service.artifactNames[0] == "Code Coverage Report_1");
                 assert(testExecutionContext.service.artifactNames[1] == "Code Coverage Files_1");

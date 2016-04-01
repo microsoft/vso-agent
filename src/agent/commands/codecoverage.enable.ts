@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 import cm = require('../common');
 import Q = require('q');
 import ccifm = require('vso-node-api/interfaces/CodeCoverageInterfaces');
@@ -8,7 +11,7 @@ import cce = require('../codecoverageenabler');
 
 //-----------------------------------------------------
 // Enable Code Coverage file for specified Build file 
-// - CMD_PREFIX + "codecoverage.enable type=junit]" + testResultsFile
+// - CMD_PREFIX + "codecoverage.enable buildTool: "buildTool", ccTool: "ccTool"]" + buildFile
 //-----------------------------------------------------
 
 export function createAsyncCommand(executionContext: cm.IExecutionContext, command: cm.ITaskCommand) {

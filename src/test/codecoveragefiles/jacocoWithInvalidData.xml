@@ -80,7 +80,7 @@
     <counter type="METHOD" missed="4" covered="2"/>
     <counter type="CLASS" missed="0" covered="2"/>
   </package>
-  <counter type="INSTRUCTION" missed="14.6" covered="8.2"/>
+  <counter type="INSTRUCTION" missed="instr" covered="8.2"/>
   <counter type="LINE" missed="5" covered="2"/>
   <counter type="COMPLEXITY" missed="4" covered="2"/>
   <counter type="METHOD" missed="4" covered="2"/>

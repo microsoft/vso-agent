@@ -50,4 +50,44 @@ describe('UtiltyTests', function() {
             done();
         });
     })
+
+    it('toTitleCase : input string with spaces', function(done) {
+        this.timeout(2000);
+
+        var titleCaseString = util.toTitleCase("tesT sTrIng");
+        assert(titleCaseString == "Test String");
+        done();
+    })
+
+    it('toTitleCase : input string with special characters', function(done) {
+        this.timeout(2000);
+
+        var titleCaseString = util.toTitleCase("t%~s1T s$rIng");
+        assert(titleCaseString == "T%~s1t S$ring");
+        done();
+    })
+
+    it('toTitleCase : input string without spaces', function(done) {
+        this.timeout(2000);
+
+        var titleCaseString = util.toTitleCase("testString");
+        assert(titleCaseString == "Teststring");
+        done();
+    })
+
+    it('toTitleCase : input string empty', function(done) {
+        this.timeout(2000);
+
+        var titleCaseString = util.toTitleCase("");
+        assert(titleCaseString == "");
+        done();
+    })
+
+    it('toTitleCase : input string null', function(done) {
+        this.timeout(2000);
+
+        var titleCaseString = util.toTitleCase(null);
+        assert(titleCaseString == null);
+        done();
+    })
 });	
