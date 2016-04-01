@@ -12,6 +12,7 @@ var str = require('string');
 var shell = require('shelljs');
 var path = require('path');
 
+/* Code Coverage enabler for different type of build tools and code coverage tools*/
 export abstract class CodeCoverageEnabler implements ICodeCoverageEnabler {
     constructor(executionContext: cm.IExecutionContext, command: cm.ITaskCommand) {
         this.executionContext = executionContext;
@@ -23,7 +24,10 @@ export abstract class CodeCoverageEnabler implements ICodeCoverageEnabler {
 
     abstract enableCodeCoverage(ccProps: ccifm.CodeCoverageProperties): Q.Promise<boolean>;
 
-    /* Convert the VSTS specific filter to Code Coverage Tool specific filter pattern */
+    //-----------------------------------------------------
+    // Convert the VSTS specific filter to Code Coverage Tool specific filter pattern
+    // - extractFilters: string  - classFilter
+    //-----------------------------------------------------    
     protected extractFilters(classFilter: string) {
         var includeFilter = "";
         var excludeFilter = "";
@@ -62,6 +66,10 @@ export abstract class CodeCoverageEnabler implements ICodeCoverageEnabler {
 }
 
 export class JacocoGradleCodeCoverageEnabler extends CodeCoverageEnabler {
+    //-----------------------------------------------------
+    // Enable code coverage for Jacoco Gradle Builds
+    // - enableCodeCoverage: CodeCoverageProperties  - ccProps
+    //-----------------------------------------------------    
     public enableCodeCoverage(ccProps: ccifm.CodeCoverageProperties): Q.Promise<boolean> {
         var defer = Q.defer<boolean>();
         var _this = this;
@@ -114,6 +122,10 @@ export class JacocoGradleCodeCoverageEnabler extends CodeCoverageEnabler {
 }
 
 export class JacocoMavenCodeCoverageEnabler extends CodeCoverageEnabler {
+    //-----------------------------------------------------
+    // Enable code coverage for Jacoco Maven Builds
+    // - enableCodeCoverage: CodeCoverageProperties  - ccProps
+    //-----------------------------------------------------    
     public enableCodeCoverage(ccProps: ccifm.CodeCoverageProperties): Q.Promise<boolean> {
         var defer = Q.defer<boolean>();
 
@@ -124,6 +136,10 @@ export class JacocoMavenCodeCoverageEnabler extends CodeCoverageEnabler {
 }
 
 export class JacocoAntCodeCoverageEnabler extends CodeCoverageEnabler {
+    //-----------------------------------------------------
+    // Enable code coverage for Jacoco Ant Builds
+    // - enableCodeCoverage: CodeCoverageProperties  - ccProps
+    //-----------------------------------------------------    
     public enableCodeCoverage(ccProps: ccifm.CodeCoverageProperties): Q.Promise<boolean> {
         var defer = Q.defer<boolean>();
 
@@ -134,6 +150,10 @@ export class JacocoAntCodeCoverageEnabler extends CodeCoverageEnabler {
 }
 
 export class CoberturaGradleCodeCoverageEnabler extends CodeCoverageEnabler {
+    //-----------------------------------------------------
+    // Enable code coverage for Cobertura Gradle Builds
+    // - enableCodeCoverage: CodeCoverageProperties  - ccProps
+    //-----------------------------------------------------    
     public enableCodeCoverage(ccProps: ccifm.CodeCoverageProperties): Q.Promise<boolean> {
         var defer = Q.defer<boolean>();
         var _this = this;
@@ -185,6 +205,10 @@ export class CoberturaGradleCodeCoverageEnabler extends CodeCoverageEnabler {
 }
 
 export class CoberturaMavenCodeCoverageEnabler extends CodeCoverageEnabler {
+    //-----------------------------------------------------
+    // Enable code coverage for Cobertura Maven Builds
+    // - enableCodeCoverage: CodeCoverageProperties  - ccProps
+    //-----------------------------------------------------    
     public enableCodeCoverage(ccProps: ccifm.CodeCoverageProperties): Q.Promise<boolean> {
         var defer = Q.defer<boolean>();
 
@@ -195,6 +219,10 @@ export class CoberturaMavenCodeCoverageEnabler extends CodeCoverageEnabler {
 }
 
 export class CoberturaAntCodeCoverageEnabler extends CodeCoverageEnabler {
+    //-----------------------------------------------------
+    // Enable code coverage for Cobertura Ant Builds
+    // - enableCodeCoverage: CodeCoverageProperties  - ccProps
+    //-----------------------------------------------------    
     public enableCodeCoverage(ccProps: ccifm.CodeCoverageProperties): Q.Promise<boolean> {
         var defer = Q.defer<boolean>();
 

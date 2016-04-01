@@ -24,7 +24,7 @@ export function toTitleCase(inputString: string): string {
     }
     return inputString;
 }
-   
+
 // returns a substring that is common from first. For example, for "abcd" and "abdf", "ab" is returned.
 export function sharedSubString(string1: string, string2: string): string {
     var ret = "";
@@ -273,6 +273,7 @@ export function readDirectory(directory: string, includeFiles: boolean, includeF
     return deferred.promise;
 }
 
+// archives given set of files.
 export function archiveFiles(files: string[], archiveName: string): Q.Promise<string> {
     var defer = Q.defer<string>();
     var archive = path.join(shell.tempdir(), archiveName);
@@ -297,6 +298,7 @@ export function archiveFiles(files: string[], archiveName: string): Q.Promise<st
     return defer.promise;
 }
 
+// returns true if given string is null or whitespace.
 export function isNullOrWhitespace(input) {
     if (typeof input == 'undefined' || input == null) {
         return true;
@@ -304,6 +306,7 @@ export function isNullOrWhitespace(input) {
     return input.replace(/\s/g, '').length < 1;
 }
 
+// returns empty string if the given value is undefined or null.
 export function trimToEmptyString(input) {
     if (typeof input == 'undefined' || input == null) {
         return "";
@@ -311,12 +314,14 @@ export function trimToEmptyString(input) {
     return input.trim();
 }
 
+// appends given text to file.
 export function appendTextToFileSync(filePath: string, fileContent: string) {
     if (isFileExists(filePath)) {
         fs.appendFileSync(filePath, fileContent);
     }
 }
 
+// prepends given text to start of file.
 export function prependTextToFileSync(filePath: string, fileContent: string) {
     if (isFileExists(filePath)) {
         var data = fs.readFileSync(filePath); //read existing contents into data
@@ -328,6 +333,7 @@ export function prependTextToFileSync(filePath: string, fileContent: string) {
     }
 }
 
+// single utility for appending text and prepending text to file.
 export function insertTextToFileSync(filePath: string, prependFileContent?: string, appendFileContent?: string) {
     if (isFileExists(filePath) && (prependFileContent || appendFileContent)) {
         var existingData = fs.readFileSync(filePath); //read existing contents into data
@@ -347,6 +353,7 @@ export function insertTextToFileSync(filePath: string, prependFileContent?: stri
     }
 }
 
+// trim the given character if it exists in the end of string.
 export function trimEnd(data: string, trimChar: string) {
     if (!trimChar || !data) {
         return data;
