@@ -26,4 +26,44 @@ describe('UtiltyTests', function() {
             assert(err);
         });
     })
+
+    it('toTitleCase : input string with spaces', function(done) {
+        this.timeout(2000);
+
+        var titleCaseString = ccp.toTitleCase("tesT sTrIng");
+        assert(titleCaseString == "Test String");
+        done();
+    })
+
+    it('toTitleCase : input string with special characters', function(done) {
+        this.timeout(2000);
+
+        var titleCaseString = ccp.toTitleCase("t%~s1T s$rIng");
+        assert(titleCaseString == "T%~s1t S$ring");
+        done();
+    })
+
+    it('toTitleCase : input string without spaces', function(done) {
+        this.timeout(2000);
+
+        var titleCaseString = ccp.toTitleCase("testString");
+        assert(titleCaseString == "Teststring");
+        done();
+    })
+
+    it('toTitleCase : input string empty', function(done) {
+        this.timeout(2000);
+
+        var titleCaseString = ccp.toTitleCase("");
+        assert(titleCaseString == "");
+        done();
+    })
+
+    it('toTitleCase : input string null', function(done) {
+        this.timeout(2000);
+
+        var titleCaseString = ccp.toTitleCase(null);
+        assert(titleCaseString == null);
+        done();
+    })
 });	
