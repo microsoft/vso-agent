@@ -17,7 +17,7 @@ DEFAULT_TEE_VERSION="14.0.2-private"
 # export bit_override=x86_64
 
 #no version is latest
-DEFAULT_AGENT_VERSION=""
+DEFAULT_AGENT_VERSION="@0.6"
 
 function failed()
 {
