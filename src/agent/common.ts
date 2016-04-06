@@ -442,10 +442,18 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment, config: ICo
                 value: config.creds.username
             };
             maskHints.push(maskHint);
+            maskHint = {
+                value: encodeURIComponent(config.creds.username)
+            }
+            maskHints.push(maskHint);
         }
         if (config.creds.password) {
             var maskHint = {
                 value: config.creds.password
+            };
+            maskHints.push(maskHint);
+            maskHint = {
+                value: encodeURIComponent(config.creds.password)
             };
             maskHints.push(maskHint);
         }
