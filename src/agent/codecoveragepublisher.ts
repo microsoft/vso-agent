@@ -33,8 +33,8 @@ export class CodeCoveragePublisher {
     //-----------------------------------------------------
     // Publish code coverage
     //-----------------------------------------------------
-    public publishCodeCoverageSummary(): Q.Promise<boolean> {
-        var defer = Q.defer<boolean>();
+    public publishCodeCoverageSummary(): Q.Promise<any> {
+        var defer = Q.defer<any>();
         var _this = this;
         var summaryFile = _this.command.properties["summaryfile"];
 
@@ -43,7 +43,7 @@ export class CodeCoveragePublisher {
                 _this.executionContext.service.publishCodeCoverageSummary(codeCoverageData, _this.project, _this.buildId)
                     .then(function(result) {
                         _this.command.info("PublishCodeCoverageSummary : Code coverage summary published successfully.");
-                        defer.resolve(true);
+                        defer.resolve(null);
                     }).fail(function(error) {
                         _this.command.warning("PublishCodeCoverageSummary : Error occured while publishing code coverage summary. Error: " + error);
                         defer.reject(error);
@@ -51,7 +51,7 @@ export class CodeCoveragePublisher {
             }
             else {
                 _this.command.warning("PublishCodeCoverageSummary : No code coverage data found to publish.");
-                defer.resolve(false);
+                defer.resolve(null);
             }
         }).fail(function(err) {
             _this.command.warning("PublishCodeCoverageSummary : Error occured while reading code coverage summary. Error : " + err);
