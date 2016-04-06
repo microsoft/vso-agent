@@ -144,7 +144,6 @@ describe('CodeCoveragePublisherTests', function() {
         var codeCoveragePublisher = new ccp.CodeCoveragePublisher(testExecutionContext, command, jacocoSummaryReader);
         codeCoveragePublisher.publishCodeCoverageSummary().then(function(result) {
             assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
-            assert(result);
             done();
         },
             function(err) {
@@ -187,7 +186,6 @@ describe('CodeCoveragePublisherTests', function() {
 
         codeCoveragePublisher.publishCodeCoverageSummary().then(function(result) {
             assert(testExecutionContext.service.jobsCompletedSuccessfully(), 'CodeCoveragePublish Task Failed! Details : ' + testExecutionContext.service.getRecordsString());
-            assert(result);
             done();
         },
             function(err) {
