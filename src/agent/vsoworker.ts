@@ -109,7 +109,7 @@ export function run(msg: cm.IWorkerMessage, consoleOutput: boolean,
         var agentUrl = hostContext.config.settings.serverUrl;
         var taskUrl = job.environment.systemConnection.url;
         
-        var jobInfo = cm.jobInfoFromJob(job, systemAuthHandler);
+        var jobInfo = cm.jobInfoFromJob(job, systemAuthHandler, hostContext.config);
         var serviceChannel: cm.IServiceChannel = createFeedbackChannel(agentUrl, taskUrl, jobInfo, hostContext);
         
         var jobContext: cm.IExecutionContext = new ctxm.ExecutionContext(jobInfo, systemAuthHandler, job.jobId, serviceChannel, hostContext);

@@ -174,6 +174,7 @@ export interface IConfiguration {
     poolId: number;
     createDiagnosticWriter?: () => IDiagnosticWriter;
     agent: agentifm.TaskAgent;
+    creds?: any;
 }
 
 export interface IServiceChannel extends NodeJS.EventEmitter {
@@ -427,13 +428,39 @@ interface IndexFunction {
     (input: string): ReplacementPosition[];
 }
 
-function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): ReplacementFunction {
+function createMaskFunction(jobEnvironment: agentifm.JobEnvironment, config: IConfiguration): ReplacementFunction {
     var noReplacement = (input: string) => {
         return input;
     };
 
     var envMasks = jobEnvironment.mask || [];
     var maskHints = [];
+    
+    // add masks for basic creds, in case force-basic was specified
+    if (config && config.creds) {
+        if (config.creds.username) {
+            var maskHint = {
+                value: config.creds.username
+            };
+            maskHints.push(maskHint);
+            maskHint = {
+                value: encodeURIComponent(config.creds.username)
+            }
+            maskHints.push(maskHint);
+        }
+        if (config.creds.password) {
+            var maskHint = {
+                value: config.creds.password
+            };
+            maskHints.push(maskHint);
+            maskHint = {
+                value: encodeURIComponent(config.creds.password)
+            };
+            maskHints.push(maskHint);
+        }
+    }
+    
+    // add masks sent by the server
     envMasks.forEach((maskHint: agentifm.MaskHint) => {
         if (maskHint.type === agentifm.MaskType.Variable && maskHint.value) {
             if (jobEnvironment.variables[maskHint.value]) {
@@ -448,19 +475,7 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
     if (maskHints.length > 0) {
         var indexFunctions: IndexFunction[] = [];
         maskHints.forEach((maskHint: agentifm.MaskHint, index: number) => {
-            if (maskHint.type === agentifm.MaskType.Variable) {
-                var toReplace = jobEnvironment.variables[maskHint.value];
-                indexFunctions.push((input: string) => {
-                    var results: ReplacementPosition[] = [];
-                    var index: number = input.indexOf(toReplace);
-                    while (index > -1) {
-                        results.push({ start: index, length: toReplace.length });
-                        index = input.indexOf(toReplace, index + 1);
-                    }
-                    return results;
-                });
-            }
-            else if (maskHint.type === agentifm.MaskType.Regex) {
+            if (maskHint.type === agentifm.MaskType.Regex) {
                 indexFunctions.push((input: string) => {
                     var stubInput: string = input;
                     var results: ReplacementPosition[] = [];
@@ -476,6 +491,21 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
                             stubInput = stubInput.substring(match.index + 1);
                             actualIndex = actualIndex + match.index + 1;
                         }
+                    }
+                    return results;
+                });
+            }
+            else {
+                var toReplace = maskHint.value;
+                if (maskHint.type === agentifm.MaskType.Variable) {
+                    toReplace = jobEnvironment.variables[maskHint.value];
+                }
+                indexFunctions.push((input: string) => {
+                    var results: ReplacementPosition[] = [];
+                    var index: number = input.indexOf(toReplace);
+                    while (index > -1) {
+                        results.push({ start: index, length: toReplace.length });
+                        index = input.indexOf(toReplace, index + 1);
                     }
                     return results;
                 });
@@ -538,7 +568,7 @@ function createMaskFunction(jobEnvironment: agentifm.JobEnvironment): Replacemen
 // TODO: JobInfo is going away soon.  We should just offer the task context the full job message.
 //       Until then, we're making the full job message available
 //       
-export function jobInfoFromJob(job: agentifm.JobRequestMessage, systemAuthHandler: baseifm.IRequestHandler): IJobInfo {
+export function jobInfoFromJob(job: agentifm.JobRequestMessage, systemAuthHandler: baseifm.IRequestHandler, config: IConfiguration): IJobInfo {
     var info: IJobInfo = {
         description: job.jobName,
         jobId: job.jobId,
@@ -549,7 +579,7 @@ export function jobInfoFromJob(job: agentifm.JobRequestMessage, systemAuthHandle
         lockToken: job.lockToken,
         systemAuthHandler: systemAuthHandler,
         variables: job.environment.variables,
-        mask: createMaskFunction(job.environment)
+        mask: createMaskFunction(job.environment, config)
     };
 
     return info;
