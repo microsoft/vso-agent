@@ -90,4 +90,56 @@ describe('UtiltyTests', function() {
         assert(titleCaseString == null);
         done();
     })
+
+    it('Test isNullOrWhiteSpace functionality', function(done) {
+        this.timeout(2000);
+
+        assert(!util.isNullOrWhitespace("Test. data."));
+        assert(util.isNullOrWhitespace(" "));
+        assert(util.isNullOrWhitespace(""));
+        assert(util.isNullOrWhitespace(null));
+        assert(util.isNullOrWhitespace(undefined));
+        done();
+    })
+
+    it('Test trimToEmptyString functionality', function(done) {
+        this.timeout(2000);
+
+        assert(util.trimToEmptyString("Test. data.") == "Test. data.");
+        assert(util.trimToEmptyString(" ") == "");
+        assert(util.trimToEmptyString("") == "");
+        assert(util.trimToEmptyString(null) == "");
+        assert(util.trimToEmptyString(undefined) == "");
+        done();
+    })
+
+    it('Test appendTextToFileSync functionality', function(done) {
+        this.timeout(2000);
+
+        this.timeout(2000);
+        var appendText = "This is Append Text";
+
+        util.appendTextToFileSync(file2, appendText);
+
+        fs.readFile(file2, 'utf-8', function(err, data) {
+            assert(data.indexOf(appendText) != -1);
+            assert(data.indexOf(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`) != -1);
+            done();
+        });
+    })
+
+    it('Test prependTextToFileSync functionality', function(done) {
+
+        this.timeout(2000);
+        var prependText = "This is Prepend Text";
+
+        util.prependTextToFileSync(file2, prependText);
+
+        fs.readFile(file2, 'utf-8', function(err, data) {
+            assert(data.indexOf(prependText) != -1);
+            assert(data.indexOf(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`) != -1);
+            done();
+        });
+    })
+
 });	
