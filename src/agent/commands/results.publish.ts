@@ -37,19 +37,9 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
         var publishRunAttachments: boolean = (this.command.properties['publishRunAttachments'] === "true");
         var resultFilesPath = this.command.properties['resultFiles'];
         var mergeResults: boolean = (this.command.properties['mergeResults'] === 'true');
+        var fileNumber: string = this.command.properties['fileNumber'];
+        var oldResultFilePath: string = this.command.message;
         var command = this.command;
-
-        var testRunContext: trp.TestRunContext = {
-            requestedFor: this.executionContext.variables["build.requestedFor"],
-            buildId: this.executionContext.variables["build.buildId"],
-            releaseEnvironmentUri: this.executionContext.variables["release.environmentUri"],
-            releaseUri: this.executionContext.variables["release.releaseUri"],
-            platform: platform,
-            config: config,
-            runTitle: runTitle,
-            fileNumber: "1",
-            publishRunAttachments: publishRunAttachments
-        };
 
         var reader;
         if (resultType == "junit") {
@@ -64,6 +54,44 @@ export class ResultsPublishCommand implements cm.IAsyncCommand {
         else if (resultType == "vstest") {
             this.command.warning("Test results of format '" + resultType + "'' are not supported on this build agent");
         }
+
+        //start - This logic is purely exisiting for keeping the compat with old tasks
+        if (oldResultFilePath && oldResultFilePath != '') {
+            var testRunContext: trp.TestRunContext = {
+                requestedFor: this.executionContext.variables["build.requestedFor"],
+                buildId: this.executionContext.variables["build.buildId"],
+                releaseEnvironmentUri: this.executionContext.variables["release.environmentUri"],
+                releaseUri: this.executionContext.variables["release.releaseUri"],
+                platform: platform,
+                config: config,
+                runTitle: runTitle,
+                fileNumber: fileNumber,
+                publishRunAttachments: publishRunAttachments
+            };
+
+            var testRunPublisher = new trp.TestRunPublisher(this.executionContext.service, command, teamProject, testRunContext, reader);
+            testRunPublisher.publishTestRun(oldResultFilePath).then(function(createdTestRun) {
+                defer.resolve(null);
+            })
+                .fail((err) => {
+                    this.command.warning("Failed to publish test results: " + err.message);
+                    defer.resolve(null);
+                });
+            return defer.promise;
+        }
+        //end
+
+        var testRunContext: trp.TestRunContext = {
+            requestedFor: this.executionContext.variables["build.requestedFor"],
+            buildId: this.executionContext.variables["build.buildId"],
+            releaseEnvironmentUri: this.executionContext.variables["release.environmentUri"],
+            releaseUri: this.executionContext.variables["release.releaseUri"],
+            platform: platform,
+            config: config,
+            runTitle: runTitle,
+            fileNumber: "1",
+            publishRunAttachments: publishRunAttachments
+        };
 
         if (reader != null && resultFilesPath) {
             var testRunPublisher = new trp.TestRunPublisher(this.executionContext.service, command, teamProject, testRunContext, reader);
