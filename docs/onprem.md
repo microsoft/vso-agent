@@ -1,97 +1,97 @@
-# On Premises Server
+# On-premises Server
 
-These instructions cover installing and configuring an agent to connect to your on premises Team Foundation Server 2015 or later.  We recommend having the latest quarterly update installed.
+These instructions cover installing and configuring an agent to connect to your on-premises Team Foundation Server 2015 or later.  We recommend having the latest quarterly update installed.
 
-## Configure Server for Basic + SSL
+## Configure Your Server for Basic Authentication + SSL
 
-Basic Auth is required for OSX/Linux Access.  
-Ensure ssl/https to secure the communicattion channel since basic credentials in the clear over the network.
+Basic authentication is required for OSX and Linux access.  
+Ensure SSL/HTTP is enabled to secure the communication channel, since basic credentials are transmitted in plain text.
 
-[Instructions Here](https://github.com/Microsoft/tfs-cli/blob/master/docs/configureBasicAuth.md)
+See [Configuring TFS to use Basic Authentication](https://github.com/Microsoft/tfs-cli/blob/master/docs/configureBasicAuth.md).
 
 ## Account and Roles
 
-Determine the local or domain user to use.  Add to *both* pool roles:
+Determine the local or domain user the agent will run as.  In the TFS Administration portal, add that user to *both* pool roles:
 
-  1. Agent Pool Administrators (allows to register)
-  2. Agent Pool Service Accounts (allows listening to build queue)
+  1. Agent Pool Administrators (allows the agent to register)
+  2. Agent Pool Service Accounts (allows the agent to listen to the build queue)
+
+![Enter the Admin Portal](enterAdminPortal.png "Enter the Admin Portal")
 
 ![Agent Roles](roles.png "Agent Roles")
 
-Then add the account to the collection level "Project Collection Build Service Accounts" group for any collections it will build.
+Also add the user to the collection-level group "Project Collection Build Service Accounts" for any collections the agent will service.  There is usually one collection named _DefaultCollection_.
+
+![View the Collection Administration Page](viewCollAdminPage.png "View the Collection Administration Page")
 
 ![Project Collection Build Service Accounts](buildsvc.png "Project Collection Build Service Accounts")
 
 ## Install
 
-By Installing the agent, you are accepting the terms on the [Team Explorer Everywhere EULA](teeeula.md)  
+By Installing the agent, you are accepting the terms on the [Team Explorer Everywhere EULA](teeeula.md).
 
-Running this from the command line (terminal) will download prereqs, install/update the agent bits globally and create an agent in your current directory.  Make a new directory for your agent
+Running this from the command line (terminal) will download prerequisites, install/update the agent bits globally and create an agent in your current directory.  Make a new directory for your agent
 
-> Tips 
-> Directory should be created under the users home directory (~).  
-> Prefer running the agent as the logged in user and creating under ~ will minimize permission issues.
+> Tips:  
+> To minimize permission issues, login to the agent machine as the above user.  
+> The agent directory should be created under the user's home directory (~).  
 
 Copy and paste the curl line.  If your linux box does not have curl [follow this answer](http://askubuntu.com/questions/259681/the-program-curl-is-currently-not-installed)
 
 From a terminal:
 ```bash
-mkdir myagent
-cd my agent
-
+mkdir tfsagent
+cd tfsagent
 curl -skSL http://aka.ms/xplatagent | bash
 ```
-Your output should look [similar to this](sampleoutput.md)
+Your output should look [similar to this](sampleoutput.md).
+If you have issues with this, fully realized zips are available in this repo's [Releases](https://github.com/Microsoft/vso-agent/releases) section.
 
-If you have issues with this, fully realized zips are available.
+### Configure on First Run
 
-Go to the [releases section on github](https://github.com/Microsoft/vso-agent/releases) and download the linux or OSX (Darwin) package.
+> Tips:  
+> For TFS, answer **true** (not the default) to the 'Enter force basic' prompt.  
+> Be sure to use a server-level URL with no collection name specified (https://server:8080/tfs, not https://server:8080/tfs/DefaultCollection).  
 
-### Configure on first run
-
->> TIPS:
->> IMPORTANT: for TFS, ensure you answer true (not the default) for force basic
->> Ensure it's server level url (no collection)
->> If the agent isn't configured (.agent file exists), on first run, it will configure.
-
+Run the agent.  You will be prompted for configuration (saved as an .agent file) the first time it is run:
 ```bash
-$ ./run.sh
-Enter alternate username > yourusername
-Enter alternate password > yourpassword
-Enter agent name (enter sets yourmac.local)  > 
+~/tfsagent$ ./run.sh
+Enter alternate username > [yourDomain\]yourUsername
+Enter alternate password > yourPassword
+Enter agent name (enter sets yourMachinename)  > 
 Enter agent pool name (enter sets default)  > 
 Enter poolName(enter sets default) > 
-Enter serverUrl > http://mytfsserver:8080/tfs
-...
+Enter serverUrl > http://yourTFSServer:8080/tfs
 Enter force basic (enter is false)  > true
-Config saved
-Waiting ...
+Successful connect as undefined
+. . .
+2016-03-24T19:08:43.188Z: Agent Started.
 ```
 
-An agent is now running interactively.  ctrl-c will exit the agent.
+The agent is now running interactively.  Typing ctrl-c will exit the agent.  You may also verify that the agent has connected to TFS in the list of agents connected to the collection's build pool:
 
-## Update Existing Agent
+![Verify Agent Connection to Build Pool](agentConnected.jpg "Verify Agent Connection to Build Pool")
 
-Run the same command used to install from the agent root directory (package.json will be in that folder)
+## Update an Existing Agent
 
-Before updating stop the agent (ctrl-c if interactive, if service [see run as a service](service.md))
-
-From a terminal:
+Before updating an existing agent, stop it (ctrl-c if interactive; if running as a service, see [run as a service](service.md)).
+Next, to update the agent, run the same command used to install it from the agent root directory (package.json will be in that folder).
 ```bash
+cd tfsagent
 curl -skSL http://aka.ms/xplatagent | bash
 ```
+
 Your output should look [similar to this](sampleoutput.md)
 
 ## Run as a Service
 
-Running interactively is good for testing and evaluation.  But, in production the agent should be run as a service
-to ensure the agent survives reboots.
+Running interactively is good for testing and evaluation, but in production, the agent should be run as a service to ensure the agent survives reboots.
 
-[How to run as a service](service.md)
+[How to Run the Agent as a Service](service.md)
 
 
 ## Agents without Internet Access
 
-If you have Server and Agent without internet access, it's possible to download and agent to a thumbdrive from a computer that has internet access (you need it to download :)) and then then use that to stamp out agents on your private network agent machines.
-
-Go to the [releases section on github](https://github.com/Microsoft/vso-agent/releases) and download the linux or OSX (Darwin) package.
+If you have server and agent machine without internet access, use a computer that does have internet access to
+download the appropriate agent package from the [Releases](https://github.com/Microsoft/vso-agent/releases) page to a thumbdrive.
+Use that copy to install agents on machines in your private network.
