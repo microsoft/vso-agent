@@ -45,13 +45,9 @@ var svcName = 'vsoagent.' + accountName + '.' + agentName;
 console.log('serviceName: vsoagent.' + svcName);
 var svcinstall = new si.SvcInstall();
 
-/*
-if (typeof svcinstall[action] !== 'function') {
-    showUsage(1);
-}*/
+// use internal node
+var nodePath = path.join(__dirname, '..', 'runtime/node/bin/node');
 
-// node is known as nodejs on some *nix installs
-var nodePath = shelljs.which('nodejs') || shelljs.which('node');
 var getSvcCfg = function () {
     if (!shelljs.test('-f', _cfgPath)) {
         console.error('Error: not configured as a service.  use install action.');
