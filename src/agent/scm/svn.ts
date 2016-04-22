@@ -61,6 +61,9 @@ export class SvnScmProvider extends scmprovider.ScmProvider {
             username: this.username,
             password: this.password,
             realmName: this.realmName,
+            acceptUntrusted: this.endpoint.data && 
+                             this.endpoint.data["acceptUntrustedCerts"] && 
+                             (this.endpoint.data["acceptUntrustedCerts"].toLowerCase() === "true"),
             url: this.endpoint.url
         });
     }

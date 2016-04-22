@@ -33,6 +33,7 @@ export interface ISvnConnectionEndpoint {
     username: string;
     password: string;
     realmName: string;
+    acceptUntrusted: boolean;
     url: string;
 }
 
@@ -310,16 +311,18 @@ export class SvnWrapper extends events.EventEmitter {
         // default connection related args
         var usernameArg = '--username';
         var passwordArg = '--password';
+        var trustArg = "--trust-server-cert";
         
         var defaults: string[] = [];
         
         if (this.endpoint.username && this.endpoint.username.length > 0) {
-            this.ctx.verbose("username=" + this.endpoint.username);
             defaults.push(usernameArg, this.endpoint.username);
         }
         if (this.endpoint.password && this.endpoint.password.length > 0) {
-            this.ctx.verbose("password=" + this.endpoint.password);
             defaults.push(passwordArg, this.endpoint.password);
+        }
+        if (this.endpoint.acceptUntrusted) {
+            defaults.push(trustArg);
         }
 
         var quotedArg = function(arg) {
