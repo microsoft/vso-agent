@@ -79,8 +79,8 @@ EnvVar:   BUILD_BINARIESDIRECTORY
 copying files to this directory
 
 ```
-Variable: Build.ArtifactsStagingDirectory
-EnvVar:   BUILD_ARTIFACTSSTAGINGDIRECTORY
+Variable: Build.ArtifactStagingDirectory
+EnvVar:   BUILD_ARTIFACTSTAGINGDIRECTORY
 ```
 
 ### TestResults
