@@ -17,14 +17,18 @@ export class TestCommand implements cm.ITaskCommand {
     public message: string;
 
     public info(message: string) {
-         console.log(message);
+         console.info(message);
     }
 
     public warning(message: string) {
-         console.log(message);
+         console.warn(message);
     }
 
     public error(message: string) {
+         console.error(message);
+    }
+    
+     public debug(message: string) {
          console.log(message);
     }
 }

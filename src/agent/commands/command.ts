@@ -26,4 +26,8 @@ export class TaskCommand implements cm.ITaskCommand {
     public error(message: string) {
     	this.lines.push('[error]' + message);
     }
+    
+    public debug(message: string) {
+    	this.lines.push('[debug]' + message);
+    }
 }

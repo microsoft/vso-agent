@@ -46,7 +46,8 @@
     "validator": "~3.11.0",
     "vso-node-api": "^3.0.1",
     "vso-task-lib": "^0.5.0",
-    "xmlreader": "^0.2.3"
+    "xmlreader": "^0.2.3",
+    "string": "^3.3.1"
   },
   "devDependencies": {
     "del": "^1.1.1",
