@@ -410,7 +410,7 @@ export class SvnWrapper extends events.EventEmitter {
     private _toSvnDepth(depth): string {
         return depth == "0" ? 'empty' :
                depth == "1" ? 'files' :
-               depth == "2" ? 'children' :
+               depth == "2" ? 'immediates' :
                depth == "3" ? 'infinity' :
                depth || 'infinity'; 
     }
