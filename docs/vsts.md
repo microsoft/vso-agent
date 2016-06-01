@@ -28,6 +28,8 @@ Running this from the command line (terminal) will download prereqs, install/upd
 > Tips 
 > Directory should be created under the users home directory (~).  
 > Prefer running the agent as the logged in user and creating under ~ will minimize permission issues.
+> Make sure that you have the latest version of NPM installed  
+> Make sure you have unzip installed (apt-get install unzip) 
 
 Copy and paste the curl line.  If your linux box does not have curl [follow this answer](http://askubuntu.com/questions/259681/the-program-curl-is-currently-not-installed)
 
