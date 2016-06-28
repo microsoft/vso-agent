@@ -33,5 +33,9 @@ export function runTask(scriptPath: string, ctx: cm.IExecutionContext, callback)
         // ignore and fall back to 
     }
 
+    var workingDir = path.dirname(scriptPath);
+    ctx.debug('Setting working directory to: ' + workingDir);
+    process.chdir(workingDir);
+
     runner.run(nodePath, scriptPath, ctx, callback);
 }
