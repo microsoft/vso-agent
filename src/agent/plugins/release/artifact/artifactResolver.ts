@@ -21,7 +21,7 @@ export class ArtifactResolver {
         }
         else {
             var defer = Q.defer<void>();
-            defer.reject('The artifact type is not yet supported: ' + artifactDefinition.artifactType);
+            defer.resolve(null);
             return defer.promise;
         }
     }
