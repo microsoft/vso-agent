@@ -218,7 +218,7 @@ export class JobRunner {
                 // ensure we reset cwd after each task runs
                 shell.cd(cwd);
                 trace.write('cwd: ' + cwd);     
-                executionContext.writeConsoleSection('Running ' + item.name);
+                executionContext.writeConsoleSection('Running (' + item.name + ') ' + item.displayName);
                 var taskContext: ctxm.ExecutionContext = new ctxm.ExecutionContext(executionContext.jobInfo,
                     executionContext.authHandler,
                     item.instanceId,
@@ -247,7 +247,7 @@ export class JobRunner {
                                     return task.alwaysRun == true;
                                 })
                                 task_errors = true;
-                                executionContext.writeConsoleSection(item.name + ' Failed, Build still has tasks to run setting task errors to ' + task_errors );
+                                executionContext.writeConsoleSection(item.displayName + ' Failed, Build still has tasks to run setting task errors to: ' + task_errors );
                                 if (_continue.length = 0) {
                                     err = new Error('Task Failed');
                                 }
