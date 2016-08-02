@@ -3,11 +3,6 @@ set -e #exit at every exit code different from "0"
 
 export VERSION=$(cat package.json|grep version|sed s/\"version\"\:\ \"//g|sed s/\"\,//g|sed s/\ //g)
 echo $VERSION > ./version.txt
-mkdir -p tfx-cli
-cp -r node_modules tfx-cli/
-cp -r _build tfx-cli/
-zip -r tfx-cli.zip ./tfx-cli/
-rm -rf ./tfx-cli/
 touch ./upload.log
 
 # based on https://github.com/JFrogDev/project-examples/blob/master/bash-example/deploy-file.sh
