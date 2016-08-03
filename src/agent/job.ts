@@ -212,14 +212,13 @@ export class JobRunner {
 
         trace.state('tasks', job.tasks);
         var cwd = process.cwd();
-        
+        var task_errors = false;
         async.forEachSeries(job.tasks,
-            function (item: agentifm.TaskInstance, done: (err: any) => void) {
+            function (item: agentifm.TaskInstance ,done: (err: any) => void) {
                 // ensure we reset cwd after each task runs
                 shell.cd(cwd);
-                trace.write('cwd: ' + cwd);
-                        
-                executionContext.writeConsoleSection('Running ' + item.name);
+                trace.write('cwd: ' + cwd);     
+                executionContext.writeConsoleSection('Running (' + item.name + ') ' + item.displayName);
                 var taskContext: ctxm.ExecutionContext = new ctxm.ExecutionContext(executionContext.jobInfo,
                     executionContext.authHandler,
                     item.instanceId,
@@ -229,33 +228,46 @@ export class JobRunner {
                 taskContext.on('message', function (message) {
                     taskContext.service.queueConsoleLine(message);
                 });
-
-                if (item.enabled) {
+                if (task_errors && !item.alwaysRun) {
+                    executionContext.writeConsoleSection('Detected task errors in build skipping task');
+                    taskResult = agentifm.TaskResult.Abandoned;                 
+                }
+                if (item.enabled && !task_errors || item.alwaysRun) {
                     taskContext.setTaskStarted(item.name);
-
                     _this.runTask(item, taskContext, (err) => {
                         var taskResult: agentifm.TaskResult = taskContext.result;
                         if (err || taskResult == agentifm.TaskResult.Failed) {
                             if (item.continueOnError) {
-                                taskResult = jobResult = agentifm.TaskResult.SucceededWithIssues;
+                                taskResult = jobResult = agentifm.TaskResult.Failed;
                                 err = null;
                             }
                             else {
                                 taskResult = jobResult = agentifm.TaskResult.Failed;
-                                err = new Error('Task Failed');
+                                var _continue = job.tasks.filter(function _hasAlwaysRun(task) {
+                                    return task.alwaysRun == true;
+                                })
+                                task_errors = true;
+                                executionContext.writeConsoleSection(item.displayName + ' Failed, Build still has tasks to run setting task errors to: ' + task_errors );
+                                if (_continue.length = 0) {
+                                    err = new Error('Task Failed');
+                                }
+                                else{
+                                    err = null;
+                                }
                             }
                         }
 
                         trace.write('taskResult: ' + taskResult);
                         taskContext.setTaskResult(item.name, taskResult);
-
                         taskContext.end();
                         done(err);
                     });
                 }
                 else {
                     var err = '';
-                    var taskResult: agentifm.TaskResult = agentifm.TaskResult.Skipped;
+                    if (!task_errors) {
+                        var taskResult: agentifm.TaskResult = agentifm.TaskResult.Skipped;    
+                    }
                     trace.write('taskResult: ' + taskResult);
                     taskContext.setTaskResult(item.name, taskResult);
                     done(err);
