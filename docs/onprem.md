@@ -37,7 +37,7 @@ Copy and paste the curl line.  If your linux box does not have curl [follow this
 From a terminal:
 ```bash
 mkdir myagent
-cd my agent
+cd myagent
 
 curl -skSL https://aka.ms/xplatagent | bash
 ```
