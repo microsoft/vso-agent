@@ -7,6 +7,9 @@
 # run to install
 # curl -sSL https://raw.githubusercontent.com/Microsoft/vso-agent/master/getagent.sh | bash
 
+echo Deprecated
+return 1
+
 DEFAULT_NODE_VERSION="5.6.0"
 DEFAULT_TEE_VERSION="14.0.2-private"
 
